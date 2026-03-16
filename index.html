@@ -1,0 +1,782 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>KOKOS Ice Cream — Plant Based</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=Instrument+Sans:wght@300;400;500&display=swap" rel="stylesheet" />
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  :root {
+    --coral:      #fdcec1;
+    --mint:       #cde6d7;
+    --apricot:    #fae2d8;
+    --lavender:   #e3d1e4;
+    --sand:       #ffddad;
+    --coral-mid:  #fdaf9a;
+    --green:      #11483d;
+    --cream:      #fffaf7;
+    --ink:        #2a1f1a;
+    --ink-mid:    #6b4f47;
+  }
+
+  body {
+    font-family: 'Instrument Sans', sans-serif;
+    background: var(--cream);
+    color: var(--ink);
+    overflow-x: hidden;
+  }
+
+  /* ── NAV ───────────────────────────── */
+  nav {
+    background: var(--coral);
+    padding: 0 3rem;
+    height: 70px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 2px solid var(--coral-mid);
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+  .nav-logo img {
+    height: 52px; width: 52px;
+    border-radius: 50%;
+    object-fit: cover;
+    background: white;
+    display: block;
+  }
+  .nav-links {
+    display: flex;
+    gap: 2.5rem;
+    list-style: none;
+  }
+  .nav-links a {
+    font-size: 0.75rem;
+    font-weight: 500;
+    color: var(--ink);
+    text-decoration: none;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+  }
+  .nav-links a:hover { color: var(--green); }
+  .nav-cta {
+    background: var(--green);
+    color: var(--coral) !important;
+    padding: 0.55rem 1.4rem;
+    border-radius: 100px;
+  }
+
+  /* ── WALL STRIPS ───────────────────── */
+  .wall-strip { display: grid; height: 44px; }
+
+  /* ── HERO ──────────────────────────── */
+  .hero {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    min-height: 90vh;
+  }
+  .hero-left {
+    background: var(--coral);
+    padding: 5rem 4rem;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 1.8rem;
+    position: relative;
+    overflow: hidden;
+  }
+  .hero-left::after {
+    content: '';
+    position: absolute;
+    bottom: -100px; right: -100px;
+    width: 300px; height: 300px;
+    border-radius: 50%;
+    background: var(--coral-mid);
+    opacity: 0.4;
+  }
+  .hero-kicker {
+    font-size: 0.7rem;
+    font-weight: 500;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--green);
+    display: flex;
+    align-items: center;
+    gap: 0.7rem;
+  }
+  .hero-kicker::before {
+    content: '';
+    display: block;
+    width: 22px; height: 1.5px;
+    background: var(--green);
+  }
+  .hero-left h1 {
+    font-family: 'DM Serif Display', serif;
+    font-size: clamp(3.2rem, 5.5vw, 5.8rem);
+    font-weight: 400;
+    line-height: 1.0;
+    color: var(--ink);
+    position: relative;
+    z-index: 2;
+  }
+  .hero-left h1 em { font-style: italic; color: var(--green); }
+  .hero-left p {
+    font-size: 1rem;
+    font-weight: 300;
+    color: var(--ink-mid);
+    line-height: 1.85;
+    max-width: 380px;
+    position: relative;
+    z-index: 2;
+  }
+  .hero-btns {
+    display: flex;
+    gap: 1rem;
+    align-items: center;
+    position: relative;
+    z-index: 2;
+  }
+  .btn-dark {
+    background: var(--green);
+    color: var(--coral);
+    padding: 0.9rem 2rem;
+    border-radius: 100px;
+    font-size: 0.85rem;
+    font-weight: 500;
+    letter-spacing: 0.04em;
+    border: none;
+    cursor: pointer;
+    text-decoration: none;
+    display: inline-block;
+  }
+  .btn-ghost {
+    color: var(--ink);
+    font-size: 0.85rem;
+    font-weight: 400;
+    text-decoration: underline;
+    text-underline-offset: 4px;
+    cursor: pointer;
+    border: none;
+    background: none;
+  }
+  .hero-logo-stamp {
+    width: 140px; height: 140px;
+    border-radius: 50%;
+    background: white;
+    padding: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    z-index: 2;
+  }
+  .hero-logo-stamp img {
+    width: 100%; height: 100%;
+    object-fit: contain;
+    border-radius: 50%;
+  }
+  .hero-right { display: grid; grid-template-rows: 1fr 1fr; }
+  .hero-block {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem;
+    position: relative;
+    overflow: hidden;
+  }
+  .scoop-ball {
+    width: 160px; height: 160px;
+    border-radius: 50%;
+    position: relative;
+    z-index: 2;
+  }
+  .scoop-label {
+    position: absolute;
+    bottom: 1.5rem; left: 2rem;
+    font-family: 'DM Serif Display', serif;
+    font-style: italic;
+    font-size: 1.1rem;
+    color: var(--ink-mid);
+    z-index: 2;
+  }
+  .bg-blob {
+    position: absolute;
+    border-radius: 50%;
+    opacity: 0.3;
+  }
+
+  /* ── COLOR STRIP ────────────────────── */
+  .color-strip {
+    display: grid;
+    grid-template-columns: repeat(6, 1fr);
+    height: 72px;
+  }
+  .strip-cell {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.65rem;
+    font-weight: 500;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--ink-mid);
+  }
+
+  /* ── ABOUT ──────────────────────────── */
+  .about-section {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    min-height: 58vh;
+  }
+  .about-block {
+    padding: 4.5rem 3rem;
+    display: flex;
+    flex-direction: column;
+  }
+  .section-kicker {
+    font-size: 0.68rem;
+    font-weight: 500;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--green);
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 1.2rem;
+  }
+  .section-kicker::before {
+    content: '';
+    display: block;
+    width: 16px; height: 1.5px;
+    background: var(--green);
+  }
+  .block-title {
+    font-family: 'DM Serif Display', serif;
+    font-size: clamp(1.8rem, 2.8vw, 2.8rem);
+    font-weight: 400;
+    line-height: 1.1;
+    color: var(--ink);
+    margin-bottom: 1.4rem;
+  }
+  .block-title em { font-style: italic; color: var(--green); }
+  .block-body {
+    font-size: 0.9rem;
+    font-weight: 300;
+    color: var(--ink-mid);
+    line-height: 1.9;
+    flex: 1;
+  }
+  .stat-row { display: flex; gap: 2rem; margin-top: 2rem; }
+  .stat-num {
+    font-family: 'DM Serif Display', serif;
+    font-size: 2.8rem;
+    color: var(--green);
+    line-height: 1;
+  }
+  .stat-lbl {
+    font-size: 0.7rem;
+    font-weight: 400;
+    letter-spacing: 0.06em;
+    color: var(--ink-mid);
+    margin-top: 0.25rem;
+  }
+  .about-blobs {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    gap: 1rem;
+  }
+  .blob-circle { border-radius: 50%; }
+
+  /* ── FLAVORS ────────────────────────── */
+  .flavors-section {
+    background: var(--cream);
+    padding: 5rem 3rem;
+  }
+  .flavors-header {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    margin-bottom: 3rem;
+  }
+  .flavors-header h2 {
+    font-family: 'DM Serif Display', serif;
+    font-size: clamp(2rem, 3.5vw, 3.5rem);
+    font-weight: 400;
+    color: var(--ink);
+  }
+  .flavors-header h2 em { font-style: italic; color: var(--green); }
+  .see-all {
+    font-size: 0.8rem;
+    font-weight: 400;
+    color: var(--green);
+    text-decoration: underline;
+    text-underline-offset: 4px;
+    white-space: nowrap;
+    margin-bottom: 0.3rem;
+    cursor: pointer;
+    border: none;
+    background: none;
+  }
+  .flavors-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 0;
+  }
+  .flavor-tile {
+    padding: 2.5rem 2rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.7rem;
+    border: 0.5px solid rgba(42,31,26,0.07);
+    cursor: default;
+    transition: transform 0.2s;
+    overflow: hidden;
+  }
+  .flavor-tile:hover { transform: scale(1.015); z-index: 2; position: relative; }
+  .flavor-dot {
+    width: 56px; height: 56px;
+    border-radius: 50%;
+    margin-bottom: 0.4rem;
+  }
+  .flavor-name {
+    font-family: 'DM Serif Display', serif;
+    font-size: 1.25rem;
+    color: var(--ink);
+  }
+  .flavor-note {
+    font-size: 0.82rem;
+    font-weight: 300;
+    color: var(--ink-mid);
+    line-height: 1.65;
+  }
+  .flavor-pill {
+    display: inline-block;
+    font-size: 0.65rem;
+    font-weight: 500;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    padding: 0.28rem 0.75rem;
+    border-radius: 100px;
+    margin-top: 0.3rem;
+    color: var(--green);
+    border: 1px solid var(--green);
+    align-self: flex-start;
+  }
+
+  /* ── PLANT STRIP ───────────────────── */
+  .plant-strip {
+    background: var(--green);
+    padding: 2.5rem 3rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 3rem;
+  }
+  .plant-badge {
+    width: 80px; height: 80px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.12);
+    padding: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .plant-badge img {
+    width: 100%;
+    border-radius: 50%;
+    filter: invert(1);
+    opacity: 0.9;
+  }
+  .plant-text {
+    font-family: 'DM Serif Display', serif;
+    font-size: clamp(1.6rem, 3vw, 2.8rem);
+    font-style: italic;
+    color: var(--coral);
+  }
+  .plant-sub {
+    font-size: 0.75rem;
+    font-weight: 400;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--mint);
+    margin-top: 0.4rem;
+  }
+
+  /* ── CONTACT ────────────────────────── */
+  .contact-section {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    min-height: 58vh;
+  }
+  .contact-left {
+    background: var(--mint);
+    padding: 5rem 4rem;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+  }
+  .contact-right {
+    background: var(--lavender);
+    padding: 5rem 4rem;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+  }
+  .contact-details { display: flex; flex-direction: column; gap: 1.4rem; margin-top: 2rem; }
+  .c-label {
+    font-size: 0.65rem;
+    font-weight: 500;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--green);
+    margin-bottom: 0.1rem;
+  }
+  .c-value {
+    font-size: 0.95rem;
+    font-weight: 300;
+    color: var(--ink);
+    line-height: 1.6;
+  }
+  .form-field {
+    width: 100%;
+    padding: 0.88rem 1.1rem;
+    border: 1.5px solid rgba(42,31,26,0.15);
+    border-radius: 10px;
+    font-family: 'Instrument Sans', sans-serif;
+    font-size: 0.9rem;
+    background: rgba(255,255,255,0.65);
+    color: var(--ink);
+    outline: none;
+    margin-bottom: 0.85rem;
+    transition: border-color 0.2s;
+  }
+  .form-field:focus { border-color: var(--green); }
+  .form-ta { resize: none; height: 100px; }
+  .form-submit {
+    background: var(--green);
+    color: var(--mint);
+    border: none;
+    padding: 0.9rem 2.2rem;
+    border-radius: 100px;
+    font-family: 'Instrument Sans', sans-serif;
+    font-size: 0.85rem;
+    font-weight: 500;
+    cursor: pointer;
+  }
+
+  /* ── FOOTER ─────────────────────────── */
+  footer {
+    background: var(--coral);
+    padding: 1.8rem 3rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .footer-logo { height: 44px; width: 44px; border-radius: 50%; background: white; padding: 4px; }
+  .footer-logo img { width: 100%; height: 100%; border-radius: 50%; object-fit: contain; }
+  .footer-links { display: flex; gap: 2rem; list-style: none; }
+  .footer-links a { font-size: 0.78rem; color: var(--ink-mid); text-decoration: none; letter-spacing: 0.06em; }
+  .footer-links a:hover { color: var(--green); }
+  .footer-copy { font-size: 0.72rem; color: var(--ink-mid); }
+
+  @media (max-width: 900px) {
+    .hero { grid-template-columns: 1fr; }
+    .hero-right { display: none; }
+    .hero-left { padding: 3rem 1.5rem; }
+    .about-section { grid-template-columns: 1fr; }
+    .flavors-grid { grid-template-columns: 1fr 1fr; }
+    .contact-section { grid-template-columns: 1fr; }
+    nav { padding: 0 1.5rem; }
+    .nav-links { gap: 1.2rem; }
+  }
+  @media (max-width: 600px) {
+    .flavors-grid { grid-template-columns: 1fr; }
+    .plant-strip { flex-direction: column; gap: 1rem; text-align: center; }
+    footer { flex-direction: column; gap: 0.8rem; text-align: center; }
+    .footer-links { justify-content: center; }
+    .nav-links { display: none; }
+  }
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <div class="nav-logo">
+    <img src="KOKOS_Logo_Registeredjpg-removebg-preview__1_.png" alt="KOKOS Ice Cream" onerror="this.style.display='none'; this.parentNode.innerHTML='<span style=\'font-family:DM Serif Display,serif;font-size:1.4rem;color:#11483d;\'>KOKOS</span>'" />
+  </div>
+  <ul class="nav-links">
+    <li><a href="#flavors">Flavors</a></li>
+    <li><a href="#about">Our story</a></li>
+    <li><a href="#press">Press</a></li>
+    <li><a href="#contact">Visit us</a></li>
+    <li><a href="#contact" class="nav-cta">Order</a></li>
+  </ul>
+</nav>
+
+<!-- TOP WALL STRIP -->
+<div class="wall-strip" style="grid-template-columns: 2fr 1fr 1fr 2fr;">
+  <div style="background:var(--coral);"></div>
+  <div style="background:var(--mint);"></div>
+  <div style="background:var(--lavender);"></div>
+  <div style="background:var(--sand);"></div>
+</div>
+
+<!-- HERO -->
+<section class="hero" id="hero">
+  <div class="hero-left">
+    <div class="hero-kicker">Plant based · Small batch · Handcrafted</div>
+    <h1>Life is<br><em>sweeter</em><br>with a scoop</h1>
+    <p>100% organic, plant-based, dairy-free, gluten-free, and nut-free. A house-made coconut milk base with European gelato silkiness and classic American ice cream richness. Nashville's best kept secret — for 9 years and counting.</p>
+    <div class="hero-btns">
+      <a href="#flavors" class="btn-dark">See flavors</a>
+      <a href="#about" class="btn-ghost">Our story</a>
+    </div>
+    <div class="hero-logo-stamp" style="margin-top:2rem;">
+      <img src="KOKOS_Logo_Registeredjpg-removebg-preview__1_.png" alt="KOKOS plant based" onerror="this.style.display='none'" />
+    </div>
+  </div>
+  <div class="hero-right">
+    <div class="hero-block" style="background:var(--mint);">
+      <div class="bg-blob" style="width:220px;height:220px;background:#9fcfb4;top:-50px;right:-50px;"></div>
+      <div class="scoop-ball" style="background:var(--coral-mid);"></div>
+      <div class="scoop-label">coral mist</div>
+    </div>
+    <div class="hero-block" style="background:var(--lavender);">
+      <div class="bg-blob" style="width:180px;height:180px;background:#c8b0cc;bottom:-40px;left:-40px;"></div>
+      <div class="scoop-ball" style="background:var(--mint);"></div>
+      <div class="scoop-label">icy mint</div>
+    </div>
+  </div>
+</section>
+
+<!-- FLAVOR COLOR STRIP -->
+<div class="color-strip">
+  <div class="strip-cell" style="background:var(--coral);">Coral mist</div>
+  <div class="strip-cell" style="background:var(--mint);">Icy mint</div>
+  <div class="strip-cell" style="background:var(--apricot);">Apricot ice</div>
+  <div class="strip-cell" style="background:var(--lavender);">Lavender</div>
+  <div class="strip-cell" style="background:var(--sand);">Sand swept</div>
+  <div class="strip-cell" style="background:var(--coral-mid); color:var(--green); font-weight:500;">+ more</div>
+</div>
+
+<!-- ABOUT -->
+<section class="about-section" id="about">
+  <div class="about-block" style="background:var(--apricot); justify-content:space-between;">
+    <div>
+      <div class="section-kicker">Our story</div>
+      <h2 class="block-title">Born from a<br><em>love</em> of ice cream</h2>
+    </div>
+    <div>
+      <p class="block-body">Sam Brooker and Jerusa van Lith didn't plan to become ice cream disruptors — they were deep in Nashville's music industry. Sam can't eat dairy, so what started as a search for better options became an obsession. In 2019 they launched KOKOS (Dutch for coconut, a nod to Jerusa's Amsterdam roots) and built a devoted following entirely through word of mouth — not a single dollar spent on paid marketing.</p>
+      <div class="stat-row">
+        <div>
+          <div class="stat-num">9+</div>
+          <div class="stat-lbl">Years in Nashville</div>
+        </div>
+        <div>
+          <div class="stat-num">100%</div>
+          <div class="stat-lbl">Plant based</div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="about-block about-blobs" style="background:var(--sand);">
+    <div class="blob-circle" style="width:160px;height:160px;background:var(--coral);"></div>
+    <div class="blob-circle" style="width:110px;height:110px;background:var(--lavender); align-self:flex-end;"></div>
+    <div class="blob-circle" style="width:80px;height:80px;background:var(--mint); align-self:flex-start;"></div>
+  </div>
+  <div class="about-block" style="background:var(--coral); justify-content:center; gap:1.5rem;">
+    <div class="section-kicker">The color block wall</div>
+    <h3 class="block-title" style="font-size:1.75rem;">A shop as joyful as the flavors</h3>
+    <p class="block-body">Step into the flagship shop at OneC1TY and you feel it immediately — emerald velvet seating, warm lighting, happy plants, and pale ice-cream-colored walls. Mirrors everywhere so you feel good about treating yourself. No guilt, just joy. The happiest place in Nashville.</p>
+    <div style="display:grid; grid-template-columns:1fr 1fr; gap:0.6rem; margin-top:0.5rem;">
+      <div style="height:72px;border-radius:12px;background:var(--mint);"></div>
+      <div style="height:72px;border-radius:12px;background:var(--lavender);"></div>
+      <div style="height:72px;border-radius:12px;background:var(--sand);"></div>
+      <div style="height:72px;border-radius:12px;background:var(--apricot);"></div>
+    </div>
+  </div>
+</section>
+
+<!-- FLAVORS -->
+<section class="flavors-section" id="flavors">
+  <div class="flavors-header">
+    <div>
+      <div class="section-kicker">The lineup</div>
+      <h2>This season's <em>favorites</em></h2>
+    </div>
+    <button class="see-all">See all flavors</button>
+  </div>
+  <div class="flavors-grid">
+    <div class="flavor-tile" style="background:var(--coral);">
+      <div class="flavor-dot" style="background:#c0392b;"></div>
+      <div class="flavor-name">Belgian Chocolate</div>
+      <div class="flavor-note">Rich, intense Belgian chocolate in a silky coconut cream base — pure indulgence</div>
+      <span class="flavor-pill">Signature</span>
+    </div>
+    <div class="flavor-tile" style="background:var(--mint);">
+      <div class="flavor-dot" style="background:#9fcfb4;"></div>
+      <div class="flavor-name">Mint Chocolate Chip</div>
+      <div class="flavor-note">Fresh garden mint with generous dark chocolate chips throughout</div>
+      <span class="flavor-pill">Fan favorite</span>
+    </div>
+    <div class="flavor-tile" style="background:var(--apricot);">
+      <div class="flavor-dot" style="background:#f4a261;"></div>
+      <div class="flavor-name">She's a Peach</div>
+      <div class="flavor-note">Sun-ripened peach folded into our dreamy house-made coconut cream</div>
+      <span class="flavor-pill">Seasonal</span>
+    </div>
+    <div class="flavor-tile" style="background:var(--lavender);">
+      <div class="flavor-dot" style="background:#c8b0cc;"></div>
+      <div class="flavor-name">Lavender Dream</div>
+      <div class="flavor-note">Floral lavender with a smooth, cloud-like finish — endlessly dreamy</div>
+      <span class="flavor-pill">Bestseller</span>
+    </div>
+    <div class="flavor-tile" style="background:var(--sand);">
+      <div class="flavor-dot" style="background:#f5cd94;"></div>
+      <div class="flavor-name">Piña Colada</div>
+      <div class="flavor-note">A legit tropical cocktail dupe — pineapple, coconut, sunshine in a scoop</div>
+      <span class="flavor-pill">Summer hit</span>
+    </div>
+    <div class="flavor-tile" style="background:var(--coral);">
+      <div class="flavor-dot" style="background:#f8f0e3;"></div>
+      <div class="flavor-name">Cookies & Kreme</div>
+      <div class="flavor-note">Creamy vanilla base loaded with crunchy cookie pieces — the crowd pleaser</div>
+      <span class="flavor-pill">Classic</span>
+    </div>
+  </div>
+</section>
+
+<!-- PLANT BASED STRIP -->
+<div class="plant-strip">
+  <div>
+    <div class="plant-text">Proudly plant based.</div>
+    <div class="plant-sub">No dairy · No compromise · Just joy</div>
+  </div>
+  <div class="plant-badge">
+    <img src="KOKOS_Logo_Registeredjpg-removebg-preview__1_.png" alt="KOKOS" onerror="this.style.display='none'" />
+  </div>
+  <div style="font-size:0.75rem; font-weight:400; letter-spacing:0.2em; text-transform:uppercase; color:var(--sand);">Est. 2024</div>
+</div>
+
+<!-- BOTTOM WALL STRIP -->
+<div class="wall-strip" style="grid-template-columns:1fr 2fr 1fr 2fr;">
+  <div style="background:var(--lavender);"></div>
+  <div style="background:var(--coral);"></div>
+  <div style="background:var(--sand);"></div>
+  <div style="background:var(--mint);"></div>
+</div>
+
+<!-- PRESS SECTION -->
+<section style="background:var(--sand); padding:5rem 3rem;" id="press">
+  <div style="max-width:1100px; margin:0 auto;">
+    <div class="section-kicker">As seen on</div>
+    <h2 style="font-family:'DM Serif Display',serif; font-size:clamp(2rem,3.5vw,3.2rem); font-weight:400; color:var(--ink); margin-bottom:3rem;">Our story, <em style="font-style:italic;color:var(--green);">in their words</em></h2>
+
+    <!-- Featured article card -->
+    <div style="display:grid; grid-template-columns:1fr 1fr; gap:0; border-radius:20px; overflow:hidden; background:white; margin-bottom:2rem;">
+      <!-- Left: big quote -->
+      <div style="background:var(--green); padding:3.5rem 3rem; display:flex; flex-direction:column; justify-content:space-between;">
+        <div style="font-family:'DM Serif Display',serif; font-size:5rem; color:var(--coral); line-height:1; margin-bottom:1rem;">&ldquo;</div>
+        <p style="font-family:'DM Serif Display',serif; font-style:italic; font-size:clamp(1.1rem,1.8vw,1.45rem); color:var(--coral); line-height:1.55; flex:1;">Given the choice, I would choose Kokos over regular ice cream — the flavors are balanced, it's not greasy, it's creamy to the max with no stodgy aftertaste, and I feel light and happy afterward.</p>
+        <p style="font-size:0.75rem; font-weight:500; letter-spacing:0.12em; text-transform:uppercase; color:var(--mint); margin-top:1.5rem;">— Native Magazine</p>
+      </div>
+      <!-- Right: article preview -->
+      <div style="background:var(--cream); padding:3rem; display:flex; flex-direction:column; justify-content:space-between;">
+        <div>
+          <div style="display:inline-block; background:var(--coral); color:var(--green); font-size:0.65rem; font-weight:500; letter-spacing:0.14em; text-transform:uppercase; padding:0.3rem 0.8rem; border-radius:100px; margin-bottom:1.5rem;">Medium · Feb 2026</div>
+          <h3 style="font-family:'DM Serif Display',serif; font-size:clamp(1.3rem,2vw,1.7rem); font-weight:400; color:var(--ink); line-height:1.25; margin-bottom:1.2rem;">Better Than Ice Cream: How KOKOS Revolutionized the Scoop in a Dairy-Dominated World</h3>
+          <p style="font-size:0.88rem; font-weight:300; color:var(--ink-mid); line-height:1.8;">From music industry veterans to creators of the creamiest low-allergen plant-based ice cream on the planet — meet the Nashville duo proving that "alternative" can actually mean superior.</p>
+        </div>
+        <div style="margin-top:2rem; display:flex; flex-direction:column; gap:0.6rem;">
+          <div style="font-size:0.75rem; font-weight:500; letter-spacing:0.1em; text-transform:uppercase; color:var(--ink-mid);">By KOKOS Ice Cream · 7 min read</div>
+          <a href="https://medium.com/@kokos_ice_cream/better-than-ice-cream-how-kokos-revolutionized-the-scoop-in-a-dairy-dominated-world-ff85359ac179" target="_blank" style="display:inline-flex; align-items:center; gap:0.5rem; background:var(--green); color:var(--coral); padding:0.75rem 1.6rem; border-radius:100px; font-size:0.82rem; font-weight:500; letter-spacing:0.04em; text-decoration:none; align-self:flex-start;">Read on Medium <span style="font-size:1rem;">→</span></a>
+        </div>
+      </div>
+    </div>
+
+    <!-- Three pull-quote tiles -->
+    <div style="display:grid; grid-template-columns:repeat(3,1fr); gap:1rem;">
+      <div style="background:var(--coral); border-radius:16px; padding:2rem 1.6rem;">
+        <div style="font-family:'DM Serif Display',serif; font-size:3rem; color:var(--green); line-height:1; margin-bottom:0.8rem;">&ldquo;</div>
+        <p style="font-size:0.88rem; font-weight:300; color:var(--ink); line-height:1.7; font-style:italic;">This is the creamiest dairy-free ice cream I've ever had! And I used to work at an ice cream shop at a dairy farm so I have high standards.</p>
+        <p style="font-size:0.68rem; font-weight:500; letter-spacing:0.1em; text-transform:uppercase; color:var(--green); margin-top:1rem;">— Yelp Review</p>
+      </div>
+      <div style="background:var(--mint); border-radius:16px; padding:2rem 1.6rem;">
+        <div style="font-family:'DM Serif Display',serif; font-size:3rem; color:var(--green); line-height:1; margin-bottom:0.8rem;">&ldquo;</div>
+        <p style="font-size:0.88rem; font-weight:300; color:var(--ink); line-height:1.7; font-style:italic;">Blew me away how creamy it tasted! Not watered down at all. Best ice cream I have had regardless of vegan or not.</p>
+        <p style="font-size:0.68rem; font-weight:500; letter-spacing:0.1em; text-transform:uppercase; color:var(--green); margin-top:1rem;">— HappyCow Review</p>
+      </div>
+      <div style="background:var(--lavender); border-radius:16px; padding:2rem 1.6rem;">
+        <div style="font-family:'DM Serif Display',serif; font-size:3rem; color:var(--green); line-height:1; margin-bottom:0.8rem;">&ldquo;</div>
+        <p style="font-size:0.88rem; font-weight:300; color:var(--ink); line-height:1.7; font-style:italic;">It's vegan and nut-free but it tastes and feels like real ice cream! The CREAMIEST ice cream ever.</p>
+        <p style="font-size:0.68rem; font-weight:500; letter-spacing:0.1em; text-transform:uppercase; color:var(--green); margin-top:1rem;">— Google Review</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- CONTACT -->
+<section class="contact-section" id="contact">
+  <div class="contact-left">
+    <div class="section-kicker">Find us</div>
+    <h2 class="block-title">Come visit<br>the <em>shop</em></h2>
+    <div class="contact-details">
+      <div>
+        <div class="c-label">Address</div>
+        <div class="c-value">3 City Ave, Suite 700<br>Nashville, TN 37209</div>
+      </div>
+      <div>
+        <div class="c-label">Phone</div>
+        <div class="c-value"><a href="tel:6158814082" style="color:inherit;text-decoration:none;">615.881.4082</a></div>
+      </div>
+      <div>
+        <div class="c-label">Email</div>
+        <div class="c-value"><a href="mailto:info@kokosicecream.com" style="color:inherit;text-decoration:none;">info@kokosicecream.com</a></div>
+      </div>
+      <div>
+        <div class="c-label">Web</div>
+        <div class="c-value"><a href="https://www.kokosicecream.com" target="_blank" style="color:inherit;text-decoration:none;">www.kokosicecream.com</a></div>
+      </div>
+      <div>
+        <div class="c-label">Follow along</div>
+        <div class="c-value"><a href="https://www.instagram.com/kokosicecream" target="_blank" style="color:inherit;text-decoration:none;">@kokosicecream</a></div>
+      </div>
+    </div>
+  </div>
+  <div class="contact-right">
+    <div class="section-kicker">Say hello</div>
+    <h2 class="block-title" style="font-size:2rem;">Events, catering<br>or just a note</h2>
+    <div style="margin-top:1.8rem;">
+      <input class="form-field" type="text" placeholder="Your name" />
+      <input class="form-field" type="email" placeholder="Email address" />
+      <textarea class="form-field form-ta" placeholder="Your message…"></textarea>
+      <button class="form-submit">Send message</button>
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div class="footer-logo">
+    <img src="KOKOS_Logo_Registeredjpg-removebg-preview__1_.png" alt="KOKOS" onerror="this.style.display='none'; this.parentNode.innerHTML='<span style=\'font-family:DM Serif Display,serif;font-size:1rem;color:#11483d;\'>K</span>'" />
+  </div>
+  <ul class="footer-links">
+    <li><a href="https://www.instagram.com/kokosicecream" target="_blank">Instagram</a></li>
+    <li><a href="https://www.facebook.com/kokosicecream" target="_blank">Facebook</a></li>
+    <li><a href="https://www.tiktok.com/@kokosicecream" target="_blank">TikTok</a></li>
+    <li><a href="https://www.kokosicecream.com" target="_blank">kokosicecream.com</a></li>
+  </ul>
+  <div class="footer-copy">Plant based · Handcrafted · Nashville, TN</div>
+</footer>
+
+</body>
+</html>
