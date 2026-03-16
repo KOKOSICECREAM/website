@@ -326,6 +326,83 @@ nav {
   margin-top: 0.3rem;
 }
 
+/* GOOGLE REVIEWS */
+.reviews-section { border-bottom: var(--border); }
+.reviews-section-header {
+  padding: 2.5rem 3rem 2rem;
+  border-bottom: var(--border);
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+}
+.google-rating-bar {
+  background: var(--cream);
+  border-bottom: var(--border);
+  padding: 1.4rem 3rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.rating-summary { display: flex; align-items: center; gap: 1.2rem; }
+.rating-stars { font-size: 1.3rem; color: #fbbc05; letter-spacing: 2px; }
+.rating-number {
+  font-family: 'DM Serif Display', serif;
+  font-size: 2.2rem;
+  color: var(--ink);
+  line-height: 1;
+}
+.rating-count { font-size: 0.78rem; font-weight: 400; color: var(--ink); opacity: 0.6; letter-spacing: 0.04em; }
+.leave-review-btn {
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--ink);
+  text-decoration: none;
+  border-bottom: 2px solid var(--ink);
+  padding-bottom: 2px;
+}
+.google-reviews-grid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+}
+.g-review-card {
+  padding: 2.2rem 1.8rem;
+  border-right: var(--border);
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+.g-review-card:nth-child(1) { background: var(--coral); }
+.g-review-card:nth-child(2) { background: var(--mint); }
+.g-review-card:nth-child(3) { background: var(--lavender); }
+.g-review-card:nth-child(4) { background: var(--sand); }
+.g-review-card:nth-child(5) { background: var(--apricot); border-right: none; }
+.g-review-header { display: flex; align-items: center; gap: 0.7rem; }
+.g-avatar {
+  width: 36px; height: 36px;
+  border-radius: 50%;
+  border: 2px solid rgba(0,0,0,0.15);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--ink);
+  flex-shrink: 0;
+}
+.g-reviewer { font-size: 0.82rem; font-weight: 600; color: var(--ink); }
+.g-stars { font-size: 0.75rem; color: #d4810a; letter-spacing: 1px; }
+.g-logo { margin-left: auto; flex-shrink: 0; opacity: 0.7; }
+.g-review-text {
+  font-size: 0.83rem;
+  font-weight: 300;
+  font-style: italic;
+  color: var(--ink);
+  line-height: 1.7;
+  opacity: 0.85;
+}
+
 /* ABOUT */
 .about-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; border-bottom: var(--border); }
 .about-col {
@@ -608,6 +685,12 @@ footer { background: var(--coral); border-top: var(--border); }
   .hero { grid-template-columns: 1fr; }
   .hero-right { display: none; }
   .hero-left { padding: 3.5rem 2rem; border-right: none; }
+  .google-reviews-grid { grid-template-columns: 1fr 1fr; }
+  .g-review-card:nth-child(5) { border-right: var(--border); }
+  .g-review-card:nth-child(2n) { border-right: none; }
+  .g-review-card { border-bottom: var(--border); }
+  .g-review-card:nth-last-child(-n+2) { border-bottom: none; }
+  .google-rating-bar { flex-direction: column; align-items: flex-start; gap: 1rem; }
   .about-grid { grid-template-columns: 1fr; }
   .about-col { border-right: none; border-bottom: var(--border); }
   .about-col:last-child { border-bottom: none; }
@@ -659,6 +742,7 @@ footer { background: var(--coral); border-top: var(--border); }
   </div>
   <ul class="nav-links">
     <li><a href="#flavors">Flavors</a></li>
+    <li><a href="#reviews">Reviews</a></li>
     <li><a href="#about">Our Story</a></li>
     <li><a href="#press">Press</a></li>
     <li><a href="#contact">Visit Us</a></li>
@@ -750,6 +834,82 @@ footer { background: var(--coral); border-top: var(--border); }
       <div class="flavor-name">Cookies &amp; Kreme</div>
       <div class="flavor-desc">Creamy vanilla base loaded with crunchy cookie pieces — the ultimate crowd pleaser</div>
       <span class="flavor-badge">Classic</span>
+    </div>
+  </div>
+</section>
+
+<!-- GOOGLE REVIEWS -->
+<section class="reviews-section" id="reviews">
+  <div class="reviews-section-header">
+    <div>
+      <div class="section-label-tag">Google Reviews</div>
+      <h2 class="section-heading">What People <em>Are Saying</em></h2>
+    </div>
+    <a href="https://www.google.com/maps/place/KOKOS+Ice+Cream/@36.1448,-86.8388,17z" target="_blank" class="see-all-link">See All 245 Reviews ↗</a>
+  </div>
+  <div class="google-rating-bar">
+    <div class="rating-summary">
+      <div class="rating-stars">★★★★★</div>
+      <div class="rating-number">4.8</div>
+      <div class="rating-count">245 Google reviews</div>
+    </div>
+    <a href="https://www.google.com/maps/place/KOKOS+Ice+Cream/@36.1448,-86.8388,17z" target="_blank" class="leave-review-btn">Leave a Review ↗</a>
+  </div>
+  <div class="google-reviews-grid">
+    <div class="g-review-card">
+      <div class="g-review-header">
+        <div class="g-avatar" style="background:#fdcec1;">★</div>
+        <div>
+          
+          <div class="g-stars">★★★★★</div>
+        </div>
+        <div class="g-logo"><svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/><path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/><path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z" fill="#FBBC05"/><path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/></svg></div>
+      </div>
+      <p class="g-review-text">"This is THE best plant based ice cream I have ever had! I wish I lived in Nashville just to get this ice cream!"</p>
+    </div>
+    <div class="g-review-card">
+      <div class="g-review-header">
+        <div class="g-avatar" style="background:#cde6d7;">★</div>
+        <div>
+          
+          <div class="g-stars">★★★★★</div>
+        </div>
+        <div class="g-logo"><svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/><path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/><path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z" fill="#FBBC05"/><path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/></svg></div>
+      </div>
+      <p class="g-review-text">"Wow — really incredible ice cream, whether you have dietary restrictions or not. Adorable space with a truly wonderful vibe and top notch ice cream! Definitely worth a visit."</p>
+    </div>
+    <div class="g-review-card">
+      <div class="g-review-header">
+        <div class="g-avatar" style="background:#e3d1e4;">★</div>
+        <div>
+          
+          <div class="g-stars">★★★★★</div>
+        </div>
+        <div class="g-logo"><svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/><path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/><path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z" fill="#FBBC05"/><path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/></svg></div>
+      </div>
+      <p class="g-review-text">"He had the cookies and cream and said he wouldn't have even guessed it was dairy free. So good I had a hard time choosing — it's so nice to have a great selection of vegan flavors."</p>
+    </div>
+    <div class="g-review-card">
+      <div class="g-review-header">
+        <div class="g-avatar" style="background:#ffddad;">★</div>
+        <div>
+          
+          <div class="g-stars">★★★★★</div>
+        </div>
+        <div class="g-logo"><svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/><path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/><path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z" fill="#FBBC05"/><path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/></svg></div>
+      </div>
+      <p class="g-review-text">"Amazing gluten &amp; dairy free ice cream — perfect if you have dietary restrictions. The worker was so nice too. The chocolate was my favorite!"</p>
+    </div>
+    <div class="g-review-card">
+      <div class="g-review-header">
+        <div class="g-avatar" style="background:#fae2d8;">★</div>
+        <div>
+          
+          <div class="g-stars">★★★★★</div>
+        </div>
+        <div class="g-logo"><svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/><path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/><path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z" fill="#FBBC05"/><path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/></svg></div>
+      </div>
+      <p class="g-review-text">"I won't even say this is the best 'vegan' ice cream I've had — it's hands down just the best ice cream I've ever had! Rotating flavors and located in such a fun spot."</p>
     </div>
   </div>
 </section>
@@ -868,7 +1028,7 @@ footer { background: var(--coral); border-top: var(--border); }
       </div>
       <div>
         <div class="c-label">Email</div>
-        <div class="c-value"><a href="mailto:info@kokosicecream.com">info@kokosicecream.com</a></div>
+        <div class="c-value"><a href="/cdn-cgi/l/email-protection#c3aaada5ac83a8aca8acb0aaa0a6a0b1a6a2aeeda0acae"><span class="__cf_email__" data-cfemail="afc6c1c9c0efc4c0c4c0dcc6cccaccddcacec281ccc0c2">[email&#160;protected]</span></a></div>
       </div>
       <div>
         <div class="c-label">Web</div>
@@ -903,14 +1063,8 @@ footer { background: var(--coral); border-top: var(--border); }
       <a href="https://www.facebook.com/kokosicecream" target="_blank">Facebook</a>
       <a href="https://www.tiktok.com/@kokosicecream" target="_blank">TikTok</a>
       <a href="https://www.kokosicecream.com" target="_blank">kokosicecream.com</a>
-      <a href="mailto:info@kokosicecream.com">Contact</a>
+      <a href="/cdn-cgi/l/email-protection#7910171f1639121612160a101a1c1a0b1c1814571a1614">Contact</a>
     </div>
   </div>
   <div class="footer-bottom">
-    <span class="footer-copy">© 2025 KOKOS Ice Cream · Nashville, TN · Plant based · Handcrafted</span>
-    <span class="footer-copy">3 City Ave Ste 700 · 615.881.4082</span>
-  </div>
-</footer>
-
-</body>
-</html>
+    <span class="footer-copy">
