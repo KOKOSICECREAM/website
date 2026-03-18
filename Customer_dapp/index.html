@@ -20,6 +20,58 @@
 <script src="https://cdn.jsdelivr.net/npm/ethers@6.13.4/dist/ethers.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
+<script type="module">
+  import { createWeb3Modal, defaultConfig } from 'https://esm.sh/@web3modal/ethers@4.2.3';
+
+  const projectId = 'c5be163298ba25127afa6b7529e29059';
+
+  const base = {
+    chainId: 8453,
+    name: 'Base',
+    currency: 'ETH',
+    explorerUrl: 'https://basescan.org',
+    rpcUrl: 'https://mainnet.base.org'
+  };
+
+  const metadata = {
+    name: 'SKOOP by KOKOS',
+    description: 'Buy, earn and pay with SKOOP tokens at KOKOS Ice Cream Nashville',
+    url: 'https://kokosicecream.github.io',
+    icons: ['https://kokosicecream.github.io/website/Customer_dapp/KOKOS_SKOOP.png']
+  };
+
+  const modal = createWeb3Modal({
+    ethersConfig: defaultConfig({ metadata }),
+    chains: [base],
+    projectId,
+    themeMode: 'light',
+    themeVariables: {
+      '--w3m-accent': '#e8876a',
+      '--w3m-border-radius-master': '18px',
+      '--w3m-font-family': 'Instrument Sans, sans-serif',
+    }
+  });
+
+  window._w3modal = modal;
+
+  // When wallet connects via modal, grab provider + signer
+  modal.subscribeProvider(async ({ provider, address, isConnected }) => {
+    if (isConnected && provider && address) {
+      try {
+        window._wcProvider = new ethers.BrowserProvider(provider);
+        window._wcSigner = await window._wcProvider.getSigner();
+        window._wcAddress = address;
+        // Signal to main app
+        window.dispatchEvent(new CustomEvent('wc-connected', {
+          detail: { provider: window._wcProvider, signer: window._wcSigner, address }
+        }));
+      } catch(e) { console.warn('WC provider setup:', e); }
+    }
+    if (!isConnected) {
+      window.dispatchEvent(new CustomEvent('wc-disconnected'));
+    }
+  });
+</script>
 <style>
 :root {
   --coral:     #fdcec1;
@@ -730,8 +782,8 @@ html,body {
   </div>
   <div class="gate-bottom">
     <div class="gate-tagline">Buy, earn &amp; pay with SKOOP<br>at KOKOS Ice Cream Nashville</div>
-    <button class="btn-primary" onclick="connectMetaMask()">🦊 &nbsp;Connect MetaMask</button>
-    <button class="btn-secondary" onclick="connectWalletConnect()">🔗 &nbsp;WalletConnect</button>
+    <button class="btn-primary" onclick="connectMetaMask()">🦊 &nbsp;MetaMask</button>
+    <button class="btn-secondary" onclick="openWalletModal()">🔗 &nbsp;Coinbase · Base · Rainbow + more</button>
   </div>
 </div>
 
@@ -1011,7 +1063,28 @@ async function connectMetaMask(){
     window.ethereum.on("chainChanged",()=>checkNet());
   }catch(e){showToast(e.message||"Connection failed","err");}
 }
-async function connectWalletConnect(){showToast("WalletConnect needs a project ID — use MetaMask for now","err");}
+function openWalletModal(){
+  if(window._w3modal){
+    window._w3modal.open();
+  } else {
+    showToast("Wallet modal loading — try again in a moment","err");
+  }
+}
+
+// Listen for WalletConnect connection events
+window.addEventListener("wc-connected", async function(e) {
+  provider = e.detail.provider;
+  signer = e.detail.signer;
+  userAddr = e.detail.address;
+  await onConnected();
+});
+
+window.addEventListener("wc-disconnected", function() {
+  provider = null; signer = null; userAddr = null;
+  document.getElementById("main-app").style.display = "none";
+  document.getElementById("bottom-nav").style.display = "none";
+  document.getElementById("connect-gate").style.display = "flex";
+});
 
 async function onConnected(){
   document.getElementById("connect-gate").style.display="none";
