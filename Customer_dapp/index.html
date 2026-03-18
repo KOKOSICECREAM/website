@@ -17,21 +17,30 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,opsz,wght@0,6..36,400;0,6..36,600;1,6..36,400;1,6..36,600&family=Instrument+Sans:wght@400;500;600&display=swap" rel="stylesheet">
-<script>window.process = { env: { NODE_ENV: 'production' }, version: 'v18.0.0', browser: true };</script>
 <script src="https://cdn.jsdelivr.net/npm/ethers@6.13.4/dist/ethers.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/@walletconnect/ethereum-provider@2.17.0/dist/index.umd.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js">
+<script src="https://cdn.jsdelivr.net/npm/@web3modal/standalone@2.4.3/dist/index.umd.js"></script>
+</script>
 <script>
-// WalletConnect EthereumProvider — single UMD bundle, handles mobile deep links
-(function initWCProvider(){
+// Web3Modal standalone v2 — QR modal + mobile deep links
+window.process = { env: { NODE_ENV: 'production' }, version: 'v18.0.0', browser: true };
+(function initWCModal(){
   function tryInit(){
-    if(typeof window.WalletConnectEthereumProvider === 'undefined'){
-      setTimeout(tryInit, 300);
-      return;
-    }
-    console.log('WC EthereumProvider ready');
-    window._wcReady = true;
+    if(typeof window.Web3Modal === 'undefined'){ setTimeout(tryInit, 200); return; }
+    try {
+      window._wcModal = new window.Web3Modal.Web3Modal({
+        projectId: 'c5be163298ba25127afa6b7529e29059',
+        standaloneChains: ['eip155:8453'],
+        walletConnectVersion: 2,
+        themeVariables: {
+          '--w3m-accent-color':      '#e8876a',
+          '--w3m-background-color':  '#fdcec1',
+          '--w3m-z-index':           '999',
+        }
+      });
+      console.log('Web3Modal ready');
+    } catch(e){ console.warn('Web3Modal init failed:', e); }
   }
   tryInit();
 })();
@@ -760,8 +769,7 @@ html,body {
   </div>
   <div class="gate-bottom">
     <div class="gate-tagline">Buy, earn &amp; pay with SKOOP<br>at KOKOS Ice Cream Nashville</div>
-    <button class="btn-primary" onclick="connectMetaMask()">🦊 &nbsp;MetaMask / Injected Wallet</button>
-    <button class="btn-secondary" onclick="openWalletModal()">🔗 &nbsp;WalletConnect</button>
+    <button class="btn-primary" onclick="openWalletModal()">Connect Wallet</button>
   </div>
 </div>
 
@@ -1047,53 +1055,70 @@ async function connectMetaMask(){
   }catch(e){ showToast(e.message||"Connection failed","err"); }
 }
 async function openWalletModal(){
-  // Wait for WC provider to be ready
+  // Wait for Web3Modal to be ready
   let attempts = 0;
-  while(!window._wcReady && attempts < 20){
+  while(!window._wcModal && attempts < 20){
     await new Promise(r => setTimeout(r, 300));
     attempts++;
   }
-  if(!window._wcReady || typeof window.WalletConnectEthereumProvider === 'undefined'){
-    showToast("WalletConnect not ready — refresh and try again","err");
-    return;
-  }
+  if(!window._wcModal){ showToast("WalletConnect not ready — refresh page","err"); return; }
+
   try {
-    showToast("Opening wallet…","");
-    const WCProvider = window.WalletConnectEthereumProvider.default || window.WalletConnectEthereumProvider;
-    const wcEthProvider = await WCProvider.init({
+    // Dynamically load SignClient (ESM) only when needed
+    showToast("Loading…","");
+    const { SignClient } = await import('https://cdn.jsdelivr.net/npm/@walletconnect/sign-client@2.17.0/+esm');
+    const signClient = await SignClient.init({
       projectId: 'c5be163298ba25127afa6b7529e29059',
-      chains: [8453],
-      showQrModal: true,
       metadata: {
         name: 'SKOOP by KOKOS',
         description: 'Buy, earn and pay with SKOOP at KOKOS Ice Cream Nashville',
         url: 'https://kokosicecream.github.io',
         icons: ['https://kokosicecream.github.io/website/Customer_dapp/KOKOS_SKOOP.png']
-      },
-      qrModalOptions: {
-        themeVariables: {
-          '--wcm-accent-color': '#e8876a',
-          '--wcm-background-color': '#fdcec1',
+      }
+    });
+    window._wcSignClient = signClient;
+
+    const { uri, approval } = await signClient.connect({
+      requiredNamespaces: {
+        eip155: {
+          methods: ['eth_sendTransaction','personal_sign','eth_signTypedData','eth_sign'],
+          chains: ['eip155:8453'],
+          events: ['chainChanged','accountsChanged']
         }
       }
     });
 
-    window._wcEthProvider = wcEthProvider;
-    await wcEthProvider.enable(); // triggers QR modal or deep link on mobile
+    if(uri) await window._wcModal.openModal({ uri });
 
-    provider = new ethers.BrowserProvider(wcEthProvider);
+    const session = await approval();
+    window._wcModal.closeModal();
+
+    const addr = session.namespaces.eip155.accounts[0].split(':')[2];
+
+    // Use the WC session as an ethers provider
+    const { EthereumProvider } = await import('https://cdn.jsdelivr.net/npm/@walletconnect/ethereum-provider@2.17.0/+esm');
+    const wcProv = await EthereumProvider.init({
+      projectId: 'c5be163298ba25127afa6b7529e29059',
+      chains: [8453],
+      showQrModal: false,
+      metadata: {
+        name: 'SKOOP by KOKOS',
+        description: 'KOKOS Ice Cream SKOOP DApp',
+        url: 'https://kokosicecream.github.io',
+        icons: ['https://kokosicecream.github.io/website/Customer_dapp/KOKOS_SKOOP.png']
+      }
+    });
+    window._wcEthProv = wcProv;
+
+    provider = new ethers.BrowserProvider(wcProv);
     signer   = await provider.getSigner();
-    userAddr = await signer.getAddress();
+    userAddr = addr;
     await onConnected();
 
-    wcEthProvider.on('disconnect', () => {
-      window.dispatchEvent(new CustomEvent('wc-disconnected'));
-    });
-    wcEthProvider.on('accountsChanged', (accounts) => {
-      if(accounts[0]){ userAddr = accounts[0]; updatePills(); refreshBals(); }
-    });
+    signClient.on('session_delete', () => window.dispatchEvent(new CustomEvent('wc-disconnected')));
 
   } catch(e){
+    window._wcModal && window._wcModal.closeModal();
     const msg = e?.message || '';
     if(!msg.toLowerCase().includes('modal') && !msg.toLowerCase().includes('closed')){
       showToast(msg || "Connection failed","err");
@@ -1103,8 +1128,16 @@ async function openWalletModal(){
 
 
 async function disconnectWallet(){
-  if(window._wcEthProvider){
-    try { await window._wcEthProvider.disconnect(); } catch(e){}
+  if(window._wcEthProv){
+    try { await window._wcEthProv.disconnect(); } catch(e){}
+  }
+  if(window._wcSignClient){
+    try {
+      const sessions = window._wcSignClient.session.getAll();
+      for(const s of sessions){
+        await window._wcSignClient.disconnect({topic: s.topic, reason:{code:6000,message:"User disconnected"}});
+      }
+    } catch(e){}
   }
   // Clear MetaMask connection (just clears local state — MM doesn't support forced disconnect)
   provider = null; signer = null; userAddr = null;
