@@ -1141,7 +1141,9 @@ async function onConnected(){
   const m=document.getElementById("main-app");
   m.style.display="flex";m.style.flexDirection="column";m.style.flex="1";m.style.overflow="hidden";
   document.getElementById("bottom-nav").style.display="flex";
-  updatePills();await checkNet();await refreshBals();await buildMyQR();
+  updatePills();await checkNet();await refreshBals();
+  // Build QR after a short delay to ensure DOM is ready
+  setTimeout(buildMyQR, 200);
 }
 
 function updatePills(){
@@ -1339,9 +1341,28 @@ async function confirmPay(){
 function closeSuccess(){document.getElementById("success-screen").classList.remove("show");document.getElementById("pay-confirm").classList.remove("active");document.getElementById("pay-scan").classList.add("active");goTo("home");}
 
 async function buildMyQR(){
-  if(!userAddr)return;
-  await QRCode.toCanvas(document.getElementById("my-qr-canvas"),userAddr,{width:240,margin:2,color:{dark:"#2a1f1a",light:"#fffaf7"}});
-  document.getElementById("qr-addr").textContent=userAddr;
+  if(!userAddr) return;
+  if(typeof QRCode === "undefined"){ showToast("QR library loading — try again","err"); return; }
+
+  // Wait a frame so the canvas is visible and has layout dimensions
+  await new Promise(r => requestAnimationFrame(r));
+
+  const canvas = document.getElementById("my-qr-canvas");
+  const wrap = canvas.parentElement;
+  // Size to container width, max 260
+  const size = Math.min(wrap.offsetWidth - 48, 260) || 240;
+
+  try {
+    await QRCode.toCanvas(canvas, userAddr, {
+      width: size,
+      margin: 2,
+      color: { dark: "#2a1f1a", light: "#fffaf7" }
+    });
+    document.getElementById("qr-addr").textContent = userAddr;
+  } catch(e) {
+    console.warn("QR render error:", e);
+    showToast("Could not render QR — try again","err");
+  }
 }
 
 function goTo(name){
@@ -1349,8 +1370,8 @@ function goTo(name){
   document.querySelectorAll(".nav-item").forEach(n=>n.classList.remove("active"));
   document.getElementById("screen-"+name).classList.add("active");
   document.getElementById("nav-"+name).classList.add("active");
-  if(name==="buy")updateFromBal();
-  if(name==="qr")buildMyQR();
+  if(name==="buy") updateFromBal();
+  if(name==="qr") setTimeout(buildMyQR, 80); // slight delay so screen is painted first
 }
 
 let toastT;
