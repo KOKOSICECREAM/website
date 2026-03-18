@@ -20,31 +20,9 @@
 <script src="https://cdn.jsdelivr.net/npm/ethers@6.13.4/dist/ethers.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
-<script type="module">
-  import { createWeb3Modal, defaultConfig } from 'https://cdn.jsdelivr.net/npm/@web3modal/ethers@4.2.3/+esm';
-  const projectId = 'c5be163298ba25127afa6b7529e29059';
-  const base = { chainId:8453, name:'Base', currency:'ETH', explorerUrl:'https://basescan.org', rpcUrl:'https://mainnet.base.org' };
-  const metadata = { name:'SKOOP by KOKOS', description:'Buy, earn and pay with SKOOP at KOKOS Ice Cream Nashville', url:'https://kokosicecream.github.io', icons:['https://kokosicecream.github.io/website/Customer_dapp/KOKOS_SKOOP.png'] };
-  const modal = createWeb3Modal({
-    ethersConfig: defaultConfig({ metadata, defaultChainId: 8453 }),
-    chains: [base], projectId, themeMode:'light',
-    themeVariables: { '--w3m-accent':'#e8876a', '--w3m-border-radius-master':'18px', '--w3m-font-family':'Instrument Sans, sans-serif' },
-    featuredWalletIds: ['fd20dc426fb37566d803205b19bbc1d4096b248ac04548e3cfb6b3a38bd033aa','c57ca95b47569778a828d19178114f4db188b89b763c899ba0be274e97267d96','1ae92b26df02f0abca6304df07debccd18262fdf5fe82daa81593582dac9a369'],
-    includeWalletIds:  ['fd20dc426fb37566d803205b19bbc1d4096b248ac04548e3cfb6b3a38bd033aa','c57ca95b47569778a828d19178114f4db188b89b763c899ba0be274e97267d96','1ae92b26df02f0abca6304df07debccd18262fdf5fe82daa81593582dac9a369']
-  });
-  window._w3modal = modal;
-  modal.subscribeProvider(async ({ provider, address, isConnected }) => {
-    if (isConnected && provider && address) {
-      try {
-        window._wcProvider = new ethers.BrowserProvider(provider);
-        window._wcSigner   = await window._wcProvider.getSigner();
-        window._wcAddress  = address;
-        window.dispatchEvent(new CustomEvent('wc-connected', { detail:{ provider:window._wcProvider, signer:window._wcSigner, address } }));
-      } catch(e) { console.warn('WC provider:', e); }
-    }
-    if (!isConnected) window.dispatchEvent(new CustomEvent('wc-disconnected'));
-  });
-</script>
+<script>window.process={env:{NODE_ENV:'production'},version:'v18.0.0',browser:true};</script>
+<script src="https://cdn.jsdelivr.net/npm/@walletconnect/modal@2.6.2/dist/index.umd.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@walletconnect/ethereum-provider@2.10.0/dist/index.umd.js"></script>
 <style>
 :root {
   --coral:#fdcec1; --coral-mid:#fdaf9a; --coral-deep:#e8876a;
@@ -502,13 +480,61 @@ const ABI_ESCROW=[{inputs:[{components:[{name:"receiptId",type:"bytes32"},{name:
 let provider,signer,userAddr,selToken="USDC",slip=0.5,quoteTimer,curQuote,pendingIntent,scannerRunning=false;
 
 // ── WALLET CONNECT ──
-function openWalletModal(){
-  if(window._w3modal) window._w3modal.open();
-  else showToast("Loading — try again in a moment","err");
+// Desktop: window.ethereum (MetaMask, Coinbase extension)
+// Mobile: WalletConnect EthereumProvider with built-in QR/deep link modal
+
+async function openWalletModal(){
+  // Desktop — use injected wallet if available
+  if(window.ethereum){
+    try{
+      await window.ethereum.request({method:'eth_requestAccounts'});
+      provider = new ethers.BrowserProvider(window.ethereum);
+      signer   = await provider.getSigner();
+      userAddr = await signer.getAddress();
+      await onConnected();
+      window.ethereum.on('accountsChanged', a=>{ if(a[0]){ userAddr=a[0]; updatePills(); refreshBals(); }});
+      window.ethereum.on('chainChanged', ()=>checkNet());
+      return;
+    }catch(e){
+      if(e.code===4001){ showToast("Connection rejected","err"); return; }
+      // Fall through to WalletConnect
+    }
+  }
+  // Mobile / no extension — WalletConnect
+  await connectWalletConnect();
+}
+
+async function connectWalletConnect(){
+  const WCEthProvider = window["@walletconnect/ethereum-provider"]?.EthereumProvider;
+  if(!WCEthProvider){ showToast("WalletConnect not loaded — refresh","err"); return; }
+  try{
+    showToast("Opening wallet...","");
+    const wcp = await WCEthProvider.init({
+      projectId:'c5be163298ba25127afa6b7529e29059',
+      chains:[8453],
+      showQrModal:true,
+      qrModalOptions:{ themeMode:'light', themeVariables:{'--wcm-accent-color':'#e8876a','--wcm-background-color':'#fdcec1'} },
+      metadata:{ name:'SKOOP by KOKOS', description:'KOKOS Ice Cream SKOOP DApp', url:'https://kokosicecream.github.io', icons:['https://kokosicecream.github.io/website/Customer_dapp/KOKOS_SKOOP.png'] }
+    });
+    window._wcp = wcp;
+    await wcp.enable();
+    provider = new ethers.BrowserProvider(wcp);
+    signer   = await provider.getSigner();
+    userAddr = await signer.getAddress();
+    await onConnected();
+    wcp.on('disconnect', ()=>window.dispatchEvent(new CustomEvent('wc-disconnected')));
+    wcp.on('accountsChanged', a=>{ if(a[0]){ userAddr=a[0]; updatePills(); refreshBals(); }});
+  }catch(e){
+    const msg = e?.message||'';
+    if(!msg.includes('closed') && !msg.includes('rejected') && !msg.includes('Modal')){
+      showToast(msg||"Connection failed","err");
+    }
+  }
 }
 
 async function disconnectWallet(){
-  try{ if(window._w3modal) await window._w3modal.disconnect(); }catch(e){}
+  try{ if(window._wcp) await window._wcp.disconnect(); }catch(e){}
+  window._wcp = null;
   provider=null;signer=null;userAddr=null;
   document.getElementById("main-app").style.display="none";
   document.getElementById("bottom-nav").style.display="none";
@@ -523,15 +549,16 @@ async function disconnectWallet(){
   document.getElementById("my-qr-div").innerHTML="";
 }
 
-window.addEventListener("wc-connected",async function(e){
-  provider=e.detail.provider;
-  signer=e.detail.signer;
-  userAddr=e.detail.address;
-  await onConnected();
-});
-
 window.addEventListener("wc-disconnected",function(){
-  disconnectWallet();
+  provider=null;signer=null;userAddr=null;
+  document.getElementById("main-app").style.display="none";
+  document.getElementById("bottom-nav").style.display="none";
+  const gate=document.getElementById("connect-gate");
+  gate.style.display="flex";gate.style.flexDirection="column";gate.style.flex="1";
+  document.getElementById("home-bal").textContent="—";
+  document.getElementById("wallet-pill").textContent="0x…";
+  document.getElementById("buy-pill").textContent="0x…";
+  document.getElementById("my-qr-div").innerHTML="";
 });
 
 async function onConnected(){
