@@ -1,0 +1,25 @@
+{
+  "name": "SKOOP by KOKOS",
+  "short_name": "SKOOP",
+  "description": "Buy, earn and pay with SKOOP tokens at KOKOS Ice Cream Nashville",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#fdcec1",
+  "theme_color": "#fdcec1",
+  "icons": [
+    {
+      "src": "KOKOS_SKOOP.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "KOKOS_SKOOP.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
