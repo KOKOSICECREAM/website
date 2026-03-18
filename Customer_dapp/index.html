@@ -21,7 +21,7 @@
 <script src="https://cdn.jsdelivr.net/npm/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
 <script type="module">
-  import { createWeb3Modal, defaultConfig } from 'https://esm.sh/@web3modal/ethers@4.2.3';
+  import { createWeb3Modal, defaultConfig } from 'https://cdn.jsdelivr.net/npm/@web3modal/ethers@4.2.3/+esm';
   const projectId = 'c5be163298ba25127afa6b7529e29059';
   const base = { chainId:8453, name:'Base', currency:'ETH', explorerUrl:'https://basescan.org', rpcUrl:'https://mainnet.base.org' };
   const metadata = { name:'SKOOP by KOKOS', description:'Buy, earn and pay with SKOOP at KOKOS Ice Cream Nashville', url:'https://kokosicecream.github.io', icons:['https://kokosicecream.github.io/website/Customer_dapp/KOKOS_SKOOP.png'] };
@@ -555,10 +555,26 @@ async function checkNet(){
   try{
     const net=await provider.getNetwork();
     const ok=Number(net.chainId)===CFG.CHAIN_ID;
-    document.getElementById("net-banner").classList.toggle("show",!ok);
+    if(!ok){
+      // Auto-switch to Base
+      try{
+        if(window.ethereum){
+          await window.ethereum.request({method:"wallet_switchEthereumChain",params:[{chainId:CFG.CHAIN_HEX}]});
+        } else if(window._w3modal){
+          await window._w3modal.switchNetwork(8453);
+        }
+      }catch(switchErr){
+        // If switch fails, show banner
+        document.getElementById("net-banner").classList.add("show");
+        document.getElementById("net-label").textContent="Wrong";
+        document.getElementById("net-label").className="pill pill-danger";
+        return;
+      }
+    }
+    document.getElementById("net-banner").classList.remove("show");
     const l=document.getElementById("net-label");
-    l.textContent=ok?"Base":"Wrong";
-    l.className=ok?"pill pill-dark":"pill pill-danger";
+    l.textContent="Base";
+    l.className="pill pill-dark";
   }catch(e){}
 }
 
@@ -669,7 +685,7 @@ async function fetchQuote(amt){
 async function execSwap(){
   if(!curQuote||!signer)return;
   const btn=document.getElementById("btn-swap");
-  btn.disabled=true;btn.innerHTML='<span class="spinner"></span>&nbsp; Swapping…';
+  btn.disabled=true;btn.innerHTML='<span class="spinner"></span> Swapping...';
   try{
     const router=new ethers.Contract(CFG.ROUTER,ABI_ROUTER,signer);
     const minOut=curQuote.amtOut*BigInt(Math.floor((1-slip/100)*10000))/10000n;
@@ -735,7 +751,7 @@ function cancelPay(){pendingIntent=null;document.getElementById("pay-confirm").c
 async function confirmPay(){
   if(!pendingIntent||!signer)return;
   const btn=document.getElementById("btn-confirm");
-  btn.disabled=true;btn.innerHTML='<span class="spinner"></span>&nbsp; Processing…';
+  btn.disabled=true;btn.innerHTML='<span class="spinner"></span> Processing...';
   try{
     const d=pendingIntent;const tokAmt=BigInt(d.tokenAmount);
     const sk=new ethers.Contract(CFG.SKOOP,ABI_ERC20,signer);
