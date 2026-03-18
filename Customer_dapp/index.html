@@ -1168,22 +1168,23 @@ async function switchToBase(){
 
 async function refreshBals(){
   if(!provider||!userAddr)return;
+  try{ const eb=await provider.getBalance(userAddr); document.getElementById("bal-eth").textContent=parseFloat(ethers.formatEther(eb)).toFixed(4)+" ETH"; }catch(e){ document.getElementById("bal-eth").textContent="--"; }
+  try{ const wc=new ethers.Contract(CFG.WETH,ABI_ERC20,provider); document.getElementById("bal-weth").textContent=parseFloat(ethers.formatEther(await wc.balanceOf(userAddr))).toFixed(4)+" WETH"; }catch(e){ document.getElementById("bal-weth").textContent="--"; }
+  try{ const uc=new ethers.Contract(CFG.USDC,ABI_ERC20,provider); document.getElementById("bal-usdc").textContent=parseFloat(ethers.formatUnits(await uc.balanceOf(userAddr),6)).toFixed(2)+" USDC"; }catch(e){ document.getElementById("bal-usdc").textContent="--"; }
   try{
     const sk=new ethers.Contract(CFG.SKOOP,ABI_ERC20,provider);
     const raw=await sk.balanceOf(userAddr);
-    const bal=parseFloat(ethers.formatUnits(raw,CFG.SKOOP_DEC));
-    const fmt=bal.toLocaleString("en-US",{maximumFractionDigits:2});
+    const fmt=parseFloat(ethers.formatUnits(raw,CFG.SKOOP_DEC)).toLocaleString("en-US",{maximumFractionDigits:2});
     document.getElementById("home-bal").textContent=fmt;
     document.getElementById("home-usd").textContent="SKOOP · Nashville plant-based ice cream";
     document.getElementById("qr-bal").textContent=fmt;
-    const eb=await provider.getBalance(userAddr);
-    document.getElementById("bal-eth").textContent=parseFloat(ethers.formatEther(eb)).toFixed(4)+" ETH";
-    const wc=new ethers.Contract(CFG.WETH,ABI_ERC20,provider);
-    document.getElementById("bal-weth").textContent=parseFloat(ethers.formatEther(await wc.balanceOf(userAddr))).toFixed(4)+" WETH";
-    const uc=new ethers.Contract(CFG.USDC,ABI_ERC20,provider);
-    document.getElementById("bal-usdc").textContent=parseFloat(ethers.formatUnits(await uc.balanceOf(userAddr),6)).toFixed(2)+" USDC";
-    await updateFromBal();
-  }catch(e){console.warn("bal:",e.message);}
+  }catch(e){
+    document.getElementById("home-bal").textContent="0";
+    document.getElementById("home-usd").textContent="SKOOP contract pending on this network";
+    document.getElementById("qr-bal").textContent="0";
+    console.info("SKOOP not yet on this network:",e.message);
+  }
+  await updateFromBal();
 }
 
 async function updateFromBal(){
@@ -1342,26 +1343,19 @@ function closeSuccess(){document.getElementById("success-screen").classList.remo
 
 async function buildMyQR(){
   if(!userAddr) return;
-  if(typeof QRCode === "undefined"){ showToast("QR library loading — try again","err"); return; }
-
-  // Wait a frame so the canvas is visible and has layout dimensions
-  await new Promise(r => requestAnimationFrame(r));
-
-  const canvas = document.getElementById("my-qr-canvas");
-  const wrap = canvas.parentElement;
-  // Size to container width, max 260
-  const size = Math.min(wrap.offsetWidth - 48, 260) || 240;
-
-  try {
-    await QRCode.toCanvas(canvas, userAddr, {
-      width: size,
-      margin: 2,
-      color: { dark: "#2a1f1a", light: "#fffaf7" }
-    });
-    document.getElementById("qr-addr").textContent = userAddr;
-  } catch(e) {
-    console.warn("QR render error:", e);
-    showToast("Could not render QR — try again","err");
+  let attempts=0;
+  while(typeof QRCode==="undefined" && attempts<15){ await new Promise(r=>setTimeout(r,300)); attempts++; }
+  if(typeof QRCode==="undefined"){ showToast("QR library failed to load — refresh page","err"); return; }
+  await new Promise(r=>requestAnimationFrame(r));
+  await new Promise(r=>requestAnimationFrame(r));
+  const canvas=document.getElementById("my-qr-canvas");
+  const size=Math.min((canvas.parentElement.offsetWidth||280)-48,260);
+  try{
+    await QRCode.toCanvas(canvas,userAddr,{width:size,margin:2,color:{dark:"#2a1f1a",light:"#fffaf7"}});
+    document.getElementById("qr-addr").textContent=userAddr;
+  }catch(e){
+    document.getElementById("qr-addr").textContent=userAddr;
+    console.warn("QR canvas fail:",e);
   }
 }
 
@@ -1382,15 +1376,12 @@ function showToast(msg,type=""){
   clearTimeout(toastT);toastT=setTimeout(()=>el.classList.remove("show"),4000);
 }
 
-// PWA
+// PWA favicon + apple icon only; manifest.json is a separate file in repo
 (function(){
   var LOGO='KOKOS_SKOOP.png';
   document.getElementById("favicon").href=LOGO;
   document.getElementById("apple-icon").href=LOGO;
-  var manifest={name:"SKOOP by KOKOS",short_name:"SKOOP",description:"Buy, earn and pay with SKOOP tokens at KOKOS Ice Cream Nashville",start_url:"./",display:"standalone",orientation:"portrait-primary",background_color:"#fdcec1",theme_color:"#fdcec1",icons:[{src:LOGO,sizes:"192x192",type:"image/png",purpose:"any maskable"},{src:LOGO,sizes:"512x512",type:"image/png",purpose:"any maskable"}]};
-  var blob=new Blob([JSON.stringify(manifest)],{type:"application/json"});
-  document.getElementById("pwa-manifest").href=URL.createObjectURL(blob);
-  if("serviceWorker"in navigator){var sw="self.addEventListener('install',function(e){self.skipWaiting();});self.addEventListener('activate',function(e){clients.claim();});self.addEventListener('fetch',function(e){e.respondWith(fetch(e.request).catch(function(){return new Response('',{status:200});}));});";navigator.serviceWorker.register(URL.createObjectURL(new Blob([sw],{type:"application/javascript"}))).catch(function(){});}
+  document.getElementById("pwa-manifest").href='manifest.json';
 })();
 </script>
 </body>
