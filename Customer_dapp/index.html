@@ -806,8 +806,8 @@ html,body {
   </div>
   <div class="gate-bottom">
     <div class="gate-tagline">Buy, earn &amp; pay with SKOOP<br>at KOKOS Ice Cream Nashville</div>
-    <button class="btn-primary" onclick="connectMetaMask()">🦊 &nbsp;MetaMask</button>
-    <button class="btn-secondary" onclick="openWalletModal()">🔗 &nbsp;Coinbase · Base · Rainbow + more</button>
+    <button class="btn-primary" onclick="openWalletModal()">Connect Wallet</button>
+    <button class="btn-secondary" onclick="connectMetaMask()">🦊 &nbsp;MetaMask (direct)</button>
   </div>
 </div>
 
@@ -1077,7 +1077,12 @@ const ABI_ESCROW=[{inputs:[{components:[{name:"receiptId",type:"bytes32"},{name:
 let provider,signer,userAddr,selToken="USDC",slip=0.5,quoteTimer,curQuote,pendingIntent,scannerRunning=false;
 
 async function connectMetaMask(){
-  if(!window.ethereum){showToast("MetaMask not found","err");return;}
+  // If Web3Modal is ready, open it — it detects injected wallets (MetaMask, Coinbase etc)
+  if(window._w3modal){
+    try{ window._w3modal.open({view:'Connect'}); return; }catch(e){}
+  }
+  // Fallback: direct window.ethereum injection
+  if(!window.ethereum){ showToast("MetaMask not found","err"); return; }
   try{
     await window.ethereum.request({method:"eth_requestAccounts"});
     provider=new ethers.BrowserProvider(window.ethereum);
@@ -1086,7 +1091,7 @@ async function connectMetaMask(){
     await onConnected();
     window.ethereum.on("accountsChanged",a=>{if(a[0]){userAddr=a[0];refreshBals();}});
     window.ethereum.on("chainChanged",()=>checkNet());
-  }catch(e){showToast(e.message||"Connection failed","err");}
+  }catch(e){ showToast(e.message||"Connection failed","err"); }
 }
 function openWalletModal(){
   if(window._w3modal){
