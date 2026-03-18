@@ -243,6 +243,9 @@ html,body{height:100%;overflow:hidden;background:var(--coral);font-family:'Instr
   <div class="gate-bottom">
     <div class="gate-tagline">Buy, earn &amp; pay with SKOOP<br>at KOKOS Ice Cream Nashville</div>
     <button class="btn-primary" onclick="openWalletModal()">Connect Wallet</button>
+    <div style="margin-top:16px;text-align:center;font-size:10px;font-weight:500;color:var(--ink-light);font-family:'Instrument Sans',monospace;letter-spacing:0.3px;word-break:break-all;line-height:1.6;">
+      SKOOP · <span onclick="navigator.clipboard.writeText('0xfd3ce21c5Acd8BbbE576d0E2336C210C3cEBeb92').then(()=>alert('CA copied!'))" style="cursor:pointer;" title="Tap to copy">0xfd3ce21c5Acd8BbbE576d0E2336C210C3cEBeb92</span>
+    </div>
   </div>
 </div>
 
@@ -267,6 +270,7 @@ html,body{height:100%;overflow:hidden;background:var(--coral);font-family:'Instr
       <div class="bal-eyebrow">Your balance</div>
       <div class="bal-number" id="home-bal">—</div>
       <div class="bal-sub" id="home-usd">SKOOP · Connect to load</div>
+      <div style="margin-top:10px;font-size:9px;font-weight:500;color:var(--ink-light);font-family:'Instrument Sans',monospace;letter-spacing:0.3px;word-break:break-all;opacity:0.7;cursor:pointer;" onclick="navigator.clipboard.writeText('0xfd3ce21c5Acd8BbbE576d0E2336C210C3cEBeb92').then(()=>alert('CA copied!'))" title="Tap to copy contract address">CA: 0xfd3ce21c5Acd8BbbE576d0E2336C210C3cEBeb92</div>
     </div>
     <div class="action-grid">
       <button class="action-cell ac-mint" onclick="goTo('buy')">
