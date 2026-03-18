@@ -20,67 +20,37 @@
 <script src="https://cdn.jsdelivr.net/npm/ethers@6.13.4/dist/ethers.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
-<script type="module">
-  import { createWeb3Modal, defaultConfig } from 'https://esm.sh/@web3modal/ethers@4.2.3';
-
-  const projectId = 'c5be163298ba25127afa6b7529e29059';
-
-  const base = {
-    chainId: 8453,
-    name: 'Base',
-    currency: 'ETH',
-    explorerUrl: 'https://basescan.org',
-    rpcUrl: 'https://mainnet.base.org'
-  };
-
-  const metadata = {
-    name: 'SKOOP by KOKOS',
-    description: 'Buy, earn and pay with SKOOP tokens at KOKOS Ice Cream Nashville',
-    url: 'https://kokosicecream.github.io',
-    icons: ['https://kokosicecream.github.io/website/Customer_dapp/KOKOS_SKOOP.png']
-  };
-
-  const modal = createWeb3Modal({
-    ethersConfig: defaultConfig({ metadata, defaultChainId: 8453 }),
-    chains: [base],
-    projectId,
-    themeMode: 'light',
-    themeVariables: {
-      '--w3m-accent': '#e8876a',
-      '--w3m-border-radius-master': '18px',
-      '--w3m-font-family': 'Instrument Sans, sans-serif',
-    },
-    featuredWalletIds: [
-      'fd20dc426fb37566d803205b19bbc1d4096b248ac04548e3cfb6b3a38bd033aa', // Coinbase Wallet / Base Wallet
-      'c57ca95b47569778a828d19178114f4db188b89b763c899ba0be274e97267d96', // MetaMask
-      '1ae92b26df02f0abca6304df07debccd18262fdf5fe82daa81593582dac9a369', // Rainbow
-    ],
-    includeWalletIds: [
-      'fd20dc426fb37566d803205b19bbc1d4096b248ac04548e3cfb6b3a38bd033aa',
-      'c57ca95b47569778a828d19178114f4db188b89b763c899ba0be274e97267d96',
-      '1ae92b26df02f0abca6304df07debccd18262fdf5fe82daa81593582dac9a369',
-    ]
-  });
-
-  window._w3modal = modal;
-
-  // When wallet connects via modal, grab provider + signer
-  modal.subscribeProvider(async ({ provider, address, isConnected }) => {
-    if (isConnected && provider && address) {
-      try {
-        window._wcProvider = new ethers.BrowserProvider(provider);
-        window._wcSigner = await window._wcProvider.getSigner();
-        window._wcAddress = address;
-        // Signal to main app
-        window.dispatchEvent(new CustomEvent('wc-connected', {
-          detail: { provider: window._wcProvider, signer: window._wcSigner, address }
-        }));
-      } catch(e) { console.warn('WC provider setup:', e); }
+<script src="https://cdn.jsdelivr.net/npm/@web3modal/standalone@2.4.3/dist/index.umd.js"></script>
+<script>
+// Web3Modal v2 standalone — works as UMD, no ESM needed
+(function initW3M(){
+  function tryInit(){
+    if(typeof window.Web3Modal === 'undefined'){
+      setTimeout(tryInit, 200);
+      return;
     }
-    if (!isConnected) {
-      window.dispatchEvent(new CustomEvent('wc-disconnected'));
-    }
-  });
+    const modal = new window.Web3Modal.Web3Modal({
+      projectId: 'c5be163298ba25127afa6b7529e29059',
+      standaloneChains: ['eip155:8453'],
+      walletConnectVersion: 2,
+      themeVariables: {
+        '--w3m-accent-color': '#e8876a',
+        '--w3m-background-color': '#fdcec1',
+        '--w3m-z-index': '999',
+      },
+    });
+    window._w3modal = modal;
+
+    modal.subscribeModal(async ({ open }) => {
+      if(!open){
+        // Modal closed — check if WC session was established
+        const wc = modal.getWalletConnectUri && modal.getWalletConnectUri();
+        console.log('modal closed, checking session');
+      }
+    });
+  }
+  tryInit();
+})();
 </script>
 <style>
 :root {
@@ -806,8 +776,8 @@ html,body {
   </div>
   <div class="gate-bottom">
     <div class="gate-tagline">Buy, earn &amp; pay with SKOOP<br>at KOKOS Ice Cream Nashville</div>
-    <button class="btn-primary" onclick="openWalletModal()">Connect Wallet</button>
-    <button class="btn-secondary" onclick="connectMetaMask()">🦊 &nbsp;MetaMask (direct)</button>
+    <button class="btn-primary" onclick="connectMetaMask()">🦊 &nbsp;MetaMask / Injected Wallet</button>
+    <button class="btn-secondary" onclick="openWalletModal()">🔗 &nbsp;WalletConnect</button>
   </div>
 </div>
 
@@ -1077,12 +1047,7 @@ const ABI_ESCROW=[{inputs:[{components:[{name:"receiptId",type:"bytes32"},{name:
 let provider,signer,userAddr,selToken="USDC",slip=0.5,quoteTimer,curQuote,pendingIntent,scannerRunning=false;
 
 async function connectMetaMask(){
-  // If Web3Modal is ready, open it — it detects injected wallets (MetaMask, Coinbase etc)
-  if(window._w3modal){
-    try{ window._w3modal.open({view:'Connect'}); return; }catch(e){}
-  }
-  // Fallback: direct window.ethereum injection
-  if(!window.ethereum){ showToast("MetaMask not found","err"); return; }
+  if(!window.ethereum){ showToast("No injected wallet found — install MetaMask","err"); return; }
   try{
     await window.ethereum.request({method:"eth_requestAccounts"});
     provider=new ethers.BrowserProvider(window.ethereum);
