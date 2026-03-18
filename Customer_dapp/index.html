@@ -19,35 +19,18 @@
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,opsz,wght@0,6..36,400;0,6..36,600;1,6..36,400;1,6..36,600&family=Instrument+Sans:wght@400;500;600&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/ethers@6.13.4/dist/ethers.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/@walletconnect/modal@2.7.0/dist/index.umd.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@walletconnect/ethereum-provider@2.17.0/dist/index.umd.js"></script>
 <script>
-// WalletConnect Modal — handles mobile deep links + QR for desktop
-(function initWCModal(){
+// WalletConnect EthereumProvider — single UMD bundle, handles mobile deep links
+(function initWCProvider(){
   function tryInit(){
-    if(typeof window.WalletConnectModal === 'undefined'){
+    if(typeof window.WalletConnectEthereumProvider === 'undefined'){
       setTimeout(tryInit, 300);
       return;
     }
-    try {
-      const wcModal = new window.WalletConnectModal.WalletConnectModal({
-        projectId: 'c5be163298ba25127afa6b7529e29059',
-        chains: ['eip155:8453'],
-        themeVariables: {
-          '--wcm-accent-color': '#e8876a',
-          '--wcm-accent-fill-color': '#ffffff',
-          '--wcm-background-color': '#fdcec1',
-          '--wcm-z-index': '999',
-        },
-        explorerRecommendedWalletIds: [
-          'fd20dc426fb37566d803205b19bbc1d4096b248ac04548e3cfb6b3a38bd033aa',
-          'c57ca95b47569778a828d19178114f4db188b89b763c899ba0be274e97267d96',
-          '1ae92b26df02f0abca6304df07debccd18262fdf5fe82daa81593582dac9a369',
-        ],
-      });
-      window._wcModal = wcModal;
-      console.log('WCModal ready');
-    } catch(e) { console.warn('WCModal init:', e); }
+    console.log('WC EthereumProvider ready');
+    window._wcReady = true;
   }
   tryInit();
 })();
@@ -1063,51 +1046,64 @@ async function connectMetaMask(){
   }catch(e){ showToast(e.message||"Connection failed","err"); }
 }
 async function openWalletModal(){
-  if(!window._wcModal){ showToast("WalletConnect loading — try again in a moment","err"); return; }
+  // Wait for WC provider to be ready
+  let attempts = 0;
+  while(!window._wcReady && attempts < 20){
+    await new Promise(r => setTimeout(r, 300));
+    attempts++;
+  }
+  if(!window._wcReady || typeof window.WalletConnectEthereumProvider === 'undefined'){
+    showToast("WalletConnect not ready — refresh and try again","err");
+    return;
+  }
   try {
-    if(!window._wcSignClient){
-      showToast("Initialising…","");
-      const { SignClient } = await import('https://cdn.jsdelivr.net/npm/@walletconnect/sign-client@2.17.0/+esm');
-      window._wcSignClient = await SignClient.init({
-        projectId:'c5be163298ba25127afa6b7529e29059',
-        metadata:{name:'SKOOP by KOKOS',description:'KOKOS Ice Cream SKOOP DApp',url:'https://kokosicecream.github.io',icons:['https://kokosicecream.github.io/website/Customer_dapp/KOKOS_SKOOP.png']}
-      });
-    }
-    const sc = window._wcSignClient;
-    const { uri, approval } = await sc.connect({
-      requiredNamespaces:{eip155:{methods:['eth_sendTransaction','personal_sign','eth_signTypedData'],chains:['eip155:8453'],events:['chainChanged','accountsChanged']}}
+    showToast("Opening wallet…","");
+    const WCProvider = window.WalletConnectEthereumProvider.default || window.WalletConnectEthereumProvider;
+    const wcEthProvider = await WCProvider.init({
+      projectId: 'c5be163298ba25127afa6b7529e29059',
+      chains: [8453],
+      showQrModal: true,
+      metadata: {
+        name: 'SKOOP by KOKOS',
+        description: 'Buy, earn and pay with SKOOP at KOKOS Ice Cream Nashville',
+        url: 'https://kokosicecream.github.io',
+        icons: ['https://kokosicecream.github.io/website/Customer_dapp/KOKOS_SKOOP.png']
+      },
+      qrModalOptions: {
+        themeVariables: {
+          '--wcm-accent-color': '#e8876a',
+          '--wcm-background-color': '#fdcec1',
+        }
+      }
     });
-    if(uri) await window._wcModal.openModal({ uri });
-    const session = await approval();
-    window._wcModal.closeModal();
-    const addr = session.namespaces.eip155.accounts[0].split(':')[2];
 
-    const { EthereumProvider } = await import('https://cdn.jsdelivr.net/npm/@walletconnect/ethereum-provider@2.17.0/+esm');
-    const wcEthProvider = await EthereumProvider.init({
-      projectId:'c5be163298ba25127afa6b7529e29059',
-      chains:[8453], showQrModal:false,
-      metadata:{name:'SKOOP by KOKOS',description:'KOKOS Ice Cream',url:'https://kokosicecream.github.io',icons:['https://kokosicecream.github.io/website/Customer_dapp/KOKOS_SKOOP.png']}
-    });
-    await wcEthProvider.enable();
+    window._wcEthProvider = wcEthProvider;
+    await wcEthProvider.enable(); // triggers QR modal or deep link on mobile
+
     provider = new ethers.BrowserProvider(wcEthProvider);
-    signer = await provider.getSigner();
-    userAddr = addr;
+    signer   = await provider.getSigner();
+    userAddr = await signer.getAddress();
     await onConnected();
-    sc.on('session_delete', () => window.dispatchEvent(new CustomEvent('wc-disconnected')));
+
+    wcEthProvider.on('disconnect', () => {
+      window.dispatchEvent(new CustomEvent('wc-disconnected'));
+    });
+    wcEthProvider.on('accountsChanged', (accounts) => {
+      if(accounts[0]){ userAddr = accounts[0]; updatePills(); refreshBals(); }
+    });
+
   } catch(e){
-    window._wcModal && window._wcModal.closeModal();
-    if(e?.message && !e.message.toLowerCase().includes('closed') && !e.message.toLowerCase().includes('modal')){
-      showToast(e.message,'err');
+    const msg = e?.message || '';
+    if(!msg.toLowerCase().includes('modal') && !msg.toLowerCase().includes('closed')){
+      showToast(msg || "Connection failed","err");
     }
   }
 }
 
+
 async function disconnectWallet(){
-  if(window._wcSignClient){
-    try {
-      const sessions = window._wcSignClient.session.getAll();
-      for(const s of sessions){ await window._wcSignClient.disconnect({topic:s.topic,reason:{code:6000,message:"User disconnected"}}); }
-    } catch(e){}
+  if(window._wcEthProvider){
+    try { await window._wcEthProvider.disconnect(); } catch(e){}
   }
   // Clear MetaMask connection (just clears local state — MM doesn't support forced disconnect)
   provider = null; signer = null; userAddr = null;
@@ -1129,7 +1125,6 @@ async function disconnectWallet(){
   document.getElementById("qr-bal").textContent = "—";
 }
 
-// WalletConnect connects directly in openWalletModal()
 
 window.addEventListener("wc-disconnected", function() {
   provider = null; signer = null; userAddr = null;
@@ -1148,8 +1143,7 @@ async function onConnected(){
   m.style.display="flex";m.style.flexDirection="column";m.style.flex="1";m.style.overflow="hidden";
   document.getElementById("bottom-nav").style.display="flex";
   updatePills();await checkNet();await refreshBals();
-  // Build QR after a short delay to ensure DOM is ready
-  setTimeout(buildMyQR, 200);
+  setTimeout(buildMyQR, 100);
 }
 
 function updatePills(){
@@ -1347,42 +1341,25 @@ async function confirmPay(){
 }
 function closeSuccess(){document.getElementById("success-screen").classList.remove("show");document.getElementById("pay-confirm").classList.remove("active");document.getElementById("pay-scan").classList.add("active");goTo("home");}
 
-async function buildMyQR(){
+function buildMyQR(){
   if(!userAddr) return;
 
-  // Always show address text immediately
+  // Show address text always
   document.getElementById("qr-addr").textContent = userAddr;
 
-  // Wait for QRCode library with retry
-  let attempts = 0;
-  while(typeof QRCode === "undefined" && attempts < 20){
-    await new Promise(r => setTimeout(r, 250));
-    attempts++;
-  }
+  // Clear any previous QR
+  const wrap = document.getElementById("qr-img-wrap");
+  wrap.innerHTML = '<div id="qr-container"></div>';
 
-  if(typeof QRCode === "undefined"){
-    // Library never loaded — show address as fallback, no error toast
-    document.getElementById("qr-placeholder").textContent = "Show address above to shop";
-    console.warn("QRCode library not available");
-    return;
-  }
-
-  try {
-    // Use toDataURL -> img tag: no canvas sizing issues, works on all mobile browsers
-    const dataUrl = await QRCode.toDataURL(userAddr, {
-      width: 240,
-      margin: 2,
-      color: { dark: "#2a1f1a", light: "#fffaf7" }
-    });
-    const img = document.getElementById("my-qr-img");
-    const placeholder = document.getElementById("qr-placeholder");
-    img.src = dataUrl;
-    img.style.display = "block";
-    placeholder.style.display = "none";
-  } catch(e) {
-    console.warn("QR dataURL fail:", e);
-    document.getElementById("qr-placeholder").textContent = "Show address above to shop";
-  }
+  // qrcodejs — just render the wallet address, nothing more
+  new QRCode(document.getElementById("qr-container"), {
+    text: userAddr,
+    width: 240,
+    height: 240,
+    colorDark: "#2a1f1a",
+    colorLight: "#fffaf7",
+    correctLevel: QRCode.CorrectLevel.M
+  });
 }
 
 function goTo(name){
@@ -1391,7 +1368,7 @@ function goTo(name){
   document.getElementById("screen-"+name).classList.add("active");
   document.getElementById("nav-"+name).classList.add("active");
   if(name==="buy") updateFromBal();
-  if(name==="qr") setTimeout(buildMyQR, 80); // slight delay so screen is painted first
+  if(name==="qr") buildMyQR();
 }
 
 let toastT;
