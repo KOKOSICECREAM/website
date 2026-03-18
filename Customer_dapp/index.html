@@ -18,7 +18,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,opsz,wght@0,6..36,400;0,6..36,600;1,6..36,400;1,6..36,600&family=Instrument+Sans:wght@400;500;600&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/ethers@6.13.4/dist/ethers.umd.min.js"></script>
-<script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
 <style>
 :root {
@@ -1161,6 +1161,7 @@ async function execSwap(){
 
 function startScan(){
   if(scannerRunning)return;
+  if(typeof Html5Qrcode==="undefined"){showToast("Scanner loading — try again in a moment","err");return;}
   const scanner=new Html5Qrcode("qr-reader");
   document.getElementById("scan-ui").style.display="none";
   document.getElementById("btn-cam").style.display="none";
