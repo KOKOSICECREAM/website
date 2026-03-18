@@ -41,7 +41,7 @@
   };
 
   const modal = createWeb3Modal({
-    ethersConfig: defaultConfig({ metadata }),
+    ethersConfig: defaultConfig({ metadata, defaultChainId: 8453 }),
     chains: [base],
     projectId,
     themeMode: 'light',
@@ -49,7 +49,17 @@
       '--w3m-accent': '#e8876a',
       '--w3m-border-radius-master': '18px',
       '--w3m-font-family': 'Instrument Sans, sans-serif',
-    }
+    },
+    featuredWalletIds: [
+      'fd20dc426fb37566d803205b19bbc1d4096b248ac04548e3cfb6b3a38bd033aa', // Coinbase Wallet / Base Wallet
+      'c57ca95b47569778a828d19178114f4db188b89b763c899ba0be274e97267d96', // MetaMask
+      '1ae92b26df02f0abca6304df07debccd18262fdf5fe82daa81593582dac9a369', // Rainbow
+    ],
+    includeWalletIds: [
+      'fd20dc426fb37566d803205b19bbc1d4096b248ac04548e3cfb6b3a38bd033aa',
+      'c57ca95b47569778a828d19178114f4db188b89b763c899ba0be274e97267d96',
+      '1ae92b26df02f0abca6304df07debccd18262fdf5fe82daa81593582dac9a369',
+    ]
   });
 
   window._w3modal = modal;
@@ -713,6 +723,20 @@ html,body {
   font-size:15px; font-weight:600; cursor:pointer; margin-top:16px;
 }
 
+.disconnect-btn {
+  width:28px; height:28px;
+  border-radius:50%;
+  border:1px solid var(--border-mid);
+  background:rgba(255,255,255,0.5);
+  color:var(--ink-mid);
+  font-size:11px; font-weight:700;
+  cursor:pointer;
+  display:flex; align-items:center; justify-content:center;
+  transition:all 0.15s;
+  flex-shrink:0;
+}
+.disconnect-btn:hover { background:var(--coral-deep); color:white; border-color:var(--coral-deep); }
+
 /* ══ TOAST + UTILS ══ */
 #toast {
   position:absolute; top:16px; left:16px; right:16px;
@@ -797,6 +821,7 @@ html,body {
       <div class="hdr-right">
         <div class="pill pill-dark" id="net-label">Base</div>
         <div class="pill pill-white" id="wallet-pill">0x…</div>
+        <button class="disconnect-btn" onclick="disconnectWallet()" title="Disconnect">✕</button>
       </div>
     </div>
     <div class="stripe stripe-thin">
@@ -1069,6 +1094,31 @@ function openWalletModal(){
   } else {
     showToast("Wallet modal loading — try again in a moment","err");
   }
+}
+
+async function disconnectWallet(){
+  // Disconnect WalletConnect session if active
+  if(window._w3modal){
+    try { await window._w3modal.disconnect(); } catch(e){}
+  }
+  // Clear MetaMask connection (just clears local state — MM doesn't support forced disconnect)
+  provider = null; signer = null; userAddr = null;
+
+  // Reset UI back to gate
+  document.getElementById("main-app").style.display = "none";
+  document.getElementById("bottom-nav").style.display = "none";
+  const gate = document.getElementById("connect-gate");
+  gate.style.display = "flex";
+  gate.style.flexDirection = "column";
+  gate.style.flex = "1";
+
+  // Reset balance display
+  document.getElementById("home-bal").textContent = "—";
+  document.getElementById("home-usd").textContent = "SKOOP · Connect to load";
+  document.getElementById("wallet-pill").textContent = "0x…";
+  document.getElementById("buy-pill").textContent = "0x…";
+  document.getElementById("qr-addr").textContent = "Connect wallet to generate QR";
+  document.getElementById("qr-bal").textContent = "—";
 }
 
 // Listen for WalletConnect connection events
