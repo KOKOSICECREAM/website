@@ -803,45 +803,90 @@ footer { background: var(--coral); border-top: var(--border); }
     </div>
     <a href="#contact" class="see-all-link">See All Flavors ↗</a>
   </div>
-  <div class="flavor-grid">
-    <div class="flavor-card" style="background:var(--coral);">
-      <div class="flavor-dot" style="background:#e8806a;"></div>
-      <div class="flavor-name">Belgian Chocolate</div>
-      <div class="flavor-desc">Rich, intense Belgian chocolate in our silky coconut cream base — pure indulgence</div>
-      <span class="flavor-badge">Signature</span>
-    </div>
-    <div class="flavor-card" style="background:var(--mint);">
-      <div class="flavor-dot" style="background:#7dc4a2;"></div>
-      <div class="flavor-name">Mint Chocolate Chip</div>
-      <div class="flavor-desc">Peppermint and Chlorophyll with generous dark chocolate chips throughout</div>
-      <span class="flavor-badge">Fan Favorite</span>
-    </div>
-    <div class="flavor-card" style="background:var(--apricot);">
-      <div class="flavor-dot" style="background:#f4a261;"></div>
-      <div class="flavor-name">She's a Peach</div>
-      <div class="flavor-desc">Sun-ripened peach Jam folded into our dreamy house-made Peach coconut cream</div>
-      <span class="flavor-badge">My Go to Flavor</span>
-    </div>
-    <div class="flavor-card" style="background:var(--lavender);">
-      <div class="flavor-dot" style="background:#b899c2;"></div>
-      <div class="flavor-name">Lavender Dream</div>
-      <div class="flavor-desc">Floral lavender with swirls of Blackberry Jam, a smooth, cloud-like finish — endlessly dreamy</div>
-      <span class="flavor-badge">Bestseller</span>
-    </div>
-    <div class="flavor-card" style="background:var(--sand);">
-      <div class="flavor-dot" style="background:#f5cd94;"></div>
-      <div class="flavor-name">Caramel Latte</div>
-      <div class="flavor-desc">Decadent Freshly ground Espresso beans steeped in cream with hints of Caramel and Vanilla</div>
-      <span class="flavor-badge">yum</span>
-    </div>
-    <div class="flavor-card" style="background:var(--cream);">
-      <div class="flavor-dot" style="background:#d4c9b8;"></div>
-      <div class="flavor-name">Cookies &amp; Kreme</div>
-      <div class="flavor-desc">Creamy vanilla base loaded with crunchy cookie pieces — the ultimate crowd pleaser</div>
-      <span class="flavor-badge">Classic</span>
-    </div>
-  </div>
+  <div class="flavor-grid" id="flavor-grid"></div>
 </section>
+
+<!-- ============================================================
+  FLAVOR CONFIG — EDIT THIS SECTION TO UPDATE THE MENU
+  Each flavor needs:
+    name       — display name
+    desc       — short description
+    badge      — label shown on the card (e.g. "Signature", "New!", "Seasonal")
+    cardColor  — background of the card. Use any of these:
+                   "var(--coral)"    = pink
+                   "var(--mint)"     = green
+                   "var(--apricot)"  = peach
+                   "var(--lavender)" = purple
+                   "var(--sand)"     = yellow
+                   "var(--cream)"    = off-white
+    dotColor   — color of the round flavor dot (any hex color)
+
+  TO ADD A FLAVOR: copy one block and paste it inside the array.
+  TO REMOVE:       delete the block.
+  TO REORDER:      cut and paste the block to a new position.
+============================================================ -->
+<script>
+const FLAVORS = [
+  {
+    name:      "Belgian Chocolate",
+    desc:      "Rich, intense Belgian chocolate in our silky coconut cream base — pure indulgence",
+    badge:     "Signature",
+    cardColor: "var(--coral)",
+    dotColor:  "#e8806a"
+  },
+  {
+    name:      "Mint Chocolate Chip",
+    desc:      "Peppermint and Chlorophyll with generous dark chocolate chips throughout",
+    badge:     "Fan Favorite",
+    cardColor: "var(--mint)",
+    dotColor:  "#7dc4a2"
+  },
+  {
+    name:      "She's a Peach",
+    desc:      "Sun-ripened peach Jam folded into our dreamy house-made Peach coconut cream",
+    badge:     "My Go to Flavor",
+    cardColor: "var(--apricot)",
+    dotColor:  "#f4a261"
+  },
+  {
+    name:      "Lavender Dream",
+    desc:      "Floral lavender with swirls of Blackberry Jam, a smooth, cloud-like finish — endlessly dreamy",
+    badge:     "Bestseller",
+    cardColor: "var(--lavender)",
+    dotColor:  "#b899c2"
+  },
+  {
+    name:      "Caramel Latte",
+    desc:      "Decadent Freshly ground Espresso beans steeped in cream with hints of Caramel and Vanilla",
+    badge:     "Yum",
+    cardColor: "var(--sand)",
+    dotColor:  "#f5cd94"
+  },
+  {
+    name:      "Cookies &amp; Kreme",
+    desc:      "Creamy vanilla base loaded with crunchy cookie pieces — the ultimate crowd pleaser",
+    badge:     "Classic",
+    cardColor: "var(--cream)",
+    dotColor:  "#d4c9b8"
+  }
+];
+
+// Renders the grid — no need to touch anything below this line
+(function() {
+  const grid = document.getElementById('flavor-grid');
+  FLAVORS.forEach(function(f) {
+    const card = document.createElement('div');
+    card.className = 'flavor-card';
+    card.style.background = f.cardColor;
+    card.innerHTML =
+      '<div class="flavor-dot" style="background:' + f.dotColor + '"></div>' +
+      '<div class="flavor-name">' + f.name + '</div>' +
+      '<div class="flavor-desc">' + f.desc + '</div>' +
+      '<span class="flavor-badge">' + f.badge + '</span>';
+    grid.appendChild(card);
+  });
+})();
+</script>
 
 <!-- GOOGLE REVIEWS -->
 <section class="reviews-section" id="reviews">
