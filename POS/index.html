@@ -687,7 +687,10 @@ html, body {
 
   <!-- TOPBAR -->
   <header id="topbar">
-    <div class="logo">KOKOS <span>shop terminal</span></div>
+    <div class="logo">
+      <img id="brand-logo" src="https://raw.githubusercontent.com/KOKOSICECREAM/website/main/Customer_dapp/KOKOS.png" alt="KOKOS" style="height:36px;width:auto;object-fit:contain;vertical-align:middle;">
+      <span>shop terminal</span>
+    </div>
     <div id="topbar-right">
       <div class="tab-pill">
         <button class="active" onclick="switchPanel('rewards')">Send Rewards</button>
@@ -729,7 +732,10 @@ html, body {
       <div class="summary-row"><span>Tax (9.25%)</span><span id="tax-display">$0.00</span></div>
       <div class="summary-row total"><span>Total</span><span id="total-display">$0.00</span></div>
       <div class="skoop-equiv">
-        <span>≈ SKOOP</span>
+        <span style="display:flex;align-items:center;gap:0.4rem;">
+          <img src="https://raw.githubusercontent.com/KOKOSICECREAM/website/main/Customer_dapp/KOKOS_SKOOP.png" alt="SKOOP" style="height:18px;width:18px;object-fit:contain;border-radius:50%;">
+          ≈ SKOOP
+        </span>
         <span id="skoop-display">—</span>
       </div>
       <button id="checkout-btn" onclick="openCheckout()" disabled>Generate Payment QR</button>
@@ -810,6 +816,11 @@ html, body {
 
 <script>
 // ─── CONFIG ───────────────────────────────────────────────────────────────────
+const ASSETS = {
+  LOGO:  'https://raw.githubusercontent.com/KOKOSICECREAM/website/main/Customer_dapp/KOKOS.png',
+  SKOOP: 'https://raw.githubusercontent.com/KOKOSICECREAM/website/main/Customer_dapp/KOKOS_SKOOP.png',
+};
+
 const CFG = {
   CHAIN_ID: 8453,
   SKOOP:   '0xfd3ce21c5Acd8BbbE576d0E2336C210C3cEBeb92',
@@ -1139,7 +1150,7 @@ async function generateQR() {
     ${items}
     <div class="mos-row"><span>Tax</span><span>$${(taxCents/100).toFixed(2)}</span></div>
     <div class="mos-row total"><span>Total</span><span>$${(totalCents/100).toFixed(2)}</span></div>
-    <div class="mos-row skoop"><span>≈ SKOOP</span><span>${Number(tokenAmount).toLocaleString()} SKOOP</span></div>
+    <div class="mos-row skoop"><span style="display:flex;align-items:center;gap:0.35rem;"><img src="https://raw.githubusercontent.com/KOKOSICECREAM/website/main/Customer_dapp/KOKOS_SKOOP.png" alt="SKOOP" style="height:15px;width:15px;object-fit:contain;border-radius:50%;">≈ SKOOP</span><span>${Number(tokenAmount).toLocaleString()} SKOOP</span></div>
   `;
 
   document.getElementById('modal-status').textContent = 'Waiting for customer to scan…';
