@@ -626,21 +626,22 @@ html, body {
 #qr-canvas-wrap {
   background: var(--white);
   border-radius: 16px;
-  padding: 16px;           /* quiet zone — scanners need this white border */
-  border: 2px solid var(--coral-mid);
-  display: inline-flex;
+  padding: 16px;
+  border: 3px solid var(--coral-mid);
+  width: 252px;   /* 220px QR + 16px padding each side */
+  height: 252px;
+  flex-shrink: 0;
+  overflow: hidden;
+  display: flex;
   align-items: center;
   justify-content: center;
-  max-width: 100%;
-  box-sizing: border-box;
 }
-/* qrcodejs renders both canvas and img — constrain both */
 #qr-canvas-wrap canvas,
 #qr-canvas-wrap img {
   display: block !important;
-  width: 240px !important;
-  height: 240px !important;
-  max-width: 240px !important;
+  width: 220px !important;
+  height: 220px !important;
+  flex-shrink: 0;
 }
 
 .modal-order-summary {
@@ -1243,27 +1244,38 @@ async function generateQR() {
 
   console.log('QR payload chars:', qrPayload.length);
 
-  // Generate QR — 240px native, pure black/white, quiet zone handled by CSS padding
+  // Use a hidden staging div, then extract the img/canvas into the styled wrap
   const wrap = document.getElementById('qr-canvas-wrap');
-  wrap.innerHTML = '';
+  wrap.innerHTML = '<p style="color:var(--ink-lt);font-size:0.8rem;">Generating…</p>';
+
+  // Stage in a hidden off-screen div so qrcodejs can do its thing
+  const stage = document.createElement('div');
+  stage.style.cssText = 'position:absolute;left:-9999px;top:-9999px;';
+  document.body.appendChild(stage);
+
   try {
-    new QRCode(wrap, {
+    new QRCode(stage, {
       text: qrPayload,
-      width: 240,
-      height: 240,
+      width: 220,
+      height: 220,
       colorDark: '#000000',
       colorLight: '#ffffff',
-      correctLevel: QRCode.CorrectLevel.M  // M gives better error recovery than L
+      correctLevel: QRCode.CorrectLevel.M
     });
-    // qrcodejs renders canvas first, then replaces with img on some browsers
-    // Force both visible with correct size after short delay
     setTimeout(() => {
-      wrap.querySelectorAll('canvas, img').forEach(el => {
-        el.style.cssText = 'display:block!important;width:240px!important;height:240px!important;';
-      });
-    }, 100);
+      // qrcodejs puts an img (and sometimes canvas) inside stage
+      const img = stage.querySelector('img');
+      const canvas = stage.querySelector('canvas');
+      const el = img || canvas;
+      if (!el) { showToast('QR failed to render', 'error'); document.body.removeChild(stage); return; }
+      el.style.cssText = 'display:block;width:220px;height:220px;';
+      wrap.innerHTML = '';
+      wrap.appendChild(el);
+      document.body.removeChild(stage);
+    }, 150);
   } catch(qrErr) {
     console.error('QR gen error:', qrErr);
+    document.body.removeChild(stage);
     showToast('QR error: ' + qrErr.message, 'error');
     closeModal();
     return;
