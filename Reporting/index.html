@@ -1,0 +1,526 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>KOKOS — Tax Report</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400&family=Instrument+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/ethers@6.13.4/dist/ethers.umd.min.js"></script>
+<style>
+:root {
+  --coral:#fdcec1; --coral-mid:#fdaf9a; --coral-deep:#e8876a;
+  --mint:#cde6d7; --apricot:#fae2d8; --sand:#ffddad;
+  --green:#11483d; --green-dk:#0a2e27;
+  --cream:#fffaf7; --ink:#2a1f1a; --ink-mid:#6b4f47; --ink-lt:#a08880;
+  --white:#ffffff; --border:rgba(42,31,26,0.10);
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'Instrument Sans',sans-serif;background:var(--cream);color:var(--ink);min-height:100vh;}
+
+/* HEADER */
+.page-header{background:var(--coral);padding:1.25rem 2rem;display:flex;align-items:center;justify-content:space-between;border-bottom:2px solid var(--coral-mid);}
+.page-header .logo{font-family:'Cormorant Garamond',serif;font-size:1.6rem;font-weight:600;color:var(--green);letter-spacing:0.1em;}
+.page-header .logo span{font-style:italic;font-weight:300;font-size:0.95rem;color:var(--ink-mid);margin-left:0.4rem;}
+
+/* CONTROLS */
+.controls{background:var(--apricot);padding:1.25rem 2rem;display:flex;align-items:center;gap:1rem;flex-wrap:wrap;border-bottom:1px solid var(--border);}
+.ctrl-group{display:flex;flex-direction:column;gap:0.3rem;}
+.ctrl-label{font-size:0.65rem;font-weight:600;text-transform:uppercase;letter-spacing:0.08em;color:var(--ink-mid);}
+select,input[type=number]{background:var(--white);border:1px solid var(--border);border-radius:8px;padding:0.5rem 0.75rem;font-family:inherit;font-size:0.85rem;color:var(--ink);cursor:pointer;}
+select:focus,input:focus{outline:none;border-color:var(--green);}
+.btn{padding:0.6rem 1.5rem;border:none;border-radius:8px;font-family:inherit;font-size:0.82rem;font-weight:600;cursor:pointer;transition:all 0.15s;letter-spacing:0.03em;}
+.btn-primary{background:var(--green);color:var(--coral);}
+.btn-primary:hover{background:var(--green-dk);}
+.btn-primary:disabled{opacity:0.4;cursor:not-allowed;}
+.btn-secondary{background:var(--white);color:var(--ink);border:1px solid var(--border);}
+.btn-secondary:hover{background:var(--coral);border-color:var(--coral);}
+.btn-secondary:disabled{opacity:0.4;cursor:not-allowed;}
+
+/* STATUS */
+.status-bar{padding:0.75rem 2rem;font-size:0.78rem;color:var(--ink-mid);border-bottom:1px solid var(--border);display:flex;align-items:center;gap:0.5rem;min-height:40px;}
+.spinner{width:14px;height:14px;border:2px solid rgba(42,31,26,0.15);border-top-color:var(--green);border-radius:50%;animation:spin 0.7s linear infinite;flex-shrink:0;}
+@keyframes spin{to{transform:rotate(360deg);}}
+
+/* SUMMARY CARDS */
+.summary{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:1rem;padding:1.5rem 2rem;border-bottom:1px solid var(--border);}
+.card{background:var(--white);border:1px solid var(--border);border-radius:12px;padding:1rem 1.25rem;}
+.card-label{font-size:0.65rem;font-weight:600;text-transform:uppercase;letter-spacing:0.08em;color:var(--ink-lt);margin-bottom:0.4rem;}
+.card-value{font-family:'Cormorant Garamond',serif;font-size:2rem;font-weight:600;color:var(--ink);letter-spacing:-0.5px;line-height:1;}
+.card-sub{font-size:0.72rem;color:var(--ink-mid);margin-top:0.3rem;}
+.card.highlight{background:var(--mint);}
+.card.highlight .card-value{color:var(--green);}
+
+/* TABLE */
+.table-wrap{padding:0 2rem 2rem;overflow-x:auto;}
+.section-title{font-family:'Cormorant Garamond',serif;font-size:1.2rem;font-style:italic;font-weight:400;color:var(--ink-mid);padding:1rem 0 0.75rem;}
+table{width:100%;border-collapse:collapse;font-size:0.78rem;}
+thead tr{background:var(--apricot);}
+th{padding:0.6rem 0.875rem;text-align:left;font-size:0.65rem;font-weight:600;text-transform:uppercase;letter-spacing:0.06em;color:var(--ink-mid);white-space:nowrap;}
+td{padding:0.6rem 0.875rem;border-bottom:1px solid var(--border);vertical-align:middle;}
+tr:last-child td{border-bottom:none;}
+tr:hover td{background:rgba(42,31,26,0.02);}
+.mono{font-family:monospace;font-size:0.72rem;color:var(--ink-mid);}
+.status-badge{display:inline-block;padding:0.15rem 0.5rem;border-radius:999px;font-size:0.65rem;font-weight:600;text-transform:uppercase;letter-spacing:0.04em;}
+.s-captured{background:var(--mint);color:var(--green);}
+.s-burned{background:var(--sand);color:#7a5a00;}
+.s-voided{background:#fde8e8;color:#b91c1c;}
+.amount{font-weight:600;color:var(--ink);}
+.tax-amt{font-weight:700;color:var(--green);}
+
+/* EMPTY */
+.empty{text-align:center;padding:3rem;color:var(--ink-lt);}
+.empty-icon{font-size:2.5rem;opacity:0.3;margin-bottom:0.5rem;}
+
+/* PRINT */
+@media print{
+  .controls,.status-bar,.btn{display:none!important;}
+  .page-header{background:#fdcec1!important;-webkit-print-color-adjust:exact;}
+  body{background:white;}
+}
+</style>
+</head>
+<body>
+
+<div class="page-header">
+  <div class="logo">
+    <img src="https://raw.githubusercontent.com/KOKOSICECREAM/website/main/Customer_dapp/KOKOS.png"
+         alt="KOKOS" style="height:32px;width:auto;vertical-align:middle;margin-right:0.5rem;">
+    <span>tax report</span>
+  </div>
+  <div style="font-size:0.75rem;color:var(--ink-mid);">KOKOS Ice Cream · Nashville</div>
+</div>
+
+<!-- AUTH GATE -->
+<div id="auth-gate" style="background:var(--apricot);border-bottom:1px solid var(--border);padding:2rem;display:flex;flex-direction:column;align-items:center;gap:1rem;text-align:center;">
+  <div style="font-size:2rem;">🔒</div>
+  <div style="font-family:'Cormorant Garamond',serif;font-size:1.2rem;font-style:italic;color:var(--ink-mid);">Owner access required</div>
+  <div style="font-size:0.78rem;color:var(--ink-mid);max-width:340px;line-height:1.6;">
+    Connect and sign with the KOKOS owner wallet to access tax reports.
+    <br><span style="font-family:monospace;font-size:0.7rem;color:var(--green);">0x001b…50b</span>
+  </div>
+  <button class="btn btn-primary" id="btn-connect" onclick="connectAndAuth()">Connect Wallet</button>
+  <div id="auth-status" style="font-size:0.72rem;color:var(--ink-lt);min-height:1rem;"></div>
+</div>
+
+<!-- CONTROLS (hidden until authed) -->
+<div id="report-controls" style="display:none;">
+  <div class="controls">
+    <div class="ctrl-group">
+      <div class="ctrl-label">Month</div>
+      <select id="sel-month">
+        <option value="0">January</option><option value="1">February</option>
+        <option value="2">March</option><option value="3">April</option>
+        <option value="4">May</option><option value="5">June</option>
+        <option value="6">July</option><option value="7">August</option>
+        <option value="8">September</option><option value="9">October</option>
+        <option value="10">November</option><option value="11">December</option>
+      </select>
+    </div>
+    <div class="ctrl-group">
+      <div class="ctrl-label">Year</div>
+      <input type="number" id="sel-year" value="2025" min="2024" max="2030" style="width:90px;">
+    </div>
+    <div class="ctrl-group">
+      <div class="ctrl-label">Tax Rate</div>
+      <input type="number" id="tax-rate" value="9.25" min="0" max="20" step="0.01" style="width:90px;">
+      <div style="font-size:0.62rem;color:var(--ink-lt);margin-top:1px;">% (override if needed)</div>
+    </div>
+    <div style="margin-left:auto;display:flex;gap:0.5rem;align-items:flex-end;">
+      <div style="font-size:0.7rem;color:var(--green);font-weight:600;align-self:center;" id="wallet-display"></div>
+      <button class="btn btn-primary" id="btn-run" onclick="runReport()">Generate Report</button>
+      <button class="btn btn-secondary" id="btn-print" onclick="window.print()" disabled>Print / Save PDF</button>
+    </div>
+  </div>
+  <div class="status-bar" id="status-bar">
+    Ready — select a month and generate report.
+  </div>
+</div>
+
+<div class="summary" id="summary" style="display:none;">
+  <div class="card">
+    <div class="card-label">Total Transactions</div>
+    <div class="card-value" id="c-count">0</div>
+    <div class="card-sub">SKOOP redemptions</div>
+  </div>
+  <div class="card">
+    <div class="card-label">Gross Revenue</div>
+    <div class="card-value" id="c-gross">$0.00</div>
+    <div class="card-sub">Subtotal (pre-tax)</div>
+  </div>
+  <div class="card highlight">
+    <div class="card-label">Tax Collected</div>
+    <div class="card-value" id="c-tax">$0.00</div>
+    <div class="card-sub" id="c-tax-rate">@ 9.25%</div>
+  </div>
+  <div class="card">
+    <div class="card-label">Total Collected</div>
+    <div class="card-value" id="c-total">$0.00</div>
+    <div class="card-sub">Including tax</div>
+  </div>
+  <div class="card">
+    <div class="card-label">SKOOP Burned</div>
+    <div class="card-value" id="c-burned">0</div>
+    <div class="card-sub">Tokens destroyed</div>
+  </div>
+  <div class="card">
+    <div class="card-label">SKOOP Pending</div>
+    <div class="card-value" id="c-pending">0</div>
+    <div class="card-sub">In escrow (not yet burned)</div>
+  </div>
+</div>
+
+<div class="table-wrap" id="table-wrap" style="display:none;">
+  <div class="section-title" id="report-title">Transaction Detail</div>
+  <table id="tx-table">
+    <thead>
+      <tr>
+        <th>#</th>
+        <th>Date</th>
+        <th>Time</th>
+        <th>Receipt ID</th>
+        <th>Items</th>
+        <th>Subtotal</th>
+        <th>Tax</th>
+        <th>Total</th>
+        <th>SKOOP</th>
+        <th>Status</th>
+        <th>Tx</th>
+      </tr>
+    </thead>
+    <tbody id="tx-body"></tbody>
+  </table>
+</div>
+
+<script>
+const CFG = {
+  CHAIN_ID: 8453,
+  RPC: 'https://mainnet.base.org',
+  ESCROW: '0x85E8cdedAe8ECd23ee21cdc90D75CbAAe9a54991',
+  OWNER:  '0x001b3fB36FE7E3a741A15Ed8bE68610442E3a50b',
+  SKOOP_DEC: 6,
+};
+
+// ── AUTH ──────────────────────────────────────────────────────────────────────
+let authed = false;
+
+async function connectAndAuth() {
+  const btn = document.getElementById('btn-connect');
+  const status = document.getElementById('auth-status');
+
+  if (!window.ethereum) {
+    status.textContent = 'MetaMask not detected.';
+    return;
+  }
+
+  btn.disabled = true;
+  btn.textContent = 'Connecting…';
+  status.textContent = '';
+
+  try {
+    await window.ethereum.request({ method: 'eth_requestAccounts' });
+    const provider = new ethers.BrowserProvider(window.ethereum);
+
+    // Check network
+    const net = await provider.getNetwork();
+    if (Number(net.chainId) !== CFG.CHAIN_ID) {
+      try {
+        await window.ethereum.request({
+          method: 'wallet_switchEthereumChain',
+          params: [{ chainId: '0x2105' }]
+        });
+      } catch(e) {
+        status.textContent = 'Please switch to Base network.';
+        btn.disabled = false; btn.textContent = 'Connect Wallet';
+        return;
+      }
+    }
+
+    const signer  = await provider.getSigner();
+    const address = await signer.getAddress();
+
+    // Check it's the owner wallet
+    if (address.toLowerCase() !== CFG.OWNER.toLowerCase()) {
+      status.textContent = `Wrong wallet. Need ${CFG.OWNER.slice(0,6)}…${CFG.OWNER.slice(-4)}`;
+      btn.disabled = false; btn.textContent = 'Connect Wallet';
+      return;
+    }
+
+    // Ask owner to sign a challenge — proves they hold the key
+    btn.textContent = 'Sign in wallet…';
+    const challenge = `KOKOS Tax Report Access
+Wallet: ${address}
+Timestamp: ${Date.now()}`;
+    const sig = await signer.signMessage(challenge);
+
+    // Verify signature recovers to owner address
+    const recovered = ethers.verifyMessage(challenge, sig);
+    if (recovered.toLowerCase() !== CFG.OWNER.toLowerCase()) {
+      status.textContent = 'Signature verification failed.';
+      btn.disabled = false; btn.textContent = 'Connect Wallet';
+      return;
+    }
+
+    // ✓ Authenticated
+    authed = true;
+    document.getElementById('auth-gate').style.display = 'none';
+    document.getElementById('report-controls').style.display = 'block';
+    document.getElementById('wallet-display').textContent =
+      '✓ ' + address.slice(0,6) + '…' + address.slice(-4);
+
+    // Set current month defaults
+    const now = new Date();
+    document.getElementById('sel-month').value = now.getMonth();
+    document.getElementById('sel-year').value  = now.getFullYear();
+
+  } catch(e) {
+    const msg = e?.message || '';
+    if (msg.includes('rejected') || msg.includes('denied')) {
+      status.textContent = 'Signature rejected.';
+    } else {
+      status.textContent = 'Error: ' + msg.slice(0, 80);
+    }
+    btn.disabled = false;
+    btn.textContent = 'Connect Wallet';
+  }
+}
+
+// Full PaymentCaptured event ABI — matches contract exactly
+const ESCROW_ABI = [
+  {
+    anonymous: false,
+    inputs: [
+      {indexed:true,  name:"receiptId",     type:"bytes32"},
+      {indexed:true,  name:"orderId",       type:"bytes32"},
+      {indexed:true,  name:"payer",         type:"address"},
+      {indexed:false, name:"tokenAmount",   type:"uint256"},
+      {indexed:false, name:"totalCents",    type:"uint256"},
+      {indexed:false, name:"itemCount",     type:"uint256"},
+      {indexed:false, name:"storeIdHash",   type:"bytes32"},
+      {indexed:false, name:"terminalIdHash",type:"bytes32"},
+      {indexed:false, name:"cartHash",      type:"bytes32"},
+      {indexed:false, name:"timestamp",     type:"uint256"},
+    ],
+    name: "PaymentCaptured", type: "event"
+  },
+  {
+    anonymous: false,
+    inputs: [
+      {indexed:true,  name:"receiptId",  type:"bytes32"},
+      {indexed:true,  name:"orderId",    type:"bytes32"},
+      {indexed:true,  name:"payer",      type:"address"},
+      {indexed:false, name:"tokenAmount",type:"uint256"},
+      {indexed:false, name:"timestamp",  type:"uint256"},
+    ],
+    name: "PaymentBurned", type: "event"
+  },
+  {
+    anonymous: false,
+    inputs: [
+      {indexed:true,  name:"receiptId",  type:"bytes32"},
+      {indexed:true,  name:"orderId",    type:"bytes32"},
+      {indexed:true,  name:"payer",      type:"address"},
+      {indexed:false, name:"tokenAmount",type:"uint256"},
+      {indexed:false, name:"timestamp",  type:"uint256"},
+    ],
+    name: "PaymentVoided", type: "event"
+  },
+  {
+    inputs: [{name:"receiptId",type:"bytes32"}],
+    name: "getPayment",
+    outputs: [{components:[
+      {name:"payer",type:"address"},
+      {name:"tokenAmount",type:"uint256"},
+      {name:"subtotalCents",type:"uint256"},
+      {name:"taxCents",type:"uint256"},
+      {name:"totalCents",type:"uint256"},
+      {name:"itemCount",type:"uint256"},
+      {name:"capturedAt",type:"uint256"},
+      {name:"settledAt",type:"uint256"},
+      {name:"status",type:"uint8"},
+      {name:"orderId",type:"bytes32"},
+      {name:"storeIdHash",type:"bytes32"},
+      {name:"terminalIdHash",type:"bytes32"},
+      {name:"cartHash",type:"bytes32"},
+    ],type:"tuple"}],
+    stateMutability:"view", type:"function"
+  }
+];
+
+const STATUS_LABELS = ['None','Captured','Voided','Burned'];
+const STATUS_CLASSES = ['','s-captured','s-voided','s-burned'];
+
+function setStatus(msg, loading=false) {
+  const bar = document.getElementById('status-bar');
+  bar.innerHTML = loading
+    ? `<div class="spinner"></div> ${msg}`
+    : msg;
+}
+
+async function runReport() {
+  if (!authed) { alert('Not authenticated.'); return; }
+  const month = parseInt(document.getElementById('sel-month').value);
+  const year  = parseInt(document.getElementById('sel-year').value);
+  const taxRate = parseFloat(document.getElementById('tax-rate').value) / 100;
+  const btn = document.getElementById('btn-run');
+  btn.disabled = true;
+
+  // Date range for selected month
+  const startDate = new Date(year, month, 1, 0, 0, 0);
+  const endDate   = new Date(year, month + 1, 0, 23, 59, 59);
+  const startTs   = Math.floor(startDate.getTime() / 1000);
+  const endTs     = Math.floor(endDate.getTime() / 1000);
+
+  const monthName = startDate.toLocaleString('en-US', { month:'long', year:'numeric' });
+  document.getElementById('report-title').textContent = `Transaction Detail — ${monthName}`;
+
+  setStatus(`Connecting to Base mainnet…`, true);
+
+  try {
+    const provider = new ethers.JsonRpcProvider(CFG.RPC);
+    const escrow   = new ethers.Contract(CFG.ESCROW, ESCROW_ABI, provider);
+    const current  = await provider.getBlockNumber();
+
+    // Base ~2s block time — scan back ~6 months max (~7.8M blocks)
+    // For monthly reports scan a reasonable window
+    const BLOCKS_PER_DAY = 43200; // ~2s blocks
+    const daysBack = Math.ceil((Date.now()/1000 - startTs) / 86400) + 2;
+    const fromBlock = Math.max(0, current - (daysBack * BLOCKS_PER_DAY));
+
+    setStatus(`Scanning blocks ${fromBlock.toLocaleString()} → ${current.toLocaleString()} for ${monthName}…`, true);
+
+    // Fetch all PaymentCaptured events in range
+    const capturedEvents = await escrow.queryFilter(
+      escrow.filters.PaymentCaptured(), fromBlock, current
+    );
+
+    // Fetch burned and voided events to get status
+    const burnedEvents = await escrow.queryFilter(
+      escrow.filters.PaymentBurned(), fromBlock, current
+    );
+    const voidedEvents = await escrow.queryFilter(
+      escrow.filters.PaymentVoided(), fromBlock, current
+    );
+
+    const burnedIds = new Set(burnedEvents.map(e => e.args.receiptId));
+    const voidedIds = new Set(voidedEvents.map(e => e.args.receiptId));
+
+    setStatus(`Processing ${capturedEvents.length} total events…`, true);
+
+    // Filter to selected month using block timestamps
+    const rows = [];
+    for (const ev of capturedEvents) {
+      const block = await provider.getBlock(ev.blockNumber);
+      const ts = Number(block.timestamp);
+      if (ts < startTs || ts > endTs) continue;
+
+      // Get full payment record (has subtotalCents and taxCents)
+      const rec = await escrow.getPayment(ev.args.receiptId);
+
+      const subtotalCents = Number(rec.subtotalCents);
+      const taxCents      = Number(rec.taxCents);
+      const totalCents    = Number(rec.totalCents);
+      const tokenAmt      = parseFloat(ethers.formatUnits(rec.tokenAmount, CFG.SKOOP_DEC));
+
+      let status = 'Captured';
+      if (burnedIds.has(ev.args.receiptId)) status = 'Burned';
+      if (voidedIds.has(ev.args.receiptId)) status = 'Voided';
+
+      rows.push({
+        ts,
+        receiptId: ev.args.receiptId,
+        txHash:    ev.transactionHash,
+        items:     Number(ev.args.itemCount),
+        subtotal:  subtotalCents / 100,
+        tax:       taxCents / 100,
+        total:     totalCents / 100,
+        skoop:     tokenAmt,
+        status,
+      });
+    }
+
+    // Sort by timestamp
+    rows.sort((a,b) => a.ts - b.ts);
+
+    // Aggregate — exclude voided
+    const active = rows.filter(r => r.status !== 'Voided');
+    const burned = rows.filter(r => r.status === 'Burned');
+    const pending = rows.filter(r => r.status === 'Captured');
+
+    const totalTax     = active.reduce((s,r) => s + r.tax, 0);
+    const totalGross   = active.reduce((s,r) => s + r.subtotal, 0);
+    const totalRevenue = active.reduce((s,r) => s + r.total, 0);
+    const totalSkoop   = active.reduce((s,r) => s + r.skoop, 0);
+    const burnedSkoop  = burned.reduce((s,r) => s + r.skoop, 0);
+    const pendingSkoop = pending.reduce((s,r) => s + r.skoop, 0);
+
+    // Update summary cards
+    document.getElementById('c-count').textContent   = active.length;
+    document.getElementById('c-gross').textContent   = '$' + totalGross.toFixed(2);
+    document.getElementById('c-tax').textContent     = '$' + totalTax.toFixed(2);
+    document.getElementById('c-tax-rate').textContent= `@ ${(taxRate*100).toFixed(2)}%`;
+    document.getElementById('c-total').textContent   = '$' + totalRevenue.toFixed(2);
+    document.getElementById('c-burned').textContent  = burnedSkoop.toLocaleString('en-US', {maximumFractionDigits:0});
+    document.getElementById('c-pending').textContent = pendingSkoop.toLocaleString('en-US', {maximumFractionDigits:0});
+
+    // Build table
+    const tbody = document.getElementById('tx-body');
+    if (rows.length === 0) {
+      tbody.innerHTML = `<tr><td colspan="11"><div class="empty"><div class="empty-icon">📋</div><p>No transactions found for ${monthName}</p></div></td></tr>`;
+    } else {
+      tbody.innerHTML = rows.map((r,i) => {
+        const d = new Date(r.ts * 1000);
+        const dateStr = d.toLocaleDateString('en-US', {month:'short',day:'numeric'});
+        const timeStr = d.toLocaleTimeString('en-US', {hour:'2-digit',minute:'2-digit'});
+        const cls = r.status === 'Captured' ? 's-captured' : r.status === 'Burned' ? 's-burned' : 's-voided';
+        const strike = r.status === 'Voided' ? 'style="opacity:0.45;text-decoration:line-through;"' : '';
+        return `<tr ${strike}>
+          <td style="color:var(--ink-lt)">${i+1}</td>
+          <td>${dateStr}</td>
+          <td style="color:var(--ink-lt)">${timeStr}</td>
+          <td class="mono">${r.receiptId.slice(0,10)}…</td>
+          <td style="text-align:center">${r.items}</td>
+          <td class="amount">$${r.subtotal.toFixed(2)}</td>
+          <td class="tax-amt">$${r.tax.toFixed(2)}</td>
+          <td class="amount">$${r.total.toFixed(2)}</td>
+          <td style="color:var(--ink-mid)">${r.skoop.toLocaleString('en-US',{maximumFractionDigits:0})}</td>
+          <td><span class="status-badge ${cls}">${r.status}</span></td>
+          <td><a href="https://basescan.org/tx/${r.txHash}" target="_blank" style="color:var(--green);font-size:0.68rem;">↗</a></td>
+        </tr>`;
+      }).join('');
+    }
+
+    // Totals footer
+    if (rows.length > 0) {
+      const totalRow = `<tr style="background:var(--apricot);font-weight:700;">
+        <td colspan="5" style="text-align:right;padding-right:0.875rem;font-size:0.72rem;color:var(--ink-mid);">TOTALS (excl. voided)</td>
+        <td class="amount">$${totalGross.toFixed(2)}</td>
+        <td class="tax-amt">$${totalTax.toFixed(2)}</td>
+        <td class="amount">$${totalRevenue.toFixed(2)}</td>
+        <td style="color:var(--ink-mid)">${totalSkoop.toLocaleString('en-US',{maximumFractionDigits:0})}</td>
+        <td colspan="2"></td>
+      </tr>`;
+      tbody.innerHTML += totalRow;
+    }
+
+    document.getElementById('summary').style.display = 'grid';
+    document.getElementById('table-wrap').style.display = 'block';
+    document.getElementById('btn-print').disabled = false;
+
+    setStatus(`✓ Report generated — ${rows.length} transaction${rows.length!==1?'s':''} in ${monthName}. Tax collected: $${totalTax.toFixed(2)}`);
+
+  } catch(e) {
+    console.error(e);
+    setStatus(`Error: ${e.message}`);
+  }
+
+  btn.disabled = false;
+}
+
+// Set current month as default
+const now = new Date();
+document.getElementById('sel-month').value = now.getMonth();
+document.getElementById('sel-year').value  = now.getFullYear();
+</script>
+</body>
+</html>
