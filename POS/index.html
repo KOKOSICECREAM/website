@@ -870,6 +870,9 @@ html, body {
     <!-- Settlement / Burn -->
     <div class="action-view" id="burn-view">
       <h3>Settlement</h3>
+      <div style="background:var(--apricot);border-radius:8px;padding:0.5rem 0.75rem;font-size:0.7rem;color:var(--ink-mid);margin-bottom:0.25rem;">
+        Requires owner wallet: <span style="font-family:monospace;color:var(--green);">0x001b…50b</span>
+      </div>
       <div class="burn-stats">
         <div class="burn-stat">
           <div class="burn-stat-label">Captured</div>
@@ -940,7 +943,8 @@ const CFG = {
   CHAIN_ID: 8453,
   SKOOP:   '0xfd3ce21c5Acd8BbbE576d0E2336C210C3cEBeb92',
   ESCROW:  '0x85E8cdedAe8ECd23ee21cdc90D75CbAAe9a54991',
-  SIGNER:  '0xa22675c629743a126E136a80244ddd2c3b2A4b12',
+  SIGNER:  '0xa22675c629743a126E136a80244ddd2c3b2A4b12', // POS signer — signs payment intents
+  OWNER:   '0x001b3fB36FE7E3a741A15Ed8bE68610442E3a50b', // contract owner — required for burnPayments + voidPayment
   SKOOP_DEC: 6,
   TAX_RATE: 0, // tax not applied to SKOOP redemptions
   STORE_ID: 'KOKOS_NASHVILLE_01',
@@ -1176,53 +1180,33 @@ async function generateQR() {
   const cartHash     = ethers.id(cartItems);
   const deadline     = BigInt(Math.floor(Date.now()/1000) + 300); // 5 min
 
-  // Build the digest to sign (match Solidity's _paymentDigest exactly)
-  const domain = {
-    name: 'KOKOSPaymentEscrowPOS',
-    version: '1',
-    chainId: CFG.CHAIN_ID,
-    verifyingContract: CFG.ESCROW
-  };
-  const types = {
-    PaymentIntent: [
-      { name:'receiptId',     type:'bytes32' },
-      { name:'orderId',       type:'bytes32' },
-      { name:'storeIdHash',   type:'bytes32' },
-      { name:'terminalIdHash',type:'bytes32' },
-      { name:'tokenAmount',   type:'uint256' },
-      { name:'subtotalCents', type:'uint256' },
-      { name:'taxCents',      type:'uint256' },
-      { name:'totalCents',    type:'uint256' },
-      { name:'itemCount',     type:'uint256' },
-      { name:'cartHash',      type:'bytes32' },
-      { name:'deadline',      type:'uint256' },
-    ]
-  };
-  const value = {
-    receiptId, orderId, storeIdHash,
-    terminalIdHash: terminalHash,
-    tokenAmount,
-    subtotalCents: BigInt(subtotalCents),
-    taxCents:      BigInt(taxCents),
-    totalCents:    BigInt(totalCents),
-    itemCount:     BigInt(Object.values(cart).reduce((a,b)=>a+b,0)),
-    cartHash,
-    deadline
-  };
+  // Build digest matching Solidity _paymentDigest:
+  // keccak256(abi.encode(receiptId, orderId, storeIdHash, terminalIdHash,
+  //   tokenAmount, subtotalCents, taxCents, totalCents, itemCount, cartHash, deadline))
+  // Then sign with eth_sign which adds \x19Ethereum Signed Message:\n32 prefix
+  // matching: keccak256(abi.encodePacked("\x19Ethereum Signed Message:\n32", digest))
+  const itemCount = BigInt(Object.values(cart).reduce((a,b)=>a+b,0));
+  const digest = ethers.keccak256(ethers.AbiCoder.defaultAbiCoder().encode(
+    ['bytes32','bytes32','bytes32','bytes32','uint256','uint256','uint256','uint256','uint256','bytes32','uint256'],
+    [receiptId, orderId, storeIdHash, terminalHash, tokenAmount,
+     BigInt(subtotalCents), BigInt(taxCents), BigInt(totalCents),
+     itemCount, cartHash, deadline]
+  ));
 
   let signature;
   try {
-    signature = await signer.signTypedData(domain, types, value);
+    // signMessage hashes with the Ethereum prefix — matches contract's ECDSA.recover
+    signature = await signer.signMessage(ethers.getBytes(digest));
   } catch(e) {
     showToast('Signature rejected', 'error');
     closeModal();
     return;
   }
 
-  // Verify the signer matches the authorized POS signer
-  const recovered = ethers.verifyTypedData(domain, types, value, signature);
+  // Verify locally before generating QR
+  const recovered = ethers.verifyMessage(ethers.getBytes(digest), signature);
   if (recovered.toLowerCase() !== CFG.SIGNER.toLowerCase()) {
-    showToast('⚠️ Wrong signer wallet', 'error');
+    showToast('⚠️ Wrong signer wallet — connect ' + CFG.SIGNER.slice(0,6) + '…', 'error');
     closeModal();
     return;
   }
@@ -1516,6 +1500,11 @@ function updateBurnBtn() {
 
 async function burnSelected() {
   if (!signer) { showToast('Connect wallet first', 'error'); return; }
+  // burnPayments is onlyOwner — must be connected as owner wallet
+  if (signerAddr && signerAddr.toLowerCase() !== CFG.OWNER.toLowerCase()) {
+    showToast('⚠️ Connect owner wallet to burn', 'error');
+    return;
+  }
   const checked = [...document.querySelectorAll('#receipt-list input:checked')].map(c => c.value);
   if (!checked.length) return;
 
