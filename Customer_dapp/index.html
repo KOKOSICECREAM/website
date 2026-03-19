@@ -581,7 +581,7 @@ async function execSwap(){
   btn.disabled=false;btn.textContent="Swap for SKOOP 🍦";
 }
 
-// ── QR SCANNER — FIXED: larger qrbox, higher fps, full 0x fields from POS ──
+// ── QR SCANNER ──
 function startScan(){
   if(scannerRunning)return;
   if(typeof Html5Qrcode==="undefined"){showToast("Scanner loading — try again","err");return;}
@@ -590,7 +590,7 @@ function startScan(){
   document.getElementById("btn-cam").style.display="none";
   scanner.start(
     {facingMode:"environment"},
-    {fps:15,qrbox:{width:280,height:280}},
+    {fps:15,qrbox:{width:260,height:260}},
     txt=>{
       scanner.stop().catch(()=>{});
       scannerRunning=false;
@@ -607,14 +607,41 @@ function startScan(){
    });
 }
 
+// POS sends minimal payload: {r, t, sc, tc, xc, ic, dl, sig}
+// We reconstruct the full intent fields the contract needs
+function expandIntent(d){
+  const receiptId     = d.r;
+  const storeIdHash   = ethers.id("KOKOS_NASHVILLE_01");
+  const terminalIdHash= ethers.id("POS_1");
+  const orderId       = ethers.id("ORD_" + receiptId);
+  const cartHash      = ethers.id(CFG.ESCROW + receiptId);
+  return {
+    receiptId,
+    orderId,
+    storeIdHash,
+    terminalIdHash,
+    tokenAmount:    d.t,
+    subtotalCents:  d.sc,
+    taxCents:       d.tc,
+    totalCents:     d.xc,
+    itemCount:      d.ic,
+    cartHash,
+    deadline:       d.dl,
+    signature:      d.sig,
+  };
+}
+
 function parseQR(raw){
   try{
     const d=JSON.parse(raw);
-    const req=["receiptId","orderId","storeIdHash","terminalIdHash","tokenAmount","subtotalCents","taxCents","totalCents","itemCount","cartHash","deadline","signature"];
-    for(const f of req)if(d[f]===undefined)throw new Error("Missing: "+f);
-    if(Date.now()/1000>Number(d.deadline)){showToast("QR expired — ask shop for a new one","err");return;}
-    pendingIntent=d;
-    showConfirm(d);
+    // Support both minimal {r,t,sc,tc,xc,ic,dl,sig} and legacy full format
+    const isMinimal = d.r !== undefined;
+    const intent = isMinimal ? expandIntent(d) : d;
+    const req=["receiptId","tokenAmount","subtotalCents","taxCents","totalCents","itemCount","deadline","signature"];
+    for(const f of req)if(intent[f]===undefined)throw new Error("Missing: "+f);
+    if(Date.now()/1000>Number(intent.deadline)){showToast("QR expired — ask shop for a new one","err");return;}
+    pendingIntent=intent;
+    showConfirm(intent);
   }catch(e){
     console.error("parseQR error:",e);
     showToast("QR error: "+e.message,"err");
@@ -626,7 +653,7 @@ function showConfirm(d){
   const sk=parseFloat(ethers.formatUnits(BigInt(d.tokenAmount),CFG.SKOOP_DEC));
   document.getElementById("cc-usd").textContent="$"+(Number(d.totalCents)/100).toFixed(2);
   document.getElementById("cc-skoop").textContent=sk.toLocaleString("en-US",{maximumFractionDigits:2})+" SKOOP";
-  document.getElementById("cc-items").textContent=d.itemCount+" item"+(d.itemCount>1?"s":"");
+  document.getElementById("cc-items").textContent=d.itemCount+" item"+(Number(d.itemCount)>1?"s":"");
   document.getElementById("cc-sub").textContent="$"+(Number(d.subtotalCents)/100).toFixed(2);
   document.getElementById("cc-tax").textContent="$"+(Number(d.taxCents)/100).toFixed(2);
   document.getElementById("cc-exp").textContent="Expires "+new Date(Number(d.deadline)*1000).toLocaleTimeString();
@@ -640,11 +667,24 @@ async function confirmPay(){
   const btn=document.getElementById("btn-confirm");
   btn.disabled=true;btn.innerHTML='<span class="spinner"></span> Processing...';
   try{
-    const d=pendingIntent;const tokAmt=BigInt(d.tokenAmount);
+    const d=pendingIntent;
+    const tokAmt=BigInt(d.tokenAmount);
     const sk=new ethers.Contract(CFG.SKOOP,ABI_ERC20,signer);
     const al=await sk.allowance(userAddr,CFG.ESCROW);
     if(al<tokAmt){showToast("Approving SKOOP…","");await(await sk.approve(CFG.ESCROW,ethers.MaxUint256)).wait();}
-    const intent={receiptId:d.receiptId,orderId:d.orderId,storeIdHash:d.storeIdHash,terminalIdHash:d.terminalIdHash,tokenAmount:BigInt(d.tokenAmount),subtotalCents:BigInt(d.subtotalCents),taxCents:BigInt(d.taxCents),totalCents:BigInt(d.totalCents),itemCount:BigInt(d.itemCount),cartHash:d.cartHash,deadline:BigInt(d.deadline)};
+    const intent={
+      receiptId:    d.receiptId,
+      orderId:      d.orderId,
+      storeIdHash:  d.storeIdHash,
+      terminalIdHash:d.terminalIdHash,
+      tokenAmount:  BigInt(d.tokenAmount),
+      subtotalCents:BigInt(d.subtotalCents),
+      taxCents:     BigInt(d.taxCents),
+      totalCents:   BigInt(d.totalCents),
+      itemCount:    BigInt(d.itemCount),
+      cartHash:     d.cartHash,
+      deadline:     BigInt(d.deadline)
+    };
     const escrow=new ethers.Contract(CFG.ESCROW,ABI_ESCROW,signer);
     const tx=await escrow.capturePayment(intent,d.signature);
     showToast("Confirming…","");const rcpt=await tx.wait();
