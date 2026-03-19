@@ -317,7 +317,7 @@ html,body{height:100%;overflow:hidden;background:var(--coral);font-family:'Instr
             <div class="cc-row"><span class="ck">SKOOP amount</span><span class="cv big" id="cc-skoop">0</span></div>
             <div class="cc-row"><span class="ck">Items</span><span class="cv" id="cc-items">&#8212;</span></div>
             <div class="cc-row"><span class="ck">Subtotal</span><span class="cv" id="cc-sub">&#8212;</span></div>
-            <div class="cc-row"><span class="ck">Tax</span><span class="cv" id="cc-tax">&#8212;</span></div>
+
             <div class="cc-row"><span class="ck">Expires</span><span class="cv" id="cc-exp">&#8212;</span></div>
             <div class="cc-row"><span class="ck">Receipt ID</span><span class="cv" id="cc-receipt">&#8212;</span></div>
           </div>
@@ -669,7 +669,7 @@ function showConfirm(d){
   document.getElementById("cc-skoop").textContent=sk.toLocaleString("en-US",{maximumFractionDigits:2})+" SKOOP";
   document.getElementById("cc-items").textContent=d.itemCount+" item"+(Number(d.itemCount)>1?"s":"");
   document.getElementById("cc-sub").textContent="$"+(Number(d.subtotalCents)/100).toFixed(2);
-  document.getElementById("cc-tax").textContent="$"+(Number(d.taxCents)/100).toFixed(2);
+
   document.getElementById("cc-exp").textContent="Expires "+new Date(Number(d.deadline)*1000).toLocaleTimeString();
   document.getElementById("cc-receipt").textContent=d.receiptId.slice(0,20)+"…";
   document.getElementById("pay-scan").classList.remove("active");
