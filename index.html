@@ -19,7 +19,8 @@
   --lavender:  #e3d1e4;
   --sand:      #ffddad;
   --coral-mid: #fdaf9a;
-  --green:     #11483d;
+  --blush:     #f7b8a6;
+  --green:     #11483d;   /* accent ONLY — borders, text, icons */
   --cream:     #fffaf7;
   --ink:       #1a1008;
   --border:    3px solid #1a1008;
@@ -32,10 +33,10 @@ body {
   overflow-x: hidden;
 }
 
-/* SITEWIDE BANNER */
+/* SITEWIDE BANNER — was dark green, now mint */
 .site-banner {
-  background: var(--green);
-  color: var(--mint);
+  background: var(--mint);
+  color: var(--ink);
   text-align: center;
   padding: 0.55rem 1rem;
   font-size: 0.7rem;
@@ -89,8 +90,9 @@ nav {
   transition: background 0.15s;
 }
 .nav-links a:hover { background: rgba(0,0,0,0.06); }
-.nav-cta { background: var(--green) !important; color: var(--coral) !important; }
-.nav-cta:hover { background: #0d3a31 !important; }
+/* CTA — was dark green, now lavender */
+.nav-cta { background: var(--lavender) !important; color: var(--ink) !important; }
+.nav-cta:hover { background: #d4bfd5 !important; }
 
 /* MARQUEE */
 .marquee-wrap {
@@ -117,7 +119,7 @@ nav {
 .marquee-track span::before {
   content: '✦';
   margin-right: 2.5rem;
-  color: var(--green);
+  color: var(--green);   /* accent ✓ */
 }
 @keyframes marquee {
   from { transform: translateX(0); }
@@ -135,10 +137,11 @@ nav {
   gap: 1.6rem;
   border-right: var(--border);
 }
+/* Hero tag — was dark green, now lavender */
 .hero-tag {
   display: inline-block;
-  background: var(--green);
-  color: var(--coral);
+  background: var(--lavender);
+  color: var(--ink);
   font-size: 0.65rem;
   font-weight: 600;
   letter-spacing: 0.2em;
@@ -156,7 +159,7 @@ nav {
   text-transform: uppercase;
   letter-spacing: -0.02em;
 }
-.hero-left h1 em { font-style: italic; color: var(--green); text-transform: none; }
+.hero-left h1 em { font-style: italic; color: var(--green); text-transform: none; }  /* accent ✓ */
 .hero-left p {
   font-size: 1rem;
   font-weight: 300;
@@ -166,10 +169,11 @@ nav {
   opacity: 0.8;
 }
 .hero-btns { display: flex; gap: 0; }
+/* Primary button — was dark green, now coral-mid */
 .btn-primary {
   display: inline-block;
-  background: var(--green);
-  color: var(--coral);
+  background: var(--coral-mid);
+  color: var(--ink);
   padding: 1rem 2.2rem;
   font-size: 0.8rem;
   font-weight: 600;
@@ -179,7 +183,7 @@ nav {
   border: var(--border);
   cursor: pointer;
 }
-.btn-primary:hover { background: #0d3a31; }
+.btn-primary:hover { background: var(--blush); }
 .btn-secondary {
   display: inline-block;
   background: transparent;
@@ -218,31 +222,6 @@ nav {
   object-position: center 20%;
   display: block;
 }
-.hero-block {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 3rem;
-  position: relative;
-  overflow: hidden;
-  border-bottom: var(--border);
-}
-.hero-block:last-child { border-bottom: none; }
-.scoop-circle {
-  width: 180px; height: 180px;
-  border-radius: 50%;
-  border: var(--border);
-  z-index: 2;
-}
-.flavor-tag-label {
-  position: absolute;
-  bottom: 1.8rem; left: 2rem;
-  font-family: 'DM Serif Display', serif;
-  font-style: italic;
-  font-size: 1.15rem;
-  color: var(--ink);
-  opacity: 0.55;
-}
 
 /* HEADLINE BAND */
 .headline-band {
@@ -259,7 +238,7 @@ nav {
   letter-spacing: -0.02em;
   color: var(--ink);
 }
-.headline-band h2 em { font-style: italic; color: var(--green); text-transform: none; }
+.headline-band h2 em { font-style: italic; color: var(--green); text-transform: none; }  /* accent ✓ */
 
 /* FLAVOR GRID */
 .flavor-grid-section { border-bottom: var(--border); }
@@ -275,7 +254,7 @@ nav {
   font-weight: 600;
   letter-spacing: 0.2em;
   text-transform: uppercase;
-  color: var(--green);
+  color: var(--green);   /* accent ✓ */
   margin-bottom: 0.5rem;
 }
 .section-heading {
@@ -287,7 +266,7 @@ nav {
   text-transform: uppercase;
   letter-spacing: -0.01em;
 }
-.section-heading em { font-style: italic; color: var(--green); text-transform: none; }
+.section-heading em { font-style: italic; color: var(--green); text-transform: none; }  /* accent ✓ */
 .see-all-link {
   font-size: 0.7rem;
   font-weight: 600;
@@ -328,6 +307,7 @@ nav {
   line-height: 1.15;
 }
 .flavor-desc { font-size: 0.82rem; font-weight: 300; color: var(--ink); opacity: 0.7; line-height: 1.65; }
+/* Badge — border/text accent only ✓ */
 .flavor-badge {
   display: inline-block;
   font-size: 0.62rem;
@@ -432,13 +412,13 @@ nav {
   font-weight: 600;
   letter-spacing: 0.2em;
   text-transform: uppercase;
-  color: var(--green);
+  color: var(--green);   /* accent ✓ */
   margin-bottom: 1rem;
   display: flex;
   align-items: center;
   gap: 0.5rem;
 }
-.kicker::before { content: ''; display: block; width: 14px; height: 2px; background: var(--green); }
+.kicker::before { content: ''; display: block; width: 14px; height: 2px; background: var(--green); }  /* accent ✓ */
 .col-title {
   font-family: 'DM Serif Display', serif;
   font-size: clamp(1.7rem, 2.5vw, 2.4rem);
@@ -447,13 +427,11 @@ nav {
   color: var(--ink);
   margin-bottom: 1.2rem;
 }
-.col-title em { font-style: italic; color: var(--green); }
+.col-title em { font-style: italic; color: var(--green); }  /* accent ✓ */
 .col-body { font-size: 0.9rem; font-weight: 300; color: var(--ink); line-height: 1.85; opacity: 0.8; flex: 1; }
 .stat-row { display: flex; gap: 2rem; margin-top: 2rem; }
-.stat-num { font-family: 'DM Serif Display', serif; font-size: 3rem; color: var(--green); line-height: 1; }
+.stat-num { font-family: 'DM Serif Display', serif; font-size: 3rem; color: var(--green); line-height: 1; }  /* accent ✓ */
 .stat-lbl { font-size: 0.65rem; font-weight: 500; letter-spacing: 0.06em; color: var(--ink); opacity: 0.6; margin-top: 0.2rem; }
-.colorblock-mini { display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; }
-.colorblock-mini div { height: 70px; border: 1.5px solid rgba(0,0,0,0.1); }
 
 /* PRESS */
 .press-section { border-bottom: var(--border); }
@@ -465,8 +443,9 @@ nav {
   justify-content: space-between;
 }
 .press-feature { display: grid; grid-template-columns: 1fr 1fr; border-bottom: var(--border); }
+/* Press quote col — was dark green, now coral-mid */
 .press-quote-col {
-  background: var(--green);
+  background: var(--coral-mid);
   padding: 4rem 3.5rem;
   border-right: var(--border);
   display: flex;
@@ -475,15 +454,16 @@ nav {
 .big-quote-mark {
   font-family: 'DM Serif Display', serif;
   font-size: 6rem;
-  color: var(--coral);
+  color: var(--ink);
   line-height: 0.8;
   margin-bottom: 1.5rem;
+  opacity: 0.35;
 }
 .quote-text {
   font-family: 'DM Serif Display', serif;
   font-style: italic;
   font-size: clamp(1.1rem, 1.8vw, 1.45rem);
-  color: var(--coral);
+  color: var(--ink);
   line-height: 1.5;
   flex: 1;
 }
@@ -492,7 +472,8 @@ nav {
   font-weight: 600;
   letter-spacing: 0.16em;
   text-transform: uppercase;
-  color: var(--mint);
+  color: var(--ink);
+  opacity: 0.55;
   margin-top: 2rem;
 }
 .press-article-col {
@@ -505,7 +486,7 @@ nav {
 .press-tag {
   display: inline-block;
   background: var(--coral);
-  color: var(--green);
+  color: var(--ink);
   font-size: 0.6rem;
   font-weight: 600;
   letter-spacing: 0.14em;
@@ -530,12 +511,13 @@ nav {
   opacity: 0.75;
   line-height: 1.8;
 }
+/* Press read link — was dark green, now coral-mid */
 .press-read-link {
   display: inline-flex;
   align-items: center;
   gap: 0.5rem;
-  background: var(--green);
-  color: var(--coral);
+  background: var(--coral-mid);
+  color: var(--ink);
   padding: 0.9rem 1.8rem;
   font-size: 0.76rem;
   font-weight: 600;
@@ -546,13 +528,14 @@ nav {
   margin-top: 2rem;
   align-self: flex-start;
 }
+.press-read-link:hover { background: var(--blush); }
 .reviews-row { display: grid; grid-template-columns: repeat(3, 1fr); }
 .review-card { padding: 2.5rem 2rem; border-right: var(--border); }
 .review-card:last-child { border-right: none; }
 .review-quote-mark {
   font-family: 'DM Serif Display', serif;
   font-size: 3.5rem;
-  color: var(--green);
+  color: var(--green);   /* accent ✓ */
   line-height: 0.8;
   margin-bottom: 1rem;
 }
@@ -562,12 +545,12 @@ nav {
   font-weight: 600;
   letter-spacing: 0.14em;
   text-transform: uppercase;
-  color: var(--green);
+  color: var(--green);   /* accent ✓ */
   margin-top: 1rem;
 }
 
-/* PLANT BAND */
-.plant-band { background: var(--green); border-bottom: var(--border); display: grid; grid-template-columns: 1fr 1fr; }
+/* PLANT BAND — was dark green, now lavender */
+.plant-band { background: var(--lavender); border-bottom: var(--border); display: grid; grid-template-columns: 1fr 1fr; }
 .plant-band-left {
   padding: 4rem 3.5rem;
   border-right: var(--border);
@@ -581,7 +564,7 @@ nav {
   font-size: clamp(2.5rem, 4vw, 4.5rem);
   font-weight: 400;
   font-style: italic;
-  color: var(--coral);
+  color: var(--ink);
   line-height: 1.0;
 }
 .plant-band-sub {
@@ -589,7 +572,7 @@ nav {
   font-weight: 500;
   letter-spacing: 0.2em;
   text-transform: uppercase;
-  color: var(--mint);
+  color: var(--green);   /* accent ✓ */
 }
 .plant-band-right {
   padding: 4rem 3.5rem;
@@ -598,10 +581,11 @@ nav {
   justify-content: center;
   gap: 1.5rem;
 }
+/* Plant pill — was mint on dark green, now green border on lavender bg */
 .plant-pill {
   display: inline-block;
-  border: 2px solid var(--mint);
-  color: var(--mint);
+  border: 2px solid var(--green);   /* accent ✓ */
+  color: var(--green);              /* accent ✓ */
   font-size: 0.7rem;
   font-weight: 600;
   letter-spacing: 0.16em;
@@ -609,7 +593,7 @@ nav {
   padding: 0.5rem 1.2rem;
   align-self: flex-start;
 }
-.plant-desc { font-size: 0.95rem; font-weight: 300; color: rgba(205,230,215,0.8); line-height: 1.8; max-width: 420px; }
+.plant-desc { font-size: 0.95rem; font-weight: 300; color: var(--ink); opacity: 0.8; line-height: 1.8; max-width: 420px; }
 
 /* CONTACT */
 .contact-grid { display: grid; grid-template-columns: 1fr 1fr; border-bottom: var(--border); }
@@ -625,19 +609,19 @@ nav {
   letter-spacing: -0.01em;
   margin-bottom: 2.5rem;
 }
-.contact-title em { font-style: italic; color: var(--green); text-transform: none; }
+.contact-title em { font-style: italic; color: var(--green); text-transform: none; }  /* accent ✓ */
 .contact-details { display: flex; flex-direction: column; gap: 1.5rem; }
 .c-label {
   font-size: 0.6rem;
   font-weight: 600;
   letter-spacing: 0.2em;
   text-transform: uppercase;
-  color: var(--green);
+  color: var(--green);   /* accent ✓ */
   margin-bottom: 0.2rem;
 }
 .c-value { font-size: 0.95rem; font-weight: 300; color: var(--ink); line-height: 1.65; }
 .c-value a { color: inherit; text-decoration: none; border-bottom: 1px solid rgba(0,0,0,0.2); }
-.c-value a:hover { color: var(--green); border-bottom-color: var(--green); }
+.c-value a:hover { color: var(--green); border-bottom-color: var(--green); }  /* accent ✓ */
 .hours-grid { display: grid; grid-template-columns: auto 1fr; gap: 0.15rem 1.5rem; }
 .h-day { font-size: 0.9rem; font-weight: 300; color: var(--ink); }
 .h-time { font-size: 0.9rem; font-weight: 500; color: var(--ink); }
@@ -654,9 +638,10 @@ nav {
 }
 .form-field:focus { background: white; }
 .form-ta { resize: none; height: 105px; }
+/* Form submit — was dark green, now coral-mid */
 .form-submit {
-  background: var(--green);
-  color: var(--coral);
+  background: var(--coral-mid);
+  color: var(--ink);
   border: var(--border);
   padding: 1rem 2.4rem;
   font-family: 'Instrument Sans', sans-serif;
@@ -666,6 +651,7 @@ nav {
   text-transform: uppercase;
   cursor: pointer;
 }
+.form-submit:hover { background: var(--blush); }
 
 /* FOOTER */
 footer { background: var(--coral); border-top: var(--border); }
@@ -697,30 +683,10 @@ footer { background: var(--coral); border-top: var(--border); }
 
 /* RESPONSIVE */
 @media (max-width: 960px) {
-  .hero {
-    grid-template-columns: 1fr;
-  }
-
-  .hero-left {
-    padding: 3.5rem 2rem;
-    border-right: none;
-  }
-
-  .hero-right {
-    display: block;
-    min-height: 320px;
-    border-left: none;
-    border-top: var(--border);
-  }
-
-  .hero-right img {
-    width: 100%;
-    height: 320px;
-    object-fit: cover;
-    object-position: center;
-    display: block;
-  }
-
+  .hero { grid-template-columns: 1fr; }
+  .hero-left { padding: 3.5rem 2rem; border-right: none; }
+  .hero-right { display: block; min-height: 320px; border-left: none; border-top: var(--border); }
+  .hero-right img { width: 100%; height: 320px; object-fit: cover; object-position: center; display: block; }
   .google-reviews-grid { grid-template-columns: 1fr 1fr; }
   .g-review-card:nth-child(5) { border-right: var(--border); }
   .g-review-card:nth-child(2n) { border-right: none; }
@@ -809,7 +775,8 @@ footer { background: var(--coral); border-top: var(--border); }
     </div>
   </div>
   <div class="hero-right">
-<img src="cone.jpg" alt="KOKOS Ice Cream" />  </div>
+    <img src="cone.jpg" alt="KOKOS Ice Cream" />
+  </div>
 </section>
 
 <!-- HEADLINE BAND -->
@@ -836,7 +803,7 @@ footer { background: var(--coral); border-top: var(--border); }
     <div class="flavor-card" style="background:var(--mint);">
       <div class="flavor-dot" style="background:#7dc4a2;"></div>
       <div class="flavor-name">Mint Chocolate Chip</div>
-      <div class="flavor-desc">Peppermint and Chlorophyll  with generous dark chocolate chips throughout</div>
+      <div class="flavor-desc">Peppermint and Chlorophyll with generous dark chocolate chips throughout</div>
       <span class="flavor-badge">Fan Favorite</span>
     </div>
     <div class="flavor-card" style="background:var(--apricot);">
@@ -887,10 +854,7 @@ footer { background: var(--coral); border-top: var(--border); }
     <div class="g-review-card">
       <div class="g-review-header">
         <div class="g-avatar" style="background:#fdcec1;">★</div>
-        <div>
-          
-          <div class="g-stars">★★★★★</div>
-        </div>
+        <div><div class="g-stars">★★★★★</div></div>
         <div class="g-logo"><svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/><path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/><path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z" fill="#FBBC05"/><path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/></svg></div>
       </div>
       <p class="g-review-text">"The texture/consistency is actually better than dairy ice cream. They always have fun flavors and the people working are always the sweetest."</p>
@@ -898,10 +862,7 @@ footer { background: var(--coral); border-top: var(--border); }
     <div class="g-review-card">
       <div class="g-review-header">
         <div class="g-avatar" style="background:#cde6d7;">★</div>
-        <div>
-          
-          <div class="g-stars">★★★★★</div>
-        </div>
+        <div><div class="g-stars">★★★★★</div></div>
         <div class="g-logo"><svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/><path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/><path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z" fill="#FBBC05"/><path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/></svg></div>
       </div>
       <p class="g-review-text">"Seriously I wouldn't even know it's vegan! I had the Belgian chocolate &amp; cookies 'n cream — both were so creamy and full of flavor."</p>
@@ -909,10 +870,7 @@ footer { background: var(--coral); border-top: var(--border); }
     <div class="g-review-card">
       <div class="g-review-header">
         <div class="g-avatar" style="background:#e3d1e4;">★</div>
-        <div>
-          
-          <div class="g-stars">★★★★★</div>
-        </div>
+        <div><div class="g-stars">★★★★★</div></div>
         <div class="g-logo"><svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/><path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/><path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z" fill="#FBBC05"/><path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/></svg></div>
       </div>
       <p class="g-review-text">"This is THE best plant based ice cream I have ever had! I wish I lived in Nashville just to get this ice cream!"</p>
@@ -920,10 +878,7 @@ footer { background: var(--coral); border-top: var(--border); }
     <div class="g-review-card">
       <div class="g-review-header">
         <div class="g-avatar" style="background:#ffddad;">★</div>
-        <div>
-          
-          <div class="g-stars">★★★★★</div>
-        </div>
+        <div><div class="g-stars">★★★★★</div></div>
         <div class="g-logo"><svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/><path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/><path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z" fill="#FBBC05"/><path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/></svg></div>
       </div>
       <p class="g-review-text">"Best ice cream ever. Wow — really incredible whether you have dietary restrictions or not. Adorable space with a truly wonderful vibe. Definitely worth a visit."</p>
@@ -931,10 +886,7 @@ footer { background: var(--coral); border-top: var(--border); }
     <div class="g-review-card">
       <div class="g-review-header">
         <div class="g-avatar" style="background:#fae2d8;">★</div>
-        <div>
-          
-          <div class="g-stars">★★★★★</div>
-        </div>
+        <div><div class="g-stars">★★★★★</div></div>
         <div class="g-logo"><svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/><path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/><path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z" fill="#FBBC05"/><path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/></svg></div>
       </div>
       <p class="g-review-text">"I won't even say this is the best 'vegan' ice cream I've had — it's hands down just the best ice cream I've ever had! Rotating flavors and such a fun spot."</p>
@@ -967,7 +919,6 @@ footer { background: var(--coral); border-top: var(--border); }
     <div class="kicker">The Shop</div>
     <h3 class="col-title">The happiest<br>place in <em>Nashville</em></h3>
     <p class="col-body">Step into the flagship at OneC1TY and you feel it immediately — emerald velvet seating, warm lighting, happy plants, and pale ice-cream-colored walls. Mirrors everywhere so you feel good about treating yourself. No guilt. Just joy.</p>
-
     <div style="margin-top:auto; padding-top:2rem; border: var(--border); overflow:hidden;">
       <img src="shop.jpg" alt="KOKOS shop interior" style="width:100%; display:block;">
     </div>
@@ -977,7 +928,6 @@ footer { background: var(--coral); border-top: var(--border); }
     <div class="kicker">The Secret</div>
     <h3 class="col-title">Objectively<br><em>better</em></h3>
     <p class="col-body">The base is 100% organic coconut milk and cream, organic sugar, pink Himalayan salt, premium chocolate, and fresh fruit. No artificial dyes, no shortcuts. European gelato silkiness meets classic American ice cream richness. People walk in skeptical, take one bite, and say the same thing: <em>"Wait — this is plant-based?"</em></p>
-
     <div style="margin-top:auto; padding-top:2rem; border: var(--border); overflow:hidden;">
       <img src="Icecream.jpg" alt="Plant-based ice cream scoop" style="width:100%; display:block;">
     </div>
@@ -1036,7 +986,7 @@ footer { background: var(--coral); border-top: var(--border); }
   <div class="plant-band-right">
     <span class="plant-pill">100% Organic</span>
     <p class="plant-desc">No dairy. No nuts. No Eggs. No artificial anything. Just organic coconut milk and cream, real ingredients, and a recipe so good it makes people question everything they thought they knew about ice cream.</p>
-    <a href="#contact" style="display:inline-flex;align-items:center;gap:0.5rem;background:var(--coral);color:var(--ink);padding:0.9rem 1.8rem;font-size:0.76rem;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;text-decoration:none;border:2px solid var(--coral);align-self:flex-start;">Visit the Shop →</a>
+    <a href="#contact" style="display:inline-flex;align-items:center;gap:0.5rem;background:var(--coral-mid);color:var(--ink);padding:0.9rem 1.8rem;font-size:0.76rem;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;text-decoration:none;border:var(--border);align-self:flex-start;">Visit the Shop →</a>
   </div>
 </div>
 
@@ -1099,7 +1049,8 @@ footer { background: var(--coral); border-top: var(--border); }
       <a href="https://www.instagram.com/kokosicecream" target="_blank">Instagram</a>
       <a href="https://www.facebook.com/kokosicecream" target="_blank">Facebook</a>
       <a href="https://www.tiktok.com/@kokosicecream" target="_blank">TikTok</a>
-      <a href="https://www.kokosicecream.com" target="_blank">kokosicecream.com</a>      <a href="mailto:info@kokosicecream.com">Contact</a>
+      <a href="https://www.kokosicecream.com" target="_blank">kokosicecream.com</a>
+      <a href="mailto:info@kokosicecream.com">Contact</a>
     </div>
   </div>
   <div class="footer-bottom">
