@@ -1144,18 +1144,25 @@ async function generateQR() {
 
   console.log('QR payload chars:', qrPayload.length);
 
-  // qrcodejs uses a div container, not a canvas element directly
+  // Generate QR — pure black on white for maximum camera contrast
   const wrap = document.getElementById('qr-canvas-wrap');
-  wrap.innerHTML = ''; // clear previous
+  wrap.innerHTML = '';
   try {
     new QRCode(wrap, {
       text: qrPayload,
-      width: 260,
-      height: 260,
-      colorDark: '#11483d',
+      width: 320,
+      height: 320,
+      colorDark: '#000000',
       colorLight: '#ffffff',
       correctLevel: QRCode.CorrectLevel.L
     });
+    // Force img to display block immediately (qrcodejs quirk)
+    setTimeout(() => {
+      const img = wrap.querySelector('img');
+      const canvas = wrap.querySelector('canvas');
+      if (img) { img.style.display = 'block'; img.style.width = '320px'; img.style.height = '320px'; }
+      if (canvas) { canvas.style.display = 'block'; }
+    }, 50);
   } catch(qrErr) {
     console.error('QR gen error:', qrErr);
     showToast('QR error: ' + qrErr.message, 'error');
