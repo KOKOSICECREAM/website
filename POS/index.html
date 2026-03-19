@@ -43,11 +43,22 @@ html, body {
 
 /* ─── LAYOUT ─── */
 #shell {
-  display: grid;
-  grid-template-columns: 260px 1fr 360px;
-  grid-template-rows: 64px 1fr;
+  display: flex;
+  flex-direction: column;
   height: 100vh;
   overflow: hidden;
+}
+
+/* Desktop: restore three-column grid */
+@media (min-width: 900px) {
+  #shell {
+    display: grid;
+    grid-template-columns: 260px 1fr 360px;
+    grid-template-rows: 64px 1fr;
+  }
+  #topbar { grid-column: 1 / -1; }
+  #mobile-nav { display: none !important; }
+  #sidebar, #cart-panel, #actions-panel { display: flex !important; }
 }
 
 /* ─── TOPBAR ─── */
@@ -679,6 +690,59 @@ html, body {
 ::-webkit-scrollbar { width: 4px; }
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb { background: var(--coral-mid); border-radius: 4px; }
+
+/* ─── MOBILE NAV ─── */
+#mobile-nav {
+  display: flex;
+  background: var(--white);
+  border-top: 1px solid var(--border);
+  flex-shrink: 0;
+}
+
+.mnav-btn {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 0.6rem 0.4rem;
+  background: none;
+  border: none;
+  font-family: inherit;
+  font-size: 0.6rem;
+  font-weight: 600;
+  color: var(--ink-lt);
+  cursor: pointer;
+  gap: 0.2rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  transition: all 0.15s;
+  border-top: 2px solid transparent;
+}
+.mnav-btn .mnav-icon { font-size: 1.3rem; }
+.mnav-btn.active { color: var(--green); border-top-color: var(--green); }
+
+/* Mobile: show only active panel */
+@media (max-width: 899px) {
+  #topbar { padding: 0 1rem; }
+  .tab-pill { display: none; }
+  #sidebar, #cart-panel, #actions-panel {
+    display: none;
+    flex: 1;
+    overflow: hidden;
+  }
+  #sidebar.mob-active,
+  #cart-panel.mob-active,
+  #actions-panel.mob-active { display: flex; }
+  /* Make menu grid 4 columns on mobile for big items */
+  #menu-grid { grid-template-columns: repeat(4, 1fr); gap: 0.5rem; }
+  .mi-emoji { font-size: 1.6rem; margin-bottom: 0.2rem; }
+  .mi-name { font-size: 0.7rem; }
+  .mi-price { font-size: 0.68rem; }
+  /* Topbar compact on mobile */
+  .logo span { display: none; }
+  #wallet-btn { font-size: 0.7rem; padding: 0.35rem 0.8rem; }
+}
 </style>
 </head>
 <body>
@@ -809,6 +873,23 @@ html, body {
     </div>
 
   </aside>
+
+  <!-- MOBILE BOTTOM NAV -->
+  <nav id="mobile-nav">
+    <button class="mnav-btn active" id="mnav-menu" onclick="mobileTab('menu')">
+      <span class="mnav-icon">🍦</span>Menu
+    </button>
+    <button class="mnav-btn" id="mnav-order" onclick="mobileTab('order')">
+      <span class="mnav-icon">🛒</span>Order
+      <span id="mnav-badge" style="display:none;background:var(--green);color:var(--coral);border-radius:999px;padding:0 5px;font-size:0.55rem;line-height:1.4;margin-top:-2px;"></span>
+    </button>
+    <button class="mnav-btn" id="mnav-rewards" onclick="mobileTab('rewards')">
+      <span class="mnav-icon">🎁</span>Rewards
+    </button>
+    <button class="mnav-btn" id="mnav-settle" onclick="mobileTab('settle')">
+      <span class="mnav-icon">🔥</span>Settle
+    </button>
+  </nav>
 
 </div>
 
@@ -1025,6 +1106,7 @@ function renderCart() {
   });
 
   updateTotals();
+  if(typeof updateMobileBadge==='function') updateMobileBadge();
 }
 
 function updateTotals() {
@@ -1051,6 +1133,12 @@ async function openCheckout() {
   if (!Object.keys(cart).length) return;
   document.getElementById('modal-overlay').classList.add('open');
   await generateQR();
+}
+
+// Mobile: tap menu item -> auto-switch to order tab after adding
+function addToCartMobile(id) {
+  addToCart(id);
+  // On mobile, briefly flash the order badge — don't auto-navigate, let staff keep adding
 }
 
 async function generateQR() {
@@ -1124,20 +1212,18 @@ async function generateQR() {
     return;
   }
 
-  // Named JSON payload matching customer dapp parseQR() field expectations exactly.
-  // Strip 0x from bytes32 values to reduce size — customer dapp restores them.
-  const strip = h => h.replace(/^0x/,'');
+  // Full 0x values — customer dapp ethers.js requires them as-is
   const qrPayload = JSON.stringify({
-    receiptId:      strip(receiptId),
-    orderId:        strip(orderId),
-    storeIdHash:    strip(storeIdHash),
-    terminalIdHash: strip(terminalHash),
+    receiptId,
+    orderId,
+    storeIdHash,
+    terminalIdHash: terminalHash,
     tokenAmount:    tokenAmount.toString(),
     subtotalCents,
     taxCents,
     totalCents,
     itemCount:      Object.values(cart).reduce((a,b)=>a+b,0),
-    cartHash:       strip(cartHash),
+    cartHash,
     deadline:       deadline.toString(),
     signature,
   });
@@ -1437,9 +1523,54 @@ function showToast(msg, type='') {
   toastTimer = setTimeout(() => t.classList.remove('show'), 3500);
 }
 
+// ─── MOBILE TAB SWITCHING ────────────────────────────────────────────────────
+function mobileTab(tab) {
+  // Only applies on mobile
+  if (window.innerWidth >= 900) return;
+  const map = {
+    menu:    { panel: 'sidebar',       btn: 'mnav-menu' },
+    order:   { panel: 'cart-panel',    btn: 'mnav-order' },
+    rewards: { panel: 'actions-panel', btn: 'mnav-rewards', sub: 'rewards' },
+    settle:  { panel: 'actions-panel', btn: 'mnav-settle',  sub: 'burn' },
+  };
+  const cfg = map[tab];
+  if (!cfg) return;
+  // Hide all panels
+  ['sidebar','cart-panel','actions-panel'].forEach(id => {
+    document.getElementById(id).classList.remove('mob-active');
+  });
+  // Show target
+  document.getElementById(cfg.panel).classList.add('mob-active');
+  // Switch sub-panel if actions
+  if (cfg.sub) switchPanel(cfg.sub);
+  // Update nav buttons
+  document.querySelectorAll('.mnav-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById(cfg.btn).classList.add('active');
+}
+
+function initMobileLayout() {
+  if (window.innerWidth < 900) {
+    // Default: show menu tab
+    document.getElementById('sidebar').classList.add('mob-active');
+  }
+}
+
 // ─── INIT ─────────────────────────────────────────────────────────────────────
 renderMenu();
 renderCart();
+initMobileLayout();
+
+// Update cart badge in mobile nav
+function updateMobileBadge() {
+  const count = Object.values(cart).reduce((a,b)=>a+b,0);
+  const badge = document.getElementById('mnav-badge');
+  if (count > 0) {
+    badge.textContent = count;
+    badge.style.display = 'inline';
+  } else {
+    badge.style.display = 'none';
+  }
+}
 
 // Auto-connect if already authorized
 if (window.ethereum) {
