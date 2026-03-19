@@ -1124,26 +1124,23 @@ async function generateQR() {
     return;
   }
 
-  // Compact array payload — minimizes QR data size for reliable scanning
-  // Order: [version, receiptId, orderId, storeIdHash, terminalIdHash,
-  //         tokenAmount, subtotalCents, taxCents, totalCents, itemCount,
-  //         cartHash, deadline, signature, escrow]
-  const qrPayload = JSON.stringify([
-    1,
-    receiptId,
-    orderId,
-    storeIdHash,
-    terminalHash,
-    tokenAmount.toString(),
+  // Named JSON payload matching customer dapp parseQR() field expectations exactly.
+  // Strip 0x from bytes32 values to reduce size — customer dapp restores them.
+  const strip = h => h.replace(/^0x/,'');
+  const qrPayload = JSON.stringify({
+    receiptId:      strip(receiptId),
+    orderId:        strip(orderId),
+    storeIdHash:    strip(storeIdHash),
+    terminalIdHash: strip(terminalHash),
+    tokenAmount:    tokenAmount.toString(),
     subtotalCents,
     taxCents,
     totalCents,
-    Object.values(cart).reduce((a,b)=>a+b,0),
-    cartHash,
-    deadline.toString(),
+    itemCount:      Object.values(cart).reduce((a,b)=>a+b,0),
+    cartHash:       strip(cartHash),
+    deadline:       deadline.toString(),
     signature,
-    CFG.ESCROW
-  ]);
+  });
 
   console.log('QR payload chars:', qrPayload.length);
 
