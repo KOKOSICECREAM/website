@@ -7,7 +7,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400;1,600&family=Instrument+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/ethers@6.13.4/dist/ethers.umd.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
 <style>
 :root {
@@ -820,9 +820,7 @@ html, body {
       <button class="modal-close" onclick="closeModal()">✕</button>
     </div>
     <div class="modal-body">
-      <div id="qr-canvas-wrap">
-        <canvas id="qr-canvas"></canvas>
-      </div>
+      <div id="qr-canvas-wrap"></div>
       <div class="modal-order-summary" id="modal-summary"></div>
       <div class="modal-status" id="modal-status">Waiting for customer to scan…</div>
       <div class="modal-actions">
@@ -1149,14 +1147,17 @@ async function generateQR() {
 
   console.log('QR payload chars:', qrPayload.length);
 
-  const canvas = document.getElementById('qr-canvas');
-  canvas.style.display = 'block';
+  // qrcodejs uses a div container, not a canvas element directly
+  const wrap = document.getElementById('qr-canvas-wrap');
+  wrap.innerHTML = ''; // clear previous
   try {
-    await QRCode.toCanvas(canvas, qrPayload, {
+    new QRCode(wrap, {
+      text: qrPayload,
       width: 260,
-      margin: 1,
-      errorCorrectionLevel: 'L',
-      color: { dark: '#11483d', light: '#ffffff' }
+      height: 260,
+      colorDark: '#11483d',
+      colorLight: '#ffffff',
+      correctLevel: QRCode.CorrectLevel.L
     });
   } catch(qrErr) {
     console.error('QR gen error:', qrErr);
