@@ -579,11 +579,18 @@ html, body {
 #modal {
   background: var(--cream);
   border-radius: 20px;
-  width: 460px;
-  max-width: 95vw;
+  width: 400px;
+  max-width: calc(100vw - 24px);
   overflow: hidden;
   box-shadow: var(--shadow-lg);
   animation: modalIn 0.22s ease;
+}
+.modal-body {
+  padding: 1.25rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.875rem;
 }
 
 @keyframes modalIn {
@@ -615,18 +622,26 @@ html, body {
 }
 .modal-close:hover { color: var(--ink); }
 
-.modal-body { padding: 1.5rem; display: flex; flex-direction: column; align-items: center; gap: 1rem; }
 
 #qr-canvas-wrap {
   background: var(--white);
   border-radius: 16px;
-  padding: 1.25rem;
+  padding: 16px;           /* quiet zone — scanners need this white border */
   border: 2px solid var(--coral-mid);
-  display: flex;
+  display: inline-flex;
   align-items: center;
   justify-content: center;
+  max-width: 100%;
+  box-sizing: border-box;
 }
-#qr-canvas-wrap canvas { display: block; }
+/* qrcodejs renders both canvas and img — constrain both */
+#qr-canvas-wrap canvas,
+#qr-canvas-wrap img {
+  display: block !important;
+  width: 240px !important;
+  height: 240px !important;
+  max-width: 240px !important;
+}
 
 .modal-order-summary {
   width: 100%;
@@ -1228,25 +1243,25 @@ async function generateQR() {
 
   console.log('QR payload chars:', qrPayload.length);
 
-  // Generate QR — pure black on white for maximum camera contrast
+  // Generate QR — 240px native, pure black/white, quiet zone handled by CSS padding
   const wrap = document.getElementById('qr-canvas-wrap');
   wrap.innerHTML = '';
   try {
     new QRCode(wrap, {
       text: qrPayload,
-      width: 320,
-      height: 320,
+      width: 240,
+      height: 240,
       colorDark: '#000000',
       colorLight: '#ffffff',
-      correctLevel: QRCode.CorrectLevel.L
+      correctLevel: QRCode.CorrectLevel.M  // M gives better error recovery than L
     });
-    // Force img to display block immediately (qrcodejs quirk)
+    // qrcodejs renders canvas first, then replaces with img on some browsers
+    // Force both visible with correct size after short delay
     setTimeout(() => {
-      const img = wrap.querySelector('img');
-      const canvas = wrap.querySelector('canvas');
-      if (img) { img.style.display = 'block'; img.style.width = '320px'; img.style.height = '320px'; }
-      if (canvas) { canvas.style.display = 'block'; }
-    }, 50);
+      wrap.querySelectorAll('canvas, img').forEach(el => {
+        el.style.cssText = 'display:block!important;width:240px!important;height:240px!important;';
+      });
+    }, 100);
   } catch(qrErr) {
     console.error('QR gen error:', qrErr);
     showToast('QR error: ' + qrErr.message, 'error');
