@@ -48,8 +48,6 @@ html,body{height:100%;overflow:hidden;background:var(--coral);font-family:'Instr
 .nav-item.active .nav-icon{background:var(--coral);}
 .nav-label{font-size:10px;font-weight:600;letter-spacing:0.4px;color:var(--ink-light);transition:color 0.15s;}
 .nav-item.active .nav-label{color:var(--coral-deep);}
-
-/* GATE */
 #connect-gate{flex:1;display:flex;flex-direction:column;background:var(--coral);overflow:hidden;}
 .gate-blocks{display:grid;grid-template-columns:1fr 1fr;grid-template-rows:1fr 1fr;flex:1;position:relative;}
 .gate-block{position:relative;overflow:hidden;}
@@ -60,8 +58,6 @@ html,body{height:100%;overflow:hidden;background:var(--coral);font-family:'Instr
 .gate-tagline{font-family:'Cormorant Garamond',serif;font-size:22px;font-weight:600;font-style:italic;color:var(--ink);text-align:center;margin-bottom:24px;line-height:1.3;}
 .btn-primary{width:100%;padding:17px;background:var(--coral-deep);color:var(--white);border:none;border-radius:var(--r);font-family:'Instrument Sans',sans-serif;font-size:15px;font-weight:600;cursor:pointer;transition:all 0.2s;display:flex;align-items:center;justify-content:center;gap:8px;}
 .btn-primary:hover{background:var(--ink);}
-
-/* HEADERS */
 .hdr{display:flex;align-items:center;padding:0 20px;height:72px;flex-shrink:0;position:relative;}
 .hdr-logo{width:44px;height:44px;border-radius:50%;overflow:hidden;flex-shrink:0;box-shadow:0 2px 12px rgba(42,31,26,0.15);}
 .hdr-logo img{width:100%;height:100%;object-fit:cover;}
@@ -72,8 +68,6 @@ html,body{height:100%;overflow:hidden;background:var(--coral);font-family:'Instr
 .pill-danger{background:#b91c1c;color:white;}
 .disconnect-btn{width:28px;height:28px;border-radius:50%;border:1px solid var(--border-mid);background:rgba(255,255,255,0.5);color:var(--ink-mid);font-size:11px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all 0.15s;flex-shrink:0;}
 .disconnect-btn:hover{background:var(--coral-deep);color:white;border-color:var(--coral-deep);}
-
-/* HOME */
 #screen-home{background:var(--coral);}
 .home-balance-block{background:var(--apricot);padding:24px 20px 20px;}
 .bal-eyebrow{font-size:10px;font-weight:600;letter-spacing:2.5px;text-transform:uppercase;color:var(--ink-mid);margin-bottom:6px;}
@@ -96,8 +90,6 @@ html,body{height:100%;overflow:hidden;background:var(--coral);font-family:'Instr
 .tx-info{flex:1;}.tx-name{font-size:13px;font-weight:600;color:var(--ink);margin-bottom:2px;}.tx-date{font-size:11px;color:var(--ink-light);font-weight:500;}
 .tx-val{text-align:right;}.tx-val .amt{font-family:'Cormorant Garamond',serif;font-size:17px;font-weight:600;}
 .amt-plus{color:var(--coral-deep);}.amt-minus{color:var(--ink-mid);}
-
-/* BUY */
 #screen-buy{background:var(--apricot);}
 .swap-block-from{background:var(--sand);padding:20px;border-bottom:2px solid var(--cream);}
 .swap-block-to{background:var(--mint);padding:20px;}
@@ -139,14 +131,12 @@ html,body{height:100%;overflow:hidden;background:var(--coral);font-family:'Instr
 .tok-opt-info h4{font-size:14px;font-weight:600;color:var(--ink);margin-bottom:2px;}
 .tok-opt-info p{font-size:11px;color:var(--ink-light);}
 .tok-opt-bal{margin-left:auto;font-size:12px;font-weight:600;color:var(--ink-mid);}
-
-/* PAY */
 #screen-pay{background:var(--lavender);}
 .pay-state{display:none;flex-direction:column;flex:1;}.pay-state.active{display:flex;}
-.scan-box{margin:16px 20px;background:var(--ink);border-radius:var(--r);overflow:hidden;position:relative;min-height:280px;display:flex;align-items:center;justify-content:center;}
+.scan-box{margin:16px 20px;background:var(--ink);border-radius:var(--r);overflow:hidden;position:relative;min-height:300px;display:flex;align-items:center;justify-content:center;}
 #qr-reader{width:100%;}
 .scan-ui{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;pointer-events:none;}
-.scan-frame{width:190px;height:190px;border-radius:16px;position:relative;margin-bottom:16px;}
+.scan-frame{width:220px;height:220px;border-radius:16px;position:relative;margin-bottom:16px;}
 .sf{position:absolute;width:28px;height:28px;border-color:var(--coral);border-style:solid;}
 .sf-tl{top:0;left:0;border-width:3px 0 0 3px;border-radius:6px 0 0 0;}
 .sf-tr{top:0;right:0;border-width:3px 3px 0 0;border-radius:0 6px 0 0;}
@@ -174,16 +164,12 @@ html,body{height:100%;overflow:hidden;background:var(--coral);font-family:'Instr
 .btn-confirm:hover{background:var(--ink);}
 .btn-confirm:disabled{background:var(--border);color:var(--ink-light);cursor:not-allowed;}
 .btn-cancel{width:100%;padding:13px;background:transparent;color:var(--ink-mid);border:1px solid var(--border-mid);border-radius:var(--r);font-family:'Instrument Sans',sans-serif;font-size:13px;font-weight:600;cursor:pointer;margin-top:8px;}
-
-/* QR SCREEN */
 #screen-qr{background:var(--sand);}
 .qr-card{background:var(--white);margin:16px 20px;border-radius:var(--r);padding:28px 24px;text-align:center;}
 .qr-eyebrow{font-size:10px;font-weight:600;letter-spacing:2px;text-transform:uppercase;color:var(--ink-light);margin-bottom:4px;}
 .qr-italic{font-family:'Cormorant Garamond',serif;font-size:18px;font-weight:600;font-style:italic;color:var(--ink);margin-bottom:20px;}
 #my-qr-div{display:inline-block;}
 .qr-addr{font-size:10px;color:var(--ink-light);font-weight:500;margin-top:14px;word-break:break-all;line-height:1.6;}
-
-/* SUCCESS */
 .success-screen{display:none;position:absolute;inset:0;z-index:300;flex-direction:column;overflow:hidden;}
 .success-screen.show{display:flex;}
 .success-blocks{display:grid;grid-template-columns:1fr 1fr;grid-template-rows:1fr 1fr;flex:1;position:relative;}
@@ -198,8 +184,6 @@ html,body{height:100%;overflow:hidden;background:var(--coral);font-family:'Instr
 .sc-row:last-child{border-bottom:none;}
 .sc-row .sk{color:var(--ink-light);font-weight:500;}.sc-row .sv{font-weight:600;color:var(--ink);font-size:11px;word-break:break-all;text-align:right;max-width:55%;}
 .btn-done{width:100%;padding:17px;background:var(--coral-deep);color:var(--white);border:none;border-radius:var(--r);font-family:'Instrument Sans',sans-serif;font-size:15px;font-weight:600;cursor:pointer;margin-top:16px;}
-
-/* TOAST */
 #toast{position:absolute;top:16px;left:16px;right:16px;background:var(--ink);color:var(--white);border-radius:var(--r);padding:13px 16px;font-size:13px;font-weight:600;z-index:999;display:none;align-items:center;gap:8px;box-shadow:0 4px 24px rgba(0,0,0,0.2);}
 #toast.show{display:flex;}#toast.ok{background:var(--coral-deep);}#toast.err{background:#b91c1c;}
 .spinner{width:16px;height:16px;border:2px solid rgba(255,255,255,0.3);border-top-color:white;border-radius:50%;animation:spin 0.7s linear infinite;flex-shrink:0;}
@@ -211,9 +195,7 @@ html,body{height:100%;overflow:hidden;background:var(--coral);font-family:'Instr
 <body>
 <div id="app">
 <div id="toast"></div>
-<div id="net-banner" onclick="switchToBase()">⚠ Wrong network — tap to switch to Base</div>
-
-<!-- SUCCESS -->
+<div id="net-banner" onclick="switchToBase()">&#9888; Wrong network — tap to switch to Base</div>
 <div class="success-screen" id="success-screen">
   <div class="success-blocks">
     <div class="sb1"></div><div class="sb2"></div><div class="sb3"></div><div class="sb4"></div>
@@ -228,128 +210,73 @@ html,body{height:100%;overflow:hidden;background:var(--coral);font-family:'Instr
     <button class="btn-done" onclick="closeSuccess()">Done</button>
   </div>
 </div>
-
-<!-- CONNECT GATE -->
 <div id="connect-gate" style="display:flex;flex-direction:column;flex:1;">
   <div class="gate-blocks">
     <div class="gate-block gb-coral"></div><div class="gate-block gb-mint"></div>
     <div class="gate-block gb-lavender"></div><div class="gate-block gb-sand"></div>
     <div class="gate-logo-center"><img src="KOKOS_SKOOP.png" alt="KOKOS SKOOP"></div>
   </div>
-  <div class="stripe">
-    <div class="s1"></div><div class="s2"></div><div class="s3"></div>
-    <div class="s4"></div><div class="s5"></div><div class="s6"></div>
-  </div>
+  <div class="stripe"><div class="s1"></div><div class="s2"></div><div class="s3"></div><div class="s4"></div><div class="s5"></div><div class="s6"></div></div>
   <div class="gate-bottom">
     <div class="gate-tagline">Buy, earn &amp; pay with SKOOP<br>at KOKOS Ice Cream Nashville</div>
     <button class="btn-primary" onclick="openWalletModal()">Connect Wallet</button>
     <div style="margin-top:16px;text-align:center;font-size:10px;font-weight:500;color:var(--ink-light);font-family:'Instrument Sans',monospace;letter-spacing:0.3px;word-break:break-all;line-height:1.6;">
-      SKOOP · <span onclick="navigator.clipboard.writeText('0xfd3ce21c5Acd8BbbE576d0E2336C210C3cEBeb92').then(()=>alert('CA copied!'))" style="cursor:pointer;" title="Tap to copy">0xfd3ce21c5Acd8BbbE576d0E2336C210C3cEBeb92</span>
+      SKOOP &middot; <span onclick="navigator.clipboard.writeText('0xfd3ce21c5Acd8BbbE576d0E2336C210C3cEBeb92').then(()=>alert('CA copied!'))" style="cursor:pointer;">0xfd3ce21c5Acd8BbbE576d0E2336C210C3cEBeb92</span>
     </div>
   </div>
 </div>
-
-<!-- MAIN APP -->
 <div id="main-app" style="display:none;flex-direction:column;flex:1;overflow:hidden;">
-
-  <!-- HOME -->
   <div class="screen active" id="screen-home">
     <div class="hdr" style="background:var(--coral);">
       <div class="hdr-logo"><img src="KOKOS_SKOOP.png" alt="KOKOS"></div>
       <div class="hdr-right">
         <div class="pill pill-dark" id="net-label">Base</div>
-        <div class="pill pill-white" id="wallet-pill">0x…</div>
-        <button class="disconnect-btn" onclick="disconnectWallet()" title="Disconnect">✕</button>
+        <div class="pill pill-white" id="wallet-pill">0x&#8230;</div>
+        <button class="disconnect-btn" onclick="disconnectWallet()" title="Disconnect">&#10005;</button>
       </div>
     </div>
-    <div class="stripe stripe-thin">
-      <div class="s1"></div><div class="s2"></div><div class="s3"></div>
-      <div class="s4"></div><div class="s5"></div><div class="s6"></div>
-    </div>
+    <div class="stripe stripe-thin"><div class="s1"></div><div class="s2"></div><div class="s3"></div><div class="s4"></div><div class="s5"></div><div class="s6"></div></div>
     <div class="home-balance-block">
       <div class="bal-eyebrow">Your balance</div>
-      <div class="bal-number" id="home-bal">—</div>
-      <div class="bal-sub" id="home-usd">SKOOP · Connect to load</div>
-      <div style="margin-top:10px;font-size:9px;font-weight:500;color:var(--ink-light);font-family:'Instrument Sans',monospace;letter-spacing:0.3px;word-break:break-all;opacity:0.7;cursor:pointer;" onclick="navigator.clipboard.writeText('0xfd3ce21c5Acd8BbbE576d0E2336C210C3cEBeb92').then(()=>alert('CA copied!'))" title="Tap to copy contract address">CA: 0xfd3ce21c5Acd8BbbE576d0E2336C210C3cEBeb92</div>
+      <div class="bal-number" id="home-bal">&#8212;</div>
+      <div class="bal-sub" id="home-usd">SKOOP &middot; Connect to load</div>
+      <div style="margin-top:10px;font-size:9px;font-weight:500;color:var(--ink-light);font-family:'Instrument Sans',monospace;letter-spacing:0.3px;word-break:break-all;opacity:0.7;cursor:pointer;" onclick="navigator.clipboard.writeText('0xfd3ce21c5Acd8BbbE576d0E2336C210C3cEBeb92').then(()=>alert('CA copied!'))">CA: 0xfd3ce21c5Acd8BbbE576d0E2336C210C3cEBeb92</div>
     </div>
     <div class="action-grid">
-      <button class="action-cell ac-mint" onclick="goTo('buy')">
-        <div class="ac-icon">💱</div>
-        <div><div class="ac-label">Buy SKOOP</div><div class="ac-sub">USDC, WETH or ETH</div></div>
-      </button>
-      <button class="action-cell ac-lavender" onclick="goTo('pay')">
-        <div class="ac-icon">📷</div>
-        <div><div class="ac-label">Pay at shop</div><div class="ac-sub">Scan checkout QR</div></div>
-      </button>
-      <button class="action-cell ac-sand" onclick="goTo('qr')">
-        <div class="ac-icon">⬛</div>
-        <div><div class="ac-label">My wallet QR</div><div class="ac-sub">Earn rewards</div></div>
-      </button>
-      <button class="action-cell ac-apricot" onclick="goTo('buy')">
-        <div class="ac-icon">📈</div>
-        <div><div class="ac-label">SKOOP price</div><div class="ac-sub">Live on Base</div></div>
-      </button>
+      <button class="action-cell ac-mint" onclick="goTo('buy')"><div class="ac-icon">&#x1F4B1;</div><div><div class="ac-label">Buy SKOOP</div><div class="ac-sub">USDC, WETH or ETH</div></div></button>
+      <button class="action-cell ac-lavender" onclick="goTo('pay')"><div class="ac-icon">&#128247;</div><div><div class="ac-label">Pay at shop</div><div class="ac-sub">Scan checkout QR</div></div></button>
+      <button class="action-cell ac-sand" onclick="goTo('qr')"><div class="ac-icon">&#11035;</div><div><div class="ac-label">My wallet QR</div><div class="ac-sub">Earn rewards</div></div></button>
+      <button class="action-cell ac-apricot" onclick="goTo('buy')"><div class="ac-icon">&#128200;</div><div><div class="ac-label">SKOOP price</div><div class="ac-sub">Live on Base</div></div></button>
     </div>
-    <div class="stripe stripe-thin">
-      <div class="s2"></div><div class="s4"></div><div class="s1"></div>
-      <div class="s5"></div><div class="s3"></div><div class="s6"></div>
-    </div>
+    <div class="stripe stripe-thin"><div class="s2"></div><div class="s4"></div><div class="s1"></div><div class="s5"></div><div class="s3"></div><div class="s6"></div></div>
     <div class="section-hdr"><div class="section-hdr-title">Recent activity</div></div>
     <div class="tx-list">
-      <div class="tx-row">
-        <div class="tx-dot td-mint">🎁</div>
-        <div class="tx-info"><div class="tx-name">Reward earned</div><div class="tx-date">Connect wallet to load history</div></div>
-        <div class="tx-val"><div class="amt amt-plus">—</div></div>
-      </div>
+      <div class="tx-row"><div class="tx-dot td-mint">&#127873;</div><div class="tx-info"><div class="tx-name">Reward earned</div><div class="tx-date">Connect wallet to load history</div></div><div class="tx-val"><div class="amt amt-plus">&#8212;</div></div></div>
     </div>
   </div>
-
-  <!-- BUY -->
   <div class="screen" id="screen-buy">
-    <div class="hdr" style="background:var(--sand);">
-      <div class="hdr-logo"><img src="KOKOS_SKOOP.png" alt="KOKOS"></div>
-      <div class="hdr-right"><div class="pill pill-dark" id="buy-pill">0x…</div></div>
-    </div>
-    <div class="stripe stripe-thin">
-      <div class="s5"></div><div class="s3"></div><div class="s2"></div>
-      <div class="s1"></div><div class="s4"></div><div class="s6"></div>
-    </div>
+    <div class="hdr" style="background:var(--sand);"><div class="hdr-logo"><img src="KOKOS_SKOOP.png" alt="KOKOS"></div><div class="hdr-right"><div class="pill pill-dark" id="buy-pill">0x&#8230;</div></div></div>
+    <div class="stripe stripe-thin"><div class="s5"></div><div class="s3"></div><div class="s2"></div><div class="s1"></div><div class="s4"></div><div class="s6"></div></div>
     <div class="backdrop" id="tok-back" onclick="closeTokSheet()"></div>
     <div class="tok-sheet" id="tok-sheet">
       <div class="sheet-handle"></div>
       <div class="sheet-title">Select token</div>
-      <div class="tok-opt" onclick="selectToken('USDC')">
-        <div class="tok-ic ti-usdc">USDC</div>
-        <div class="tok-opt-info"><h4>USDC</h4><p>USD Coin · Base</p></div>
-        <div class="tok-opt-bal" id="bal-usdc">—</div>
-      </div>
-      <div class="tok-opt" onclick="selectToken('WETH')">
-        <div class="tok-ic ti-weth">ETH</div>
-        <div class="tok-opt-info"><h4>WETH</h4><p>Wrapped Ether · Base</p></div>
-        <div class="tok-opt-bal" id="bal-weth">—</div>
-      </div>
-      <div class="tok-opt" onclick="selectToken('ETH')">
-        <div class="tok-ic ti-eth">Ξ</div>
-        <div class="tok-opt-info"><h4>ETH</h4><p>Native Ether · auto-wraps</p></div>
-        <div class="tok-opt-bal" id="bal-eth">—</div>
-      </div>
+      <div class="tok-opt" onclick="selectToken('USDC')"><div class="tok-ic ti-usdc">USDC</div><div class="tok-opt-info"><h4>USDC</h4><p>USD Coin &middot; Base</p></div><div class="tok-opt-bal" id="bal-usdc">&#8212;</div></div>
+      <div class="tok-opt" onclick="selectToken('WETH')"><div class="tok-ic ti-weth">ETH</div><div class="tok-opt-info"><h4>WETH</h4><p>Wrapped Ether &middot; Base</p></div><div class="tok-opt-bal" id="bal-weth">&#8212;</div></div>
+      <div class="tok-opt" onclick="selectToken('ETH')"><div class="tok-ic ti-eth">&#926;</div><div class="tok-opt-info"><h4>ETH</h4><p>Native Ether &middot; auto-wraps</p></div><div class="tok-opt-bal" id="bal-eth">&#8212;</div></div>
     </div>
     <div class="swap-block-from">
       <div class="sp-eyebrow">You pay</div>
-      <button class="tok-btn" onclick="openTokSheet()">
-        <div class="tok-ic ti-usdc" id="from-icon">USDC</div>
-        <div class="tok-name" id="from-name">USDC</div>
-        <div class="tok-chev">▼</div>
-      </button>
+      <button class="tok-btn" onclick="openTokSheet()"><div class="tok-ic ti-usdc" id="from-icon">USDC</div><div class="tok-name" id="from-name">USDC</div><div class="tok-chev">&#9660;</div></button>
       <input class="amt-input" id="from-amt" type="number" placeholder="0" min="0" step="any" oninput="onAmt()">
-      <div class="bal-hint">Balance: <span id="from-bal">—</span> <button class="max-tag" onclick="setMax()">MAX</button></div>
+      <div class="bal-hint">Balance: <span id="from-bal">&#8212;</span> <button class="max-tag" onclick="setMax()">MAX</button></div>
     </div>
-    <div class="swap-block-arrow">↓</div>
+    <div class="swap-block-arrow">&#8595;</div>
     <div class="swap-block-to">
       <div class="sp-eyebrow">You receive</div>
-      <div class="skoop-pill">🍦 SKOOP</div>
+      <div class="skoop-pill">&#127846; SKOOP</div>
       <div class="out-amount" id="out-amt">0</div>
-      <div class="out-loading" id="out-loading">Getting quote…</div>
+      <div class="out-loading" id="out-loading">Getting quote&#8230;</div>
     </div>
     <div class="slip-row">
       <span class="slip-lbl">Slippage</span>
@@ -358,37 +285,25 @@ html,body{height:100%;overflow:hidden;background:var(--coral);font-family:'Instr
       <button class="slip-btn" onclick="setSlip(2,this)">2%</button>
     </div>
     <div class="swap-dets" id="swap-dets">
-      <div class="det-row"><span class="dk">Route</span><span class="dv" id="det-route">—</span></div>
-      <div class="det-row"><span class="dk">Price impact</span><span class="dv" id="det-impact">—</span></div>
-      <div class="det-row"><span class="dk">Min received</span><span class="dv" id="det-min">—</span></div>
+      <div class="det-row"><span class="dk">Route</span><span class="dv" id="det-route">&#8212;</span></div>
+      <div class="det-row"><span class="dk">Price impact</span><span class="dv" id="det-impact">&#8212;</span></div>
+      <div class="det-row"><span class="dk">Min received</span><span class="dv" id="det-min">&#8212;</span></div>
       <div class="det-row"><span class="dk">Pool fee</span><span class="dv">0.30%</span></div>
     </div>
     <button class="btn-swap" id="btn-swap" onclick="execSwap()" disabled>Enter amount</button>
   </div>
-
-  <!-- PAY -->
   <div class="screen" id="screen-pay">
-    <div class="hdr" style="background:var(--lavender);">
-      <div class="hdr-logo"><img src="KOKOS_SKOOP.png" alt="KOKOS"></div>
-      <div class="hdr-right"><div class="pill pill-white">Pay at shop</div></div>
-    </div>
-    <div class="stripe stripe-thin">
-      <div class="s4"></div><div class="s1"></div><div class="s5"></div>
-      <div class="s2"></div><div class="s6"></div><div class="s3"></div>
-    </div>
+    <div class="hdr" style="background:var(--lavender);"><div class="hdr-logo"><img src="KOKOS_SKOOP.png" alt="KOKOS"></div><div class="hdr-right"><div class="pill pill-white">Pay at shop</div></div></div>
+    <div class="stripe stripe-thin"><div class="s4"></div><div class="s1"></div><div class="s5"></div><div class="s2"></div><div class="s6"></div><div class="s3"></div></div>
     <div class="pay-state active" id="pay-scan">
       <div class="scan-box">
         <div id="qr-reader"></div>
         <div class="scan-ui" id="scan-ui">
-          <div class="scan-frame">
-            <div class="sf sf-tl"></div><div class="sf sf-tr"></div>
-            <div class="sf sf-bl"></div><div class="sf sf-br"></div>
-            <div class="scan-line"></div>
-          </div>
+          <div class="scan-frame"><div class="sf sf-tl"></div><div class="sf sf-tr"></div><div class="sf sf-bl"></div><div class="sf sf-br"></div><div class="scan-line"></div></div>
           <div class="scan-hint">Point at the shop checkout QR</div>
         </div>
       </div>
-      <button class="btn-cam" id="btn-cam" onclick="startScan()">📷 &nbsp;Start Camera</button>
+      <button class="btn-cam" id="btn-cam" onclick="startScan()">&#128247; &nbsp;Start Camera</button>
       <div class="info-block" style="background:var(--lavender);">
         <div class="ib-title">How it works</div>
         <div class="ib-text">The shop rings up your order and generates a QR. Scan it here, review the total, and confirm — SKOOP goes to escrow and burns in the next settlement.</div>
@@ -397,20 +312,14 @@ html,body{height:100%;overflow:hidden;background:var(--coral);font-family:'Instr
     <div class="pay-state" id="pay-confirm">
       <div class="cc-wrap" style="padding-top:16px;">
         <div class="confirm-card">
-          <div class="cc-head">
-            <div style="font-size:28px">🏪</div>
-            <div class="cc-head-text">
-              <div class="store">KOKOS Ice Cream · Nashville</div>
-              <div class="total" id="cc-usd">$0.00</div>
-            </div>
-          </div>
+          <div class="cc-head"><div style="font-size:28px">&#127978;</div><div class="cc-head-text"><div class="store">KOKOS Ice Cream &middot; Nashville</div><div class="total" id="cc-usd">$0.00</div></div></div>
           <div class="cc-body">
             <div class="cc-row"><span class="ck">SKOOP amount</span><span class="cv big" id="cc-skoop">0</span></div>
-            <div class="cc-row"><span class="ck">Items</span><span class="cv" id="cc-items">—</span></div>
-            <div class="cc-row"><span class="ck">Subtotal</span><span class="cv" id="cc-sub">—</span></div>
-            <div class="cc-row"><span class="ck">Tax</span><span class="cv" id="cc-tax">—</span></div>
-            <div class="cc-row"><span class="ck">Expires</span><span class="cv" id="cc-exp">—</span></div>
-            <div class="cc-row"><span class="ck">Receipt ID</span><span class="cv" id="cc-receipt">—</span></div>
+            <div class="cc-row"><span class="ck">Items</span><span class="cv" id="cc-items">&#8212;</span></div>
+            <div class="cc-row"><span class="ck">Subtotal</span><span class="cv" id="cc-sub">&#8212;</span></div>
+            <div class="cc-row"><span class="ck">Tax</span><span class="cv" id="cc-tax">&#8212;</span></div>
+            <div class="cc-row"><span class="ck">Expires</span><span class="cv" id="cc-exp">&#8212;</span></div>
+            <div class="cc-row"><span class="ck">Receipt ID</span><span class="cv" id="cc-receipt">&#8212;</span></div>
           </div>
         </div>
         <button class="btn-confirm" id="btn-confirm" onclick="confirmPay()">Confirm &amp; Pay with SKOOP</button>
@@ -418,52 +327,26 @@ html,body{height:100%;overflow:hidden;background:var(--coral);font-family:'Instr
       </div>
     </div>
   </div>
-
-  <!-- QR -->
   <div class="screen" id="screen-qr">
-    <div class="hdr" style="background:var(--sand);">
-      <div class="hdr-logo"><img src="KOKOS_SKOOP.png" alt="KOKOS"></div>
-      <div class="hdr-right"><div class="pill pill-dark">Earn rewards</div></div>
-    </div>
-    <div class="stripe stripe-thin">
-      <div class="s5"></div><div class="s1"></div><div class="s4"></div>
-      <div class="s3"></div><div class="s2"></div><div class="s6"></div>
-    </div>
-    <div class="info-block" style="background:var(--apricot);margin:16px 20px 0;">
-      <div class="ib-title">Show this to earn rewards</div>
-      <div class="ib-text">After paying by card or cash, show this QR to the KOKOS team. They'll scan it and send SKOOP directly to your wallet.</div>
-    </div>
+    <div class="hdr" style="background:var(--sand);"><div class="hdr-logo"><img src="KOKOS_SKOOP.png" alt="KOKOS"></div><div class="hdr-right"><div class="pill pill-dark">Earn rewards</div></div></div>
+    <div class="stripe stripe-thin"><div class="s5"></div><div class="s1"></div><div class="s4"></div><div class="s3"></div><div class="s2"></div><div class="s6"></div></div>
+    <div class="info-block" style="background:var(--apricot);margin:16px 20px 0;"><div class="ib-title">Show this to earn rewards</div><div class="ib-text">After paying by card or cash, show this QR to the KOKOS team. They'll scan it and send SKOOP directly to your wallet.</div></div>
     <div class="qr-card">
       <div class="qr-eyebrow">Your wallet</div>
       <div class="qr-italic">Show to KOKOS to receive SKOOP</div>
       <div id="my-qr-div"></div>
       <div class="qr-addr" id="qr-addr">Connect wallet to generate QR</div>
     </div>
-    <div class="info-block" style="background:var(--lavender);margin:0 20px 16px;">
-      <div class="ib-title">Current balance</div>
-      <div class="ib-text"><span id="qr-bal">—</span> SKOOP · KOKOS Ice Cream, 3 City Ave Ste 700, Nashville TN</div>
-    </div>
+    <div class="info-block" style="background:var(--lavender);margin:0 20px 16px;"><div class="ib-title">Current balance</div><div class="ib-text"><span id="qr-bal">&#8212;</span> SKOOP &middot; KOKOS Ice Cream, 3 City Ave Ste 700, Nashville TN</div></div>
   </div>
-
-</div><!-- /main-app -->
-
-<!-- NAV -->
-<div id="bottom-nav" style="display:none;">
-  <button class="nav-item active" id="nav-home" onclick="goTo('home')">
-    <div class="nav-icon">🏠</div><div class="nav-label">Home</div>
-  </button>
-  <button class="nav-item" id="nav-buy" onclick="goTo('buy')">
-    <div class="nav-icon">💱</div><div class="nav-label">Buy</div>
-  </button>
-  <button class="nav-item" id="nav-pay" onclick="goTo('pay')">
-    <div class="nav-icon">📷</div><div class="nav-label">Pay</div>
-  </button>
-  <button class="nav-item" id="nav-qr" onclick="goTo('qr')">
-    <div class="nav-icon">⬛</div><div class="nav-label">My QR</div>
-  </button>
 </div>
-</div><!-- /app -->
-
+<div id="bottom-nav" style="display:none;">
+  <button class="nav-item active" id="nav-home" onclick="goTo('home')"><div class="nav-icon">&#127968;</div><div class="nav-label">Home</div></button>
+  <button class="nav-item" id="nav-buy" onclick="goTo('buy')"><div class="nav-icon">&#x1F4B1;</div><div class="nav-label">Buy</div></button>
+  <button class="nav-item" id="nav-pay" onclick="goTo('pay')"><div class="nav-icon">&#128247;</div><div class="nav-label">Pay</div></button>
+  <button class="nav-item" id="nav-qr" onclick="goTo('qr')"><div class="nav-icon">&#11035;</div><div class="nav-label">My QR</div></button>
+</div>
+</div>
 <script>
 const CFG={
   CHAIN_ID:8453,CHAIN_HEX:'0x2105',RPC:'https://mainnet.base.org',
@@ -483,63 +366,48 @@ const ABI_ESCROW=[{inputs:[{components:[{name:"receiptId",type:"bytes32"},{name:
 
 let provider,signer,userAddr,selToken="USDC",slip=0.5,quoteTimer,curQuote,pendingIntent,scannerRunning=false;
 
-// ── WALLET CONNECT ──
-// Desktop: window.ethereum (MetaMask, Coinbase extension)
-// Mobile: WalletConnect EthereumProvider with built-in QR/deep link modal
-
 async function openWalletModal(){
-  // Desktop — use injected wallet if available
   if(window.ethereum){
     try{
       await window.ethereum.request({method:'eth_requestAccounts'});
-      provider = new ethers.BrowserProvider(window.ethereum);
-      signer   = await provider.getSigner();
-      userAddr = await signer.getAddress();
+      provider=new ethers.BrowserProvider(window.ethereum);
+      signer=await provider.getSigner();
+      userAddr=await signer.getAddress();
       await onConnected();
-      window.ethereum.on('accountsChanged', a=>{ if(a[0]){ userAddr=a[0]; updatePills(); refreshBals(); }});
-      window.ethereum.on('chainChanged', ()=>checkNet());
+      window.ethereum.on('accountsChanged',a=>{if(a[0]){userAddr=a[0];updatePills();refreshBals();}});
+      window.ethereum.on('chainChanged',()=>checkNet());
       return;
-    }catch(e){
-      if(e.code===4001){ showToast("Connection rejected","err"); return; }
-      // Fall through to WalletConnect
-    }
+    }catch(e){if(e.code===4001){showToast("Connection rejected","err");return;}}
   }
-  // Mobile / no extension — WalletConnect
   await connectWalletConnect();
 }
-
 async function connectWalletConnect(){
-  const WCEthProvider = window["@walletconnect/ethereum-provider"]?.EthereumProvider;
-  if(!WCEthProvider){ showToast("WalletConnect not loaded — refresh","err"); return; }
+  const WCEthProvider=window["@walletconnect/ethereum-provider"]?.EthereumProvider;
+  if(!WCEthProvider){showToast("WalletConnect not loaded — refresh","err");return;}
   try{
     showToast("Opening wallet...","");
-    const wcp = await WCEthProvider.init({
+    const wcp=await WCEthProvider.init({
       projectId:'c5be163298ba25127afa6b7529e29059',
-      chains:[8453],
-      showQrModal:true,
-      qrModalOptions:{ themeMode:'light', themeVariables:{'--wcm-accent-color':'#e8876a','--wcm-background-color':'#fdcec1'} },
-      metadata:{ name:'SKOOP by KOKOS', description:'KOKOS Ice Cream SKOOP DApp', url:'https://kokosicecream.github.io', icons:['https://kokosicecream.github.io/website/Customer_dapp/KOKOS_SKOOP.png'] }
+      chains:[8453],showQrModal:true,
+      qrModalOptions:{themeMode:'light',themeVariables:{'--wcm-accent-color':'#e8876a','--wcm-background-color':'#fdcec1'}},
+      metadata:{name:'SKOOP by KOKOS',description:'KOKOS Ice Cream SKOOP DApp',url:'https://kokosicecream.github.io',icons:['https://kokosicecream.github.io/website/Customer_dapp/KOKOS_SKOOP.png']}
     });
-    window._wcp = wcp;
+    window._wcp=wcp;
     await wcp.enable();
-    provider = new ethers.BrowserProvider(wcp);
-    signer   = await provider.getSigner();
-    userAddr = await signer.getAddress();
+    provider=new ethers.BrowserProvider(wcp);
+    signer=await provider.getSigner();
+    userAddr=await signer.getAddress();
     await onConnected();
-    wcp.on('disconnect', ()=>window.dispatchEvent(new CustomEvent('wc-disconnected')));
-    wcp.on('accountsChanged', a=>{ if(a[0]){ userAddr=a[0]; updatePills(); refreshBals(); }});
+    wcp.on('disconnect',()=>window.dispatchEvent(new CustomEvent('wc-disconnected')));
+    wcp.on('accountsChanged',a=>{if(a[0]){userAddr=a[0];updatePills();refreshBals();}});
   }catch(e){
-    const msg = e?.message||'';
-    if(!msg.includes('closed') && !msg.includes('rejected') && !msg.includes('Modal')){
-      showToast(msg||"Connection failed","err");
-    }
+    const msg=e?.message||'';
+    if(!msg.includes('closed')&&!msg.includes('rejected')&&!msg.includes('Modal'))showToast(msg||"Connection failed","err");
   }
 }
-
 async function disconnectWallet(){
-  try{ if(window._wcp) await window._wcp.disconnect(); }catch(e){}
-  window._wcp = null;
-  provider=null;signer=null;userAddr=null;
+  try{if(window._wcp)await window._wcp.disconnect();}catch(e){}
+  window._wcp=null;provider=null;signer=null;userAddr=null;
   document.getElementById("main-app").style.display="none";
   document.getElementById("bottom-nav").style.display="none";
   const gate=document.getElementById("connect-gate");
@@ -552,7 +420,6 @@ async function disconnectWallet(){
   document.getElementById("qr-bal").textContent="—";
   document.getElementById("my-qr-div").innerHTML="";
 }
-
 window.addEventListener("wc-disconnected",function(){
   provider=null;signer=null;userAddr=null;
   document.getElementById("main-app").style.display="none";
@@ -564,38 +431,25 @@ window.addEventListener("wc-disconnected",function(){
   document.getElementById("buy-pill").textContent="0x…";
   document.getElementById("my-qr-div").innerHTML="";
 });
-
 async function onConnected(){
   document.getElementById("connect-gate").style.display="none";
   const m=document.getElementById("main-app");
   m.style.display="flex";m.style.flexDirection="column";m.style.flex="1";m.style.overflow="hidden";
   document.getElementById("bottom-nav").style.display="flex";
-  updatePills();
-  await checkNet();
-  await refreshBals();
-  setTimeout(buildMyQR,200);
+  updatePills();await checkNet();await refreshBals();setTimeout(buildMyQR,200);
 }
-
 function updatePills(){
   const s=userAddr?userAddr.slice(0,6)+"…"+userAddr.slice(-4):"";
   document.getElementById("wallet-pill").textContent=s;
   document.getElementById("buy-pill").textContent=s;
 }
-
 async function checkNet(){
   try{
     const net=await provider.getNetwork();
-    const ok=Number(net.chainId)===CFG.CHAIN_ID;
-    if(!ok){
-      // Auto-switch to Base
+    if(Number(net.chainId)!==CFG.CHAIN_ID){
       try{
-        if(window.ethereum){
-          await window.ethereum.request({method:"wallet_switchEthereumChain",params:[{chainId:CFG.CHAIN_HEX}]});
-        } else if(window._w3modal){
-          await window._w3modal.switchNetwork(8453);
-        }
+        if(window.ethereum)await window.ethereum.request({method:"wallet_switchEthereumChain",params:[{chainId:CFG.CHAIN_HEX}]});
       }catch(switchErr){
-        // If switch fails, show banner
         document.getElementById("net-banner").classList.add("show");
         document.getElementById("net-label").textContent="Wrong";
         document.getElementById("net-label").className="pill pill-danger";
@@ -603,19 +457,14 @@ async function checkNet(){
       }
     }
     document.getElementById("net-banner").classList.remove("show");
-    const l=document.getElementById("net-label");
-    l.textContent="Base";
-    l.className="pill pill-dark";
+    const l=document.getElementById("net-label");l.textContent="Base";l.className="pill pill-dark";
   }catch(e){}
 }
-
 async function switchToBase(){
   if(!window.ethereum)return;
   try{await window.ethereum.request({method:"wallet_switchEthereumChain",params:[{chainId:CFG.CHAIN_HEX}]});}
   catch(e){if(e.code===4902)await window.ethereum.request({method:"wallet_addEthereumChain",params:[{chainId:CFG.CHAIN_HEX,chainName:"Base",rpcUrls:["https://mainnet.base.org"],nativeCurrency:{name:"ETH",symbol:"ETH",decimals:18},blockExplorerUrls:["https://basescan.org"]}]});}
 }
-
-// ── BALANCES ──
 async function refreshBals(){
   if(!provider||!userAddr)return;
   try{
@@ -635,7 +484,6 @@ async function refreshBals(){
   try{const uc=new ethers.Contract(CFG.USDC,ABI_ERC20,provider);document.getElementById("bal-usdc").textContent=parseFloat(ethers.formatUnits(await uc.balanceOf(userAddr),6)).toFixed(2)+" USDC";}catch(e){}
   await updateFromBal();
 }
-
 async function updateFromBal(){
   if(!provider||!userAddr)return;
   let b="—";
@@ -646,8 +494,6 @@ async function updateFromBal(){
   }catch(e){}
   document.getElementById("from-bal").textContent=b;
 }
-
-// ── SWAP ──
 function openTokSheet(){document.getElementById("tok-sheet").classList.add("open");document.getElementById("tok-back").classList.add("open");}
 function closeTokSheet(){document.getElementById("tok-sheet").classList.remove("open");document.getElementById("tok-back").classList.remove("open");}
 function selectToken(t){
@@ -735,16 +581,19 @@ async function execSwap(){
   btn.disabled=false;btn.textContent="Swap for SKOOP 🍦";
 }
 
-// ── QR SCANNER (pay screen) ──
+// ── QR SCANNER — FIXED: larger qrbox, higher fps, full 0x fields from POS ──
 function startScan(){
   if(scannerRunning)return;
   if(typeof Html5Qrcode==="undefined"){showToast("Scanner loading — try again","err");return;}
   const scanner=new Html5Qrcode("qr-reader");
   document.getElementById("scan-ui").style.display="none";
   document.getElementById("btn-cam").style.display="none";
-  scanner.start({facingMode:"environment"},{fps:10,qrbox:{width:220,height:220}},
+  scanner.start(
+    {facingMode:"environment"},
+    {fps:15,qrbox:{width:280,height:280}},
     txt=>{
-      scanner.stop().catch(()=>{});scannerRunning=false;
+      scanner.stop().catch(()=>{});
+      scannerRunning=false;
       document.getElementById("scan-ui").style.display="flex";
       document.getElementById("btn-cam").style.display="flex";
       parseQR(txt);
@@ -757,15 +606,22 @@ function startScan(){
      document.getElementById("btn-cam").style.display="flex";
    });
 }
+
 function parseQR(raw){
   try{
     const d=JSON.parse(raw);
     const req=["receiptId","orderId","storeIdHash","terminalIdHash","tokenAmount","subtotalCents","taxCents","totalCents","itemCount","cartHash","deadline","signature"];
     for(const f of req)if(d[f]===undefined)throw new Error("Missing: "+f);
     if(Date.now()/1000>Number(d.deadline)){showToast("QR expired — ask shop for a new one","err");return;}
-    pendingIntent=d;showConfirm(d);
-  }catch(e){showToast("Invalid QR: "+e.message,"err");setTimeout(startScan,1500);}
+    pendingIntent=d;
+    showConfirm(d);
+  }catch(e){
+    console.error("parseQR error:",e);
+    showToast("QR error: "+e.message,"err");
+    setTimeout(startScan,1500);
+  }
 }
+
 function showConfirm(d){
   const sk=parseFloat(ethers.formatUnits(BigInt(d.tokenAmount),CFG.SKOOP_DEC));
   document.getElementById("cc-usd").textContent="$"+(Number(d.totalCents)/100).toFixed(2);
@@ -801,25 +657,14 @@ async function confirmPay(){
 }
 function closeSuccess(){document.getElementById("success-screen").classList.remove("show");document.getElementById("pay-confirm").classList.remove("active");document.getElementById("pay-scan").classList.add("active");goTo("home");}
 
-// ── MY QR (wallet address only) ──
 function buildMyQR(){
   if(!userAddr)return;
   document.getElementById("qr-addr").textContent=userAddr;
   const div=document.getElementById("my-qr-div");
   div.innerHTML="";
-  if(typeof QRCode==="undefined"){
-    div.textContent="Show address below to shop";
-    return;
-  }
-  new QRCode(div,{
-    text:userAddr,
-    width:240,height:240,
-    colorDark:"#2a1f1a",colorLight:"#fffaf7",
-    correctLevel:QRCode.CorrectLevel.M
-  });
+  if(typeof QRCode==="undefined"){div.textContent="Show address below to shop";return;}
+  new QRCode(div,{text:userAddr,width:240,height:240,colorDark:"#2a1f1a",colorLight:"#fffaf7",correctLevel:QRCode.CorrectLevel.M});
 }
-
-// ── NAV ──
 function goTo(name){
   document.querySelectorAll(".screen").forEach(s=>s.classList.remove("active"));
   document.querySelectorAll(".nav-item").forEach(n=>n.classList.remove("active"));
@@ -828,8 +673,6 @@ function goTo(name){
   if(name==="buy")updateFromBal();
   if(name==="qr")setTimeout(buildMyQR,80);
 }
-
-// ── TOAST ──
 let toastT;
 function showToast(msg,type=""){
   const el=document.getElementById("toast");
