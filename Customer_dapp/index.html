@@ -609,43 +609,57 @@ function startScan(){
 
 // POS sends minimal payload: {r, t, sc, tc, xc, ic, dl, sig}
 // We reconstruct the full intent fields the contract needs
-function expandIntent(d){
-  const receiptId     = d.r;
-  const storeIdHash   = ethers.id("KOKOS_NASHVILLE_01");
-  const terminalIdHash= ethers.id("POS_1");
-  const orderId       = ethers.id("ORD_" + receiptId);
-  const cartHash      = ethers.id(CFG.ESCROW + receiptId);
-  return {
-    receiptId,
-    orderId,
-    storeIdHash,
-    terminalIdHash,
-    tokenAmount:    d.t,
-    subtotalCents:  d.sc,
-    taxCents:       d.tc,
-    totalCents:     d.xc,
-    itemCount:      d.ic,
-    cartHash,
-    deadline:       d.dl,
-    signature:      d.sig,
-  };
-}
-
 function parseQR(raw){
   try{
     const d=JSON.parse(raw);
-    // Support both minimal {r,t,sc,tc,xc,ic,dl,sig} and legacy full format
-    const isMinimal = d.r !== undefined;
-    const intent = isMinimal ? expandIntent(d) : d;
+    console.log("QR keys:",Object.keys(d));
+
+    let intent;
+    if(d.r !== undefined){
+      // Minimal format from POS — expand to full intent
+      const receiptId      = d.r;
+      const storeIdHash    = ethers.id("KOKOS_NASHVILLE_01");
+      const terminalIdHash = ethers.id("POS_1");
+      const orderId        = ethers.id("ORD_" + receiptId);
+      const cartHash       = ethers.id(CFG.ESCROW + receiptId);
+      intent = {
+        receiptId,
+        orderId,
+        storeIdHash,
+        terminalIdHash,
+        tokenAmount:   d.t,
+        subtotalCents: d.sc,
+        taxCents:      d.tc,
+        totalCents:    d.xc,
+        itemCount:     d.ic,
+        cartHash,
+        deadline:      d.dl,
+        signature:     d.sig,
+      };
+    } else {
+      // Legacy full format
+      intent = d;
+    }
+
+    console.log("intent.receiptId:", intent.receiptId);
+    console.log("intent.tokenAmount:", intent.tokenAmount);
+
     const req=["receiptId","tokenAmount","subtotalCents","taxCents","totalCents","itemCount","deadline","signature"];
-    for(const f of req)if(intent[f]===undefined)throw new Error("Missing: "+f);
-    if(Date.now()/1000>Number(intent.deadline)){showToast("QR expired — ask shop for a new one","err");return;}
+    for(const f of req){
+      if(intent[f]===undefined || intent[f]===null){
+        throw new Error("Missing: "+f);
+      }
+    }
+    if(Date.now()/1000>Number(intent.deadline)){
+      showToast("QR expired — ask shop to regenerate","err");
+      return;
+    }
     pendingIntent=intent;
     showConfirm(intent);
   }catch(e){
-    console.error("parseQR error:",e);
-    showToast("QR error: "+e.message,"err");
-    setTimeout(startScan,1500);
+    console.error("parseQR failed:",e);
+    showToast("Scan error: "+e.message,"err");
+    setTimeout(startScan,2000);
   }
 }
 
