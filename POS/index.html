@@ -809,6 +809,7 @@ html, body {
     </div>
     <div id="cart-footer">
       <div class="summary-row"><span>Subtotal</span><span id="sub-display">$0.00</span></div>
+      <div class="summary-row"><span>Tax (9.25%)</span><span id="tax-display">$0.00</span></div>
       <div class="summary-row total"><span>Total</span><span id="total-display">$0.00</span></div>
       <div class="skoop-equiv">
         <span style="display:flex;align-items:center;gap:0.4rem;">
@@ -946,7 +947,7 @@ const CFG = {
   SIGNER:  '0xa22675c629743a126E136a80244ddd2c3b2A4b12', // POS signer — signs payment intents
   OWNER:   '0x001b3fB36FE7E3a741A15Ed8bE68610442E3a50b', // contract owner — required for burnPayments + voidPayment
   SKOOP_DEC: 6,
-  TAX_RATE: 0, // tax not applied to SKOOP redemptions
+  TAX_RATE: 0.0925,
   STORE_ID: 'KOKOS_NASHVILLE_01',
   TERMINAL_ID: 'POS_1',
   // Price of SKOOP in USD — update dynamically or via oracle
@@ -1138,7 +1139,7 @@ function updateTotals() {
   const skoopAmt = total / CFG.SKOOP_PRICE_USD;
 
   document.getElementById('sub-display').textContent   = '$' + subtotal.toFixed(2);
-  // tax not applied
+  document.getElementById('tax-display').textContent   = '$' + tax.toFixed(2);
   document.getElementById('total-display').textContent = '$' + total.toFixed(2);
   document.getElementById('skoop-display').textContent = Object.keys(cart).length
     ? skoopAmt.toLocaleString('en-US', { maximumFractionDigits: 0 }) + ' SKOOP'
@@ -1273,6 +1274,7 @@ async function generateQR() {
   document.getElementById('modal-summary').innerHTML = `
     ${items}
 
+    <div class="mos-row"><span>Tax</span><span>$${(taxCents/100).toFixed(2)}</span></div>
     <div class="mos-row total"><span>Total</span><span>$${(totalCents/100).toFixed(2)}</span></div>
     <div class="mos-row skoop"><span style="display:flex;align-items:center;gap:0.35rem;"><img src="https://raw.githubusercontent.com/KOKOSICECREAM/website/main/Customer_dapp/KOKOS_SKOOP.png" alt="SKOOP" style="height:15px;width:15px;object-fit:contain;border-radius:50%;">≈ SKOOP</span><span>${Number(tokenAmount).toLocaleString()} SKOOP</span></div>
   `;
