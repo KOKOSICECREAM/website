@@ -710,7 +710,7 @@ html, body {
       <button class="cat-btn" onclick="filterCat('scoops',this)">Scoops</button>
       <button class="cat-btn" onclick="filterCat('drinks',this)">Drinks</button>
       <button class="cat-btn" onclick="filterCat('extras',this)">Extras</button>
-      <button class="cat-btn" onclick="filterCat('merch',this)">Merch</button>
+
     </div>
     <div id="menu-grid"></div>
   </aside>
@@ -880,23 +880,14 @@ const ABI_ESCROW = [
 // ─── MENU DATA ────────────────────────────────────────────────────────────────
 const MENU = [
   // Scoops
-  { id:'s1', cat:'scoops', emoji:'🍦', name:'Single Scoop', price:5.00 },
-  { id:'s2', cat:'scoops', emoji:'🍧', name:'Double Scoop', price:8.50 },
-  { id:'s3', cat:'scoops', emoji:'🍨', name:'Triple Scoop', price:11.00 },
-  { id:'s4', cat:'scoops', emoji:'🧁', name:'KOKOS Cup',    price:6.50 },
-  { id:'s5', cat:'scoops', emoji:'🌯', name:'Waffle Cone',  price:9.50 },
-  { id:'s6', cat:'scoops', emoji:'🍡', name:'Sundae',       price:12.00 },
-  // Drinks
-  { id:'d1', cat:'drinks', emoji:'🥤', name:'Oat Shake',    price:8.00 },
-  { id:'d2', cat:'drinks', emoji:'🧃', name:'Coconut Water', price:4.50 },
-  { id:'d3', cat:'drinks', emoji:'☕', name:'Cold Brew',    price:5.50 },
-  // Extras
-  { id:'e1', cat:'extras', emoji:'🍫', name:'Choco Drizzle', price:1.00 },
-  { id:'e2', cat:'extras', emoji:'🫐', name:'Berry Compote', price:1.50 },
-  { id:'e3', cat:'extras', emoji:'🥜', name:'Nut Crumble',   price:1.00 },
-  // Merch
-  { id:'m1', cat:'merch', emoji:'👕', name:'KOKOS Tee',     price:28.00 },
-  { id:'m2', cat:'merch', emoji:'🧢', name:'KOKOS Cap',     price:24.00 },
+  { id:'s1', cat:'scoops', emoji:'🍦', name:'Kids Scoop', price:5.00 },
+  { id:'s2', cat:'scoops', emoji:'🍧', name:'Small',      price:7.00 },
+  { id:'s3', cat:'scoops', emoji:'🍨', name:'Trio',       price:9.00 },
+  { id:'s4', cat:'scoops', emoji:'🫙', name:'Pint',       price:12.00 },
+  { id:'d1', cat:'drinks', emoji:'☕', name:'Latte',      price:7.00 },
+  { id:'d2', cat:'drinks', emoji:'💧', name:'Water',      price:1.00 },
+  { id:'e1', cat:'extras', emoji:'🍟', name:'Fries',      price:8.00 },
+  { id:'e2', cat:'extras', emoji:'🍦', name:'Cone',       price:0.60 },
 ];
 
 // ─── STATE ────────────────────────────────────────────────────────────────────
