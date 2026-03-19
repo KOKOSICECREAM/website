@@ -865,6 +865,7 @@ html, body {
       <button class="action-btn primary" id="reward-send-btn" onclick="sendReward()" disabled>Send SKOOP Reward</button>
 
       <!-- Clear / reset -->
+      <div id="daily-limit-display" style="font-size:0.68rem;color:var(--ink-lt);text-align:center;padding:0.25rem 0;"></div>
       <button class="action-btn secondary" onclick="resetRewards()" style="font-size:0.75rem;padding:0.5rem;">Clear</button>
     </div>
 
@@ -952,6 +953,7 @@ const CFG = {
   TERMINAL_ID: 'POS_1',
   // Price of SKOOP in USD — update dynamically or via oracle
   SKOOP_PRICE_USD: 0.001, // placeholder — will fetch from pool
+  DAILY_REWARD_LIMIT: 888888, // 0.1% of 888,888,888 total supply
 };
 
 const ABI_ERC20 = [
@@ -1428,11 +1430,53 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 });
 
+// Daily reward tracking — stored in localStorage, resets at midnight
+function getDailyRewardState() {
+  const today = new Date().toDateString();
+  const stored = localStorage.getItem('kokos_reward_day');
+  const sent   = parseFloat(localStorage.getItem('kokos_reward_sent') || '0');
+  if (stored !== today) {
+    // New day — reset
+    localStorage.setItem('kokos_reward_day', today);
+    localStorage.setItem('kokos_reward_sent', '0');
+    return 0;
+  }
+  return sent;
+}
+
+function addDailyRewardSent(amount) {
+  const today = new Date().toDateString();
+  const current = getDailyRewardState();
+  localStorage.setItem('kokos_reward_day', today);
+  localStorage.setItem('kokos_reward_sent', (current + amount).toString());
+  updateDailyLimitDisplay();
+}
+
+function updateDailyLimitDisplay() {
+  const sent = getDailyRewardState();
+  const remaining = CFG.DAILY_REWARD_LIMIT - sent;
+  const el = document.getElementById('daily-limit-display');
+  if (el) {
+    el.textContent = `Daily sent: ${sent.toLocaleString()} / ${CFG.DAILY_REWARD_LIMIT.toLocaleString()} SKOOP`;
+    el.style.color = remaining < CFG.DAILY_REWARD_LIMIT * 0.2 ? '#c0392b' : 'var(--ink-lt)';
+  }
+}
+
 async function sendReward() {
   if (!signer) { showToast('Connect wallet first', 'error'); return; }
   if (!scannedRewardAddr) { showToast('No wallet address set', 'error'); return; }
   const amtStr = document.getElementById('reward-amount').value;
   if (!amtStr || Number(amtStr) <= 0) { showToast('Enter SKOOP amount', 'error'); return; }
+
+  const amtNum = parseFloat(amtStr);
+
+  // Check daily limit
+  const sentToday = getDailyRewardState();
+  if (sentToday + amtNum > CFG.DAILY_REWARD_LIMIT) {
+    const remaining = CFG.DAILY_REWARD_LIMIT - sentToday;
+    showToast(`Daily limit reached — ${remaining.toLocaleString()} SKOOP remaining today`, 'error');
+    return;
+  }
 
   const amount = ethers.parseUnits(amtStr, CFG.SKOOP_DEC);
   const btn = document.getElementById('reward-send-btn');
@@ -1444,6 +1488,7 @@ async function sendReward() {
     const tx = await token.transfer(scannedRewardAddr, amount);
     showToast('Broadcasting…', '');
     await tx.wait();
+    addDailyRewardSent(amtNum);
     showToast('Reward sent ✓', 'success');
     resetRewards();
     btn.textContent = 'Send SKOOP Reward';
@@ -1574,6 +1619,7 @@ function initMobileLayout() {
 renderMenu();
 renderCart();
 initMobileLayout();
+updateDailyLimitDisplay();
 
 // Update cart badge in mobile nav
 function updateMobileBadge() {
