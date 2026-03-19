@@ -1212,20 +1212,18 @@ async function generateQR() {
     return;
   }
 
-  // Full 0x values — customer dapp ethers.js requires them as-is
+  // Minimal QR payload — ~280 chars, sparse easy-to-scan code
+  // customer dapp derives orderId/storeIdHash/terminalIdHash/cartHash
+  // from its own CFG constants + receiptId (all deterministic)
   const qrPayload = JSON.stringify({
-    receiptId,
-    orderId,
-    storeIdHash,
-    terminalIdHash: terminalHash,
-    tokenAmount:    tokenAmount.toString(),
-    subtotalCents,
-    taxCents,
-    totalCents,
-    itemCount:      Object.values(cart).reduce((a,b)=>a+b,0),
-    cartHash,
-    deadline:       deadline.toString(),
-    signature,
+    r:   receiptId,
+    t:   tokenAmount.toString(),
+    sc:  subtotalCents,
+    tc:  taxCents,
+    xc:  totalCents,
+    ic:  Object.values(cart).reduce((a,b)=>a+b,0),
+    dl:  deadline.toString(),
+    sig: signature,
   });
 
   console.log('QR payload chars:', qrPayload.length);
