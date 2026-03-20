@@ -713,10 +713,14 @@ footer { background: var(--coral); border-top: var(--border); }
 }
 .mobile-menu {
   display: none;
+  position: fixed;
+  top: 84px;
+  left: 0;
+  right: 0;
   flex-direction: column;
   background: var(--coral);
   border-bottom: var(--border);
-  z-index: 200;
+  z-index: 9999;
   overflow: hidden;
   max-height: 0;
   transition: max-height 0.3s ease;
@@ -1190,6 +1194,14 @@ function toggleMenu() {
     b.textContent = 'CLOSE';
   }
 }
+
+// Close menu when any menu link is tapped
+document.querySelectorAll('#mobile-menu a').forEach(function(a) {
+  a.addEventListener('click', function() {
+    document.getElementById('mobile-menu').classList.remove('open');
+    document.getElementById('hamburger').textContent = 'MENU';
+  });
+});
 </script>
 </body>
 </html>
