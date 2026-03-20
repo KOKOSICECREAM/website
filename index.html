@@ -697,66 +697,45 @@ footer { background: var(--coral); border-top: var(--border); }
   display: none;
   align-items: center;
   justify-content: center;
-  height: 38px;
-  padding: 0 14px;
-  background: rgba(255,255,255,0.4);
+  height: 36px;
+  padding: 0 12px;
+  background: rgba(255,255,255,0.5);
   border: 2px solid var(--ink);
-  border-radius: 4px;
+  border-radius: 3px;
   cursor: pointer;
   font-family: 'Instrument Sans', sans-serif;
-  font-size: 0.65rem;
+  font-size: 0.62rem;
   font-weight: 700;
   letter-spacing: 0.18em;
   color: var(--ink);
   text-transform: uppercase;
   flex-shrink: 0;
-  -webkit-tap-highlight-color: transparent;
 }
-.hamburger.open {
-  background: var(--ink);
-  color: var(--coral);
-}
-
 .mobile-menu {
   display: none;
-  position: fixed;
-  top: 84px;
-  left: 0;
-  right: 0;
+  flex-direction: column;
   background: var(--coral);
   border-bottom: var(--border);
-  z-index: 9999;
-  flex-direction: column;
+  z-index: 200;
   overflow: hidden;
   max-height: 0;
-  transition: max-height 0.35s ease;
+  transition: max-height 0.3s ease;
 }
-.mobile-menu.open {
-  max-height: 520px;
-}
+.mobile-menu.open { max-height: 520px; }
 .mobile-menu a {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
+  display: block;
   padding: 1rem 1.5rem;
-  font-size: 0.82rem;
+  font-size: 0.78rem;
   font-weight: 600;
   letter-spacing: 0.14em;
   text-transform: uppercase;
   color: var(--ink);
   text-decoration: none;
   border-bottom: var(--border);
-  transition: background 0.15s;
 }
 .mobile-menu a:last-child { border-bottom: none; }
-.mobile-menu a:hover { background: rgba(0,0,0,0.05); }
-.mobile-menu a.mob-cta {
-  background: var(--coral-mid);
-  font-size: 0.8rem;
-}
-.mobile-menu a.mob-skoop {
-  background: var(--lavender);
-}
+.mobile-menu a.mob-skoop { background: var(--lavender); }
+.mobile-menu a.mob-cta { background: var(--coral-mid); }
 
 /* RESPONSIVE */
 @media (max-width: 960px) {
@@ -832,7 +811,7 @@ footer { background: var(--coral); border-top: var(--border); }
     <li><a href="https://kokosicecream.com/Customer_dapp/index.html" target="_blank">$SKOOP</a></li>
     <li><a href="#contact" class="nav-cta">Order</a></li>
   </ul>
-  <button class="hamburger" id="hamburger" onclick="toggleMenu()" aria-label="Menu">MENU</button>
+  <button class="hamburger" id="hamburger" onclick="toggleMenu()" aria-label="Open menu">MENU</button>
 </nav>
 
 <!-- MOBILE DROPDOWN MENU -->
@@ -1200,41 +1179,17 @@ const FLAVORS = [
 </footer>
 
 <script>
-var menuOpen = false;
-var scrollTimer = null;
-
-function openMenu() {
-  menuOpen = true;
-  document.getElementById('mobile-menu').classList.add('open');
-  document.getElementById('hamburger').classList.add('open');
-  document.getElementById('hamburger').textContent = 'CLOSE';
-}
-function closeMenu() {
-  menuOpen = false;
-  document.getElementById('mobile-menu').classList.remove('open');
-  document.getElementById('hamburger').classList.remove('open');
-  document.getElementById('hamburger').textContent = 'MENU';
-}
-
-// Re-open after scroll settles (anchor nav scrolls, then we're ready again)
-window.addEventListener('scroll', function() {
-  if (menuOpen) {
-    closeMenu();
+function toggleMenu() {
+  var m = document.getElementById('mobile-menu');
+  var b = document.getElementById('hamburger');
+  if (m.classList.contains('open')) {
+    m.classList.remove('open');
+    b.textContent = 'MENU';
+  } else {
+    m.classList.add('open');
+    b.textContent = 'CLOSE';
   }
-  clearTimeout(scrollTimer);
-  scrollTimer = setTimeout(function() {
-    menuOpen = false;
-  }, 300);
-}, { passive: true });
-
-// Close on outside tap
-document.addEventListener('click', function(e) {
-  var menu = document.getElementById('mobile-menu');
-  var btn = document.getElementById('hamburger');
-  if (menuOpen && !menu.contains(e.target) && !btn.contains(e.target)) {
-    closeMenu();
-  }
-});
+}
 </script>
 </body>
 </html>
