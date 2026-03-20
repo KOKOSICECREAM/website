@@ -719,13 +719,16 @@ footer { background: var(--coral); border-top: var(--border); }
   right: 0;
   flex-direction: column;
   background: var(--coral);
-  border-bottom: var(--border);
+  border-bottom: none;
   z-index: 9999;
   overflow: hidden;
   max-height: 0;
   transition: max-height 0.3s ease;
 }
-.mobile-menu.open { max-height: 520px; }
+.mobile-menu.open {
+  max-height: 520px;
+  border-bottom: var(--border);
+}
 .mobile-menu a {
   display: block;
   padding: 1rem 1.5rem;
