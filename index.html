@@ -69,6 +69,7 @@ nav {
   top: 0;
   z-index: 100;
 }
+.nav-logo { cursor: pointer; }
 .nav-logo img {
   height: 68px;
   width: 68px;
@@ -750,7 +751,6 @@ footer { background: var(--coral); border-top: var(--border); }
 }
 .mobile-menu a:last-child { border-bottom: none; }
 .mobile-menu a:hover { background: rgba(0,0,0,0.05); }
-.mobile-menu a .arrow { font-size: 0.65rem; opacity: 0.4; }
 .mobile-menu a.mob-cta {
   background: var(--coral-mid);
   font-size: 0.8rem;
@@ -819,8 +819,10 @@ footer { background: var(--coral); border-top: var(--border); }
 <!-- NAV -->
 <nav>
   <div class="nav-logo">
-    <img src="KOKOS_logo.png" alt="KOKOS Ice Cream" onerror="this.style.display='none';this.nextElementSibling.style.display='block'" />
-    <span class="nav-logo-fallback" style="display:none;">KOKOS</span>
+    <a href="#" aria-label="Home" style="display:block;line-height:0;">
+      <img src="KOKOS_logo.png" alt="KOKOS Ice Cream" onerror="this.style.display='none';this.nextElementSibling.style.display='block'" />
+      <span class="nav-logo-fallback" style="display:none;">KOKOS</span>
+    </a>
   </div>
   <ul class="nav-links">
     <li><a href="#flavors">Flavors</a></li>
@@ -838,13 +840,13 @@ footer { background: var(--coral); border-top: var(--border); }
 
 <!-- MOBILE DROPDOWN MENU -->
 <div class="mobile-menu" id="mobile-menu">
-  <a href="#flavors" onclick="closeMenu()">Flavors <span class="arrow">↓</span></a>
-  <a href="#reviews" onclick="closeMenu()">Reviews <span class="arrow">↓</span></a>
-  <a href="#about" onclick="closeMenu()">Our Story <span class="arrow">↓</span></a>
-  <a href="#press" onclick="closeMenu()">Press <span class="arrow">↓</span></a>
-  <a href="#contact" onclick="closeMenu()">Visit Us <span class="arrow">↓</span></a>
-  <a href="https://kokosicecream.com/Customer_dapp/index.html" target="_blank" class="mob-skoop" onclick="closeMenu()">$SKOOP Token <span class="arrow">↗</span></a>
-  <a href="#contact" onclick="closeMenu()" class="mob-cta">Order ↗</a>
+  <a href="#flavors" onclick="closeMenu()">Flavors</a>
+  <a href="#reviews" onclick="closeMenu()">Reviews</a>
+  <a href="#about" onclick="closeMenu()">Our Story</a>
+  <a href="#press" onclick="closeMenu()">Press</a>
+  <a href="#contact" onclick="closeMenu()">Visit Us</a>
+  <a href="https://kokosicecream.com/Customer_dapp/index.html" target="_blank" class="mob-skoop" onclick="closeMenu()">$SKOOP Token</a>
+  <a href="#contact" onclick="closeMenu()" class="mob-cta">Order</a>
 </div>
 
 <!-- MARQUEE TICKER -->
