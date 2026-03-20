@@ -691,6 +691,74 @@ footer { background: var(--coral); border-top: var(--border); }
 }
 .footer-copy { font-size: 0.68rem; font-weight: 400; color: var(--ink); opacity: 0.6; letter-spacing: 0.06em; }
 
+/* HAMBURGER + MOBILE DROPDOWN */
+.hamburger {
+  display: none;
+  flex-direction: column;
+  justify-content: center;
+  gap: 5px;
+  width: 44px;
+  height: 44px;
+  background: none;
+  border: var(--border);
+  cursor: pointer;
+  padding: 10px;
+  flex-shrink: 0;
+}
+.hamburger span {
+  display: block;
+  height: 2px;
+  background: var(--ink);
+  border-radius: 2px;
+  transition: all 0.25s ease;
+  transform-origin: center;
+}
+.hamburger.open span:nth-child(1) { transform: translateY(7px) rotate(45deg); }
+.hamburger.open span:nth-child(2) { opacity: 0; transform: scaleX(0); }
+.hamburger.open span:nth-child(3) { transform: translateY(-7px) rotate(-45deg); }
+
+.mobile-menu {
+  display: none;
+  position: absolute;
+  top: 84px;
+  left: 0;
+  right: 0;
+  background: var(--coral);
+  border-bottom: var(--border);
+  z-index: 99;
+  flex-direction: column;
+  overflow: hidden;
+  max-height: 0;
+  transition: max-height 0.35s ease;
+}
+.mobile-menu.open {
+  max-height: 500px;
+}
+.mobile-menu a {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1rem 1.5rem;
+  font-size: 0.82rem;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--ink);
+  text-decoration: none;
+  border-bottom: var(--border);
+  transition: background 0.15s;
+}
+.mobile-menu a:last-child { border-bottom: none; }
+.mobile-menu a:hover { background: rgba(0,0,0,0.05); }
+.mobile-menu a .arrow { font-size: 0.65rem; opacity: 0.4; }
+.mobile-menu a.mob-cta {
+  background: var(--coral-mid);
+  font-size: 0.8rem;
+}
+.mobile-menu a.mob-skoop {
+  background: var(--lavender);
+}
+
 /* RESPONSIVE */
 @media (max-width: 960px) {
   .hero { grid-template-columns: 1fr; }
@@ -722,6 +790,8 @@ footer { background: var(--coral); border-top: var(--border); }
   .contact-left { border-right: none; border-bottom: var(--border); }
   nav { padding: 0 1.2rem; }
   .nav-links { display: none; }
+  .hamburger { display: flex; }
+  .mobile-menu { display: flex; }
   .footer-top { grid-template-columns: 1fr; }
   .footer-logo-col { border-right: none; border-bottom: var(--border); }
   .footer-links-col { flex-wrap: wrap; }
@@ -761,7 +831,21 @@ footer { background: var(--coral); border-top: var(--border); }
     <li><a href="https://kokosicecream.com/Customer_dapp/index.html" target="_blank">$SKOOP</a></li>
     <li><a href="#contact" class="nav-cta">Order</a></li>
   </ul>
+  <button class="hamburger" id="hamburger" onclick="toggleMenu()" aria-label="Menu">
+    <span></span><span></span><span></span>
+  </button>
 </nav>
+
+<!-- MOBILE DROPDOWN MENU -->
+<div class="mobile-menu" id="mobile-menu">
+  <a href="#flavors" onclick="closeMenu()">Flavors <span class="arrow">↓</span></a>
+  <a href="#reviews" onclick="closeMenu()">Reviews <span class="arrow">↓</span></a>
+  <a href="#about" onclick="closeMenu()">Our Story <span class="arrow">↓</span></a>
+  <a href="#press" onclick="closeMenu()">Press <span class="arrow">↓</span></a>
+  <a href="#contact" onclick="closeMenu()">Visit Us <span class="arrow">↓</span></a>
+  <a href="https://kokosicecream.com/Customer_dapp/index.html" target="_blank" class="mob-skoop" onclick="closeMenu()">$SKOOP Token <span class="arrow">↗</span></a>
+  <a href="#contact" onclick="closeMenu()" class="mob-cta">Order ↗</a>
+</div>
 
 <!-- MARQUEE TICKER -->
 <div class="marquee-wrap">
@@ -1111,4 +1195,30 @@ const FLAVORS = [
     </div>
   </div>
   <div class="footer-bottom">
-    <span class="footer-copy">&copy; 2025 KOKOS Ice Cream
+    <span class="footer-copy">&copy; 2025 KOKOS Ice Cream &middot; Nashville, TN &middot; Plant based &middot; Handcrafted</span>
+    <span class="footer-copy">3 City Ave Ste 700 &middot; 615.881.4082</span>
+  </div>
+</footer>
+
+<script>
+function toggleMenu() {
+  const menu = document.getElementById('mobile-menu');
+  const btn = document.getElementById('hamburger');
+  menu.classList.toggle('open');
+  btn.classList.toggle('open');
+}
+function closeMenu() {
+  document.getElementById('mobile-menu').classList.remove('open');
+  document.getElementById('hamburger').classList.remove('open');
+}
+document.addEventListener('click', function(e) {
+  const menu = document.getElementById('mobile-menu');
+  const btn = document.getElementById('hamburger');
+  if (menu.classList.contains('open') && !menu.contains(e.target) && !btn.contains(e.target)) {
+    closeMenu();
+  }
+});
+
+</script>
+</body>
+</html>
