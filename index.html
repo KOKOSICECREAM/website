@@ -832,7 +832,7 @@ footer { background: var(--coral); border-top: var(--border); }
     <li><a href="https://kokosicecream.com/Customer_dapp/index.html" target="_blank">$SKOOP</a></li>
     <li><a href="#contact" class="nav-cta">Order</a></li>
   </ul>
-  <button class="hamburger" id="hamburger" aria-label="Menu">MENU</button>
+  <button class="hamburger" id="hamburger" onclick="toggleMenu()" aria-label="Menu">MENU</button>
 </nav>
 
 <!-- MOBILE DROPDOWN MENU -->
@@ -1201,43 +1201,39 @@ const FLAVORS = [
 
 <script>
 var menuOpen = false;
+var scrollTimer = null;
 
 function openMenu() {
+  menuOpen = true;
   document.getElementById('mobile-menu').classList.add('open');
   document.getElementById('hamburger').classList.add('open');
   document.getElementById('hamburger').textContent = 'CLOSE';
-  menuOpen = true;
 }
 function closeMenu() {
+  menuOpen = false;
   document.getElementById('mobile-menu').classList.remove('open');
   document.getElementById('hamburger').classList.remove('open');
   document.getElementById('hamburger').textContent = 'MENU';
-  menuOpen = false;
-}
-function toggleMenu() {
-  menuOpen ? closeMenu() : openMenu();
 }
 
-document.addEventListener('DOMContentLoaded', function() {
-  var btn = document.getElementById('hamburger');
+// Re-open after scroll settles (anchor nav scrolls, then we're ready again)
+window.addEventListener('scroll', function() {
+  if (menuOpen) {
+    closeMenu();
+  }
+  clearTimeout(scrollTimer);
+  scrollTimer = setTimeout(function() {
+    menuOpen = false;
+  }, 300);
+}, { passive: true });
+
+// Close on outside tap
+document.addEventListener('click', function(e) {
   var menu = document.getElementById('mobile-menu');
-
-  btn.addEventListener('click', function(e) {
-    e.stopPropagation();
-    toggleMenu();
-  });
-
-  menu.querySelectorAll('a').forEach(function(link) {
-    link.addEventListener('click', function() {
-      closeMenu();
-    });
-  });
-
-  document.addEventListener('click', function(e) {
-    if (menuOpen && !menu.contains(e.target) && !btn.contains(e.target)) {
-      closeMenu();
-    }
-  });
+  var btn = document.getElementById('hamburger');
+  if (menuOpen && !menu.contains(e.target) && !btn.contains(e.target)) {
+    closeMenu();
+  }
 });
 </script>
 </body>
