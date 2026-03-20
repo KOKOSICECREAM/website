@@ -86,13 +86,12 @@ nav {
   color: var(--green);
 }
 .nav-links { display: flex; gap: 0; list-style: none; }
-.nav-links li { border-left: var(--border); }
-.nav-links li:last-child { border-right: var(--border); }
+.nav-links li { display: flex; }
 .nav-links a {
-  display: block;
+  display: flex;
+  align-items: center;
   padding: 0 1.4rem;
   height: 84px;
-  line-height: 84px;
   font-size: 0.72rem;
   font-weight: 600;
   color: var(--ink);
@@ -100,9 +99,11 @@ nav {
   letter-spacing: 0.14em;
   text-transform: uppercase;
   transition: background 0.15s;
+  border-left: var(--border);
 }
+.nav-links li:last-child a { border-right: var(--border); }
 .nav-links a:hover { background: rgba(0,0,0,0.06); }
-/* CTA — was dark green, now lavender */
+/* CTA */
 .nav-cta { background: var(--lavender) !important; color: var(--ink) !important; }
 .nav-cta:hover { background: #d4bfd5 !important; }
 
