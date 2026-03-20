@@ -719,20 +719,20 @@ footer { background: var(--coral); border-top: var(--border); }
 
 .mobile-menu {
   display: none;
-  position: absolute;
+  position: fixed;
   top: 84px;
   left: 0;
   right: 0;
   background: var(--coral);
   border-bottom: var(--border);
-  z-index: 99;
+  z-index: 9999;
   flex-direction: column;
   overflow: hidden;
   max-height: 0;
   transition: max-height 0.35s ease;
 }
 .mobile-menu.open {
-  max-height: 500px;
+  max-height: 520px;
 }
 .mobile-menu a {
   display: flex;
