@@ -751,6 +751,11 @@ footer { background: var(--coral); border-top: var(--border); }
 .mobile-menu a.mob-skoop { background: var(--lavender); }
 .mobile-menu a.mob-cta { background: var(--coral-mid); }
 
+/* SCROLL OFFSET — compensates for sticky 84px nav */
+#flavors, #reviews, #about, #press, #contact {
+  scroll-margin-top: 100px;
+}
+
 /* RESPONSIVE */
 @media (max-width: 960px) {
   .hero { grid-template-columns: 1fr; }
