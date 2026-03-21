@@ -536,7 +536,7 @@ async function onConnected(){
   const m=document.getElementById("main-app");
   m.style.display="flex";m.style.flexDirection="column";m.style.flex="1";m.style.overflow="hidden";
   document.getElementById("bottom-nav").style.display="flex";
-  updatePills();await checkNet();await refreshBals();setTimeout(buildMyQR,200);
+  updatePills();await checkNet();await refreshBals();setTimeout(buildMyQR,200);loadPoolImmutables();
 }
 
 function updatePills(){
@@ -636,20 +636,56 @@ function onAmt(){
   document.getElementById("btn-swap").textContent="Getting quote…";
   quoteTimer=setTimeout(()=>fetchQuote(v),600);
 }
+// Pool addresses
+const POOL_ETH_SKOOP  = '0xc1d89ca13d5cbc24b92e9f40b36d43da347c5198';
+const POOL_USDC_SKOOP = '0x64ef20f32445eb0a86f4b97ca895fe508af253cd';
+const ABI_POOL_IMM=["function token0() view returns (address)","function token1() view returns (address)","function fee() view returns (uint24)"];
+
+// Per-pool fee cache
+const poolFees={};
+
+async function loadPoolFee(poolAddr){
+  if(poolFees[poolAddr]!=null)return poolFees[poolAddr];
+  try{
+    const p=new ethers.Contract(poolAddr,ABI_POOL_IMM,provider);
+    const fee=await p.fee();
+    poolFees[poolAddr]=Number(fee);
+    console.log("pool",poolAddr,"fee:",poolFees[poolAddr]);
+    return poolFees[poolAddr];
+  }catch(e){
+    console.warn("loadPoolFee:",e.message);
+    return CFG.FEE; // fallback
+  }
+}
+
+async function loadPoolImmutables(){
+  await Promise.all([loadPoolFee(POOL_ETH_SKOOP),loadPoolFee(POOL_USDC_SKOOP)]);
+}
+
 async function fetchQuote(amt){
   if(!provider)return;
   try{
+    // Load pool immutables if not yet done
+    await loadPoolImmutables();
+
     const q=new ethers.Contract(CFG.QUOTER,ABI_QUOTER,provider);
     const tokenIn=selToken==="USDC"?CFG.USDC:CFG.WETH;
     const dec=selToken==="USDC"?CFG.USDC_DEC:CFG.WETH_DEC;
     const amtIn=ethers.parseUnits(amt.toString(),dec);
-    const [amtOut]=await q.quoteExactInputSingle.staticCall({tokenIn,tokenOut:CFG.SKOOP,amountIn:amtIn,fee:CFG.FEE,sqrtPriceLimitX96:0n});
-    curQuote={amtOut,amtIn,tokenIn};
+
+    // Pick pool and fee based on selected token
+    const poolAddr = selToken==="USDC" ? POOL_USDC_SKOOP : POOL_ETH_SKOOP;
+    const fee = await loadPoolFee(poolAddr);
+
+    const [amtOut]=await q.quoteExactInputSingle.staticCall({
+      tokenIn, tokenOut:CFG.SKOOP, amountIn:amtIn, fee:fee, sqrtPriceLimitX96:0n
+    });
+    curQuote={amtOut,amtIn,tokenIn,fee};
     const out=parseFloat(ethers.formatUnits(amtOut,CFG.SKOOP_DEC));
     const min=out*(1-slip/100);
     document.getElementById("out-amt").textContent=out.toLocaleString("en-US",{maximumFractionDigits:2});
     document.getElementById("out-loading").classList.remove("show");
-    document.getElementById("det-route").textContent=selToken+" → SKOOP (0.30%)";
+    document.getElementById("det-route").textContent=selToken+" → SKOOP ("+(fee/10000).toFixed(2)+"%)";
     document.getElementById("det-impact").textContent="< 1%";
     document.getElementById("det-min").textContent=min.toLocaleString("en-US",{maximumFractionDigits:2})+" SKOOP";
     document.getElementById("swap-dets").classList.add("show");
@@ -672,13 +708,13 @@ async function execSwap(){
     let tx;
     if(selToken==="ETH"){
       // ETH: send value directly, no approval needed
-      tx=await router.exactInputSingle({tokenIn:CFG.WETH,tokenOut:CFG.SKOOP,fee:CFG.FEE,recipient:userAddr,amountIn:curQuote.amtIn,amountOutMinimum:minOut,sqrtPriceLimitX96:0n},{value:curQuote.amtIn});
+      tx=await router.exactInputSingle({tokenIn:CFG.WETH,tokenOut:CFG.SKOOP,fee:curQuote.fee||CFG.FEE,recipient:userAddr,amountIn:curQuote.amtIn,amountOutMinimum:minOut,sqrtPriceLimitX96:0n},{value:curQuote.amtIn});
     }else{
       const tc=new ethers.Contract(curQuote.tokenIn,ABI_ERC20,signer);
       const al=await tc.allowance(userAddr,CFG.ROUTER);
       // EXACT approval — only approve the amount being swapped, no unlimited allowance
       if(al<curQuote.amtIn){showToast("Approving…","");await(await tc.approve(CFG.ROUTER,curQuote.amtIn)).wait();}
-      tx=await router.exactInputSingle({tokenIn:curQuote.tokenIn,tokenOut:CFG.SKOOP,fee:CFG.FEE,recipient:userAddr,amountIn:curQuote.amtIn,amountOutMinimum:minOut,sqrtPriceLimitX96:0n});
+      tx=await router.exactInputSingle({tokenIn:curQuote.tokenIn,tokenOut:CFG.SKOOP,fee:curQuote.fee||CFG.FEE,recipient:userAddr,amountIn:curQuote.amtIn,amountOutMinimum:minOut,sqrtPriceLimitX96:0n});
     }
     showToast("Submitted…","");await tx.wait();
     showToast("Swap complete! 🍦","ok");
