@@ -363,6 +363,7 @@ html,body{height:100%;overflow:hidden;background:var(--coral);font-family:'Instr
       <div class="sp-eyebrow">You pay</div>
       <button class="tok-btn" onclick="openTokSheet()"><div class="tok-ic ti-eth" id="from-icon">&#926;</div><div class="tok-name" id="from-name">ETH</div><div class="tok-chev">&#9660;</div></button>
       <input class="amt-input" id="from-amt" type="number" placeholder="0" min="0" step="any" oninput="onAmt()">
+      <div id="from-usd" style="font-size:12px;color:var(--ink-mid);font-weight:500;margin-top:2px;min-height:16px;"></div>
       <div class="bal-hint">Balance: <span id="from-bal">&#8212;</span> <button class="max-tag" onclick="setMax()">MAX</button></div>
     </div>
     <div class="swap-block-arrow">&#8595;</div>
@@ -458,7 +459,15 @@ const ABI_ERC20=["function balanceOf(address) view returns (uint256)","function 
 const ABI_ROUTER=["function exactInputSingle((address tokenIn,address tokenOut,uint24 fee,address recipient,uint256 amountIn,uint256 amountOutMinimum,uint160 sqrtPriceLimitX96)) payable returns (uint256)"];
 const ABI_ESCROW=[{inputs:[{components:[{name:"receiptId",type:"bytes32"},{name:"orderId",type:"bytes32"},{name:"storeIdHash",type:"bytes32"},{name:"terminalIdHash",type:"bytes32"},{name:"tokenAmount",type:"uint256"},{name:"subtotalCents",type:"uint256"},{name:"taxCents",type:"uint256"},{name:"totalCents",type:"uint256"},{name:"itemCount",type:"uint256"},{name:"cartHash",type:"bytes32"},{name:"deadline",type:"uint256"}],internalType:"struct KOKOSPaymentEscrowPOS.PaymentIntent",name:"intent",type:"tuple"},{name:"signature",type:"bytes"}],name:"capturePayment",outputs:[],stateMutability:"nonpayable",type:"function"}];
 
-let provider,signer,userAddr,selToken="ETH",slip=0.5,quoteTimer,curQuote,pendingIntent,scannerRunning=false;
+let provider,signer,userAddr,selToken="ETH",slip=0.5,quoteTimer,curQuote,pendingIntent,scannerRunning=false,ethPriceUSD=0;
+
+async function fetchEthPrice(){
+  try{
+    const r=await fetch('https://api.coingecko.com/api/v3/simple/price?ids=ethereum&vs_currencies=usd');
+    const d=await r.json();
+    ethPriceUSD=d?.ethereum?.usd||0;
+  }catch(e){}
+}
 
 async function openWalletModal(){
   if(window.ethereum){
@@ -534,7 +543,7 @@ async function onConnected(){
   const m=document.getElementById("main-app");
   m.style.display="flex";m.style.flexDirection="column";m.style.flex="1";m.style.overflow="hidden";
   document.getElementById("bottom-nav").style.display="flex";
-  updatePills();await checkNet();await refreshBals();setTimeout(buildMyQR,200);loadPoolImmutables();
+  updatePills();await checkNet();await refreshBals();setTimeout(buildMyQR,200);loadPoolImmutables();fetchEthPrice();
 }
 
 function updatePills(){
@@ -589,8 +598,15 @@ async function updateFromBal(){
   if(!provider||!userAddr)return;
   let b="—";
   try{
-    if(selToken==="ETH")b=parseFloat(ethers.formatEther(await provider.getBalance(userAddr))).toFixed(4)+" ETH";
-    else{const c=new ethers.Contract(CFG.USDC,ABI_ERC20,provider);b=parseFloat(ethers.formatUnits(await c.balanceOf(userAddr),6)).toFixed(2)+" USDC";}
+    if(selToken==="ETH"){
+      const raw=await provider.getBalance(userAddr);
+      const eth=parseFloat(ethers.formatEther(raw));
+      const usd=ethPriceUSD>0?" (≈$"+(eth*ethPriceUSD).toLocaleString("en-US",{maximumFractionDigits:2})+")":" ";
+      b=eth.toFixed(4)+" ETH"+usd;
+    } else {
+      const c=new ethers.Contract(CFG.USDC,ABI_ERC20,provider);
+      b=parseFloat(ethers.formatUnits(await c.balanceOf(userAddr),6)).toFixed(2)+" USDC";
+    }
   }catch(e){}
   document.getElementById("from-bal").textContent=b;
 }
@@ -622,12 +638,18 @@ function resetOut(){
   document.getElementById("swap-dets").classList.remove("show");
   document.getElementById("btn-swap").disabled=true;
   document.getElementById("btn-swap").textContent="Enter amount";
+  document.getElementById("from-usd").textContent="";
   curQuote=null;
 }
 function onAmt(){
   clearTimeout(quoteTimer);
   const v=parseFloat(document.getElementById("from-amt").value);
   if(!v||v<=0){resetOut();return;}
+  if(selToken==="ETH"&&ethPriceUSD>0){
+    document.getElementById("from-usd").textContent="≈ $"+(v*ethPriceUSD).toLocaleString("en-US",{maximumFractionDigits:2});
+  } else {
+    document.getElementById("from-usd").textContent="";
+  }
   document.getElementById("out-loading").classList.add("show");
   document.getElementById("out-loading").textContent="Getting quote…";
   document.getElementById("btn-swap").disabled=true;
