@@ -274,7 +274,7 @@ html,body{height:100%;overflow:hidden;background:var(--coral);font-family:'Instr
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 12h.01"/><path d="M2 10h20"/><path d="M7 3l5-1 5 1"/></svg>
         Connect Wallet
       </button>
-      <div class="ca-line" onclick="navigator.clipboard.writeText('0xfd3ce21c5Acd8BbbE576d0E2336C210C3cEBeb92').then(()=>alert('CA copied!'))">
+      <div class="ca-line" onclick="navigator.clipboard.writeText('0xfd3ce21c5acd8bbbe576d0e2336c210c3cebeb92').then(()=>alert('CA copied!'))">
         SKOOP &middot; <span style="text-decoration:underline dotted;">0xfd3ce21c5Acd8BbbE576d0E2336C210C3cEBeb92</span> &middot; tap to copy
       </div>
       <div class="gate-divider"><span>About SKOOP</span></div>
@@ -333,7 +333,7 @@ html,body{height:100%;overflow:hidden;background:var(--coral);font-family:'Instr
       <div class="bal-eyebrow">Your balance</div>
       <div class="bal-number" id="home-bal">&#8212;</div>
       <div class="bal-sub" id="home-usd">SKOOP &middot; Connect to load</div>
-      <div style="margin-top:10px;font-size:9px;font-weight:500;color:var(--ink-light);letter-spacing:0.3px;word-break:break-all;opacity:0.7;cursor:pointer;" onclick="navigator.clipboard.writeText('0xfd3ce21c5Acd8BbbE576d0E2336C210C3cEBeb92').then(()=>alert('CA copied!'))">CA: 0xfd3ce21c5Acd8BbbE576d0E2336C210C3cEBeb92</div>
+      <div style="margin-top:10px;font-size:9px;font-weight:500;color:var(--ink-light);letter-spacing:0.3px;word-break:break-all;opacity:0.7;cursor:pointer;" onclick="navigator.clipboard.writeText('0xfd3ce21c5acd8bbbe576d0e2336c210c3cebeb92').then(()=>alert('CA copied!'))">CA: 0xfd3ce21c5Acd8BbbE576d0E2336C210C3cEBeb92</div>
     </div>
     <div class="action-grid">
       <button class="action-cell ac-mint" onclick="goTo('buy')"><div class="ac-icon">&#x1F4B1;</div><div><div class="ac-label">Buy SKOOP</div><div class="ac-sub">USDC or ETH</div></div></button>
@@ -446,12 +446,12 @@ html,body{height:100%;overflow:hidden;background:var(--coral);font-family:'Instr
 <script>
 const CFG={
   CHAIN_ID:8453,CHAIN_HEX:'0x2105',RPC:'https://mainnet.base.org',
-  SKOOP:'0xfd3ce21c5Acd8BbbE576d0E2336C210C3cEBeb92',
-  ESCROW:'0x85E8cdedAe8ECd23ee21cdc90D75CbAAe9a54991',
-  POS_SIGNER:'0xa22675c629743a126E136a80244ddd2c3b2A4b12',
-  ROUTER:'0x2626664c2603336E57B271c5C0b26F421741e481',
-  QUOTER:'0x3d4e44Eb1374240CE5F1B136cf395a8eae25D0aE',
-  USDC:'0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913',
+  SKOOP:'0xfd3ce21c5acd8bbbe576d0e2336c210c3cebeb92',
+  ESCROW:'0x85e8cdedae8ecd23ee21cdc90d75cbaae9a54991',
+  POS_SIGNER:'0xa22675c629743a126e136a80244ddd2c3b2a4b12',
+  ROUTER:'0x2626664c2603336e57b271c5c0b26f421741e481',
+  QUOTER:'0x3d4e44eb1374240ce5f1b136cf395a8eae25d0ae',
+  USDC:'0x833589fcd6edb6e08f4c7c32d4f71b54bda02913',
   WETH:'0x4200000000000000000000000000000000000006',
   FEE:3000,SKOOP_DEC:6,USDC_DEC:6,WETH_DEC:18,
 };
