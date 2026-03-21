@@ -677,9 +677,11 @@ async function fetchQuote(amt){
     const poolAddr = selToken==="USDC" ? POOL_USDC_SKOOP : POOL_ETH_SKOOP;
     const fee = await loadPoolFee(poolAddr);
 
+    console.log("quote params:", {tokenIn, tokenOut:CFG.SKOOP, amountIn:amtIn.toString(), fee, sqrtPriceLimitX96:"0"});
     const [amtOut]=await q.quoteExactInputSingle.staticCall({
       tokenIn, tokenOut:CFG.SKOOP, amountIn:amtIn, fee:fee, sqrtPriceLimitX96:0n
     });
+    console.log("quote result:", amtOut.toString());
     curQuote={amtOut,amtIn,tokenIn,fee};
     const out=parseFloat(ethers.formatUnits(amtOut,CFG.SKOOP_DEC));
     const min=out*(1-slip/100);
