@@ -332,7 +332,8 @@ html,body{height:100%;overflow:hidden;background:var(--coral);font-family:'Instr
     <div class="home-balance-block">
       <div class="bal-eyebrow">Your balance</div>
       <div class="bal-number" id="home-bal">&#8212;</div>
-      <div class="bal-sub" id="home-usd">SKOOP &middot; Connect to load</div>
+      <div class="bal-sub" id="home-usd">SKOOP</div>
+      <div style="font-size:12px;color:var(--ink-mid);font-weight:500;margin-bottom:4px;min-height:16px;" id="home-usd-val"></div>
       <div style="margin-top:10px;font-size:9px;font-weight:500;color:var(--ink-light);letter-spacing:0.3px;word-break:break-all;opacity:0.7;cursor:pointer;" onclick="navigator.clipboard.writeText('0xfd3ce21c5acd8bbbe576d0e2336c210c3cebeb92').then(()=>alert('CA copied!'))">CA: 0xfd3ce21c5Acd8BbbE576d0E2336C210C3cEBeb92</div>
       <div style="margin-top:6px;font-size:10px;font-weight:500;color:var(--ink-light);opacity:0.6;">
         <a href="https://app.uniswap.org/explore/tokens/base/0xfd3ce21c5acd8bbbe576d0e2336c210c3cebeb92" target="_blank" rel="noopener" style="color:inherit;text-decoration:none;border-bottom:1px dotted currentColor;">Trade on Uniswap ↗</a>
@@ -503,10 +504,10 @@ async function fetchSkoopPrice(){
 }
 
 function updateSkoopBalanceDisplay(){
-  const subEl=document.getElementById("home-usd");
-  if(!subEl||!window._skoopBal||!skoopPriceUSD)return;
+  const valEl=document.getElementById("home-usd-val");
+  if(!valEl||!window._skoopBal||!skoopPriceUSD)return;
   const usd=(window._skoopBal*skoopPriceUSD).toLocaleString("en-US",{style:"currency",currency:"USD",maximumFractionDigits:2});
-  subEl.textContent="SKOOP · "+usd;
+  valEl.textContent=usd;
 }
 
 async function openWalletModal(){
@@ -558,7 +559,7 @@ async function disconnectWallet(){
   const gate=document.getElementById("connect-gate");
   gate.style.display="flex";gate.style.flexDirection="column";gate.style.flex="1";
   document.getElementById("home-bal").textContent="—";
-  document.getElementById("home-usd").textContent="SKOOP · Connect to load";
+  document.getElementById("home-usd").textContent="SKOOP";document.getElementById("home-usd-val").textContent="";
   document.getElementById("wallet-pill").textContent="0x…";
   document.getElementById("buy-pill").textContent="0x…";
   document.getElementById("qr-addr").textContent="Connect wallet to generate QR";
@@ -623,7 +624,7 @@ async function refreshBals(){
     const skoopBal=parseFloat(ethers.formatUnits(raw,CFG.SKOOP_DEC));
     window._skoopBal=skoopBal;
     document.getElementById("home-bal").textContent=skoopBal.toLocaleString("en-US",{maximumFractionDigits:2});
-    document.getElementById("home-usd").textContent="SKOOP · Nashville plant-based ice cream";
+    document.getElementById("home-usd").textContent="SKOOP";
     updateSkoopBalanceDisplay();
     document.getElementById("qr-bal").textContent=fmt;
   }catch(e){
