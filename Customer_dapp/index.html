@@ -334,6 +334,9 @@ html,body{height:100%;overflow:hidden;background:var(--coral);font-family:'Instr
       <div class="bal-number" id="home-bal">&#8212;</div>
       <div class="bal-sub" id="home-usd">SKOOP &middot; Connect to load</div>
       <div style="margin-top:10px;font-size:9px;font-weight:500;color:var(--ink-light);letter-spacing:0.3px;word-break:break-all;opacity:0.7;cursor:pointer;" onclick="navigator.clipboard.writeText('0xfd3ce21c5acd8bbbe576d0e2336c210c3cebeb92').then(()=>alert('CA copied!'))">CA: 0xfd3ce21c5Acd8BbbE576d0E2336C210C3cEBeb92</div>
+      <div style="margin-top:6px;font-size:10px;font-weight:500;color:var(--ink-light);opacity:0.6;">
+        <a href="https://app.uniswap.org/explore/tokens/base/0xfd3ce21c5acd8bbbe576d0e2336c210c3cebeb92" target="_blank" rel="noopener" style="color:inherit;text-decoration:none;border-bottom:1px dotted currentColor;">Trade on Uniswap ↗</a>
+      </div>
     </div>
     <div class="action-grid">
       <button class="action-cell ac-mint" onclick="goTo('buy')"><div class="ac-icon">&#x1F4B1;</div><div><div class="ac-label">Buy SKOOP</div><div class="ac-sub">USDC or ETH</div></div></button>
@@ -459,14 +462,52 @@ const ABI_ERC20=["function balanceOf(address) view returns (uint256)","function 
 const ABI_ROUTER=["function exactInputSingle((address tokenIn,address tokenOut,uint24 fee,address recipient,uint256 amountIn,uint256 amountOutMinimum,uint160 sqrtPriceLimitX96)) payable returns (uint256)"];
 const ABI_ESCROW=[{inputs:[{components:[{name:"receiptId",type:"bytes32"},{name:"orderId",type:"bytes32"},{name:"storeIdHash",type:"bytes32"},{name:"terminalIdHash",type:"bytes32"},{name:"tokenAmount",type:"uint256"},{name:"subtotalCents",type:"uint256"},{name:"taxCents",type:"uint256"},{name:"totalCents",type:"uint256"},{name:"itemCount",type:"uint256"},{name:"cartHash",type:"bytes32"},{name:"deadline",type:"uint256"}],internalType:"struct KOKOSPaymentEscrowPOS.PaymentIntent",name:"intent",type:"tuple"},{name:"signature",type:"bytes"}],name:"capturePayment",outputs:[],stateMutability:"nonpayable",type:"function"}];
 
-let provider,signer,userAddr,selToken="ETH",slip=0.5,quoteTimer,curQuote,pendingIntent,scannerRunning=false,ethPriceUSD=0;
+let provider,signer,userAddr,selToken="ETH",slip=0.5,quoteTimer,curQuote,pendingIntent,scannerRunning=false,ethPriceUSD=0,skoopPriceUSD=0;
 
 async function fetchEthPrice(){
   try{
     const r=await fetch('https://api.coingecko.com/api/v3/simple/price?ids=ethereum&vs_currencies=usd');
     const d=await r.json();
     ethPriceUSD=d?.ethereum?.usd||0;
+    if(ethPriceUSD>0) await fetchSkoopPrice();
   }catch(e){}
+}
+
+async function fetchSkoopPrice(){
+  try{
+    // Read sqrtPriceX96 from WETH/SKOOP pool to derive SKOOP price in USD
+    const ABI_POOL=["function slot0() view returns (uint160 sqrtPriceX96,int24,uint16,uint16,uint16,uint8,bool)","function token0() view returns (address)"];
+    const pub=new ethers.JsonRpcProvider(CFG.RPC);
+    const pool=new ethers.Contract(POOL_ETH_SKOOP,ABI_POOL,pub);
+    const [s0,t0]=await Promise.all([pool.slot0(),pool.token0()]);
+    const sqrtP=s0.sqrtPriceX96;
+    const Q96=2n**96n;
+    const skoopIsT0=t0.toLowerCase()===CFG.SKOOP.toLowerCase();
+    // price = sqrtP^2/Q96^2 = token1_raw/token0_raw
+    // WETH=token0(18dec) SKOOP=token1(6dec): SKOOP_raw per WETH_raw
+    // skoopPerEth = sqrtP^2/Q96^2 * 1e18/1e6 correction already baked in
+    let skoopPerEth;
+    if(skoopIsT0){
+      // SKOOP=token0, WETH=token1: price = Q96^2/sqrtP^2 * 1e12
+      skoopPerEth = Number(Q96*Q96/(sqrtP*sqrtP)) * 1e12;
+    } else {
+      // SKOOP=token1, WETH=token0
+      skoopPerEth = Number(sqrtP*sqrtP/(Q96*Q96)) * 1e12;
+    }
+    skoopPriceUSD = skoopPerEth > 0 ? ethPriceUSD / skoopPerEth : 0;
+    updateSkoopBalanceDisplay();
+  }catch(e){}
+}
+
+function updateSkoopBalanceDisplay(){
+  const balEl=document.getElementById("home-bal");
+  const subEl=document.getElementById("home-usd");
+  if(!balEl||!subEl)return;
+  const bal=parseFloat(balEl.textContent.replace(/,/g,""));
+  if(!isNaN(bal)&&bal>0&&skoopPriceUSD>0){
+    const usd=(bal*skoopPriceUSD).toLocaleString("en-US",{style:"currency",currency:"USD",maximumFractionDigits:2});
+    subEl.textContent="SKOOP · "+usd+" · Nashville plant-based ice cream";
+  }
 }
 
 async function openWalletModal(){
@@ -583,6 +624,7 @@ async function refreshBals(){
     const fmt=parseFloat(ethers.formatUnits(raw,CFG.SKOOP_DEC)).toLocaleString("en-US",{maximumFractionDigits:2});
     document.getElementById("home-bal").textContent=fmt;
     document.getElementById("home-usd").textContent="SKOOP · Nashville plant-based ice cream";
+    updateSkoopBalanceDisplay();
     document.getElementById("qr-bal").textContent=fmt;
   }catch(e){
     document.getElementById("home-bal").textContent="0";
