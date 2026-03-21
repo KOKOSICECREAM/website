@@ -1224,7 +1224,13 @@ function drawLineChart(ctx, canvas, prices){
   const lbx = W - pad.right - tw - 10, lby = pad.top + 4;
   ctx.fillStyle = labelBg;
   ctx.beginPath();
-  ctx.roundRect(lbx-4, lby-1, tw+8, 14, 4);
+  // Safari-safe rounded rect
+  (function(x,y,w,h,r){
+    ctx.moveTo(x+r,y);ctx.lineTo(x+w-r,y);ctx.quadraticCurveTo(x+w,y,x+w,y+r);
+    ctx.lineTo(x+w,y+h-r);ctx.quadraticCurveTo(x+w,y+h,x+w-r,y+h);
+    ctx.lineTo(x+r,y+h);ctx.quadraticCurveTo(x,y+h,x,y+h-r);
+    ctx.lineTo(x,y+r);ctx.quadraticCurveTo(x,y,x+r,y);ctx.closePath();
+  })(lbx-4, lby-1, tw+8, 14, 4);
   ctx.fill();
   ctx.fillStyle = labelColor;
   ctx.textAlign = 'left';
@@ -1265,7 +1271,7 @@ let toastT;
 function showToast(msg,type=""){
   const el=document.getElementById("toast");
   el.className="show"+(type?" "+type:"");
-  el.innerHTML=(type==="ok"?"✓ ":type==="err"?"✕ ":""+msg;
+  el.innerHTML=(type==="ok"?"✓ ":type==="err"?"✕ ":"")+msg;
   clearTimeout(toastT);toastT=setTimeout(()=>el.classList.remove("show"),4000);
 }
 
