@@ -261,90 +261,119 @@ html,body{height:100%;overflow:hidden;background:var(--coral);font-family:'Instr
 </div>
 
 <!-- CONNECT GATE -->
-<div id="connect-gate" style="display:flex;flex-direction:column;flex:1;overflow:hidden;">
-  <div class="gate-blocks">
-    <div class="gate-block gb-coral"></div><div class="gate-block gb-mint"></div>
-    <div class="gate-block gb-lavender"></div><div class="gate-block gb-sand"></div>
-    <div class="gate-logo-center"><img src="KOKOS_SKOOP.png" alt="KOKOS SKOOP"></div>
+<div id="connect-gate" style="display:flex;flex-direction:column;flex:1;overflow-y:auto;">
+
+  <!-- color stripe -->
+  <div style="display:flex;height:5px;flex-shrink:0;">
+    <div style="flex:1;background:var(--coral)"></div>
+    <div style="flex:1;background:var(--mint)"></div>
+    <div style="flex:1;background:var(--apricot)"></div>
+    <div style="flex:1;background:var(--lavender)"></div>
+    <div style="flex:1;background:var(--sand)"></div>
   </div>
-  <div class="stripe"><div class="s1"></div><div class="s2"></div><div class="s3"></div><div class="s4"></div><div class="s5"></div><div class="s6"></div></div>
-  <div class="gate-bottom">
-    <div class="gate-bottom-inner">
-      <div class="gate-tagline">The KOKOS loyalty token<br>Buy, earn rewards &amp; pay at the shop</div>
-      <button class="btn-primary" id="gate-connect-btn" onclick="openWalletModal()">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 12h.01"/><path d="M2 10h20"/><path d="M7 3l5-1 5 1"/></svg>
-        Connect Wallet
+
+  <!-- logo -->
+  <div style="padding:32px 24px 0;display:flex;flex-direction:column;align-items:center;gap:12px;">
+    <img src="KOKOS_SKOOP.png" style="width:72px;height:72px;border-radius:50%;box-shadow:0 4px 20px rgba(42,31,26,0.15);">
+    <div style="text-align:center;">
+      <div style="font-family:'Cormorant Garamond',serif;font-size:28px;font-weight:600;color:var(--ink);letter-spacing:-0.5px;">SKOOP</div>
+      <div style="font-size:13px;color:var(--ink-mid);font-weight:500;margin-top:2px;">by KOKOS Ice Cream Nashville</div>
+    </div>
+  </div>
+
+  <!-- main content — switches based on whether wallet browser detected -->
+  <div style="padding:24px;display:flex;flex-direction:column;gap:16px;flex:1;">
+
+    <!-- WALLET BROWSER DETECTED — show connect button -->
+    <div id="gate-web3" style="display:none;flex-direction:column;gap:12px;">
+      <div style="background:var(--mint);border-radius:var(--r);padding:14px 16px;text-align:center;">
+        <div style="font-size:12px;font-weight:600;color:var(--green);letter-spacing:0.3px;">Wallet detected</div>
+        <div style="font-size:11px;color:var(--ink-mid);margin-top:3px;">Tap below to connect and get started</div>
+      </div>
+      <button id="gate-connect-btn" class="btn-primary" onclick="openWalletModal()" style="width:100%;padding:18px;font-size:16px;">
+        Get Started
       </button>
-      <div id="wallet-hint" style="display:none;margin:12px 0;">
-        <div style="background:var(--sand);border-radius:var(--r-sm);padding:12px 14px;margin-bottom:10px;font-size:12px;font-weight:500;color:var(--ink-mid);line-height:1.6;text-align:center;">
-          You need a crypto wallet to use SKOOP. Tap below to open this page inside your wallet app — then connect from there and stay in the wallet browser.
+    </div>
+
+    <!-- NO WALLET BROWSER — show launchpad -->
+    <div id="gate-launchpad" style="display:none;flex-direction:column;gap:12px;">
+      <div style="text-align:center;margin-bottom:4px;">
+        <div style="font-size:15px;font-weight:600;color:var(--ink);margin-bottom:6px;">Open in your wallet app</div>
+        <div style="font-size:12px;color:var(--ink-mid);line-height:1.6;">SKOOP runs inside your crypto wallet browser. Tap below to open it there — then connect and stay inside the wallet app.</div>
+      </div>
+
+      <a href="https://metamask.app.link/dapp/kokosicecream.github.io/website/Customer_dapp/index.html"
+         style="display:flex;align-items:center;gap:14px;background:var(--white);border:1.5px solid var(--border-mid);border-radius:var(--r);padding:16px;text-decoration:none;color:var(--ink);">
+        <img src="https://upload.wikimedia.org/wikipedia/commons/3/36/MetaMask_Fox.svg" style="width:36px;height:36px;flex-shrink:0;">
+        <div>
+          <div style="font-size:14px;font-weight:600;">Open in MetaMask</div>
+          <div style="font-size:11px;color:var(--ink-light);margin-top:2px;">Tap Get Started once inside</div>
         </div>
-        <div style="display:flex;flex-direction:column;gap:6px;">
-          <a href="https://metamask.app.link/dapp/kokosicecream.github.io/website/Customer_dapp/index.html"
-             style="display:flex;align-items:center;gap:10px;background:var(--white);border:1px solid var(--border-mid);border-radius:var(--r-sm);padding:10px 14px;text-decoration:none;color:var(--ink);font-size:13px;font-weight:600;">
-            <img src="https://upload.wikimedia.org/wikipedia/commons/3/36/MetaMask_Fox.svg" style="width:24px;height:24px;">
-            <div>
-              <div>Open in MetaMask</div>
-              <div style="font-size:10px;font-weight:400;color:var(--ink-light);margin-top:1px;">Then tap Get Started inside MetaMask</div>
-            </div>
-          </a>
-          <a href="https://coinbase-wallet.onelink.me/q5Sy?af_dp=cbwallet%3A%2F%2Fdapp%3Furl%3Dhttps%3A%2F%2Fkokosicecream.github.io%2Fwebsite%2FCustomer_dapp%2Findex.html&af_web_dp=https%3A%2F%2Fkokosicecream.github.io%2Fwebsite%2FCustomer_dapp%2Findex.html"
-             style="display:flex;align-items:center;gap:10px;background:var(--white);border:1px solid var(--border-mid);border-radius:var(--r-sm);padding:10px 14px;text-decoration:none;color:var(--ink);font-size:13px;font-weight:600;">
-            <img src="https://www.coinbase.com/favicon.ico" style="width:24px;height:24px;border-radius:4px;">
-            <div>
-              <div>Open in Coinbase Wallet</div>
-              <div style="font-size:10px;font-weight:400;color:var(--ink-light);margin-top:1px;">Opens dapp directly in wallet browser</div>
-            </div>
-          </a>
+        <svg style="margin-left:auto;opacity:0.3;" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M9 18l6-6-6-6"/></svg>
+      </a>
+
+      <a href="https://coinbase-wallet.onelink.me/q5Sy?af_dp=cbwallet%3A%2F%2Fdapp%3Furl%3Dhttps%3A%2F%2Fkokosicecream.github.io%2Fwebsite%2FCustomer_dapp%2Findex.html&af_web_dp=https%3A%2F%2Fkokosicecream.github.io%2Fwebsite%2FCustomer_dapp%2Findex.html"
+         style="display:flex;align-items:center;gap:14px;background:var(--white);border:1.5px solid var(--border-mid);border-radius:var(--r);padding:16px;text-decoration:none;color:var(--ink);">
+        <img src="https://www.coinbase.com/favicon.ico" style="width:36px;height:36px;border-radius:8px;flex-shrink:0;">
+        <div>
+          <div style="font-size:14px;font-weight:600;">Open in Coinbase Wallet</div>
+          <div style="font-size:11px;color:var(--ink-light);margin-top:2px;">Tap Get Started once inside</div>
         </div>
-        <div style="font-size:10px;color:var(--ink-light);text-align:center;margin-top:10px;line-height:1.6;">
-          Already inside a wallet browser? Tap Get Started above.<br>Different wallet? Tap Get Started and scan the QR code.
+        <svg style="margin-left:auto;opacity:0.3;" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M9 18l6-6-6-6"/></svg>
+      </a>
+
+      <div style="display:flex;align-items:center;gap:10px;margin:4px 0;">
+        <div style="flex:1;height:1px;background:var(--border);"></div>
+        <div style="font-size:10px;font-weight:600;color:var(--ink-light);letter-spacing:1px;text-transform:uppercase;">or</div>
+        <div style="flex:1;height:1px;background:var(--border);"></div>
+      </div>
+
+      <button id="gate-connect-btn" class="btn-primary" onclick="openWalletModal()" style="width:100%;padding:16px;font-size:14px;background:var(--apricot);color:var(--ink);border:1.5px solid var(--border-mid);">
+        Connect via WalletConnect
+      </button>
+      <div style="font-size:10px;color:var(--ink-light);text-align:center;">Scan a QR code from any wallet app</div>
+    </div>
+
+    <!-- divider -->
+    <div style="height:1px;background:var(--border);margin:4px 0;"></div>
+
+    <!-- about section — always visible -->
+    <div style="display:flex;flex-direction:column;gap:10px;">
+      <div style="font-family:'Cormorant Garamond',serif;font-size:18px;font-weight:600;color:var(--ink);">What is SKOOP?</div>
+      <div style="font-size:13px;color:var(--ink-mid);line-height:1.7;">SKOOP is the loyalty token for KOKOS Ice Cream — Nashville's original plant-based scoop shop. Buy SKOOP with ETH or USDC, pay at the register, and earn rewards on every visit. No points cards. Just your wallet.</div>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:4px;">
+        <div style="background:var(--mint);border-radius:var(--r-sm);padding:12px;">
+          <div style="font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--green);margin-bottom:4px;">Buy</div>
+          <div style="font-size:12px;color:var(--ink-mid);line-height:1.5;">Swap ETH or USDC for SKOOP via Uniswap</div>
+        </div>
+        <div style="background:var(--apricot);border-radius:var(--r-sm);padding:12px;">
+          <div style="font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--coral-deep);margin-bottom:4px;">Pay</div>
+          <div style="font-size:12px;color:var(--ink-mid);line-height:1.5;">Scan the register QR and pay on-chain</div>
+        </div>
+        <div style="background:var(--lavender);border-radius:var(--r-sm);padding:12px;">
+          <div style="font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--ink-mid);margin-bottom:4px;">Earn</div>
+          <div style="font-size:12px;color:var(--ink-mid);line-height:1.5;">Show your QR after any purchase to earn SKOOP</div>
+        </div>
+        <div style="background:var(--sand);border-radius:var(--r-sm);padding:12px;">
+          <div style="font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--ink-mid);margin-bottom:4px;">Burns</div>
+          <div style="font-size:12px;color:var(--ink-mid);line-height:1.5;">Every payment reduces supply over time</div>
         </div>
       </div>
-      <div class="ca-line" onclick="navigator.clipboard.writeText('0xfd3ce21c5acd8bbbe576d0e2336c210c3cebeb92').then(()=>alert('CA copied!'))">
-        SKOOP &middot; <span style="text-decoration:underline dotted;">0xfd3ce21c5Acd8BbbE576d0E2336C210C3cEBeb92</span> &middot; tap to copy
-      </div>
-      <div class="gate-divider"><span>About SKOOP</span></div>
-      <div class="about-kicker">The KOKOS Token</div>
-      <h2 class="about-heading">Your skoop,<br><em>on-chain.</em></h2>
-      <p class="about-body">SKOOP is the loyalty and payment token for KOKOS Ice Cream — Nashville's original plant-based scoop shop. Built on Base, it lets you buy tokens, pay at the register, and earn rewards just for being a regular. No points cards. No apps. Just your web3 wallet.</p>
-      <p class="about-body" style="margin-top:-8px;">Every SKOOP transaction at the shop flows through an on-chain escrow and settles transparently — no middlemen, no processing fees eating into your purchase. It's the first crypto-native checkout experience in Nashville's food scene.</p>
-      <div class="stat-strip">
-        <div class="stat-cell"><div class="stat-big">Base</div><div class="stat-lbl">Network</div></div>
-        <div class="stat-cell"><div class="stat-big">$0</div><div class="stat-lbl">Middle&shy;men</div></div>
-        <div class="stat-cell"><div class="stat-big">Local</div><div class="stat-lbl">Nashville</div></div>
-      </div>
-      <div class="token-card">
-        <div class="token-card-head"><span class="token-badge">$SKOOP</span><span class="token-card-title">Base &middot; ERC-20</span></div>
-        <p class="token-card-body">
-          <strong>Contract:</strong> 0xfd3ce21c5Acd8BbbE576d0E2336C210C3cEBeb92<br>
-          <strong>Buy with:</strong> USDC or ETH via Uniswap V3<br>
-          <strong>Use it:</strong> Scan &amp; pay at the KOKOS register in Nashville<br>
-          <strong>Earn it:</strong> Show your wallet QR after any cash or card purchase
-        </p>
-      </div>
-      <div class="gate-divider"><span>How It Works</span></div>
-      <h2 class="hiw-heading">Three ways<br>to <em>use SKOOP</em></h2>
-      <div class="step-list">
-        <div class="step"><div class="step-num">1</div><div class="step-content"><div class="step-title">Get SKOOP</div><div class="step-desc">Connect your wallet and tap Buy. Swap USDC or ETH for SKOOP directly through Uniswap V3 on Base — no account required, no KYC.</div></div></div>
-        <div class="step"><div class="step-num">2</div><div class="step-content"><div class="step-title">Pay at the shop</div><div class="step-desc">The KOKOS team rings up your order and shows you a checkout QR. Open the Pay tab, scan it, review the total, and confirm — SKOOP goes to escrow instantly.</div></div></div>
-        <div class="step"><div class="step-num">3</div><div class="step-content"><div class="step-title">Earn rewards</div><div class="step-desc">Paying by card or cash? Show your My QR tab to the team after your purchase. They'll scan it and send SKOOP straight to your wallet as a reward.</div></div></div>
-        <div class="step"><div class="step-num">4</div><div class="step-content"><div class="step-title">Settlement &amp; burn</div><div class="step-desc">SKOOP captured in escrow settles on-chain and a portion burns — reducing supply over time. Every scoop you buy makes the token a little more scarce.</div></div></div>
-      </div>
-      <div class="earn-pay-grid">
-        <div class="ep-card"><div class="ep-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 12 20 22 4 22 4 12"/><rect x="2" y="7" width="20" height="5"/><path d="M12 22V7M12 7H7.5a2.5 2.5 0 010-5C11 2 12 7 12 7zM12 7h4.5a2.5 2.5 0 000-5C13 2 12 7 12 7z"/></svg></div><div class="ep-title">Earn SKOOP</div><div class="ep-body">Pay any way at KOKOS and show your QR. The team sends SKOOP to your wallet as a thank-you.</div></div>
-        <div class="ep-card"><div class="ep-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="2" width="14" height="20" rx="2"/><path d="M9 7h6M9 11h6M9 15h4"/></svg></div><div class="ep-title">Pay with SKOOP</div><div class="ep-body">Scan the shop's checkout QR, confirm the total, and your SKOOP pays for your order on-chain.</div></div>
-      </div>
-      <div class="gate-footer-cta">
-        <p>Ready to SKOOP?<br><em>Connect your wallet to start.</em></p>
-        <button class="btn-cta-repeat" onclick="openWalletModal()">Connect Wallet &rarr;</button>
+
+      <div style="background:var(--white);border:1px solid var(--border);border-radius:var(--r-sm);padding:12px;margin-top:4px;">
+        <div style="font-size:10px;font-weight:600;color:var(--ink-light);letter-spacing:0.5px;text-transform:uppercase;margin-bottom:6px;">Contract · Base Network</div>
+        <div style="font-size:11px;font-family:monospace;color:var(--ink-mid);word-break:break-all;cursor:pointer;" onclick="navigator.clipboard.writeText('0xfd3ce21c5acd8bbbe576d0e2336c210c3cebeb92').then(()=>showToast('Address copied','ok'))">
+          0xfd3ce21c5Acd8BbbE576d0E2336C210C3cEBeb92
+          <span style="font-family:'Instrument Sans',sans-serif;font-size:10px;color:var(--ink-light);"> · tap to copy</span>
+        </div>
       </div>
     </div>
+
   </div>
 </div>
 
-<!-- MAIN APP -->
-<div id="main-app" style="display:none;flex-direction:column;flex:1;overflow:hidden;">
+id="main-app" style="display:none;flex-direction:column;flex:1;overflow:hidden;">
   <!-- HOME -->
   <div class="screen active" id="screen-home">
     <div class="hdr" style="background:var(--coral);">
@@ -601,28 +630,44 @@ function updateSkoopBalanceDisplay(){
   }
 })();
 
-async function openWalletModal(){
-  if(window.ethereum){
-    try{
-      const btn=document.getElementById('gate-connect-btn');
-      if(btn){btn.textContent='Connecting...';btn.disabled=true;}
-      await window.ethereum.request({method:'eth_requestAccounts'});
-      provider=new ethers.BrowserProvider(window.ethereum);
-      signer=await provider.getSigner();
-      userAddr=await signer.getAddress();
-      await onConnected();
-      window.ethereum.on('accountsChanged',a=>{if(a[0]){userAddr=a[0];updatePills();refreshBals();}else{userAddr=null;provider=null;signer=null;showGate();}});
-      window.ethereum.on('chainChanged',()=>location.reload());
-      return;
-    }catch(e){
-      const btn=document.getElementById('gate-connect-btn');
-      if(btn){btn.textContent='Connect Wallet';btn.disabled=false;}
-      if(e.code===4001||e.code===-32603){showToast("Connection rejected","err");return;}
-      // Any other error — show it
-      showToast(e?.message?.slice(0,60)||"Connection failed","err");
-      return;
+async function connectEthereumDirect(){
+  const btn=document.getElementById('gate-connect-btn');
+  try{
+    if(btn){btn.textContent='Connecting...';btn.disabled=true;}
+    await window.ethereum.request({method:'eth_requestAccounts'});
+    provider=new ethers.BrowserProvider(window.ethereum);
+    signer=await provider.getSigner();
+    userAddr=await signer.getAddress();
+    await onConnected();
+    window.ethereum.on('accountsChanged',a=>{if(a[0]){userAddr=a[0];updatePills();refreshBals();}else{userAddr=null;provider=null;signer=null;showGate();}});
+    window.ethereum.on('chainChanged',()=>location.reload());
+    return true;
+  }catch(e){
+    if(btn){btn.textContent='Get Started';btn.disabled=false;}
+    if(e.code===4001){showToast('Connection rejected','err');return false;}
+    // Timing issue on fresh page load — retry once after short delay
+    if(e.code===-32002||!userAddr){
+      await new Promise(r=>setTimeout(r,800));
+      try{
+        provider=new ethers.BrowserProvider(window.ethereum);
+        signer=await provider.getSigner();
+        userAddr=await signer.getAddress();
+        await onConnected();
+        return true;
+      }catch(e2){}
     }
+    showToast(e?.message?.slice(0,50)||'Connection failed','err');
+    return false;
   }
+}
+
+async function openWalletModal(){
+  // Always try direct window.ethereum first — never fall through to WC if it exists
+  if(window.ethereum){
+    await connectEthereumDirect();
+    return;
+  }
+  // No injected wallet — use WalletConnect QR
   await connectWalletConnect();
 }
 
@@ -1310,6 +1355,21 @@ function showToast(msg,type=""){
 }
 
 // ── INIT ─────────────────────────────────────────────────────────────────────
+// Show correct gate panel based on whether wallet browser is detected
+(function(){
+  const web3Panel      = document.getElementById('gate-web3');
+  const launchpadPanel = document.getElementById('gate-launchpad');
+  if(window.ethereum){
+    // Inside a wallet browser — show connect button
+    if(web3Panel)      web3Panel.style.display      = 'flex';
+    if(launchpadPanel) launchpadPanel.style.display  = 'none';
+  } else {
+    // Regular browser — show wallet app launch buttons
+    if(web3Panel)      web3Panel.style.display      = 'none';
+    if(launchpadPanel) launchpadPanel.style.display  = 'flex';
+  }
+})();
+
 // Auto-connect if wallet already authorized
 if(window.ethereum){
   window.ethereum.request({method:'eth_accounts'}).then(accounts=>{
