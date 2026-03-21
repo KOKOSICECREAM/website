@@ -168,7 +168,7 @@ html,body{height:100%;overflow:hidden;background:var(--coral);font-family:'Instr
 .btn-swap:disabled{background:var(--border);color:var(--ink-light);cursor:not-allowed;}
 .backdrop{display:none;position:absolute;inset:0;background:rgba(42,31,26,0.35);z-index:150;}
 .backdrop.open{display:block;}
-.tok-sheet{display:none;position:absolute;bottom:0;left:0;right:0;background:var(--white);border-top-left-radius:24px;border-top-right-radius:24px;padding:16px 20px 44px;z-index:200;box-shadow:0 -4px 40px rgba(0,0,0,0.12);}
+.tok-sheet{display:none;position:absolute;bottom:0;left:0;right:0;background:var(--white);border-top-left-radius:24px;border-top-right-radius:24px;padding:16px 20px calc(var(--nav-h) + env(safe-area-inset-bottom,0px) + 16px);z-index:200;box-shadow:0 -4px 40px rgba(0,0,0,0.12);}
 .tok-sheet.open{display:block;}
 .sheet-handle{width:36px;height:4px;background:var(--border-mid);border-radius:2px;margin:0 auto 20px;}
 .sheet-title{font-family:'Cormorant Garamond',serif;font-size:20px;font-weight:600;color:var(--ink);margin-bottom:16px;}
@@ -234,6 +234,7 @@ html,body{height:100%;overflow:hidden;background:var(--coral);font-family:'Instr
 #toast.show{display:flex;}#toast.ok{background:var(--coral-deep);}#toast.err{background:#b91c1c;}
 .spinner{width:16px;height:16px;border:2px solid rgba(255,255,255,0.3);border-top-color:white;border-radius:50%;animation:spin 0.7s linear infinite;flex-shrink:0;}
 @keyframes spin{to{transform:rotate(360deg);}}
+@keyframes sheetUp{from{transform:translateY(100%);opacity:0;}to{transform:translateY(0);opacity:1;}}
 #net-banner{display:none;background:#b91c1c;color:white;padding:9px 20px;font-size:12px;font-weight:600;text-align:center;cursor:pointer;}
 #net-banner.show{display:block;}
 </style>
@@ -274,6 +275,24 @@ html,body{height:100%;overflow:hidden;background:var(--coral);font-family:'Instr
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 12h.01"/><path d="M2 10h20"/><path d="M7 3l5-1 5 1"/></svg>
         Connect Wallet
       </button>
+      <div id="wallet-hint" style="display:none;margin:12px 0;">
+        <div style="font-size:11px;font-weight:600;color:var(--ink-mid);text-align:center;margin-bottom:8px;letter-spacing:0.5px;text-transform:uppercase;">Open in your wallet app</div>
+        <div style="display:flex;flex-direction:column;gap:6px;">
+          <a href="https://metamask.app.link/dapp/kokosicecream.github.io/website/Customer_dapp/index.html"
+             style="display:flex;align-items:center;gap:10px;background:var(--white);border:1px solid var(--border-mid);border-radius:var(--r-sm);padding:10px 14px;text-decoration:none;color:var(--ink);font-size:13px;font-weight:600;transition:background 0.15s;"
+             onmouseover="this.style.background='var(--apricot)'" onmouseout="this.style.background='var(--white)'">
+            <img src="https://upload.wikimedia.org/wikipedia/commons/3/36/MetaMask_Fox.svg" style="width:24px;height:24px;">
+            Open in MetaMask
+          </a>
+          <a href="https://go.cb-w.com/dapp?cb_url=https%3A%2F%2Fkokosicecream.github.io%2Fwebsite%2FCustomer_dapp%2Findex.html"
+             style="display:flex;align-items:center;gap:10px;background:var(--white);border:1px solid var(--border-mid);border-radius:var(--r-sm);padding:10px 14px;text-decoration:none;color:var(--ink);font-size:13px;font-weight:600;transition:background 0.15s;"
+             onmouseover="this.style.background='var(--apricot)'" onmouseout="this.style.background='var(--white)'">
+            <img src="https://www.coinbase.com/favicon.ico" style="width:24px;height:24px;border-radius:4px;">
+            Open in Coinbase Wallet
+          </a>
+        </div>
+        <div style="font-size:10px;color:var(--ink-light);text-align:center;margin-top:8px;">or use the WalletConnect button above</div>
+      </div>
       <div class="ca-line" onclick="navigator.clipboard.writeText('0xfd3ce21c5acd8bbbe576d0e2336c210c3cebeb92').then(()=>alert('CA copied!'))">
         SKOOP &middot; <span style="text-decoration:underline dotted;">0xfd3ce21c5Acd8BbbE576d0E2336C210C3cEBeb92</span> &middot; tap to copy
       </div>
@@ -305,8 +324,8 @@ html,body{height:100%;overflow:hidden;background:var(--coral);font-family:'Instr
         <div class="step"><div class="step-num">4</div><div class="step-content"><div class="step-title">Settlement &amp; burn</div><div class="step-desc">SKOOP captured in escrow settles on-chain and a portion burns — reducing supply over time. Every scoop you buy makes the token a little more scarce.</div></div></div>
       </div>
       <div class="earn-pay-grid">
-        <div class="ep-card"><div class="ep-icon">🎁</div><div class="ep-title">Earn SKOOP</div><div class="ep-body">Pay any way at KOKOS and show your QR. The team sends SKOOP to your wallet as a thank-you.</div></div>
-        <div class="ep-card"><div class="ep-icon">📲</div><div class="ep-title">Pay with SKOOP</div><div class="ep-body">Scan the shop's checkout QR, confirm the total, and your SKOOP pays for your order on-chain.</div></div>
+        <div class="ep-card"><div class="ep-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 12 20 22 4 22 4 12"/><rect x="2" y="7" width="20" height="5"/><path d="M12 22V7M12 7H7.5a2.5 2.5 0 010-5C11 2 12 7 12 7zM12 7h4.5a2.5 2.5 0 000-5C13 2 12 7 12 7z"/></svg></div><div class="ep-title">Earn SKOOP</div><div class="ep-body">Pay any way at KOKOS and show your QR. The team sends SKOOP to your wallet as a thank-you.</div></div>
+        <div class="ep-card"><div class="ep-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="2" width="14" height="20" rx="2"/><path d="M9 7h6M9 11h6M9 15h4"/></svg></div><div class="ep-title">Pay with SKOOP</div><div class="ep-body">Scan the shop's checkout QR, confirm the total, and your SKOOP pays for your order on-chain.</div></div>
       </div>
       <div class="gate-footer-cta">
         <p>Ready to SKOOP?<br><em>Connect your wallet to start.</em></p>
@@ -340,15 +359,15 @@ html,body{height:100%;overflow:hidden;background:var(--coral);font-family:'Instr
       </div>
     </div>
     <div class="action-grid">
-      <button class="action-cell ac-mint" onclick="goTo('buy')"><div class="ac-icon">&#x1F4B1;</div><div><div class="ac-label">Buy SKOOP</div><div class="ac-sub">USDC or ETH</div></div></button>
-      <button class="action-cell ac-lavender" onclick="goTo('pay')"><div class="ac-icon">&#128247;</div><div><div class="ac-label">Pay at shop</div><div class="ac-sub">Scan checkout QR</div></div></button>
-      <button class="action-cell ac-sand" onclick="goTo('qr')"><div class="ac-icon">&#11035;</div><div><div class="ac-label">My wallet QR</div><div class="ac-sub">Earn rewards</div></div></button>
-      <button class="action-cell ac-apricot" onclick="goTo('buy')"><div class="ac-icon">&#128200;</div><div><div class="ac-label">SKOOP price</div><div class="ac-sub">Live on Base</div></div></button>
+      <button class="action-cell ac-mint" onclick="goTo('buy')"><div class="ac-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 14H9V8h2v8zm4 0h-2V8h2v8z"/></svg></div><div><div class="ac-label">Buy SKOOP</div><div class="ac-sub">USDC or ETH</div></div></button>
+      <button class="action-cell ac-lavender" onclick="goTo('pay')"><div class="ac-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/><circle cx="12" cy="13" r="4"/></svg></div><div><div class="ac-label">Pay at shop</div><div class="ac-sub">Scan checkout QR</div></div></button>
+      <button class="action-cell ac-sand" onclick="goTo('qr')"><div class="ac-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M9 9h6M9 12h6M9 15h4"/></svg></div><div><div class="ac-label">My wallet QR</div><div class="ac-sub">Earn rewards</div></div></button>
+      <button class="action-cell ac-apricot" onclick="openPriceModal()"><div class="ac-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/></svg></div><div><div class="ac-label">SKOOP price</div><div class="ac-sub" id="home-skoop-price">Live on Base</div></div></button>
     </div>
     <div class="stripe stripe-thin"><div class="s2"></div><div class="s4"></div><div class="s1"></div><div class="s5"></div><div class="s3"></div><div class="s6"></div></div>
     <div class="section-hdr"><div class="section-hdr-title">Recent activity</div></div>
     <div class="tx-list">
-      <div class="tx-row"><div class="tx-dot td-mint">&#127873;</div><div class="tx-info"><div class="tx-name">Reward earned</div><div class="tx-date">Connect wallet to load history</div></div><div class="tx-val"><div class="amt amt-plus">&#8212;</div></div></div>
+      <div class="tx-row"><div class="tx-dot td-mint"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></div><div class="tx-info"><div class="tx-name">Reward earned</div><div class="tx-date">Connect wallet to load history</div></div><div class="tx-val"><div class="amt amt-plus">&#8212;</div></div></div>
     </div>
   </div>
 
@@ -404,7 +423,7 @@ html,body{height:100%;overflow:hidden;background:var(--coral);font-family:'Instr
           <div class="scan-hint">Point at the shop checkout QR</div>
         </div>
       </div>
-      <button class="btn-cam" id="btn-cam" onclick="startScan()">&#128247; &nbsp;Start Camera</button>
+      <button class="btn-cam" id="btn-cam" onclick="startScan()"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/><circle cx="12" cy="13" r="4"/></svg> &nbsp;Start Camera</button>
       <div class="info-block" style="background:var(--lavender);"><div class="ib-title">How it works</div><div class="ib-text">The shop rings up your order and generates a QR. Scan it here, review the total, and confirm — SKOOP goes to escrow and burns in the next settlement.</div></div>
     </div>
     <div class="pay-state" id="pay-confirm">
@@ -441,10 +460,10 @@ html,body{height:100%;overflow:hidden;background:var(--coral);font-family:'Instr
 </div>
 
 <div id="bottom-nav" style="display:none;">
-  <button class="nav-item active" id="nav-home" onclick="goTo('home')"><div class="nav-icon">&#127968;</div><div class="nav-label">Home</div></button>
-  <button class="nav-item" id="nav-buy" onclick="goTo('buy')"><div class="nav-icon">&#x1F4B1;</div><div class="nav-label">Buy</div></button>
-  <button class="nav-item" id="nav-pay" onclick="goTo('pay')"><div class="nav-icon">&#128247;</div><div class="nav-label">Pay</div></button>
-  <button class="nav-item" id="nav-qr" onclick="goTo('qr')"><div class="nav-icon">&#11035;</div><div class="nav-label">My QR</div></button>
+  <button class="nav-item active" id="nav-home" onclick="goTo('home')"><div class="nav-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg></div><div class="nav-label">Home</div></button>
+  <button class="nav-item" id="nav-buy" onclick="goTo('buy')"><div class="nav-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 14H9V8h2v8zm4 0h-2V8h2v8z"/></svg></div><div class="nav-label">Buy</div></button>
+  <button class="nav-item" id="nav-pay" onclick="goTo('pay')"><div class="nav-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/><circle cx="12" cy="13" r="4"/></svg></div><div class="nav-label">Pay</div></button>
+  <button class="nav-item" id="nav-qr" onclick="goTo('qr')"><div class="nav-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M9 9h6M9 12h6M9 15h4"/></svg></div><div class="nav-label">My QR</div></button>
 </div>
 </div>
 
@@ -508,7 +527,18 @@ function updateSkoopBalanceDisplay(){
   if(!valEl||!window._skoopBal||!skoopPriceUSD)return;
   const usd=(window._skoopBal*skoopPriceUSD).toLocaleString("en-US",{style:"currency",currency:"USD",maximumFractionDigits:2});
   valEl.textContent=usd;
+  // Update SKOOP price card subtitle
+  const priceCard = document.getElementById('home-skoop-price');
+  if(priceCard && skoopPriceUSD > 0) priceCard.textContent = '$' + skoopPriceUSD.toFixed(6);
 }
+
+// Show hint on non-Web3 browsers (Safari, Chrome without extension)
+(function(){
+  if(typeof window !== 'undefined' && !window.ethereum){
+    const hint = document.getElementById('wallet-hint');
+    if(hint) hint.style.display = 'block';
+  }
+})();
 
 async function openWalletModal(){
   if(window.ethereum){
@@ -782,7 +812,7 @@ async function fetchQuote(amt){
     document.getElementById("det-min").textContent = min.toLocaleString("en-US",{maximumFractionDigits:2})+" SKOOP";
     document.getElementById("swap-dets").classList.add("show");
     document.getElementById("btn-swap").disabled = false;
-    document.getElementById("btn-swap").textContent = "Swap for SKOOP 🍦";
+    document.getElementById("btn-swap").textContent = "Swap for SKOOP";
   }catch(e){
     document.getElementById("out-loading").textContent = "Quote unavailable";
     document.getElementById("btn-swap").textContent = "Pool unavailable";
@@ -808,10 +838,10 @@ async function execSwap(){
       tx=await router.exactInputSingle({tokenIn:curQuote.tokenIn,tokenOut:CFG.SKOOP,fee:curQuote.fee||CFG.FEE,recipient:userAddr,amountIn:curQuote.amtIn,amountOutMinimum:minOut,sqrtPriceLimitX96:0n});
     }
     showToast("Submitted…","");await tx.wait();
-    showToast("Swap complete! 🍦","ok");
+    showToast("Swap complete!","ok");
     document.getElementById("from-amt").value="";resetOut();await refreshBals();
   }catch(e){showToast(e?.reason||e?.shortMessage||e?.message||"Swap failed","err");}
-  btn.disabled=false;btn.textContent="Swap for SKOOP 🍦";
+  btn.disabled=false;btn.textContent="Swap for SKOOP";
 }
 
 function startScan(){
@@ -935,13 +965,309 @@ function goTo(name){
   if(name==="qr")setTimeout(buildMyQR,80);
 }
 
+
+// ─── PRICE MODAL ──────────────────────────────────────────────────────────────
+async function openPriceModal(){
+  const modal = document.getElementById('price-modal');
+  modal.style.display = 'flex';
+  await renderPriceModal();
+}
+
+function closePriceModal(){
+  document.getElementById('price-modal').style.display = 'none';
+}
+
+// Close on backdrop tap
+// price modal backdrop close — deferred until DOM ready
+document.addEventListener('DOMContentLoaded', function(){
+  var pm = document.getElementById('price-modal');
+  if(pm) pm.addEventListener('click', function(e){ if(e.target===this) closePriceModal(); });
+});
+
+async function renderPriceModal(){
+  // Use already-fetched prices if available
+  const price = skoopPriceUSD;
+  const ethP  = ethPriceUSD;
+
+  if(price > 0){
+    document.getElementById('pm-price').textContent = '$' + price.toFixed(8);
+    document.getElementById('pm-eth-price').textContent = '$' + ethP.toLocaleString('en-US',{maximumFractionDigits:0});
+    document.getElementById('pm-per-eth').textContent = (1/price*ethP).toLocaleString('en-US',{maximumFractionDigits:0});
+    document.getElementById('pm-per-usdc').textContent = (1/price).toLocaleString('en-US',{maximumFractionDigits:0});
+    // Market cap = price * 888,888,888 supply (simplified — actual circulating may differ)
+    const mcap = price * 888888888;
+    document.getElementById('pm-mcap').textContent = mcap >= 1000000
+      ? '$' + (mcap/1000000).toFixed(2) + 'M'
+      : '$' + mcap.toLocaleString('en-US',{maximumFractionDigits:0});
+    // Update home card subtitle
+    const sub = document.getElementById('home-skoop-price');
+    if(sub) sub.textContent = '$' + price.toFixed(6);
+  }
+
+  // Fetch price history from pool swap events and draw chart
+  await drawPriceChart();
+}
+
+async function drawPriceChart(){
+  const canvas = document.getElementById('pm-chart');
+  const ctx = canvas.getContext('2d');
+  const statusEl = document.getElementById('pm-chart-status');
+  canvas.width = canvas.offsetWidth || 390;
+
+  try{
+    // Read last N swap events from pool to reconstruct price history
+    const pub = new ethers.JsonRpcProvider(CFG.RPC);
+    const ABI_SWAP = ["event Swap(address indexed sender,address indexed recipient,int256 amount0,int256 amount1,uint160 sqrtPriceX96,uint128 liquidity,int24 tick)"];
+    const pool = new ethers.Contract(POOL_ETH_SKOOP, ABI_SWAP, pub);
+    const currentBlock = await pub.getBlockNumber();
+    // ~6 hours of blocks at 2s/block on Base
+    const fromBlock = currentBlock - 10800;
+    const events = await pool.queryFilter(pool.filters.Swap(), fromBlock);
+
+    if(events.length < 2){
+      statusEl.textContent = events.length + ' swaps — not enough data yet';
+      drawFlatLine(ctx, canvas, skoopPriceUSD);
+      return;
+    }
+
+    statusEl.textContent = events.length + ' swaps · 6h';
+
+    // Convert each event's sqrtPriceX96 to USD price
+    const Q96f = Number(2n**96n);
+    const prices = events.map(e => {
+      const sqrtPf = Number(e.args.sqrtPriceX96) / Q96f;
+      const priceRaw = sqrtPf * sqrtPf;
+      // token0=WETH, token1=SKOOP: skoopPerEth = priceRaw * 1e12
+      const skoopPerEth = priceRaw * 1e12;
+      return skoopPerEth > 0 ? ethPriceUSD / skoopPerEth : 0;
+    }).filter(p => p > 0);
+
+    if(!prices.length){ drawFlatLine(ctx, canvas, skoopPriceUSD); return; }
+
+    drawLineChart(ctx, canvas, prices);
+
+  }catch(e){
+    statusEl.textContent = 'Chart unavailable';
+    drawFlatLine(ctx, canvas, skoopPriceUSD);
+  }
+}
+
+function drawLineChart(ctx, canvas, prices){
+  const W = canvas.width, H = canvas.height;
+  const pad = { top:16, right:16, bottom:32, left:58 };
+  const chartW = W - pad.left - pad.right;
+  const chartH = H - pad.top - pad.bottom;
+  const minP = Math.min(...prices) * 0.993;
+  const maxP = Math.max(...prices) * 1.007;
+  const range = maxP - minP || maxP * 0.01;
+  const n = prices.length;
+
+  ctx.clearRect(0, 0, W, H);
+
+  // ── pastel background blocks (KOKOS color palette) ──
+  const blocks = [
+    {color:'rgba(253,206,193,0.18)', x:pad.left, w:chartW/4},
+    {color:'rgba(205,230,215,0.18)', x:pad.left+chartW/4, w:chartW/4},
+    {color:'rgba(250,226,216,0.18)', x:pad.left+chartW*2/4, w:chartW/4},
+    {color:'rgba(255,221,173,0.18)', x:pad.left+chartW*3/4, w:chartW/4},
+  ];
+  blocks.forEach(b => {
+    ctx.fillStyle = b.color;
+    ctx.fillRect(b.x, pad.top, b.w, chartH);
+  });
+
+  // ── horizontal grid lines ──
+  const ticks = 4;
+  for(let i=0; i<=ticks; i++){
+    const t = i/ticks;
+    const y = pad.top + chartH*(1-t);
+    ctx.strokeStyle = 'rgba(42,31,26,0.07)';
+    ctx.lineWidth = 1;
+    ctx.setLineDash([3,4]);
+    ctx.beginPath(); ctx.moveTo(pad.left, y); ctx.lineTo(W-pad.right, y); ctx.stroke();
+    ctx.setLineDash([]);
+    const val = minP + range*t;
+    ctx.fillStyle = 'rgba(107,79,71,0.5)';
+    ctx.font = '600 9px "Instrument Sans", sans-serif';
+    ctx.textAlign = 'right';
+    ctx.fillText('$'+val.toFixed(6), pad.left-5, y+3);
+  }
+
+  // ── X axis labels (start / mid / end) ──
+  ctx.fillStyle = 'rgba(107,79,71,0.45)';
+  ctx.font = '600 9px "Instrument Sans", sans-serif';
+  ctx.textAlign = 'center';
+  [['6h ago', pad.left], ['3h ago', pad.left+chartW/2], ['now', pad.left+chartW]].forEach(([label, x]) => {
+    ctx.fillText(label, x, H - 6);
+  });
+
+  // ── gradient fill under curve ──
+  const grad = ctx.createLinearGradient(0, pad.top, 0, pad.top+chartH);
+  grad.addColorStop(0, 'rgba(232,135,106,0.28)');
+  grad.addColorStop(0.6, 'rgba(253,175,154,0.10)');
+  grad.addColorStop(1, 'rgba(253,206,193,0.02)');
+
+  // build path
+  function ptX(i){ return pad.left + (i/(n-1))*chartW; }
+  function ptY(p){ return pad.top + chartH*(1-(p-minP)/range); }
+
+  ctx.beginPath();
+  // smooth curve via quadratic bezier
+  ctx.moveTo(ptX(0), ptY(prices[0]));
+  for(let i=1; i<n-1; i++){
+    const mx = (ptX(i)+ptX(i+1))/2;
+    const my = (ptY(prices[i])+ptY(prices[i+1]))/2;
+    ctx.quadraticCurveTo(ptX(i), ptY(prices[i]), mx, my);
+  }
+  ctx.lineTo(ptX(n-1), ptY(prices[n-1]));
+  ctx.lineTo(ptX(n-1), pad.top+chartH);
+  ctx.lineTo(ptX(0), pad.top+chartH);
+  ctx.closePath();
+  ctx.fillStyle = grad;
+  ctx.fill();
+
+  // ── main line (smooth) ──
+  ctx.beginPath();
+  ctx.moveTo(ptX(0), ptY(prices[0]));
+  for(let i=1; i<n-1; i++){
+    const mx = (ptX(i)+ptX(i+1))/2;
+    const my = (ptY(prices[i])+ptY(prices[i+1]))/2;
+    ctx.quadraticCurveTo(ptX(i), ptY(prices[i]), mx, my);
+  }
+  ctx.lineTo(ptX(n-1), ptY(prices[n-1]));
+  ctx.strokeStyle = '#e8876a';
+  ctx.lineWidth = 2.5;
+  ctx.lineJoin = 'round';
+  ctx.lineCap = 'round';
+  ctx.stroke();
+
+  // ── animated glow dot at latest price ──
+  const lx = ptX(n-1), ly = ptY(prices[n-1]);
+  // outer pulse ring
+  ctx.beginPath();
+  ctx.arc(lx, ly, 7, 0, Math.PI*2);
+  ctx.fillStyle = 'rgba(232,135,106,0.20)';
+  ctx.fill();
+  // inner dot
+  ctx.beginPath();
+  ctx.arc(lx, ly, 4, 0, Math.PI*2);
+  ctx.fillStyle = '#e8876a';
+  ctx.fill();
+  ctx.beginPath();
+  ctx.arc(lx, ly, 2, 0, Math.PI*2);
+  ctx.fillStyle = '#fffaf7';
+  ctx.fill();
+
+  // ── first price dot ──
+  ctx.beginPath();
+  ctx.arc(ptX(0), ptY(prices[0]), 3, 0, Math.PI*2);
+  ctx.fillStyle = 'rgba(232,135,106,0.5)';
+  ctx.fill();
+
+  // ── price delta label top-right ──
+  const delta = prices[n-1] - prices[0];
+  const deltaPct = (delta/prices[0]*100).toFixed(2);
+  const sign = delta >= 0 ? '+' : '';
+  const labelColor = delta >= 0 ? '#2d7a5f' : '#b91c1c';
+  const labelBg = delta >= 0 ? 'rgba(205,230,215,0.7)' : 'rgba(253,206,193,0.7)';
+  const label = sign + deltaPct + '%';
+  ctx.font = '700 10px "Instrument Sans", sans-serif';
+  const tw = ctx.measureText(label).width;
+  const lbx = W - pad.right - tw - 10, lby = pad.top + 4;
+  ctx.fillStyle = labelBg;
+  ctx.beginPath();
+  ctx.roundRect(lbx-4, lby-1, tw+8, 14, 4);
+  ctx.fill();
+  ctx.fillStyle = labelColor;
+  ctx.textAlign = 'left';
+  ctx.fillText(label, lbx, lby+10);
+}
+
+function drawFlatLine(ctx, canvas, price){
+  const W = canvas.width, H = canvas.height;
+  ctx.clearRect(0, 0, W, H);
+
+  // pastel background
+  const colors = ['rgba(253,206,193,0.2)','rgba(205,230,215,0.2)','rgba(250,226,216,0.2)','rgba(255,221,173,0.2)'];
+  colors.forEach((c,i)=>{ ctx.fillStyle=c; ctx.fillRect(W/4*i, 0, W/4, H); });
+
+  // dashed center line
+  ctx.strokeStyle = 'rgba(232,135,106,0.35)';
+  ctx.setLineDash([5,5]);
+  ctx.lineWidth = 1.5;
+  ctx.beginPath(); ctx.moveTo(20, H/2); ctx.lineTo(W-20, H/2); ctx.stroke();
+  ctx.setLineDash([]);
+
+  // price label
+  if(price > 0){
+    const label = '$' + price.toFixed(6);
+    ctx.font = '600 11px "Instrument Sans", sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillStyle = 'rgba(107,79,71,0.5)';
+    ctx.fillText(label, W/2, H/2 - 8);
+  }
+  ctx.font = '500 10px "Instrument Sans", sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillStyle = 'rgba(107,79,71,0.35)';
+  ctx.fillText('Accumulating price history…', W/2, H/2 + 16);
+}
+
+
 let toastT;
 function showToast(msg,type=""){
   const el=document.getElementById("toast");
   el.className="show"+(type?" "+type:"");
-  el.innerHTML=(type==="ok"?"✓ ":type==="err"?"✕ ":"⏳ ")+msg;
+  el.innerHTML=(type==="ok"?"✓ ":type==="err"?"✕ ":""+msg;
   clearTimeout(toastT);toastT=setTimeout(()=>el.classList.remove("show"),4000);
 }
+
+<!-- PRICE MODAL -->
+<div id="price-modal" style="display:none;position:absolute;inset:0;z-index:400;background:rgba(42,31,26,0.5);backdrop-filter:blur(6px);align-items:flex-end;justify-content:center;">
+  <div style="background:var(--cream);border-top-left-radius:28px;border-top-right-radius:28px;width:100%;max-width:430px;overflow:hidden;box-shadow:0 -8px 48px rgba(42,31,26,0.22);animation:sheetUp 0.28s cubic-bezier(0.34,1.56,0.64,1);">
+    <div style="display:flex;height:5px;flex-shrink:0;"><div style="flex:1;background:var(--coral)"></div><div style="flex:1;background:var(--mint)"></div><div style="flex:1;background:var(--apricot)"></div><div style="flex:1;background:var(--lavender)"></div><div style="flex:1;background:var(--sand)"></div></div>
+    <div style="padding:20px 20px 36px;">
+      <div style="width:36px;height:4px;background:var(--border-mid);border-radius:2px;margin:0 auto 20px;"></div>
+      <div style="display:flex;align-items:center;gap:14px;margin-bottom:6px;">
+        <img src="KOKOS_SKOOP.png" style="width:52px;height:52px;border-radius:50%;box-shadow:0 4px 16px rgba(42,31,26,0.18);flex-shrink:0;">
+        <div style="flex:1;">
+          <div style="font-size:10px;font-weight:600;letter-spacing:2px;text-transform:uppercase;color:var(--ink-light);margin-bottom:4px;">SKOOP · Base Network</div>
+          <div style="font-family:'Cormorant Garamond',serif;font-size:32px;font-weight:600;color:var(--ink);letter-spacing:-1px;line-height:1;" id="pm-price">—</div>
+        </div>
+        <button onclick="closePriceModal()" style="width:32px;height:32px;border-radius:50%;border:1px solid var(--border-mid);background:rgba(255,255,255,0.6);color:var(--ink-mid);font-size:14px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;">✕</button>
+      </div>
+      <div style="font-size:12px;color:var(--ink-mid);font-weight:500;margin-bottom:20px;padding-left:66px;" id="pm-eth-price">—</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:16px;">
+        <div style="background:var(--mint);border-radius:var(--r-sm);padding:14px 10px;text-align:center;">
+          <div style="font-size:9px;font-weight:700;letter-spacing:1.2px;text-transform:uppercase;color:var(--ink-mid);margin-bottom:6px;">Per ETH</div>
+          <div style="font-family:'Cormorant Garamond',serif;font-size:17px;font-weight:600;color:var(--ink);line-height:1;" id="pm-per-eth">—</div>
+          <div style="font-size:8px;color:var(--ink-light);margin-top:3px;">SKOOP</div>
+        </div>
+        <div style="background:var(--apricot);border-radius:var(--r-sm);padding:14px 10px;text-align:center;">
+          <div style="font-size:9px;font-weight:700;letter-spacing:1.2px;text-transform:uppercase;color:var(--ink-mid);margin-bottom:6px;">Per USDC</div>
+          <div style="font-family:'Cormorant Garamond',serif;font-size:17px;font-weight:600;color:var(--ink);line-height:1;" id="pm-per-usdc">—</div>
+          <div style="font-size:8px;color:var(--ink-light);margin-top:3px;">SKOOP</div>
+        </div>
+        <div style="background:var(--lavender);border-radius:var(--r-sm);padding:14px 10px;text-align:center;">
+          <div style="font-size:9px;font-weight:700;letter-spacing:1.2px;text-transform:uppercase;color:var(--ink-mid);margin-bottom:6px;">Mkt Cap</div>
+          <div style="font-family:'Cormorant Garamond',serif;font-size:17px;font-weight:600;color:var(--ink);line-height:1;" id="pm-mcap">—</div>
+          <div style="font-size:8px;color:var(--ink-light);margin-top:3px;">USD</div>
+        </div>
+      </div>
+      <div style="background:var(--white);border:1px solid var(--border);border-radius:var(--r);overflow:hidden;margin-bottom:14px;">
+        <div style="background:var(--coral);padding:10px 16px;display:flex;align-items:center;justify-content:space-between;">
+          <div style="font-family:'Cormorant Garamond',serif;font-size:15px;font-style:italic;font-weight:400;color:var(--ink);">Price history</div>
+          <div id="pm-chart-status" style="font-size:10px;font-weight:500;color:var(--ink-mid);">Loading&hellip;</div>
+        </div>
+        <canvas id="pm-chart" height="130" style="width:100%;display:block;"></canvas>
+      </div>
+      <a href="https://app.uniswap.org/explore/tokens/base/0xfd3ce21c5acd8bbbe576d0e2336c210c3cebeb92"
+         target="_blank" rel="noopener"
+         style="display:flex;align-items:center;justify-content:center;gap:8px;background:var(--apricot);border:1.5px solid var(--border-mid);border-radius:var(--r);padding:14px;text-decoration:none;color:var(--ink-mid);font-size:12px;font-weight:600;letter-spacing:0.3px;">
+        Trade on Uniswap
+      </a>
+    </div>
+  </div>
+</div>
 </script>
 </body>
 </html>
