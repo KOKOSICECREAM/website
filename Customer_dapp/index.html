@@ -467,6 +467,54 @@ html,body{height:100%;overflow:hidden;background:var(--coral);font-family:'Instr
 </div>
 </div>
 
+
+<!-- PRICE MODAL -->
+<div id="price-modal" style="display:none;position:absolute;inset:0;z-index:400;background:rgba(42,31,26,0.5);backdrop-filter:blur(6px);align-items:flex-end;justify-content:center;">
+  <div style="background:var(--cream);border-top-left-radius:28px;border-top-right-radius:28px;width:100%;max-width:430px;overflow:hidden;box-shadow:0 -8px 48px rgba(42,31,26,0.22);animation:sheetUp 0.28s cubic-bezier(0.34,1.56,0.64,1);">
+    <div style="display:flex;height:5px;flex-shrink:0;"><div style="flex:1;background:var(--coral)"></div><div style="flex:1;background:var(--mint)"></div><div style="flex:1;background:var(--apricot)"></div><div style="flex:1;background:var(--lavender)"></div><div style="flex:1;background:var(--sand)"></div></div>
+    <div style="padding:20px 20px 36px;">
+      <div style="width:36px;height:4px;background:var(--border-mid);border-radius:2px;margin:0 auto 20px;"></div>
+      <div style="display:flex;align-items:center;gap:14px;margin-bottom:6px;">
+        <img src="KOKOS_SKOOP.png" style="width:52px;height:52px;border-radius:50%;box-shadow:0 4px 16px rgba(42,31,26,0.18);flex-shrink:0;">
+        <div style="flex:1;">
+          <div style="font-size:10px;font-weight:600;letter-spacing:2px;text-transform:uppercase;color:var(--ink-light);margin-bottom:4px;">SKOOP · Base Network</div>
+          <div style="font-family:'Cormorant Garamond',serif;font-size:32px;font-weight:600;color:var(--ink);letter-spacing:-1px;line-height:1;" id="pm-price">—</div>
+        </div>
+        <button onclick="closePriceModal()" style="width:32px;height:32px;border-radius:50%;border:1px solid var(--border-mid);background:rgba(255,255,255,0.6);color:var(--ink-mid);font-size:14px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;">✕</button>
+      </div>
+      <div style="font-size:12px;color:var(--ink-mid);font-weight:500;margin-bottom:20px;padding-left:66px;" id="pm-eth-price">—</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:16px;">
+        <div style="background:var(--mint);border-radius:var(--r-sm);padding:14px 10px;text-align:center;">
+          <div style="font-size:9px;font-weight:700;letter-spacing:1.2px;text-transform:uppercase;color:var(--ink-mid);margin-bottom:6px;">Per ETH</div>
+          <div style="font-family:'Cormorant Garamond',serif;font-size:17px;font-weight:600;color:var(--ink);line-height:1;" id="pm-per-eth">—</div>
+          <div style="font-size:8px;color:var(--ink-light);margin-top:3px;">SKOOP</div>
+        </div>
+        <div style="background:var(--apricot);border-radius:var(--r-sm);padding:14px 10px;text-align:center;">
+          <div style="font-size:9px;font-weight:700;letter-spacing:1.2px;text-transform:uppercase;color:var(--ink-mid);margin-bottom:6px;">Per USDC</div>
+          <div style="font-family:'Cormorant Garamond',serif;font-size:17px;font-weight:600;color:var(--ink);line-height:1;" id="pm-per-usdc">—</div>
+          <div style="font-size:8px;color:var(--ink-light);margin-top:3px;">SKOOP</div>
+        </div>
+        <div style="background:var(--lavender);border-radius:var(--r-sm);padding:14px 10px;text-align:center;">
+          <div style="font-size:9px;font-weight:700;letter-spacing:1.2px;text-transform:uppercase;color:var(--ink-mid);margin-bottom:6px;">Mkt Cap</div>
+          <div style="font-family:'Cormorant Garamond',serif;font-size:17px;font-weight:600;color:var(--ink);line-height:1;" id="pm-mcap">—</div>
+          <div style="font-size:8px;color:var(--ink-light);margin-top:3px;">USD</div>
+        </div>
+      </div>
+      <div style="background:var(--white);border:1px solid var(--border);border-radius:var(--r);overflow:hidden;margin-bottom:14px;">
+        <div style="background:var(--coral);padding:10px 16px;display:flex;align-items:center;justify-content:space-between;">
+          <div style="font-family:'Cormorant Garamond',serif;font-size:15px;font-style:italic;font-weight:400;color:var(--ink);">Price history</div>
+          <div id="pm-chart-status" style="font-size:10px;font-weight:500;color:var(--ink-mid);">Loading&hellip;</div>
+        </div>
+        <canvas id="pm-chart" height="130" style="width:100%;display:block;"></canvas>
+      </div>
+      <a href="https://app.uniswap.org/explore/tokens/base/0xfd3ce21c5acd8bbbe576d0e2336c210c3cebeb92"
+         target="_blank" rel="noopener"
+         style="display:flex;align-items:center;justify-content:center;gap:8px;background:var(--apricot);border:1.5px solid var(--border-mid);border-radius:var(--r);padding:14px;text-decoration:none;color:var(--ink-mid);font-size:12px;font-weight:600;letter-spacing:0.3px;">
+        Trade on Uniswap
+      </a>
+    </div>
+  </div>
+</div>
 <script>
 const CFG={
   CHAIN_ID:8453,CHAIN_HEX:'0x2105',RPC:'https://mainnet.base.org',
@@ -1221,53 +1269,6 @@ function showToast(msg,type=""){
   clearTimeout(toastT);toastT=setTimeout(()=>el.classList.remove("show"),4000);
 }
 
-<!-- PRICE MODAL -->
-<div id="price-modal" style="display:none;position:absolute;inset:0;z-index:400;background:rgba(42,31,26,0.5);backdrop-filter:blur(6px);align-items:flex-end;justify-content:center;">
-  <div style="background:var(--cream);border-top-left-radius:28px;border-top-right-radius:28px;width:100%;max-width:430px;overflow:hidden;box-shadow:0 -8px 48px rgba(42,31,26,0.22);animation:sheetUp 0.28s cubic-bezier(0.34,1.56,0.64,1);">
-    <div style="display:flex;height:5px;flex-shrink:0;"><div style="flex:1;background:var(--coral)"></div><div style="flex:1;background:var(--mint)"></div><div style="flex:1;background:var(--apricot)"></div><div style="flex:1;background:var(--lavender)"></div><div style="flex:1;background:var(--sand)"></div></div>
-    <div style="padding:20px 20px 36px;">
-      <div style="width:36px;height:4px;background:var(--border-mid);border-radius:2px;margin:0 auto 20px;"></div>
-      <div style="display:flex;align-items:center;gap:14px;margin-bottom:6px;">
-        <img src="KOKOS_SKOOP.png" style="width:52px;height:52px;border-radius:50%;box-shadow:0 4px 16px rgba(42,31,26,0.18);flex-shrink:0;">
-        <div style="flex:1;">
-          <div style="font-size:10px;font-weight:600;letter-spacing:2px;text-transform:uppercase;color:var(--ink-light);margin-bottom:4px;">SKOOP · Base Network</div>
-          <div style="font-family:'Cormorant Garamond',serif;font-size:32px;font-weight:600;color:var(--ink);letter-spacing:-1px;line-height:1;" id="pm-price">—</div>
-        </div>
-        <button onclick="closePriceModal()" style="width:32px;height:32px;border-radius:50%;border:1px solid var(--border-mid);background:rgba(255,255,255,0.6);color:var(--ink-mid);font-size:14px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;">✕</button>
-      </div>
-      <div style="font-size:12px;color:var(--ink-mid);font-weight:500;margin-bottom:20px;padding-left:66px;" id="pm-eth-price">—</div>
-      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:16px;">
-        <div style="background:var(--mint);border-radius:var(--r-sm);padding:14px 10px;text-align:center;">
-          <div style="font-size:9px;font-weight:700;letter-spacing:1.2px;text-transform:uppercase;color:var(--ink-mid);margin-bottom:6px;">Per ETH</div>
-          <div style="font-family:'Cormorant Garamond',serif;font-size:17px;font-weight:600;color:var(--ink);line-height:1;" id="pm-per-eth">—</div>
-          <div style="font-size:8px;color:var(--ink-light);margin-top:3px;">SKOOP</div>
-        </div>
-        <div style="background:var(--apricot);border-radius:var(--r-sm);padding:14px 10px;text-align:center;">
-          <div style="font-size:9px;font-weight:700;letter-spacing:1.2px;text-transform:uppercase;color:var(--ink-mid);margin-bottom:6px;">Per USDC</div>
-          <div style="font-family:'Cormorant Garamond',serif;font-size:17px;font-weight:600;color:var(--ink);line-height:1;" id="pm-per-usdc">—</div>
-          <div style="font-size:8px;color:var(--ink-light);margin-top:3px;">SKOOP</div>
-        </div>
-        <div style="background:var(--lavender);border-radius:var(--r-sm);padding:14px 10px;text-align:center;">
-          <div style="font-size:9px;font-weight:700;letter-spacing:1.2px;text-transform:uppercase;color:var(--ink-mid);margin-bottom:6px;">Mkt Cap</div>
-          <div style="font-family:'Cormorant Garamond',serif;font-size:17px;font-weight:600;color:var(--ink);line-height:1;" id="pm-mcap">—</div>
-          <div style="font-size:8px;color:var(--ink-light);margin-top:3px;">USD</div>
-        </div>
-      </div>
-      <div style="background:var(--white);border:1px solid var(--border);border-radius:var(--r);overflow:hidden;margin-bottom:14px;">
-        <div style="background:var(--coral);padding:10px 16px;display:flex;align-items:center;justify-content:space-between;">
-          <div style="font-family:'Cormorant Garamond',serif;font-size:15px;font-style:italic;font-weight:400;color:var(--ink);">Price history</div>
-          <div id="pm-chart-status" style="font-size:10px;font-weight:500;color:var(--ink-mid);">Loading&hellip;</div>
-        </div>
-        <canvas id="pm-chart" height="130" style="width:100%;display:block;"></canvas>
-      </div>
-      <a href="https://app.uniswap.org/explore/tokens/base/0xfd3ce21c5acd8bbbe576d0e2336c210c3cebeb92"
-         target="_blank" rel="noopener"
-         style="display:flex;align-items:center;justify-content:center;gap:8px;background:var(--apricot);border:1.5px solid var(--border-mid);border-radius:var(--r);padding:14px;text-decoration:none;color:var(--ink-mid);font-size:12px;font-weight:600;letter-spacing:0.3px;">
-        Trade on Uniswap
-      </a>
-    </div>
-  </div>
-</div>
 </script>
 </body>
 </html>
