@@ -665,37 +665,78 @@ async function loadPoolImmutables(){
 async function fetchQuote(amt){
   if(!provider)return;
   try{
-    // Load pool immutables if not yet done
     await loadPoolImmutables();
 
-    const q=new ethers.Contract(CFG.QUOTER,ABI_QUOTER,provider);
-    const tokenIn=selToken==="USDC"?CFG.USDC:CFG.WETH;
-    const dec=selToken==="USDC"?CFG.USDC_DEC:CFG.WETH_DEC;
-    const amtIn=ethers.parseUnits(amt.toString(),dec);
+    const isUSDC = selToken==="USDC";
+    const poolAddr = isUSDC ? POOL_USDC_SKOOP : POOL_ETH_SKOOP;
+    const tokenIn  = isUSDC ? CFG.USDC : CFG.WETH;
+    const decIn    = isUSDC ? CFG.USDC_DEC : CFG.WETH_DEC;
+    const amtIn    = ethers.parseUnits(amt.toString(), decIn);
+    const fee      = await loadPoolFee(poolAddr);
 
-    // Pick pool and fee based on selected token
-    const poolAddr = selToken==="USDC" ? POOL_USDC_SKOOP : POOL_ETH_SKOOP;
-    const fee = await loadPoolFee(poolAddr);
+    // Read pool state directly — no Quoter needed
+    const ABI_SLOT0 = [
+      "function slot0() view returns (uint160 sqrtPriceX96, int24 tick, uint16 observationIndex, uint16 observationCardinality, uint16 observationCardinalityNext, uint8 feeProtocol, bool unlocked)",
+      "function token0() view returns (address)",
+      "function liquidity() view returns (uint128)"
+    ];
+    const pool = new ethers.Contract(poolAddr, ABI_SLOT0, provider);
+    const [slot0data, token0addr, liq] = await Promise.all([
+      pool.slot0(), pool.token0(), pool.liquidity()
+    ]);
 
-    console.log("quote params:", {tokenIn, tokenOut:CFG.SKOOP, amountIn:amtIn.toString(), fee, sqrtPriceLimitX96:"0"});
-    const [amtOut]=await q.quoteExactInputSingle.staticCall(
-      tokenIn, CFG.SKOOP, fee, amtIn, 0n
-    );
-    console.log("quote result:", amtOut.toString());
-    curQuote={amtOut,amtIn,tokenIn,fee};
-    const out=parseFloat(ethers.formatUnits(amtOut,CFG.SKOOP_DEC));
-    const min=out*(1-slip/100);
-    document.getElementById("out-amt").textContent=out.toLocaleString("en-US",{maximumFractionDigits:2});
+    const sqrtPriceX96 = slot0data.sqrtPriceX96;
+    const t0 = token0addr.toLowerCase();
+    const skoopIsToken0 = t0 === CFG.SKOOP.toLowerCase();
+
+    console.log("pool:", poolAddr, "token0:", t0, "skoopIsToken0:", skoopIsToken0, "sqrtPriceX96:", sqrtPriceX96.toString(), "liquidity:", liq.toString());
+
+    // price = (sqrtPriceX96 / 2^96)^2
+    // If SKOOP is token0: price = token1 per token0 = inputToken per SKOOP
+    //   => SKOOP out = amtIn / price
+    // If SKOOP is token1: price = token0 per token1 
+    //   => SKOOP out = amtIn * price (adjusted for decimals)
+
+    const Q96 = 2n ** 96n;
+    const sqrtP = sqrtPriceX96;
+
+    let amtOut;
+    if(skoopIsToken0){
+      // price of token0(SKOOP) in terms of token1(WETH/USDC) = (sqrtP/Q96)^2
+      // tokenIn amount (WETH/USDC) -> SKOOP
+      // SKOOP = amtIn * Q96^2 / sqrtP^2, adjusted for decimal diff
+      const decAdj = isUSDC ? 10n**(18n-6n) : 1n; // USDC is 6 dec, WETH 18
+      const amtInAdj = amtIn * decAdj; // normalize to 18 dec
+      // SKOOP (6 dec) = amtIn18 * Q96^2 / sqrtP^2 / 10^(18-6)
+      amtOut = amtInAdj * Q96 * Q96 / (sqrtP * sqrtP) / (10n**(18n-6n));
+    } else {
+      // SKOOP is token1, tokenIn is token0 (WETH/USDC)
+      // price of token1(SKOOP) in terms of token0 = Q96^2 / sqrtP^2
+      // SKOOP = amtIn * sqrtP^2 / Q96^2, adjusted for decimals
+      const decAdj = isUSDC ? 10n**(18n-6n) : 1n;
+      const amtInAdj = amtIn * decAdj;
+      amtOut = amtInAdj * sqrtP * sqrtP / Q96 / Q96 / (10n**(18n-6n));
+    }
+
+    // Apply fee deduction
+    amtOut = amtOut * BigInt(1000000 - fee) / 1000000n;
+
+    console.log("computed amtOut:", amtOut.toString());
+
+    curQuote = {amtOut, amtIn, tokenIn, fee};
+    const out = parseFloat(ethers.formatUnits(amtOut, CFG.SKOOP_DEC));
+    const min = out*(1-slip/100);
+    document.getElementById("out-amt").textContent = out.toLocaleString("en-US",{maximumFractionDigits:2});
     document.getElementById("out-loading").classList.remove("show");
-    document.getElementById("det-route").textContent=selToken+" → SKOOP ("+(fee/10000).toFixed(2)+"%)";
-    document.getElementById("det-impact").textContent="< 1%";
-    document.getElementById("det-min").textContent=min.toLocaleString("en-US",{maximumFractionDigits:2})+" SKOOP";
+    document.getElementById("det-route").textContent = selToken+" → SKOOP ("+(fee/10000).toFixed(2)+"%)";
+    document.getElementById("det-impact").textContent = "~est.";
+    document.getElementById("det-min").textContent = min.toLocaleString("en-US",{maximumFractionDigits:2})+" SKOOP";
     document.getElementById("swap-dets").classList.add("show");
-    document.getElementById("btn-swap").disabled=false;
-    document.getElementById("btn-swap").textContent="Swap for SKOOP 🍦";
+    document.getElementById("btn-swap").disabled = false;
+    document.getElementById("btn-swap").textContent = "Swap for SKOOP 🍦";
   }catch(e){
-    document.getElementById("out-loading").textContent="Quote unavailable — pool may not exist yet";
-    document.getElementById("btn-swap").textContent="Pool unavailable";
+    document.getElementById("out-loading").textContent = "Quote unavailable";
+    document.getElementById("btn-swap").textContent = "Pool unavailable";
     console.warn("quote:",e.message);
   }
 }
