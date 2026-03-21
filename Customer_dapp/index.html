@@ -486,13 +486,16 @@ async function fetchSkoopPrice(){
     // price = sqrtP^2/Q96^2 = token1_raw/token0_raw
     // WETH=token0(18dec) SKOOP=token1(6dec): SKOOP_raw per WETH_raw
     // skoopPerEth = sqrtP^2/Q96^2 * 1e18/1e6 correction already baked in
+    // Convert BigInt sqrtP to float before squaring to avoid precision loss
+    const sqrtPf = Number(sqrtP) / Number(Q96);
+    const priceRaw = sqrtPf * sqrtPf; // token1_raw / token0_raw
     let skoopPerEth;
     if(skoopIsT0){
-      // SKOOP=token0, WETH=token1: price = Q96^2/sqrtP^2 * 1e12
-      skoopPerEth = Number(Q96*Q96/(sqrtP*sqrtP)) * 1e12;
+      // SKOOP=token0(6dec), WETH=token1(18dec): price = Q96^2/sqrtP^2, adjust 1e12
+      skoopPerEth = (1 / priceRaw) * 1e12;
     } else {
-      // SKOOP=token1, WETH=token0
-      skoopPerEth = Number(sqrtP*sqrtP/(Q96*Q96)) * 1e12;
+      // SKOOP=token1(6dec), WETH=token0(18dec): adjust 1e12
+      skoopPerEth = priceRaw * 1e12;
     }
     skoopPriceUSD = skoopPerEth > 0 ? ethPriceUSD / skoopPerEth : 0;
     updateSkoopBalanceDisplay();
@@ -500,14 +503,10 @@ async function fetchSkoopPrice(){
 }
 
 function updateSkoopBalanceDisplay(){
-  const balEl=document.getElementById("home-bal");
   const subEl=document.getElementById("home-usd");
-  if(!balEl||!subEl)return;
-  const bal=parseFloat(balEl.textContent.replace(/,/g,""));
-  if(!isNaN(bal)&&bal>0&&skoopPriceUSD>0){
-    const usd=(bal*skoopPriceUSD).toLocaleString("en-US",{style:"currency",currency:"USD",maximumFractionDigits:2});
-    subEl.textContent="SKOOP · "+usd+" · Nashville plant-based ice cream";
-  }
+  if(!subEl||!window._skoopBal||!skoopPriceUSD)return;
+  const usd=(window._skoopBal*skoopPriceUSD).toLocaleString("en-US",{style:"currency",currency:"USD",maximumFractionDigits:2});
+  subEl.textContent="SKOOP · "+usd;
 }
 
 async function openWalletModal(){
@@ -621,8 +620,9 @@ async function refreshBals(){
   try{
     const sk=new ethers.Contract(CFG.SKOOP,ABI_ERC20,provider);
     const raw=await sk.balanceOf(userAddr);
-    const fmt=parseFloat(ethers.formatUnits(raw,CFG.SKOOP_DEC)).toLocaleString("en-US",{maximumFractionDigits:2});
-    document.getElementById("home-bal").textContent=fmt;
+    const skoopBal=parseFloat(ethers.formatUnits(raw,CFG.SKOOP_DEC));
+    window._skoopBal=skoopBal;
+    document.getElementById("home-bal").textContent=skoopBal.toLocaleString("en-US",{maximumFractionDigits:2});
     document.getElementById("home-usd").textContent="SKOOP · Nashville plant-based ice cream";
     updateSkoopBalanceDisplay();
     document.getElementById("qr-bal").textContent=fmt;
