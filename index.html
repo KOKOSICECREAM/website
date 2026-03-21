@@ -43,6 +43,26 @@ body {
   overflow-x: hidden;
 }
 
+/* Fixed palm background */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background-image: url('tropicalvibes.png');
+  background-size: cover;
+  background-position: center center;
+  background-repeat: no-repeat;
+  opacity: 0.07;
+  z-index: 0;
+  pointer-events: none;
+}
+
+/* Ensure all content sits above the background */
+body > * {
+  position: relative;
+  z-index: 1;
+}
+
 
 
 /* SITEWIDE BANNER — was dark green, now mint */
@@ -1107,7 +1127,7 @@ const FLAVORS = [
     <div class="press-article-col">
       <div>
         <span class="press-tag">Medium · Mar 2026</span>
-        <h3 class="press-article-title">The $SKOOP That Changes Everything: How KOKOS Ice Cream Is Rewriting the Rules of Web3 Loyalty</h3>
+        <h3 class="press-article-title">The Scoop That Changes Everything: How KOKOS Ice Cream Is Rewriting the Rules of Web3 Loyalty</h3>
         <p class="press-article-excerpt">Nashville's beloved plant-based scoop shop just launched $SKOOP — a crypto loyalty token that lets customers buy, earn, and pay on-chain. Here's why it actually makes sense.</p>
       </div>
       <a href="https://medium.com/@kokos_ice_cream/the-scoop-that-changes-everything-how-kokos-ice-cream-is-rewriting-the-rules-of-web3-loyalty-and-0aca24814524" target="_blank" class="press-read-link">Read on Medium →</a>
