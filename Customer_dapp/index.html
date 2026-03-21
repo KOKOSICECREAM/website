@@ -144,7 +144,7 @@ html,body{height:100%;overflow:hidden;background:var(--coral);font-family:'Instr
 .tok-btn{display:flex;align-items:center;gap:7px;background:rgba(255,255,255,0.65);border:1px solid var(--border-mid);border-radius:var(--r-pill);padding:7px 13px 7px 7px;cursor:pointer;transition:all 0.15s;margin-bottom:12px;}
 .tok-btn:hover{background:rgba(255,255,255,0.9);}
 .tok-ic{width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:white;flex-shrink:0;}
-.ti-usdc{background:#2775CA;}.ti-weth{background:#627EEA;}.ti-eth{background:#343434;}
+.ti-usdc{background:#2775CA;}.ti-eth{background:#627EEA;}
 .tok-name{font-size:14px;font-weight:600;color:var(--ink);}.tok-chev{font-size:9px;color:var(--ink-light);}
 .amt-input{font-family:'Cormorant Garamond',serif;font-size:48px;font-weight:600;color:var(--ink);background:none;border:none;outline:none;width:100%;letter-spacing:-2px;}
 .amt-input::placeholder{color:rgba(42,31,26,0.2);}
@@ -291,7 +291,7 @@ html,body{height:100%;overflow:hidden;background:var(--coral);font-family:'Instr
         <div class="token-card-head"><span class="token-badge">$SKOOP</span><span class="token-card-title">Base &middot; ERC-20</span></div>
         <p class="token-card-body">
           <strong>Contract:</strong> 0xfd3ce21c5Acd8BbbE576d0E2336C210C3cEBeb92<br>
-          <strong>Buy with:</strong> USDC, WETH, or ETH via Uniswap V3<br>
+          <strong>Buy with:</strong> USDC or ETH via Uniswap V3<br>
           <strong>Use it:</strong> Scan &amp; pay at the KOKOS register in Nashville<br>
           <strong>Earn it:</strong> Show your wallet QR after any cash or card purchase
         </p>
@@ -299,7 +299,7 @@ html,body{height:100%;overflow:hidden;background:var(--coral);font-family:'Instr
       <div class="gate-divider"><span>How It Works</span></div>
       <h2 class="hiw-heading">Three ways<br>to <em>use SKOOP</em></h2>
       <div class="step-list">
-        <div class="step"><div class="step-num">1</div><div class="step-content"><div class="step-title">Get SKOOP</div><div class="step-desc">Connect your wallet and tap Buy. Swap USDC, WETH, or ETH for SKOOP directly through Uniswap V3 on Base — no account required, no KYC.</div></div></div>
+        <div class="step"><div class="step-num">1</div><div class="step-content"><div class="step-title">Get SKOOP</div><div class="step-desc">Connect your wallet and tap Buy. Swap USDC or ETH for SKOOP directly through Uniswap V3 on Base — no account required, no KYC.</div></div></div>
         <div class="step"><div class="step-num">2</div><div class="step-content"><div class="step-title">Pay at the shop</div><div class="step-desc">The KOKOS team rings up your order and shows you a checkout QR. Open the Pay tab, scan it, review the total, and confirm — SKOOP goes to escrow instantly.</div></div></div>
         <div class="step"><div class="step-num">3</div><div class="step-content"><div class="step-title">Earn rewards</div><div class="step-desc">Paying by card or cash? Show your My QR tab to the team after your purchase. They'll scan it and send SKOOP straight to your wallet as a reward.</div></div></div>
         <div class="step"><div class="step-num">4</div><div class="step-content"><div class="step-title">Settlement &amp; burn</div><div class="step-desc">SKOOP captured in escrow settles on-chain and a portion burns — reducing supply over time. Every scoop you buy makes the token a little more scarce.</div></div></div>
@@ -336,7 +336,7 @@ html,body{height:100%;overflow:hidden;background:var(--coral);font-family:'Instr
       <div style="margin-top:10px;font-size:9px;font-weight:500;color:var(--ink-light);letter-spacing:0.3px;word-break:break-all;opacity:0.7;cursor:pointer;" onclick="navigator.clipboard.writeText('0xfd3ce21c5Acd8BbbE576d0E2336C210C3cEBeb92').then(()=>alert('CA copied!'))">CA: 0xfd3ce21c5Acd8BbbE576d0E2336C210C3cEBeb92</div>
     </div>
     <div class="action-grid">
-      <button class="action-cell ac-mint" onclick="goTo('buy')"><div class="ac-icon">&#x1F4B1;</div><div><div class="ac-label">Buy SKOOP</div><div class="ac-sub">USDC, WETH or ETH</div></div></button>
+      <button class="action-cell ac-mint" onclick="goTo('buy')"><div class="ac-icon">&#x1F4B1;</div><div><div class="ac-label">Buy SKOOP</div><div class="ac-sub">USDC or ETH</div></div></button>
       <button class="action-cell ac-lavender" onclick="goTo('pay')"><div class="ac-icon">&#128247;</div><div><div class="ac-label">Pay at shop</div><div class="ac-sub">Scan checkout QR</div></div></button>
       <button class="action-cell ac-sand" onclick="goTo('qr')"><div class="ac-icon">&#11035;</div><div><div class="ac-label">My wallet QR</div><div class="ac-sub">Earn rewards</div></div></button>
       <button class="action-cell ac-apricot" onclick="goTo('buy')"><div class="ac-icon">&#128200;</div><div><div class="ac-label">SKOOP price</div><div class="ac-sub">Live on Base</div></div></button>
@@ -356,20 +356,19 @@ html,body{height:100%;overflow:hidden;background:var(--coral);font-family:'Instr
     <div class="tok-sheet" id="tok-sheet">
       <div class="sheet-handle"></div>
       <div class="sheet-title">Select token</div>
+      <div class="tok-opt" onclick="selectToken('ETH')"><div class="tok-ic ti-eth">&#926;</div><div class="tok-opt-info"><h4>ETH</h4><p>Native Ether &middot; Base</p></div><div class="tok-opt-bal" id="bal-eth">&#8212;</div></div>
       <div class="tok-opt" onclick="selectToken('USDC')"><div class="tok-ic ti-usdc">USDC</div><div class="tok-opt-info"><h4>USDC</h4><p>USD Coin &middot; Base</p></div><div class="tok-opt-bal" id="bal-usdc">&#8212;</div></div>
-      <div class="tok-opt" onclick="selectToken('WETH')"><div class="tok-ic ti-weth">ETH</div><div class="tok-opt-info"><h4>WETH</h4><p>Wrapped Ether &middot; Base</p></div><div class="tok-opt-bal" id="bal-weth">&#8212;</div></div>
-      <div class="tok-opt" onclick="selectToken('ETH')"><div class="tok-ic ti-eth">&#926;</div><div class="tok-opt-info"><h4>ETH</h4><p>Native Ether &middot; auto-wraps</p></div><div class="tok-opt-bal" id="bal-eth">&#8212;</div></div>
     </div>
     <div class="swap-block-from">
       <div class="sp-eyebrow">You pay</div>
-      <button class="tok-btn" onclick="openTokSheet()"><div class="tok-ic ti-usdc" id="from-icon">USDC</div><div class="tok-name" id="from-name">USDC</div><div class="tok-chev">&#9660;</div></button>
+      <button class="tok-btn" onclick="openTokSheet()"><div class="tok-ic ti-eth" id="from-icon">&#926;</div><div class="tok-name" id="from-name">ETH</div><div class="tok-chev">&#9660;</div></button>
       <input class="amt-input" id="from-amt" type="number" placeholder="0" min="0" step="any" oninput="onAmt()">
       <div class="bal-hint">Balance: <span id="from-bal">&#8212;</span> <button class="max-tag" onclick="setMax()">MAX</button></div>
     </div>
     <div class="swap-block-arrow">&#8595;</div>
     <div class="swap-block-to">
       <div class="sp-eyebrow">You receive</div>
-      <div class="skoop-pill">&#127846; SKOOP</div>
+      <div class="skoop-pill"><img src="KOKOS_SKOOP.png" alt="SKOOP" style="width:20px;height:20px;border-radius:50%;object-fit:cover;"> SKOOP</div>
       <div class="out-amount" id="out-amt">0</div>
       <div class="out-loading" id="out-loading">Getting quote&#8230;</div>
     </div>
@@ -461,7 +460,7 @@ const ABI_QUOTER=["function quoteExactInputSingle((address tokenIn,address token
 const ABI_ROUTER=["function exactInputSingle((address tokenIn,address tokenOut,uint24 fee,address recipient,uint256 amountIn,uint256 amountOutMinimum,uint160 sqrtPriceLimitX96)) payable returns (uint256)"];
 const ABI_ESCROW=[{inputs:[{components:[{name:"receiptId",type:"bytes32"},{name:"orderId",type:"bytes32"},{name:"storeIdHash",type:"bytes32"},{name:"terminalIdHash",type:"bytes32"},{name:"tokenAmount",type:"uint256"},{name:"subtotalCents",type:"uint256"},{name:"taxCents",type:"uint256"},{name:"totalCents",type:"uint256"},{name:"itemCount",type:"uint256"},{name:"cartHash",type:"bytes32"},{name:"deadline",type:"uint256"}],internalType:"struct KOKOSPaymentEscrowPOS.PaymentIntent",name:"intent",type:"tuple"},{name:"signature",type:"bytes"}],name:"capturePayment",outputs:[],stateMutability:"nonpayable",type:"function"}];
 
-let provider,signer,userAddr,selToken="USDC",slip=0.5,quoteTimer,curQuote,pendingIntent,scannerRunning=false;
+let provider,signer,userAddr,selToken="ETH",slip=0.5,quoteTimer,curQuote,pendingIntent,scannerRunning=false;
 
 async function openWalletModal(){
   if(window.ethereum){
@@ -584,7 +583,6 @@ async function refreshBals(){
     document.getElementById("qr-bal").textContent="0";
   }
   try{const eb=await provider.getBalance(userAddr);document.getElementById("bal-eth").textContent=parseFloat(ethers.formatEther(eb)).toFixed(4)+" ETH";}catch(e){}
-  try{const wc=new ethers.Contract(CFG.WETH,ABI_ERC20,provider);document.getElementById("bal-weth").textContent=parseFloat(ethers.formatEther(await wc.balanceOf(userAddr))).toFixed(4)+" WETH";}catch(e){}
   try{const uc=new ethers.Contract(CFG.USDC,ABI_ERC20,provider);document.getElementById("bal-usdc").textContent=parseFloat(ethers.formatUnits(await uc.balanceOf(userAddr),6)).toFixed(2)+" USDC";}catch(e){}
   await updateFromBal();
 }
@@ -594,7 +592,6 @@ async function updateFromBal(){
   let b="—";
   try{
     if(selToken==="ETH")b=parseFloat(ethers.formatEther(await provider.getBalance(userAddr))).toFixed(4)+" ETH";
-    else if(selToken==="WETH"){const c=new ethers.Contract(CFG.WETH,ABI_ERC20,provider);b=parseFloat(ethers.formatEther(await c.balanceOf(userAddr))).toFixed(4)+" WETH";}
     else{const c=new ethers.Contract(CFG.USDC,ABI_ERC20,provider);b=parseFloat(ethers.formatUnits(await c.balanceOf(userAddr),6)).toFixed(2)+" USDC";}
   }catch(e){}
   document.getElementById("from-bal").textContent=b;
@@ -604,8 +601,8 @@ function openTokSheet(){document.getElementById("tok-sheet").classList.add("open
 function closeTokSheet(){document.getElementById("tok-sheet").classList.remove("open");document.getElementById("tok-back").classList.remove("open");}
 function selectToken(t){
   selToken=t;closeTokSheet();
-  const icons={USDC:"USDC",WETH:"ETH",ETH:"Ξ"};
-  const cls={USDC:"ti-usdc",WETH:"ti-weth",ETH:"ti-eth"};
+  const icons={USDC:"USDC",ETH:"Ξ"};
+  const cls={USDC:"ti-usdc",ETH:"ti-eth"};
   const ic=document.getElementById("from-icon");
   ic.textContent=icons[t];ic.className="tok-ic "+cls[t];
   document.getElementById("from-name").textContent=t;
@@ -617,7 +614,6 @@ async function setMax(){
   try{
     let mx="0";
     if(selToken==="ETH"){const b=await provider.getBalance(userAddr);const r=ethers.parseEther("0.005");mx=ethers.formatEther(b>r?b-r:0n);}
-    else if(selToken==="WETH"){const c=new ethers.Contract(CFG.WETH,ABI_ERC20,provider);mx=ethers.formatEther(await c.balanceOf(userAddr));}
     else{const c=new ethers.Contract(CFG.USDC,ABI_ERC20,provider);mx=ethers.formatUnits(await c.balanceOf(userAddr),6);}
     document.getElementById("from-amt").value=parseFloat(mx).toFixed(6);onAmt();
   }catch(e){showToast("Could not fetch balance","err");}
@@ -720,7 +716,6 @@ function parseQR(raw){
   try{
     const d=JSON.parse(raw);
     let intent;
-    // Support compact POS QR format: {r,t,sc,tc,xc,ic,dl,sig}
     if(d.r!==undefined){
       const receiptId=d.r;
       const storeIdHash=ethers.id("KOKOS_NASHVILLE_01");
