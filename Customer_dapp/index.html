@@ -271,7 +271,7 @@ html,body{height:100%;overflow:hidden;background:var(--coral);font-family:'Instr
   <div class="gate-bottom">
     <div class="gate-bottom-inner">
       <div class="gate-tagline">Buy, earn &amp; pay with SKOOP<br>at KOKOS Ice Cream Nashville</div>
-      <button class="btn-primary" onclick="openWalletModal()">
+      <button class="btn-primary" id="gate-connect-btn" onclick="openWalletModal()">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 12h.01"/><path d="M2 10h20"/><path d="M7 3l5-1 5 1"/></svg>
         Connect Wallet
       </button>
@@ -591,15 +591,24 @@ function updateSkoopBalanceDisplay(){
 async function openWalletModal(){
   if(window.ethereum){
     try{
+      const btn=document.getElementById('gate-connect-btn');
+      if(btn){btn.textContent='Connecting...';btn.disabled=true;}
       await window.ethereum.request({method:'eth_requestAccounts'});
       provider=new ethers.BrowserProvider(window.ethereum);
       signer=await provider.getSigner();
       userAddr=await signer.getAddress();
       await onConnected();
-      window.ethereum.on('accountsChanged',a=>{if(a[0]){userAddr=a[0];updatePills();refreshBals();}});
-      window.ethereum.on('chainChanged',()=>checkNet());
+      window.ethereum.on('accountsChanged',a=>{if(a[0]){userAddr=a[0];updatePills();refreshBals();}else{userAddr=null;provider=null;signer=null;showGate();}});
+      window.ethereum.on('chainChanged',()=>location.reload());
       return;
-    }catch(e){if(e.code===4001){showToast("Connection rejected","err");return;}}
+    }catch(e){
+      const btn=document.getElementById('gate-connect-btn');
+      if(btn){btn.textContent='Connect Wallet';btn.disabled=false;}
+      if(e.code===4001||e.code===-32603){showToast("Connection rejected","err");return;}
+      // Any other error — show it
+      showToast(e?.message?.slice(0,60)||"Connection failed","err");
+      return;
+    }
   }
   await connectWalletConnect();
 }
@@ -675,17 +684,24 @@ async function checkNet(){
   try{
     const net=await provider.getNetwork();
     if(Number(net.chainId)!==CFG.CHAIN_ID){
-      try{if(window.ethereum)await window.ethereum.request({method:"wallet_switchEthereumChain",params:[{chainId:CFG.CHAIN_HEX}]});}
-      catch(switchErr){
+      try{
+        if(window.ethereum){
+          await window.ethereum.request({method:"wallet_switchEthereumChain",params:[{chainId:CFG.CHAIN_HEX}]});
+          provider=new ethers.BrowserProvider(window.ethereum);
+          signer=await provider.getSigner();
+          userAddr=await signer.getAddress();
+        }
+      }catch(switchErr){
         document.getElementById("net-banner").classList.add("show");
         document.getElementById("net-label").textContent="Wrong";
         document.getElementById("net-label").className="pill pill-danger";
-        return;
+        return false;
       }
     }
     document.getElementById("net-banner").classList.remove("show");
     const l=document.getElementById("net-label");l.textContent="Base";l.className="pill pill-dark";
-  }catch(e){}
+    return true;
+  }catch(e){return false;}
 }
 
 async function switchToBase(){
@@ -710,6 +726,7 @@ async function refreshBals(){
     document.getElementById("home-bal").textContent="—";
     document.getElementById("home-usd").textContent="SKOOP";
     document.getElementById("qr-bal").textContent="—";
+    showToast(e?.message?.slice(0,60)||"Balance fetch failed","err");
   }
   try{const eb=await provider.getBalance(userAddr);document.getElementById("bal-eth").textContent=parseFloat(ethers.formatEther(eb)).toFixed(4)+" ETH";}catch(e){}
   try{const uc=new ethers.Contract(CFG.USDC,ABI_ERC20,provider);document.getElementById("bal-usdc").textContent=parseFloat(ethers.formatUnits(await uc.balanceOf(userAddr),6)).toFixed(2)+" USDC";}catch(e){}
