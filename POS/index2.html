@@ -117,7 +117,7 @@ html,body{height:100%;font-family:'Instrument Sans',sans-serif;background:var(--
 #actions-panel{border-left:1px solid var(--border);display:flex;flex-direction:column;overflow:hidden;background:var(--cream);}
 .action-view{display:none;flex-direction:column;flex:1;overflow:hidden;}
 .action-view.active{display:flex;}
-#rewards-view{padding:1.25rem;gap:1rem;overflow-y:auto;}
+#rewards-view{display:flex;flex-direction:column;padding:1.25rem;gap:1rem;overflow-y:auto;flex:1;}
 #rewards-view h3{font-family:'Cormorant Garamond',serif;font-size:1.1rem;font-style:italic;font-weight:400;color:var(--ink-mid);}
 .field-group{display:flex;flex-direction:column;gap:0.4rem;}
 .field-label{font-size:0.72rem;font-weight:600;color:var(--ink-mid);letter-spacing:0.05em;text-transform:uppercase;}
@@ -246,7 +246,7 @@ html,body{height:100%;font-family:'Instrument Sans',sans-serif;background:var(--
       <!-- ── PATCH: Scan + Paste block (added to doc4) ── -->
       <div style="background:var(--white);border:1px solid var(--border);border-radius:14px;overflow:hidden;">
         <div id="reward-qr-reader" style="display:none;width:100%;"></div>
-        <button id="reward-scan-btn" onclick="toggleRewardScan()" style="width:100%;padding:0.75rem;background:var(--green);color:var(--coral);border:none;border-bottom:1px solid rgba(0,0,0,0.1);font-family:inherit;font-size:0.82rem;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:0.5rem;letter-spacing:0.04em;transition:opacity 0.15s;">
+        <button class="action-btn secondary" id="reward-scan-btn" onclick="toggleRewardScan()" style="border-radius:0;border:none;border-bottom:1px solid var(--border);width:100%;display:flex;align-items:center;justify-content:center;gap:0.5rem;">
           <span id="scan-btn-icon">📷</span><span id="scan-btn-label">Scan Customer QR</span>
         </button>
         <div style="padding:0.65rem 0.875rem;">
