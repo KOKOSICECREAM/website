@@ -558,12 +558,51 @@ const ABI_POOL_IMM=["function token0() view returns (address)","function token1(
 const ABI_POOL_S0=["function slot0() view returns (uint160 sqrtPriceX96,int24,uint16,uint16,uint16,uint8,bool)","function token0() view returns (address)"];
 
 async function fetchEthPrice(){
-  try{
-    const r=await fetch('https://api.coingecko.com/api/v3/simple/price?ids=ethereum&vs_currencies=usd');
-    const d=await r.json();
-    ethPriceUSD=d?.ethereum?.usd||0;
-    if(ethPriceUSD>0)await fetchSkoopPrice();
-  }catch(e){}
+  // Try multiple CORS-friendly sources in order
+  const sources = [
+    // Binance — no CORS, no key
+    async () => {
+      const r = await fetch('https://api.binance.com/api/v3/ticker/price?symbol=ETHUSDT');
+      const d = await r.json();
+      return parseFloat(d.price);
+    },
+    // Coinbase — no CORS, no key
+    async () => {
+      const r = await fetch('https://api.coinbase.com/v2/prices/ETH-USD/spot');
+      const d = await r.json();
+      return parseFloat(d.data.amount);
+    },
+    // KuCoin — no CORS
+    async () => {
+      const r = await fetch('https://api.kucoin.com/api/v1/market/orderbook/level1?symbol=ETH-USDT');
+      const d = await r.json();
+      return parseFloat(d.data.price);
+    },
+    // On-chain fallback: WETH/USDC pool on Base (always works, no CORS)
+    async () => {
+      const WETH_USDC_POOL = '0xd0b53D9277642d899DF5C87A3966A349A798F224'; // Base WETH/USDC 0.05%
+      const pub = new ethers.JsonRpcProvider(CFG.RPC);
+      const pool = new ethers.Contract(WETH_USDC_POOL, ABI_POOL_S0, pub);
+      const [s0, t0] = await Promise.all([pool.slot0(), pool.token0()]);
+      const sqrtPf = Number(s0.sqrtPriceX96) / Number(2n**96n);
+      const priceRaw = sqrtPf * sqrtPf;
+      // WETH is token0 or token1, USDC is the other (6 dec vs 18 dec = 1e12 adjustment)
+      const wethIsT0 = t0.toLowerCase() === CFG.WETH.toLowerCase();
+      const usdcPerWeth = wethIsT0 ? (1/priceRaw)*1e12 : priceRaw*1e12;
+      return usdcPerWeth;
+    },
+  ];
+
+  for (const source of sources) {
+    try {
+      const price = await source();
+      if (price && price > 100 && price < 1000000) { // sanity check
+        ethPriceUSD = price;
+        if (ethPriceUSD > 0) await fetchSkoopPrice();
+        return;
+      }
+    } catch(e) { /* try next */ }
+  }
 }
 
 async function fetchSkoopPrice(){
@@ -1036,9 +1075,19 @@ async function renderPriceModal(){
 
   try{
     // ── Fetch ETH price ──
-    const r = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=ethereum&vs_currencies=usd');
-    const d = await r.json();
-    const ethUSD = d?.ethereum?.usd || 0;
+    // Fetch ETH price from CORS-friendly sources
+    let ethUSD = 0;
+    const ethSources = [
+      async () => { const r=await fetch('https://api.binance.com/api/v3/ticker/price?symbol=ETHUSDT'); const d=await r.json(); return parseFloat(d.price); },
+      async () => { const r=await fetch('https://api.coinbase.com/v2/prices/ETH-USD/spot'); const d=await r.json(); return parseFloat(d.data.amount); },
+      async () => { const r=await fetch('https://api.kucoin.com/api/v1/market/orderbook/level1?symbol=ETH-USDT'); const d=await r.json(); return parseFloat(d.data.price); },
+    ];
+    for (const src of ethSources) {
+      try { const p=await src(); if(p>100&&p<1000000){ethUSD=p;break;} } catch(e){}
+    }
+    // Fall back to cached value if all fail
+    if (!ethUSD && ethPriceUSD > 0) ethUSD = ethPriceUSD;
+    if (!ethUSD) throw new Error('ETH price unavailable');
 
     // ── Get SKOOP price from ETH pool slot0 ──
     const pub = new ethers.JsonRpcProvider(CFG.RPC);
@@ -1080,7 +1129,7 @@ async function renderPriceModal(){
     if(sub && skoopUSD > 0) sub.textContent = '$' + skoopUSD.toFixed(6);
 
     // ── Draw chart from Swap events ──────────────────────────────────────────
-    await drawPriceChart(pub, poolETH, t0eth, ethUSD, skoopIsT0eth);
+    await drawPriceChart();
 
   } catch(e){
     setEl('pm-chart-status', 'Price unavailable');
@@ -1088,126 +1137,167 @@ async function renderPriceModal(){
   }
 }
 
-async function drawPriceChart(pub, poolContract, t0eth, ethUSD, skoopIsT0){
-  const statusEl = document.getElementById('pm-chart-status');
+async function drawPriceChart(){
   const canvas = document.getElementById('pm-chart');
-  if(!canvas) return;
   const ctx = canvas.getContext('2d');
+  const statusEl = document.getElementById('pm-chart-status');
+  canvas.width = canvas.offsetWidth || 390;
 
   try{
-    // Fetch Swap events from last ~10800 blocks (~6h on Base)
-    const latest = await pub.getBlockNumber();
-    const LOOKBACK = 9000; // stay under 10k limit
-    const fromBlock = latest - LOOKBACK;
-
+    const pub = new ethers.JsonRpcProvider(CFG.RPC);
     const ABI_SWAP = ["event Swap(address indexed sender,address indexed recipient,int256 amount0,int256 amount1,uint160 sqrtPriceX96,uint128 liquidity,int24 tick)"];
-    const poolWithSwap = new ethers.Contract(POOL_ETH_SKOOP, ABI_SWAP, pub);
-    const events = await poolWithSwap.queryFilter(poolWithSwap.filters.Swap(), fromBlock, latest);
+    const pool = new ethers.Contract(POOL_ETH_SKOOP, ABI_SWAP, pub);
+    const currentBlock = await pub.getBlockNumber();
+    const fromBlock = currentBlock - 9000; // ~5h, under 10k block limit
+    const events = await pool.queryFilter(pool.filters.Swap(), fromBlock);
 
-    let prices = [];
-    for(const ev of events){
-      const sqrtPf = Number(ev.args.sqrtPriceX96) / Number(2n**96n);
-      const raw = sqrtPf * sqrtPf;
-      const skoopPerEth = skoopIsT0 ? (1/raw)*1e12 : raw*1e12;
-      const usd = skoopPerEth > 0 ? ethUSD / skoopPerEth : 0;
-      if(usd > 0) prices.push(usd);
-    }
-
-    if(prices.length < 2){
-      statusEl.textContent = 'Accumulating price history…';
-      drawFlatChart(ctx, canvas);
+    if(events.length < 2){
+      statusEl.textContent = events.length + ' swaps — not enough data yet';
+      drawFlatLine(ctx, canvas, skoopPriceUSD);
       return;
     }
 
-    // Bucket into ~40 points
-    const BUCKETS = Math.min(40, prices.length);
-    const chunk = Math.ceil(prices.length / BUCKETS);
-    const pts = [];
-    for(let i = 0; i < prices.length; i += chunk){
-      const slice = prices.slice(i, i + chunk);
-      pts.push(slice.reduce((a,b) => a+b, 0) / slice.length);
-    }
+    statusEl.textContent = events.length + ' swaps · 6h';
 
-    const mn = Math.min(...pts), mx = Math.max(...pts);
-    const delta = pts[pts.length-1] - pts[0];
-    const pct = pts[0] > 0 ? (delta/pts[0]*100).toFixed(2) : '0.00';
-    const sign = delta >= 0 ? '+' : '';
-    statusEl.textContent = `${sign}${pct}% · ${events.length} swaps`;
+    const Q96f = Number(2n**96n);
+    const prices = events.map(e => {
+      const sqrtPf = Number(e.args.sqrtPriceX96) / Q96f;
+      const priceRaw = sqrtPf * sqrtPf;
+      const skoopPerEth = priceRaw * 1e12;
+      return skoopPerEth > 0 ? ethPriceUSD / skoopPerEth : 0;
+    }).filter(p => p > 0);
 
-    // Draw
-    const W = canvas.offsetWidth || 360;
-    const H = 130;
-    canvas.width = W; canvas.height = H;
-    const PAD = { t:12, b:20, l:8, r:8 };
-    const gw = W - PAD.l - PAD.r, gh = H - PAD.t - PAD.b;
+    if(!prices.length){ drawFlatLine(ctx, canvas, skoopPriceUSD); return; }
+    drawLineChart(ctx, canvas, prices);
 
-    // Background blocks (pastel bands)
-    const bands = ['#fdcec133','#cde6d733','#fae2d833','#e3d1e433','#ffddad33'];
-    const bw = gw / bands.length;
-    bands.forEach((c,i)=>{ ctx.fillStyle=c; ctx.fillRect(PAD.l+i*bw, PAD.t, bw, gh); });
-
-    // Gradient fill under curve
-    const toX = i => PAD.l + (i/(pts.length-1))*gw;
-    const toY = v => PAD.t + gh - ((v-mn)/(mx-mn||1))*gh;
-    const grad = ctx.createLinearGradient(0, PAD.t, 0, PAD.t+gh);
-    grad.addColorStop(0, 'rgba(253,175,154,0.45)');
-    grad.addColorStop(1, 'rgba(253,175,154,0)');
-    ctx.beginPath();
-    ctx.moveTo(toX(0), toY(pts[0]));
-    for(let i=1;i<pts.length;i++){
-      const cx=(toX(i-1)+toX(i))/2;
-      ctx.quadraticCurveTo(toX(i-1),toY(pts[i-1]),cx,( toY(pts[i-1])+toY(pts[i]))/2);
-    }
-    ctx.quadraticCurveTo(toX(pts.length-2),toY(pts[pts.length-2]),toX(pts.length-1),toY(pts[pts.length-1]));
-    ctx.lineTo(toX(pts.length-1), PAD.t+gh);
-    ctx.lineTo(toX(0), PAD.t+gh);
-    ctx.closePath();
-    ctx.fillStyle = grad;
-    ctx.fill();
-
-    // Line
-    ctx.beginPath();
-    ctx.moveTo(toX(0), toY(pts[0]));
-    for(let i=1;i<pts.length;i++){
-      const cx=(toX(i-1)+toX(i))/2;
-      ctx.quadraticCurveTo(toX(i-1),toY(pts[i-1]),cx,(toY(pts[i-1])+toY(pts[i]))/2);
-    }
-    ctx.quadraticCurveTo(toX(pts.length-2),toY(pts[pts.length-2]),toX(pts.length-1),toY(pts[pts.length-1]));
-    ctx.strokeStyle = '#e8876a';
-    ctx.lineWidth = 2;
-    ctx.stroke();
-
-    // Glow dot at current price
-    const lx = toX(pts.length-1), ly = toY(pts[pts.length-1]);
-    ctx.beginPath(); ctx.arc(lx,ly,5,0,Math.PI*2);
-    ctx.fillStyle='#e8876a'; ctx.fill();
-    ctx.beginPath(); ctx.arc(lx,ly,9,0,Math.PI*2);
-    ctx.fillStyle='rgba(232,135,106,0.2)'; ctx.fill();
-
-    // Price labels
-    ctx.fillStyle='rgba(42,31,26,0.45)';
-    ctx.font='9px Instrument Sans, sans-serif';
-    ctx.textAlign='right';
-    ctx.fillText('$'+mx.toFixed(8), W-PAD.r, PAD.t+8);
-    ctx.fillText('$'+mn.toFixed(8), W-PAD.r, PAD.t+gh-2);
-
-  } catch(e){
-    statusEl.textContent = 'Chart unavailable';
-    drawFlatChart(ctx, canvas);
+  }catch(e){
+    document.getElementById('pm-chart-status').textContent = 'Chart unavailable';
+    drawFlatLine(ctx, canvas, skoopPriceUSD);
   }
 }
 
-function drawFlatChart(ctx, canvas){
-  const W = canvas.offsetWidth || 360, H = 130;
-  canvas.width = W; canvas.height = H;
-  ctx.fillStyle = 'rgba(253,206,193,0.2)';
-  ctx.fillRect(0,0,W,H);
-  ctx.strokeStyle = '#fdaf9a';
-  ctx.lineWidth = 1.5;
-  ctx.setLineDash([4,4]);
-  ctx.beginPath(); ctx.moveTo(0,H/2); ctx.lineTo(W,H/2); ctx.stroke();
-  ctx.setLineDash([]);
+function drawLineChart(ctx, canvas, prices){
+  const W = canvas.width, H = canvas.height;
+  const pad = { top:16, right:16, bottom:32, left:58 };
+  const chartW = W - pad.left - pad.right;
+  const chartH = H - pad.top - pad.bottom;
+  const minP = Math.min(...prices) * 0.993;
+  const maxP = Math.max(...prices) * 1.007;
+  const range = maxP - minP || maxP * 0.01;
+  const n = prices.length;
+
+  ctx.clearRect(0, 0, W, H);
+
+  // pastel background blocks
+  const blocks = [
+    {color:'rgba(253,206,193,0.18)', x:pad.left, w:chartW/4},
+    {color:'rgba(205,230,215,0.18)', x:pad.left+chartW/4, w:chartW/4},
+    {color:'rgba(250,226,216,0.18)', x:pad.left+chartW*2/4, w:chartW/4},
+    {color:'rgba(255,221,173,0.18)', x:pad.left+chartW*3/4, w:chartW/4},
+  ];
+  blocks.forEach(b => { ctx.fillStyle = b.color; ctx.fillRect(b.x, pad.top, b.w, chartH); });
+
+  // grid lines
+  for(let i=0; i<=4; i++){
+    const t = i/4;
+    const y = pad.top + chartH*(1-t);
+    ctx.strokeStyle = 'rgba(42,31,26,0.07)'; ctx.lineWidth = 1; ctx.setLineDash([3,4]);
+    ctx.beginPath(); ctx.moveTo(pad.left, y); ctx.lineTo(W-pad.right, y); ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.fillStyle = 'rgba(107,79,71,0.5)';
+    ctx.font = '600 9px "Instrument Sans", sans-serif'; ctx.textAlign = 'right';
+    ctx.fillText('$'+(minP + range*t).toFixed(6), pad.left-5, y+3);
+  }
+
+  // X axis labels
+  ctx.fillStyle = 'rgba(107,79,71,0.45)';
+  ctx.font = '600 9px "Instrument Sans", sans-serif'; ctx.textAlign = 'center';
+  [['6h ago', pad.left], ['3h ago', pad.left+chartW/2], ['now', pad.left+chartW]].forEach(([label, x]) => {
+    ctx.fillText(label, x, H - 6);
+  });
+
+  function ptX(i){ return pad.left + (i/(n-1))*chartW; }
+  function ptY(p){ return pad.top + chartH*(1-(p-minP)/range); }
+
+  // gradient fill
+  const grad = ctx.createLinearGradient(0, pad.top, 0, pad.top+chartH);
+  grad.addColorStop(0, 'rgba(232,135,106,0.28)');
+  grad.addColorStop(0.6, 'rgba(253,175,154,0.10)');
+  grad.addColorStop(1, 'rgba(253,206,193,0.02)');
+  ctx.beginPath();
+  ctx.moveTo(ptX(0), ptY(prices[0]));
+  for(let i=1; i<n-1; i++){
+    const mx=(ptX(i)+ptX(i+1))/2, my=(ptY(prices[i])+ptY(prices[i+1]))/2;
+    ctx.quadraticCurveTo(ptX(i), ptY(prices[i]), mx, my);
+  }
+  ctx.lineTo(ptX(n-1), ptY(prices[n-1]));
+  ctx.lineTo(ptX(n-1), pad.top+chartH); ctx.lineTo(ptX(0), pad.top+chartH);
+  ctx.closePath(); ctx.fillStyle = grad; ctx.fill();
+
+  // main line
+  ctx.beginPath(); ctx.moveTo(ptX(0), ptY(prices[0]));
+  for(let i=1; i<n-1; i++){
+    const mx=(ptX(i)+ptX(i+1))/2, my=(ptY(prices[i])+ptY(prices[i+1]))/2;
+    ctx.quadraticCurveTo(ptX(i), ptY(prices[i]), mx, my);
+  }
+  ctx.lineTo(ptX(n-1), ptY(prices[n-1]));
+  ctx.strokeStyle = '#e8876a'; ctx.lineWidth = 2.5;
+  ctx.lineJoin = 'round'; ctx.lineCap = 'round'; ctx.stroke();
+
+  // glow dot at latest
+  const lx = ptX(n-1), ly = ptY(prices[n-1]);
+  ctx.beginPath(); ctx.arc(lx, ly, 7, 0, Math.PI*2);
+  ctx.fillStyle = 'rgba(232,135,106,0.20)'; ctx.fill();
+  ctx.beginPath(); ctx.arc(lx, ly, 4, 0, Math.PI*2);
+  ctx.fillStyle = '#e8876a'; ctx.fill();
+  ctx.beginPath(); ctx.arc(lx, ly, 2, 0, Math.PI*2);
+  ctx.fillStyle = '#fffaf7'; ctx.fill();
+
+  // first dot
+  ctx.beginPath(); ctx.arc(ptX(0), ptY(prices[0]), 3, 0, Math.PI*2);
+  ctx.fillStyle = 'rgba(232,135,106,0.5)'; ctx.fill();
+
+  // delta label
+  const delta = prices[n-1] - prices[0];
+  const deltaPct = (delta/prices[0]*100).toFixed(2);
+  const sign = delta >= 0 ? '+' : '';
+  const labelColor = delta >= 0 ? '#2d7a5f' : '#b91c1c';
+  const labelBg = delta >= 0 ? 'rgba(205,230,215,0.7)' : 'rgba(253,206,193,0.7)';
+  const label = sign + deltaPct + '%';
+  ctx.font = '700 10px "Instrument Sans", sans-serif';
+  const tw = ctx.measureText(label).width;
+  const lbx = W - pad.right - tw - 10, lby = pad.top + 4;
+  ctx.fillStyle = labelBg;
+  ctx.beginPath();
+  (function(x,y,w,h,r){
+    ctx.moveTo(x+r,y);ctx.lineTo(x+w-r,y);ctx.quadraticCurveTo(x+w,y,x+w,y+r);
+    ctx.lineTo(x+w,y+h-r);ctx.quadraticCurveTo(x+w,y+h,x+w-r,y+h);
+    ctx.lineTo(x+r,y+h);ctx.quadraticCurveTo(x,y+h,x,y+h-r);
+    ctx.lineTo(x,y+r);ctx.quadraticCurveTo(x,y,x+r,y);ctx.closePath();
+  })(lbx-4, lby-1, tw+8, 14, 4);
+  ctx.fill();
+  ctx.fillStyle = labelColor; ctx.textAlign = 'left';
+  ctx.fillText(label, lbx, lby+10);
 }
+
+function drawFlatLine(ctx, canvas, price){
+  const W = canvas.width, H = canvas.height;
+  ctx.clearRect(0, 0, W, H);
+  const colors = ['rgba(253,206,193,0.2)','rgba(205,230,215,0.2)','rgba(250,226,216,0.2)','rgba(255,221,173,0.2)'];
+  colors.forEach((c,i)=>{ ctx.fillStyle=c; ctx.fillRect(W/4*i, 0, W/4, H); });
+  ctx.strokeStyle = 'rgba(232,135,106,0.35)'; ctx.setLineDash([5,5]); ctx.lineWidth = 1.5;
+  ctx.beginPath(); ctx.moveTo(20, H/2); ctx.lineTo(W-20, H/2); ctx.stroke();
+  ctx.setLineDash([]);
+  if(price > 0){
+    ctx.font = '600 11px "Instrument Sans", sans-serif'; ctx.textAlign = 'center';
+    ctx.fillStyle = 'rgba(107,79,71,0.5)';
+    ctx.fillText('$' + price.toFixed(6), W/2, H/2 - 8);
+  }
+  ctx.font = '500 10px "Instrument Sans", sans-serif';
+  ctx.fillStyle = 'rgba(107,79,71,0.35)';
+  ctx.fillText('Accumulating price history…', W/2, H/2 + 16);
+}
+
 
 if(window.ethereum){
   window.ethereum.request({method:'eth_accounts'}).then(async a=>{
