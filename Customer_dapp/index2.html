@@ -531,6 +531,7 @@ const ABI_POOL_IMM=["function token0() view returns (address)","function token1(
 const poolFees={};
 
 let provider,signer,userAddr,selToken="ETH",slip=0.5,quoteTimer,curQuote,pendingIntent,scannerRunning=false,ethPriceUSD=0,skoopPriceUSD=0;
+let _justDisconnected=false; // prevents immediate auto-reconnect after explicit disconnect
 
 // ── ETH PRICE — CoinGecko (works on kokosicecream.com) + on-chain fallback ──
 async function fetchEthPrice(){
@@ -582,6 +583,7 @@ function updateSkoopBalanceDisplay(){
 
 // ── WALLET CONNECT ────────────────────────────────────────────────────────────
 async function openWalletModal(){
+  if(_justDisconnected)return; // don't reconnect immediately after explicit disconnect
   if(window.ethereum){
     const btn=document.getElementById('gate-connect-btn');
     try{
@@ -654,6 +656,11 @@ async function disconnectWallet(){
   document.getElementById("bottom-nav").style.display="none";
   const gate=document.getElementById("connect-gate");
   if(gate){gate.style.display="flex";gate.style.flexDirection="column";gate.style.flex="1";}
+  // Block immediate auto-reconnect, then reset button
+  _justDisconnected=true;
+  setTimeout(()=>{ _justDisconnected=false; },1000);
+  const connectBtn=document.getElementById('gate-connect-btn');
+  if(connectBtn){connectBtn.textContent='Connect Wallet';connectBtn.disabled=false;}
   setT("home-bal","—");setT("home-usd","SKOOP");setT("home-usd-val","");
   setT("wallet-pill","0x…");setT("buy-pill","0x…");
   setT("qr-addr","Connect wallet to generate QR");
