@@ -264,6 +264,12 @@ html,body{height:100%;font-family:'Instrument Sans',sans-serif;background:var(--
       <button class="action-btn primary" id="reward-send-btn" onclick="sendReward()" disabled>Send SKOOP Reward</button>
       <div id="daily-limit-display" style="font-size:0.68rem;color:var(--ink-lt);text-align:center;padding:0.25rem 0;"></div>
       <button class="action-btn secondary" onclick="resetRewards()" style="font-size:0.75rem;padding:0.5rem;">Clear</button>
+
+      <!-- PENDING REWARDS -->
+      <div id="pending-rewards-section" style="display:none;border-top:1px solid var(--border);padding-top:0.875rem;display:flex;flex-direction:column;gap:0.5rem;">
+        <div style="font-size:0.65rem;font-weight:600;text-transform:uppercase;letter-spacing:0.08em;color:var(--coral-deep);">⏳ Pending Rewards</div>
+        <div id="pending-rewards-list" style="display:flex;flex-direction:column;gap:0.4rem;"></div>
+      </div>
     </div>
 
     <div class="action-view" id="burn-view">
@@ -583,6 +589,8 @@ async function pollForPayment(receiptId){
           const paidCents = Number(ev.args.totalCents);
           const rewardSkoop = Math.round((paidCents / 100) * 0.10 / skoopPriceUSD);
           if(rewardSkoop > 0){
+            // Save as pending immediately — will be cleared if staff sends in time
+            const pendingId = savePendingReward(receiptId, rewardSkoop, paidCents);
             setTimeout(()=>{
               mobileTab('rewards');
               switchPanel('rewards');
@@ -592,6 +600,9 @@ async function pollForPayment(receiptId){
               document.getElementById('reward-usd-hint').textContent =
                 '10% SKOOP payment bonus — scan customer wallet to send';
               showToast('10% reward ready — scan customer wallet 🎁','success');
+              renderPendingRewards();
+              // Start 90s timeout — if not sent, reward stays pending for later
+              startRewardTimeout(pendingId, rewardSkoop);
             }, 2700);
           }
         }
@@ -647,6 +658,8 @@ function resetRewards(){
   document.getElementById('calc-apply-btn').disabled=true;
   document.getElementById('reward-usd-hint').textContent='';
   document.getElementById('reward-send-btn').disabled=true;
+  const amtInput = document.getElementById('reward-amount');
+  if(amtInput) delete amtInput.dataset.pendingId;
   calcSkoopAmount=0;
 }
 
@@ -681,6 +694,99 @@ function applyCalcReward(){
   showToast(calcSkoopAmount.toLocaleString()+' SKOOP applied ✓','success');
 }
 
+// ─── PENDING REWARDS ─────────────────────────────────────────────────────────
+let rewardTimeoutHandle = null;
+
+function savePendingReward(receiptId, skoopAmt, totalCents) {
+  const pending = getPendingRewards();
+  const id = 'PR_' + Date.now();
+  pending.push({
+    id,
+    receiptId: receiptId.slice(0,14) + '…',
+    skoopAmt,
+    totalCents,
+    ts: Date.now(),
+  });
+  localStorage.setItem('kokos_pending_rewards', JSON.stringify(pending));
+  return id;
+}
+
+function getPendingRewards() {
+  try { return JSON.parse(localStorage.getItem('kokos_pending_rewards') || '[]'); }
+  catch { return []; }
+}
+
+function removePendingReward(id) {
+  const pending = getPendingRewards().filter(r => r.id !== id);
+  localStorage.setItem('kokos_pending_rewards', JSON.stringify(pending));
+  renderPendingRewards();
+}
+
+function renderPendingRewards() {
+  const pending = getPendingRewards();
+  const section = document.getElementById('pending-rewards-section');
+  const list    = document.getElementById('pending-rewards-list');
+  if (!pending.length) {
+    section.style.display = 'none';
+    return;
+  }
+  section.style.display = 'flex';
+  list.innerHTML = pending.map(r => {
+    const age = Math.round((Date.now() - r.ts) / 60000);
+    const ageStr = age < 1 ? 'just now' : age + 'm ago';
+    return `<div style="background:var(--apricot);border:1px solid var(--coral-mid);border-radius:10px;padding:0.6rem 0.75rem;">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.3rem;">
+        <span style="font-size:0.75rem;font-weight:700;color:var(--green);">${r.skoopAmt.toLocaleString()} SKOOP</span>
+        <span style="font-size:0.62rem;color:var(--ink-lt);">${ageStr}</span>
+      </div>
+      <div style="font-size:0.65rem;color:var(--ink-mid);margin-bottom:0.45rem;">
+        $${(r.totalCents/100).toFixed(2)} purchase · receipt ${r.receiptId}
+      </div>
+      <div style="display:flex;gap:0.4rem;">
+        <button onclick="loadPendingReward('${r.id}')"
+          style="flex:1;background:var(--green);color:var(--coral);border:none;border-radius:8px;padding:0.4rem;font-family:inherit;font-size:0.72rem;font-weight:700;cursor:pointer;">
+          Send Now
+        </button>
+        <button onclick="removePendingReward('${r.id}')"
+          style="background:none;border:1px solid var(--border);border-radius:8px;padding:0.4rem 0.6rem;font-family:inherit;font-size:0.72rem;color:var(--ink-lt);cursor:pointer;">
+          ✕
+        </button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function loadPendingReward(id) {
+  const r = getPendingRewards().find(x => x.id === id);
+  if (!r) return;
+  // Pre-fill the amount — staff still needs to scan/paste wallet
+  const input = document.getElementById('reward-amount');
+  input.value = r.skoopAmt;
+  input.dispatchEvent(new Event('input'));
+  document.getElementById('reward-usd-hint').textContent =
+    '10% SKOOP bonus (pending) — scan customer wallet to send';
+  // Store which pending entry this is so sendReward can clear it
+  input.dataset.pendingId = id;
+  showToast('Loaded — scan customer wallet to send','success');
+}
+
+function startRewardTimeout(pendingId, skoopAmt) {
+  // Clear any existing timeout
+  if (rewardTimeoutHandle) clearTimeout(rewardTimeoutHandle);
+  // After 90s, if reward-amount still has this value and no wallet scanned, clear the UI
+  // The reward stays in pending list — not lost
+  rewardTimeoutHandle = setTimeout(() => {
+    const input = document.getElementById('reward-amount');
+    const currentAmt = parseInt(input.value);
+    if (currentAmt === skoopAmt && !scannedRewardAddr) {
+      input.value = '';
+      input.dispatchEvent(new Event('input'));
+      document.getElementById('reward-usd-hint').textContent = '';
+      showToast('Reward saved to Pending — customer can claim later','success');
+    }
+  }, 90000);
+}
+
 // ─── DAILY LIMIT ──────────────────────────────────────────────────────────────
 function getDailyRewardState(){ const today=new Date().toDateString(); const stored=localStorage.getItem('kokos_reward_day'); const sent=parseFloat(localStorage.getItem('kokos_reward_sent')||'0'); if(stored!==today){localStorage.setItem('kokos_reward_day',today);localStorage.setItem('kokos_reward_sent','0');return 0;} return sent; }
 function addDailyRewardSent(amount){ const today=new Date().toDateString(); const current=getDailyRewardState(); localStorage.setItem('kokos_reward_day',today); localStorage.setItem('kokos_reward_sent',(current+amount).toString()); updateDailyLimitDisplay(); }
@@ -701,7 +807,11 @@ async function sendReward(){
     const token=new ethers.Contract(CFG.SKOOP,ABI_ERC20,signer);
     const tx=await token.transfer(scannedRewardAddr,amount);
     showToast('Broadcasting…',''); await tx.wait();
-    addDailyRewardSent(amtNum); showToast('Reward sent ✓','success'); resetRewards();
+    addDailyRewardSent(amtNum);
+    // Clear pending reward entry if this was triggered from one
+    const pendingId = document.getElementById('reward-amount').dataset.pendingId;
+    if(pendingId) removePendingReward(pendingId);
+    showToast('Reward sent ✓','success'); resetRewards();
     btn.textContent='Send SKOOP Reward';
   }catch(e){showToast('Transaction failed','error');btn.disabled=false;btn.textContent='Send SKOOP Reward';}
 }
@@ -778,6 +888,7 @@ updateDailyLimitDisplay();
 
 fetchSkoopPrice();
 setInterval(fetchSkoopPrice, 60000);
+renderPendingRewards();
 
 if(window.ethereum){
   window.ethereum.request({method:'eth_accounts'}).then(accounts=>{
