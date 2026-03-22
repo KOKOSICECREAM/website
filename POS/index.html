@@ -878,9 +878,31 @@ async function burnSelected(){
   try{
     const escrow=new ethers.Contract(CFG.ESCROW,ABI_ESCROW,signer);
     const tx=await escrow.burnPayments(checked);
-    showToast('Broadcasting burn…','');await tx.wait();
-    showToast(`🔥 ${checked.length} receipt(s) burned`,'success');await loadReceipts();
-  }catch(e){showToast('Burn failed','error');}
+    showToast('Broadcasting burn…','');
+    const rcpt=await tx.wait();
+    // Parse BatchBurnExecuted for exact totals
+    let burnCount=checked.length,burnSkoop=0;
+    try{
+      const iface=new ethers.Interface([{anonymous:false,inputs:[{name:'paymentCount',type:'uint256'},{name:'totalTokenAmount',type:'uint256'},{name:'timestamp',type:'uint256'}],name:'BatchBurnExecuted',type:'event'}]);
+      for(const log of rcpt.logs){
+        try{const parsed=iface.parseLog(log);if(parsed&&parsed.name==='BatchBurnExecuted'){burnCount=Number(parsed.args.paymentCount);burnSkoop=parseFloat(ethers.formatUnits(parsed.args.totalTokenAmount,CFG.SKOOP_DEC));break;}}catch{}
+      }
+    }catch{}
+    const skoopStr=burnSkoop>0?burnSkoop.toLocaleString('en-US',{maximumFractionDigits:2})+' SKOOP':'';
+    document.getElementById('receipt-list').innerHTML=`
+      <div style="background:var(--mint);border:1px solid var(--mint-mid);border-radius:12px;padding:1rem;display:flex;flex-direction:column;align-items:center;gap:0.5rem;text-align:center;">
+        <div style="font-size:1.8rem;">🔥</div>
+        <div style="font-family:'Cormorant Garamond',serif;font-size:1.1rem;font-weight:600;color:var(--green);">Burn complete</div>
+        <div style="font-size:0.82rem;font-weight:700;color:var(--green);">${skoopStr}</div>
+        <div style="font-size:0.72rem;color:var(--ink-mid);">${burnCount} receipt${burnCount!==1?'s':''} burned · sent to 0x000…000</div>
+        <div style="font-size:0.62rem;font-family:monospace;color:var(--ink-lt);word-break:break-all;">${rcpt.hash.slice(0,20)}…</div>
+      </div>`;
+    document.getElementById('stat-captured').textContent='0';
+    document.getElementById('stat-skoop').textContent='0';
+    document.getElementById('burn-btn').disabled=true;
+    showToast(`🔥 ${skoopStr||burnCount+' receipt(s)'} burned`,'success');
+    capturedReceipts=[];
+  }catch(e){showToast('Burn failed','error');btn.disabled=false;}
   btn.textContent='🔥 Burn Selected';
 }
 
