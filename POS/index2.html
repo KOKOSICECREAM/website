@@ -16,7 +16,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400;1,600&family=Instrument+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/ethers@6.13.4/dist/ethers.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+<script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
 <style>
 :root {
   --coral:#fdcec1; --coral-mid:#fdaf9a; --coral-deep:#f0876a;
@@ -689,15 +689,16 @@ function stopRewardScan(){
 // ── END PATCH ─────────────────────────────────────────────────────────────────
 
 function resetRewards(){
-  stopRewardScan();scannedRewardAddr=null;
+  stopRewardScan(); scannedRewardAddr=null;
   document.getElementById('reward-addr').textContent='—';
   document.getElementById('reward-addr-input').value='';
   document.getElementById('reward-amount').value='';
-  document.getElementById('sale-total').value='';
-  document.getElementById('calc-skoop-display').textContent='—';
-  document.getElementById('calc-apply-btn').disabled=true;
-  document.getElementById('reward-usd-hint').textContent='';
+  document.getElementById('reward-usd-hint').textContent='Calculate based on purchase total';
   document.getElementById('reward-send-btn').disabled=true;
+  // also clear calculator fields if present
+  const saleEl=document.getElementById('sale-total'); if(saleEl)saleEl.value='';
+  const calcEl=document.getElementById('calc-skoop-display'); if(calcEl)calcEl.textContent='—';
+  const applyEl=document.getElementById('calc-apply-btn'); if(applyEl)applyEl.disabled=true;
   const amtInput=document.getElementById('reward-amount');
   if(amtInput)delete amtInput.dataset.pendingId;
   calcSkoopAmount=0;
