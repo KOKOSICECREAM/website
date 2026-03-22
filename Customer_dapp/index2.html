@@ -386,6 +386,7 @@ html,body{height:100%;overflow:hidden;background:var(--coral);font-family:'Instr
       <div class="bal-eyebrow">Your balance</div>
       <div class="bal-number" id="home-bal">&#8212;</div>
       <div class="bal-sub" id="home-usd">SKOOP &middot; Connect to load</div>
+      <div style="font-size:12px;color:var(--ink-mid);font-weight:500;margin-top:2px;" id="home-usd-val"></div>
       <div style="margin-top:10px;font-size:9px;font-weight:500;color:var(--ink-light);letter-spacing:0.3px;word-break:break-all;opacity:0.7;cursor:pointer;" onclick="navigator.clipboard.writeText('0xfd3ce21c5Acd8BbbE576d0E2336C210C3cEBeb92').then(()=>showToast('CA copied','ok'))">CA: 0xfd3ce21c5Acd8BbbE576d0E2336C210C3cEBeb92</div>
     </div>
     <div class="action-grid">
@@ -658,25 +659,29 @@ async function connectWalletConnect(){
 async function disconnectWallet(){
   try{if(window._wcp)await window._wcp.disconnect();}catch(e){}
   window._wcp=null;provider=null;signer=null;userAddr=null;
-  document.getElementById("main-app").style.display="none";
-  document.getElementById("bottom-nav").style.display="none";
+  // Null-safe reset — elements may not exist if gate was never fully shown
+  const setT=(id,v)=>{const el=document.getElementById(id);if(el)el.textContent=v;};
+  const setH=(id,v)=>{const el=document.getElementById(id);if(el)el.innerHTML=v;};
+  const setS=(id,k,v)=>{const el=document.getElementById(id);if(el)el.style[k]=v;};
+  setS("main-app","display","none");
+  setS("bottom-nav","display","none");
   const gate=document.getElementById("connect-gate");
-  gate.style.display="flex";gate.style.flexDirection="column";gate.style.flex="1";
-  document.getElementById("home-bal").textContent="—";
-  document.getElementById("home-usd").textContent="SKOOP";
-  document.getElementById("home-usd-val").textContent="";
-  document.getElementById("wallet-pill").textContent="0x…";
-  document.getElementById("buy-pill").textContent="0x…";
-  document.getElementById("qr-addr").textContent="Connect wallet to generate QR";
-  document.getElementById("qr-bal").textContent="—";
-  document.getElementById("my-qr-div").innerHTML="";
+  if(gate){gate.style.display="flex";gate.style.flexDirection="column";gate.style.flex="1";}
+  setT("home-bal","—");
+  setT("home-usd","SKOOP");
+  setT("home-usd-val","");
+  setT("wallet-pill","0x…");
+  setT("buy-pill","0x…");
+  setT("qr-addr","Connect wallet to generate QR");
+  setT("qr-bal","—");
+  setH("my-qr-div","");
 }
 async function onConnected(){
   document.getElementById("connect-gate").style.display="none";
   const m=document.getElementById("main-app");
   m.style.display="flex";m.style.flexDirection="column";m.style.flex="1";m.style.overflow="hidden";
   document.getElementById("bottom-nav").style.display="flex";
-  updatePills();await checkNet();await refreshBals();setTimeout(buildMyQR,200);
+  updatePills();await checkNet();await refreshBals();setTimeout(buildMyQR,200);fetchEthPrice();
 }
 
 function updatePills(){
@@ -784,27 +789,62 @@ function onAmt(){
 }
 async function fetchQuote(amt){
   if(!provider)return;
+  const tokenIn=selToken==="USDC"?CFG.USDC:CFG.WETH;
+  const dec=selToken==="USDC"?CFG.USDC_DEC:CFG.WETH_DEC;
+  const amtIn=ethers.parseUnits(amt.toString(),dec);
+  let amtOut=null;
+  let isEstimate=false;
+
+  // Tier 1: QuoterV2
   try{
     const q=new ethers.Contract(CFG.QUOTER,ABI_QUOTER,provider);
-    const tokenIn=selToken==="USDC"?CFG.USDC:CFG.WETH;
-    const dec=selToken==="USDC"?CFG.USDC_DEC:CFG.WETH_DEC;
-    const amtIn=ethers.parseUnits(amt.toString(),dec);
-    const [amtOut]=await q.quoteExactInputSingle.staticCall({tokenIn,tokenOut:CFG.SKOOP,amountIn:amtIn,fee:CFG.FEE,sqrtPriceLimitX96:0n});
-    curQuote={amtOut,amtIn,tokenIn};
-    const out=parseFloat(ethers.formatUnits(amtOut,CFG.SKOOP_DEC));
-    const min=out*(1-slip/100);
-    document.getElementById("out-amt").textContent=out.toLocaleString("en-US",{maximumFractionDigits:2});
-    document.getElementById("out-loading").classList.remove("show");
-    document.getElementById("det-route").textContent=selToken+" → SKOOP (0.30%)";
-    document.getElementById("det-impact").textContent="< 1%";
-    document.getElementById("det-min").textContent=min.toLocaleString("en-US",{maximumFractionDigits:2})+" SKOOP";
-    document.getElementById("swap-dets").classList.add("show");
-    document.getElementById("btn-swap").disabled=false;
-    document.getElementById("btn-swap").textContent="Swap for SKOOP";
-  }catch(e){
-    document.getElementById("out-loading").textContent="Quote unavailable \— pool may not exist yet";
-    document.getElementById("btn-swap").textContent="Pool unavailable";
+    const result=await q.quoteExactInputSingle.staticCall({tokenIn,tokenOut:CFG.SKOOP,amountIn:amtIn,fee:CFG.FEE,sqrtPriceLimitX96:0n});
+    amtOut=Array.isArray(result)?result[0]:result;
+  }catch(e1){
+    // Tier 2: QuoterV1
+    try{
+      const ABI_Q1=["function quoteExactInputSingle(address tokenIn,address tokenOut,uint24 fee,uint256 amountIn,uint160 sqrtPriceLimitX96) external returns (uint256 amountOut)"];
+      const q1=new ethers.Contract('0xb27308f9F90D607463bb33eA1BeBb41C27CE5AB6',ABI_Q1,provider);
+      amtOut=await q1.quoteExactInputSingle.staticCall(tokenIn,CFG.SKOOP,CFG.FEE,amtIn,0n);
+    }catch(e2){
+      // Tier 3: slot0 spot price estimate
+      try{
+        const poolAddr=selToken==="USDC"?POOL_USDC_SKOOP:POOL_ETH_SKOOP;
+        const pool=new ethers.Contract(poolAddr,ABI_POOL_S0,provider);
+        const [s0,t0]=await Promise.all([pool.slot0(),pool.token0()]);
+        const sqrtPf=Number(s0.sqrtPriceX96)/Number(2n**96n);
+        const priceRaw=sqrtPf*sqrtPf;
+        const skoopIsT0=t0.toLowerCase()===CFG.SKOOP.toLowerCase();
+        let skoopPerIn;
+        if(selToken==="ETH"){
+          skoopPerIn=skoopIsT0?(1/priceRaw)*1e12:priceRaw*1e12;
+        } else {
+          skoopPerIn=skoopIsT0?(1/priceRaw):priceRaw;
+        }
+        const inAmt=parseFloat(ethers.formatUnits(amtIn,dec));
+        const estOut=inAmt*skoopPerIn;
+        amtOut=ethers.parseUnits(estOut.toFixed(6),CFG.SKOOP_DEC);
+        isEstimate=true;
+      }catch(e3){
+        document.getElementById("out-loading").textContent="Quote unavailable — try again";
+        document.getElementById("btn-swap").textContent="Retry";
+        console.error("All quote methods failed:",e1,e2,e3);
+        return;
+      }
+    }
   }
+
+  curQuote={amtOut,amtIn,tokenIn};
+  const out=parseFloat(ethers.formatUnits(amtOut,CFG.SKOOP_DEC));
+  const min=out*(1-slip/100);
+  document.getElementById("out-amt").textContent=(isEstimate?"~":"")+out.toLocaleString("en-US",{maximumFractionDigits:2});
+  document.getElementById("out-loading").classList.remove("show");
+  document.getElementById("det-route").textContent=selToken+" → SKOOP (0.30%)"+(isEstimate?" ~est":"");
+  document.getElementById("det-impact").textContent="< 1%";
+  document.getElementById("det-min").textContent=min.toLocaleString("en-US",{maximumFractionDigits:2})+" SKOOP";
+  document.getElementById("swap-dets").classList.add("show");
+  document.getElementById("btn-swap").disabled=false;
+  document.getElementById("btn-swap").textContent=isEstimate?"Swap (estimated)":"Swap for SKOOP";
 }
 
 async function execSwap(){
