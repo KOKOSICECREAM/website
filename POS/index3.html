@@ -680,13 +680,20 @@ async function loadReceipts(){
   try{
     const pubProvider = new ethers.JsonRpcProvider(CFG.RPC);
     const escrow = new ethers.Contract(CFG.ESCROW, ABI_ESCROW, pubProvider);
-    // ethers v6 does not support negative fromBlock — compute explicit range
     const latest = await pubProvider.getBlockNumber();
-    const fromBlock = Math.max(0, latest - 50000);
-    const events = await escrow.queryFilter(escrow.filters.PaymentCaptured(), fromBlock, latest);
-    capturedReceipts = events.map(e => ({receiptId: e.args.receiptId, amount: e.args.tokenAmount}));
+    const CHUNK = 9000; // Base RPC caps eth_getLogs at 10k blocks
+    const LOOKBACK = 45000; // ~1.5 days of Base blocks
+    const fromBlock = Math.max(0, latest - LOOKBACK);
+    // Chunk the range to stay under the 10k block limit
+    let allEvents = [];
+    for(let start = fromBlock; start < latest; start += CHUNK){
+      const end = Math.min(start + CHUNK - 1, latest);
+      const chunk = await escrow.queryFilter(escrow.filters.PaymentCaptured(), start, end);
+      allEvents = allEvents.concat(chunk);
+    }
+    capturedReceipts = allEvents.map(e => ({receiptId: e.args.receiptId, amount: e.args.tokenAmount}));
     renderReceipts();
-    if(capturedReceipts.length === 0) showToast('No receipts found in last 50k blocks', '');
+    if(capturedReceipts.length === 0) showToast('No receipts found in last 45k blocks', '');
   } catch(e) {
     showToast('Receipt load error: ' + (e?.message||'unknown').slice(0,60), 'error');
     console.error('loadReceipts:', e);
