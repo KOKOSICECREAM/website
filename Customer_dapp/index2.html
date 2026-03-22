@@ -921,11 +921,11 @@ async function confirmPay(){
     const fmt=parseFloat(ethers.formatUnits(tokAmt,CFG.SKOOP_DEC));
     const totalUSD='$'+(Number(d.totalCents)/100).toFixed(2);
     document.getElementById('success-total-display').textContent=totalUSD+' · '+fmt.toLocaleString('en-US',{maximumFractionDigits:2})+' SKOOP';
-    document.getElementById("success-detail").innerHTML=
-      '<div class="sc-row"><span class="sk">SKOOP paid</span><span class="sv" style="color:var(--coral-deep);font-family:'Cormorant Garamond',serif;font-size:1.1rem;">'+fmt.toLocaleString("en-US",{maximumFractionDigits:2})+' SKOOP</span></div>'+
-      '<div class="sc-row"><span class="sk">Total</span><span class="sv">'+totalUSD+'</span></div>'+
-      '<div class="sc-row"><span class="sk">Tx</span><span class="sv" style="font-family:monospace;font-size:0.62rem;">'+rcpt.hash.slice(0,20)+'…</span></div>'+
-      '<div class="sc-row"><span class="sk">Block</span><span class="sv">'+rcpt.blockNumber+'</span></div>';
+    document.getElementById("success-detail").innerHTML=`
+      <div class="sc-row"><span class="sk">SKOOP paid</span><span class="sv" style="color:var(--coral-deep);font-family:'Cormorant Garamond',serif;font-size:1.1rem;">${fmt.toLocaleString("en-US",{maximumFractionDigits:2})} SKOOP</span></div>
+      <div class="sc-row"><span class="sk">Total</span><span class="sv">${totalUSD}</span></div>
+      <div class="sc-row"><span class="sk">Tx</span><span class="sv" style="font-family:monospace;font-size:0.62rem;">${rcpt.hash.slice(0,20)}…</span></div>
+      <div class="sc-row"><span class="sk">Block</span><span class="sv">${rcpt.blockNumber}</span></div>`;
     document.getElementById("success-screen").classList.add("show");
     pendingIntent=null;await refreshBals();
   }catch(e){
