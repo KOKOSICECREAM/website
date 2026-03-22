@@ -243,9 +243,10 @@ html,body{height:100%;font-family:'Instrument Sans',sans-serif;background:var(--
     <div class="action-view active" id="rewards-view">
       <h3>Send Rewards</h3>
 
-      <!-- ── PATCH: Scan + Paste block (added to doc4) ── -->
+      <!-- Scan + Paste block -->
+      <!-- Camera viewer: outside any overflow:hidden container so Html5Qrcode can expand freely -->
+      <div id="reward-qr-reader" style="display:none;width:100%;border-radius:10px;overflow:hidden;"></div>
       <div style="background:var(--white);border:1px solid var(--border);border-radius:14px;overflow:hidden;">
-        <div id="reward-qr-reader" style="display:none;width:100%;"></div>
         <button class="action-btn secondary" id="reward-scan-btn" onclick="toggleRewardScan()" style="border-radius:0;border:none;border-bottom:1px solid var(--border);width:100%;display:flex;align-items:center;justify-content:center;gap:0.5rem;">
           <span id="scan-btn-icon">📷</span><span id="scan-btn-label">Scan Customer QR</span>
         </button>
