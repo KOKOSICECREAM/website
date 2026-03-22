@@ -216,8 +216,11 @@ html,body{height:100%;overflow:hidden;background:var(--coral);font-family:'Instr
 .qr-italic{font-family:'Cormorant Garamond',serif;font-size:18px;font-weight:600;font-style:italic;color:var(--ink);margin-bottom:20px;}
 #my-qr-div{display:inline-block;}
 .qr-addr{font-size:10px;color:var(--ink-light);font-weight:500;margin-top:14px;word-break:break-all;line-height:1.6;}
-.success-screen{display:none;position:absolute;inset:0;z-index:300;flex-direction:column;overflow:hidden;}
+.success-screen{display:none;position:absolute;inset:0;z-index:300;flex-direction:column;overflow:hidden;animation:successFadeIn 0.3s ease;}
 .success-screen.show{display:flex;}
+@keyframes successFadeIn{from{opacity:0;transform:translateY(16px);}to{opacity:1;transform:translateY(0);}}
+#success-check-anim{animation:successPop 0.45s cubic-bezier(0.34,1.56,0.64,1);}
+@keyframes successPop{from{transform:scale(0.3);opacity:0;}to{transform:scale(1);opacity:1;}}
 .success-blocks{display:grid;grid-template-columns:1fr 1fr;grid-template-rows:1fr 1fr;flex:1;position:relative;}
 .sb1{background:var(--coral);}.sb2{background:var(--mint);}.sb3{background:var(--sand);}.sb4{background:var(--lavender);}
 .success-center{position:absolute;top:50%;left:50%;transform:translate(-50%,-55%);z-index:5;display:flex;flex-direction:column;align-items:center;text-align:center;width:100%;padding:0 32px;}
@@ -229,7 +232,8 @@ html,body{height:100%;overflow:hidden;background:var(--coral);font-family:'Instr
 .sc-row{display:flex;justify-content:space-between;font-size:12px;padding:5px 0;border-bottom:1px solid var(--border);}
 .sc-row:last-child{border-bottom:none;}
 .sc-row .sk{color:var(--ink-light);font-weight:500;}.sc-row .sv{font-weight:600;color:var(--ink);font-size:11px;word-break:break-all;text-align:right;max-width:55%;}
-.btn-done{width:100%;padding:17px;background:var(--coral-deep);color:var(--white);border:none;border-radius:var(--r);font-family:'Instrument Sans',sans-serif;font-size:15px;font-weight:600;cursor:pointer;margin-top:16px;}
+.btn-done{width:100%;padding:17px;background:var(--coral-deep);color:var(--white);border:none;border-radius:var(--r);font-family:'Instrument Sans',sans-serif;font-size:15px;font-weight:600;cursor:pointer;transition:all 0.2s;}
+.btn-done:hover{background:var(--ink);}
 #toast{position:absolute;top:16px;left:16px;right:16px;background:var(--ink);color:var(--white);border-radius:var(--r);padding:13px 16px;font-size:13px;font-weight:600;z-index:999;display:none;align-items:center;gap:8px;box-shadow:0 4px 24px rgba(0,0,0,0.2);}
 #toast.show{display:flex;}#toast.ok{background:var(--coral-deep);}#toast.err{background:#b91c1c;}
 .spinner{width:16px;height:16px;border:2px solid rgba(255,255,255,0.3);border-top-color:white;border-radius:50%;animation:spin 0.7s linear infinite;flex-shrink:0;}
@@ -245,17 +249,48 @@ html,body{height:100%;overflow:hidden;background:var(--coral);font-family:'Instr
 
 <!-- SUCCESS -->
 <div class="success-screen" id="success-screen">
-  <div class="success-blocks">
-    <div class="sb1"></div><div class="sb2"></div><div class="sb3"></div><div class="sb4"></div>
-    <div class="success-center">
-      <div class="success-logo"><img src="KOKOS_SKOOP.png" alt="KOKOS SKOOP"></div>
-      <div class="success-title">Payment<br><em>captured!</em></div>
-      <div class="success-sub">Your SKOOP is locked in escrow. Enjoy your ice cream.</div>
+  <!-- Color stripe top -->
+  <div style="display:flex;height:6px;flex-shrink:0;">
+    <div style="flex:1;background:var(--coral)"></div><div style="flex:1;background:var(--mint)"></div>
+    <div style="flex:1;background:var(--apricot)"></div><div style="flex:1;background:var(--lavender)"></div>
+    <div style="flex:1;background:var(--sand)"></div>
+  </div>
+  <!-- Main content -->
+  <div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:2rem 1.5rem;gap:1.25rem;text-align:center;background:var(--cream);">
+    <!-- Animated check -->
+    <div id="success-check-anim" style="width:90px;height:90px;border-radius:50%;background:var(--mint);display:flex;align-items:center;justify-content:center;box-shadow:0 8px 32px rgba(17,72,61,0.18);">
+      <svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="var(--green)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+    </div>
+    <!-- Headline -->
+    <div>
+      <div style="font-family:'Cormorant Garamond',serif;font-size:2.4rem;font-weight:600;color:var(--ink);line-height:1;letter-spacing:-0.5px;margin-bottom:0.4rem;">
+        Payment<br><em style="color:var(--coral-deep);">captured!</em>
+      </div>
+      <div style="font-size:0.85rem;color:var(--ink-mid);font-weight:500;">Your SKOOP is locked in escrow</div>
+    </div>
+    <!-- Amount card -->
+    <div style="width:100%;background:var(--white);border:1.5px solid var(--border);border-radius:var(--r);overflow:hidden;">
+      <div style="background:var(--coral);padding:0.75rem 1rem;display:flex;align-items:center;gap:0.75rem;">
+        <img src="KOKOS_SKOOP.png" style="width:32px;height:32px;border-radius:50%;flex-shrink:0;">
+        <div style="text-align:left;">
+          <div style="font-size:0.65rem;font-weight:600;letter-spacing:1.5px;text-transform:uppercase;color:var(--ink-mid);">KOKOS Ice Cream · Nashville</div>
+          <div style="font-family:'Cormorant Garamond',serif;font-size:1.6rem;font-weight:600;color:var(--ink);line-height:1;" id="success-total-display">—</div>
+        </div>
+      </div>
+      <div style="padding:0.75rem 1rem;" id="success-detail"></div>
+    </div>
+    <!-- Enjoy message -->
+    <div style="background:var(--mint);border-radius:var(--r-sm);padding:0.75rem 1rem;width:100%;display:flex;align-items:center;gap:0.75rem;">
+      <span style="font-size:1.4rem;">🍦</span>
+      <div style="text-align:left;">
+        <div style="font-size:0.78rem;font-weight:700;color:var(--green);">Enjoy your ice cream!</div>
+        <div style="font-size:0.68rem;color:var(--ink-mid);margin-top:2px;">Show your wallet QR to earn 10% back in SKOOP</div>
+      </div>
     </div>
   </div>
-  <div class="success-bottom">
-    <div id="success-detail"></div>
-    <button class="btn-done" onclick="closeSuccess()">Done</button>
+  <!-- Done button -->
+  <div style="padding:1rem 1.5rem;padding-bottom:calc(1rem + env(safe-area-inset-bottom,0px));background:var(--white);border-top:1px solid var(--border);flex-shrink:0;">
+    <button class="btn-done" onclick="closeSuccess()">Done — go earn your reward</button>
   </div>
 </div>
 
@@ -876,11 +911,13 @@ async function confirmPay(){
     const tx=await escrow.capturePayment(intent,d.signature);
     showToast("Confirming…","");const rcpt=await tx.wait();
     const fmt=parseFloat(ethers.formatUnits(tokAmt,CFG.SKOOP_DEC));
+    const totalUSD='$'+(Number(d.totalCents)/100).toFixed(2);
+    document.getElementById('success-total-display').textContent=totalUSD+' · '+fmt.toLocaleString('en-US',{maximumFractionDigits:2})+' SKOOP';
     document.getElementById("success-detail").innerHTML=
-      '<div class="sc-row"><span class="sk">Tx hash</span><span class="sv">'+rcpt.hash+'</span></div>'+
-      '<div class="sc-row"><span class="sk">Block</span><span class="sv">'+rcpt.blockNumber+'</span></div>'+
-      '<div class="sc-row"><span class="sk">SKOOP captured</span><span class="sv">'+fmt.toLocaleString("en-US",{maximumFractionDigits:2})+' SKOOP → pending burn</span></div>'+
-      '<div class="sc-row"><span class="sk">Receipt ID</span><span class="sv">'+d.receiptId+'</span></div>';
+      '<div class="sc-row"><span class="sk">SKOOP paid</span><span class="sv" style="color:var(--coral-deep);font-family:'Cormorant Garamond',serif;font-size:1.1rem;">'+fmt.toLocaleString("en-US",{maximumFractionDigits:2})+' SKOOP</span></div>'+
+      '<div class="sc-row"><span class="sk">Total</span><span class="sv">'+totalUSD+'</span></div>'+
+      '<div class="sc-row"><span class="sk">Tx</span><span class="sv" style="font-family:monospace;font-size:0.62rem;">'+rcpt.hash.slice(0,20)+'…</span></div>'+
+      '<div class="sc-row"><span class="sk">Block</span><span class="sv">'+rcpt.blockNumber+'</span></div>';
     document.getElementById("success-screen").classList.add("show");
     pendingIntent=null;await refreshBals();
   }catch(e){
@@ -896,7 +933,7 @@ function closeSuccess(){
   document.getElementById("success-screen").classList.remove("show");
   document.getElementById("pay-confirm").classList.remove("active");
   document.getElementById("pay-scan").classList.add("active");
-  goTo("home");
+  goTo("qr"); // Go to My QR so they can show wallet for 10% reward
 }
 
 function buildMyQR(){
@@ -932,18 +969,29 @@ if(window.ethereum){
 }
 document.addEventListener('visibilitychange',async function(){
   if(document.visibilityState!=='visible'||!window.ethereum)return;
-  if(provider&&userAddr){try{await refreshBals();}catch(e){}}
-  else{
-    try{
-      const a=await window.ethereum.request({method:'eth_accounts'});
-      if(a.length){
-        provider=new ethers.BrowserProvider(window.ethereum);
-        signer=await provider.getSigner();
-        userAddr=await signer.getAddress();
-        await onConnected();
-      }
-    }catch(e){}
+  if(provider&&userAddr){
+    // Already connected — just refresh balances silently
+    try{await refreshBals();}catch(e){}
+    return;
   }
+  // Not connected — check if wallet still has accounts and silently reconnect
+  try{
+    const a=await window.ethereum.request({method:'eth_accounts'});
+    if(!a.length)return; // user disconnected in wallet — don't force reconnect
+    provider=new ethers.BrowserProvider(window.ethereum);
+    signer=await provider.getSigner();
+    userAddr=await signer.getAddress();
+    // Only run UI setup if gate is still showing (first connect)
+    const gateVisible=document.getElementById('connect-gate').style.display!=='none';
+    if(gateVisible){
+      await onConnected();
+    } else {
+      // Already in app — just restore provider state silently
+      updatePills();
+      try{await checkNet();}catch(e){}
+      try{await refreshBals();}catch(e){}
+    }
+  }catch(e){}
 });
 </script>
 </body>
