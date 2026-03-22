@@ -155,6 +155,10 @@ html,body{height:100%;font-family:'Instrument Sans',sans-serif;background:var(--
 #modal{background:var(--cream);border-radius:20px;width:400px;max-width:calc(100vw - 24px);overflow:hidden;box-shadow:var(--shadow-lg);animation:modalIn 0.22s ease;}
 .modal-body{padding:1.25rem;display:flex;flex-direction:column;align-items:center;gap:0.875rem;}
 @keyframes modalIn{from{opacity:0;transform:scale(0.94) translateY(10px);}to{opacity:1;transform:scale(1) translateY(0);}}
+@keyframes successPop{from{transform:scale(0.4);opacity:0;}to{transform:scale(1);opacity:1;}}
+@keyframes pulse{0%,100%{opacity:1;transform:scale(1);}50%{opacity:0.5;transform:scale(1.3);}}
+@keyframes successSlide{from{opacity:0;transform:translateY(20px);}to{opacity:1;transform:translateY(0);}}
+#modal-success-state{animation:successSlide 0.3s ease;}
 .modal-header{background:var(--coral);padding:1.25rem 1.5rem;display:flex;align-items:center;justify-content:space-between;}
 .modal-header h2{font-family:'Cormorant Garamond',serif;font-size:1.4rem;font-style:italic;font-weight:400;}
 .modal-close{background:none;border:none;font-size:1.4rem;cursor:pointer;color:var(--ink-mid);line-height:1;transition:color 0.12s;}
@@ -324,14 +328,44 @@ html,body{height:100%;font-family:'Instrument Sans',sans-serif;background:var(--
 
 <div id="modal-overlay">
   <div id="modal">
-    <div class="modal-header"><h2>Payment QR</h2><button class="modal-close" onclick="closeModal()">✕</button></div>
-    <div class="modal-body">
-      <div id="qr-canvas-wrap"></div>
-      <div class="modal-order-summary" id="modal-summary"></div>
-      <div class="modal-status" id="modal-status">Waiting for customer to scan…</div>
-      <div class="modal-actions">
-        <button class="action-btn secondary" style="flex:1" onclick="closeModal()">Cancel</button>
-        <button class="action-btn primary" style="flex:1" onclick="regenerateQR()">Regenerate</button>
+    <!-- QR state -->
+    <div id="modal-qr-state">
+      <div class="modal-header"><h2>Payment QR</h2><button class="modal-close" onclick="closeModal()">✕</button></div>
+      <div class="modal-body">
+        <div id="qr-canvas-wrap"></div>
+        <div class="modal-order-summary" id="modal-summary"></div>
+        <div class="modal-status" id="modal-status">Waiting for customer to scan…</div>
+        <div class="modal-actions">
+          <button class="action-btn secondary" style="flex:1" onclick="closeModal()">Cancel</button>
+          <button class="action-btn primary" style="flex:1" onclick="regenerateQR()">Regenerate</button>
+        </div>
+      </div>
+    </div>
+    <!-- Success state -->
+    <div id="modal-success-state" style="display:none;">
+      <div id="modal-success-body" style="padding:0;overflow:hidden;border-radius:20px;">
+        <!-- Color stripe -->
+        <div style="display:flex;height:6px;">
+          <div style="flex:1;background:var(--coral)"></div><div style="flex:1;background:var(--mint)"></div>
+          <div style="flex:1;background:var(--apricot)"></div><div style="flex:1;background:var(--lavender)"></div>
+          <div style="flex:1;background:var(--sand)"></div>
+        </div>
+        <!-- Big success content -->
+        <div style="padding:2rem 1.5rem 1.5rem;display:flex;flex-direction:column;align-items:center;text-align:center;gap:1rem;">
+          <div id="success-check" style="width:80px;height:80px;border-radius:50%;background:var(--mint);display:flex;align-items:center;justify-content:center;animation:successPop 0.4s cubic-bezier(0.34,1.56,0.64,1);">
+            <svg width="38" height="38" viewBox="0 0 24 24" fill="none" stroke="var(--green)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+          </div>
+          <div>
+            <div style="font-family:'Cormorant Garamond',serif;font-size:2rem;font-weight:600;color:var(--ink);line-height:1;margin-bottom:0.4rem;">Payment<br><em style="color:var(--coral-deep);">captured!</em></div>
+            <div style="font-size:0.8rem;color:var(--ink-mid);font-weight:500;" id="success-sub">SKOOP locked in escrow</div>
+          </div>
+          <div id="success-details" style="width:100%;background:var(--apricot);border-radius:12px;padding:0.875rem 1rem;text-align:left;display:flex;flex-direction:column;gap:0.3rem;"></div>
+          <div style="font-size:0.72rem;color:var(--ink-lt);display:flex;align-items:center;gap:0.4rem;" id="success-countdown">
+            <div style="width:8px;height:8px;border-radius:50%;background:var(--mint);animation:pulse 1s ease infinite;"></div>
+            Closing in 4s…
+          </div>
+          <button onclick="closeSuccess()" style="width:100%;padding:0.875rem;background:var(--green);color:var(--coral);border:none;border-radius:12px;font-family:inherit;font-size:0.88rem;font-weight:700;cursor:pointer;letter-spacing:0.05em;">Done</button>
+        </div>
       </div>
     </div>
   </div>
@@ -602,7 +636,56 @@ async function generateQR(){
 }
 
 async function regenerateQR(){document.getElementById('qr-canvas-wrap').style.opacity='0.4';await generateQR();document.getElementById('qr-canvas-wrap').style.opacity='1';}
-function closeModal(){document.getElementById('modal-overlay').classList.remove('open');}
+function closeModal(){
+  document.getElementById('modal-overlay').classList.remove('open');
+  // Reset to QR state for next time
+  document.getElementById('modal-qr-state').style.display='';
+  document.getElementById('modal-success-state').style.display='none';
+}
+
+let successCountdownTimer = null;
+
+function showPaymentSuccess(totalCents, skoopAmt, receiptId){
+  // Switch modal to success state
+  document.getElementById('modal-qr-state').style.display='none';
+  document.getElementById('modal-success-state').style.display='block';
+  // Fill details
+  document.getElementById('success-sub').textContent =
+    '$'+(totalCents/100).toFixed(2)+' · '+skoopAmt.toLocaleString('en-US',{maximumFractionDigits:2})+' SKOOP';
+  document.getElementById('success-details').innerHTML =
+    `<div style="display:flex;justify-content:space-between;font-size:0.75rem;padding:0.2rem 0;border-bottom:1px solid var(--border);">
+       <span style="color:var(--ink-mid);font-weight:500;">Total charged</span>
+       <span style="font-weight:700;color:var(--ink);">$${(totalCents/100).toFixed(2)}</span>
+     </div>
+     <div style="display:flex;justify-content:space-between;font-size:0.75rem;padding:0.2rem 0;border-bottom:1px solid var(--border);">
+       <span style="color:var(--ink-mid);font-weight:500;">SKOOP captured</span>
+       <span style="font-weight:700;color:var(--green);">${skoopAmt.toLocaleString('en-US',{maximumFractionDigits:2})} SKOOP</span>
+     </div>
+     <div style="display:flex;justify-content:space-between;font-size:0.72rem;padding:0.2rem 0;">
+       <span style="color:var(--ink-mid);font-weight:500;">Receipt</span>
+       <span style="font-weight:600;color:var(--ink-mid);font-family:monospace;font-size:0.62rem;">${receiptId.slice(0,20)}…</span>
+     </div>`;
+  // Countdown auto-close
+  let secs = 4;
+  clearInterval(successCountdownTimer);
+  successCountdownTimer = setInterval(()=>{
+    secs--;
+    const el = document.getElementById('success-countdown');
+    if(el) el.innerHTML = `<div style="width:8px;height:8px;border-radius:50%;background:var(--mint);animation:pulse 1s ease infinite;"></div> Closing in ${secs}s…`;
+    if(secs <= 0){ clearInterval(successCountdownTimer); closeSuccess(); }
+  }, 1000);
+}
+
+function closeSuccess(){
+  clearInterval(successCountdownTimer);
+  closeModal();
+  showToast('Payment complete — scan customer wallet for reward 🎁', 'success');
+  // Switch to rewards tab
+  switchPanel('rewards');
+  if(window.innerWidth < 900){
+    mobileTab('rewards');
+  }
+}
 
 async function pollForPayment(receiptId){
   // Use public RPC for polling — wallet providers throttle eth_getLogs
@@ -630,27 +713,25 @@ async function pollForPayment(receiptId){
       );
       if (events.length > 0) {
         clearInterval(poll);
-        document.getElementById('modal-status').textContent = '✓ Payment confirmed!';
-        document.getElementById('modal-status').style.background = 'var(--mint)';
-        showToast('Payment received ✓', 'success');
-        // Auto-calculate 10% SKOOP reward for paying with SKOOP
+        // Show full success screen
+        const ev = events[0];
+        const paidCents = Number(ev.args.totalCents);
+        const paidSkoop = parseFloat(ethers.formatUnits(BigInt(ev.args.tokenAmount), CFG.SKOOP_DEC));
+        showPaymentSuccess(paidCents, paidSkoop, ev.args.receiptId);
+        // Auto-calculate 10% SKOOP reward
         if (skoopPriceUSD > 0) {
-          const ev = events[0];
-          const paidCents = Number(ev.args.totalCents);
           const rewardSkoop = Math.round((paidCents / 100) * 0.10 / skoopPriceUSD);
           if (rewardSkoop > 0) {
-            const pendingId = savePendingReward(receiptId, rewardSkoop, paidCents);
+            const pendingId = savePendingReward(ev.args.receiptId, rewardSkoop, paidCents);
             setTimeout(() => {
-              mobileTab('rewards'); switchPanel('rewards');
               const input = document.getElementById('reward-amount');
               input.value = rewardSkoop; input.dispatchEvent(new Event('input'));
               document.getElementById('reward-usd-hint').textContent = '10% SKOOP payment bonus — scan customer wallet to send';
-              showToast('10% reward ready — scan customer wallet 🎁', 'success');
               renderPendingRewards(); startRewardTimeout(pendingId, rewardSkoop);
-            }, 2700);
+            }, 500);
           }
         }
-        cart = {}; renderCart(); setTimeout(closeModal, 2500); loadReceipts();
+        cart = {}; renderCart(); renderMenu(); loadReceipts();
       }
     } catch(e) {
       // silent — keep polling
