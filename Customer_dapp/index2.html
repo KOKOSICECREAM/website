@@ -305,7 +305,7 @@ html,body{height:100%;overflow:hidden;background:var(--coral);font-family:'Instr
   <div class="gate-bottom">
     <div class="gate-bottom-inner">
       <div class="gate-tagline">Buy, earn &amp; pay with SKOOP<br>at KOKOS Ice Cream Nashville</div>
-      <button class="btn-primary" onclick="openWalletModal()">
+      <button class="btn-primary" id="gate-connect-btn" onclick="openWalletModal()">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 12h.01"/><path d="M2 10h20"/><path d="M7 3l5-1 5 1"/></svg>
         Connect Wallet
       </button>
@@ -392,7 +392,7 @@ html,body{height:100%;overflow:hidden;background:var(--coral);font-family:'Instr
       <button class="action-cell ac-mint" onclick="goTo('buy')"><div class="ac-icon">&#x1F4B1;</div><div><div class="ac-label">Buy SKOOP</div><div class="ac-sub">USDC or ETH</div></div></button>
       <button class="action-cell ac-lavender" onclick="goTo('pay')"><div class="ac-icon">&#128247;</div><div><div class="ac-label">Pay at shop</div><div class="ac-sub">Scan checkout QR</div></div></button>
       <button class="action-cell ac-sand" onclick="goTo('qr')"><div class="ac-icon">&#11035;</div><div><div class="ac-label">My wallet QR</div><div class="ac-sub">Earn rewards</div></div></button>
-      <button class="action-cell ac-apricot" onclick="goTo('buy')"><div class="ac-icon">&#128200;</div><div><div class="ac-label">SKOOP price</div><div class="ac-sub" id="home-skoop-price">Live on Base</div></div></button>
+      <button class="action-cell ac-apricot" onclick="openPriceModal()"><div class="ac-icon">&#128200;</div><div><div class="ac-label">SKOOP price</div><div class="ac-sub" id="home-skoop-price">Live on Base</div></div></button>
     </div>
     <div class="stripe stripe-thin"><div class="s2"></div><div class="s4"></div><div class="s1"></div><div class="s5"></div><div class="s3"></div><div class="s6"></div></div>
     <div class="section-hdr"><div class="section-hdr-title">Recent activity</div></div>
@@ -498,8 +498,8 @@ html,body{height:100%;overflow:hidden;background:var(--coral);font-family:'Instr
 
 
 <!-- PRICE MODAL -->
-<div id="price-modal" style="display:none;position:absolute;inset:0;z-index:400;background:rgba(42,31,26,0.5);backdrop-filter:blur(6px);align-items:flex-end;justify-content:center;">
-  <div style="background:var(--cream);border-top-left-radius:28px;border-top-right-radius:28px;width:100%;max-width:430px;overflow:hidden;box-shadow:0 -8px 48px rgba(42,31,26,0.22);animation:sheetUp 0.28s cubic-bezier(0.34,1.56,0.64,1);">
+<div id="price-modal" style="display:none;position:absolute;inset:0;z-index:400;background:rgba(42,31,26,0.5);backdrop-filter:blur(6px);align-items:flex-end;justify-content:center;" onclick="closePriceModal()">
+  <div style="background:var(--cream);border-top-left-radius:28px;border-top-right-radius:28px;width:100%;max-width:430px;overflow:hidden;box-shadow:0 -8px 48px rgba(42,31,26,0.22);animation:sheetUp 0.28s cubic-bezier(0.34,1.56,0.64,1);" onclick="event.stopPropagation()">
     <div style="display:flex;height:5px;flex-shrink:0;"><div style="flex:1;background:var(--coral)"></div><div style="flex:1;background:var(--mint)"></div><div style="flex:1;background:var(--apricot)"></div><div style="flex:1;background:var(--lavender)"></div><div style="flex:1;background:var(--sand)"></div></div>
     <div style="padding:20px 20px 36px;">
       <div style="width:36px;height:4px;background:var(--border-mid);border-radius:2px;margin:0 auto 20px;"></div>
@@ -602,8 +602,12 @@ async function openWalletModal(){
       signer=await provider.getSigner();
       userAddr=await signer.getAddress();
       await onConnected();
-      window.ethereum.on('accountsChanged',a=>{if(a[0]){userAddr=a[0];updatePills();refreshBals();}else disconnectWallet();});
-      window.ethereum.on('chainChanged',()=>location.reload());
+      // Add listeners only once
+      if(!window._ethListenersAdded){
+        window._ethListenersAdded=true;
+        window.ethereum.on('accountsChanged',a=>{if(a[0]){userAddr=a[0];updatePills();refreshBals();}else disconnectWallet();});
+        window.ethereum.on('chainChanged',()=>location.reload());
+      }
     }catch(e){
       if(btn){btn.textContent='Connect Wallet';btn.disabled=false;}
       if(e.code===4001){showToast("Connection rejected","err");return;}
@@ -640,11 +644,14 @@ async function connectWalletConnect(){
     signer=await provider.getSigner();
     userAddr=await signer.getAddress();
     await onConnected();
-    wcp.on('disconnect',()=>window.dispatchEvent(new CustomEvent('wc-disconnected')));
+    wcp.on('disconnect',()=>{ window._wcp=null; disconnectWallet(); });
     wcp.on('accountsChanged',a=>{if(a[0]){userAddr=a[0];updatePills();refreshBals();}});
   }catch(e){
     const msg=e?.message||'';
     if(!msg.includes('closed')&&!msg.includes('rejected')&&!msg.includes('Modal'))showToast(msg||"Connection failed","err");
+    // Reset connect button on any WC failure
+    const btn=document.getElementById('gate-connect-btn');
+    if(btn){btn.textContent='Connect Wallet';btn.disabled=false;}
   }
 }
 
@@ -683,8 +690,9 @@ async function checkNet(){
     const net=await provider.getNetwork();
     if(Number(net.chainId)!==CFG.CHAIN_ID){
       try{
-        await window.ethereum.request({method:"wallet_switchEthereumChain",params:[{chainId:CFG.CHAIN_HEX}]});
-        provider=new ethers.BrowserProvider(window.ethereum);
+        // Use provider.send() — works for both MetaMask and WalletConnect
+        await provider.send("wallet_switchEthereumChain",[{chainId:CFG.CHAIN_HEX}]);
+        // Re-init signer after network switch
         signer=await provider.getSigner();
         userAddr=await signer.getAddress();
       }catch(switchErr){
@@ -962,9 +970,208 @@ function showToast(msg,type="",dur=4000){
 }
 
 // ── INIT ──────────────────────────────────────────────────────────────────────
+
+// ─── PRICE MODAL ──────────────────────────────────────────────────────────────
+let priceModalOpen = false;
+let priceModalRefreshTimer = null;
+
+function openPriceModal(){
+  const m = document.getElementById('price-modal');
+  m.style.display = 'flex';
+  priceModalOpen = true;
+  renderPriceModal();
+  // Auto-refresh every 30s while open
+  priceModalRefreshTimer = setInterval(renderPriceModal, 30000);
+}
+
+function closePriceModal(){
+  document.getElementById('price-modal').style.display = 'none';
+  priceModalOpen = false;
+  clearInterval(priceModalRefreshTimer);
+}
+
+async function renderPriceModal(){
+  const setEl = (id, val) => { const el = document.getElementById(id); if(el) el.textContent = val; };
+  setEl('pm-chart-status', 'Loading…');
+
+  try{
+    // ── Fetch ETH price ──
+    const r = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=ethereum&vs_currencies=usd');
+    const d = await r.json();
+    const ethUSD = d?.ethereum?.usd || 0;
+
+    // ── Get SKOOP price from ETH pool slot0 ──
+    const pub = new ethers.JsonRpcProvider(CFG.RPC);
+    const poolETH = new ethers.Contract(POOL_ETH_SKOOP, ABI_POOL_S0, pub);
+    const poolUSDC = new ethers.Contract(POOL_USDC_SKOOP, ABI_POOL_S0, pub);
+
+    const [[s0eth, t0eth], [s0usdc, t0usdc]] = await Promise.all([
+      Promise.all([poolETH.slot0(), poolETH.token0()]),
+      Promise.all([poolUSDC.slot0(), poolUSDC.token0()]),
+    ]);
+
+    // ETH pool price
+    const sqrtEth = Number(s0eth.sqrtPriceX96) / Number(2n**96n);
+    const rawEth = sqrtEth * sqrtEth;
+    const skoopIsT0eth = t0eth.toLowerCase() === CFG.SKOOP.toLowerCase();
+    const skoopPerEth = skoopIsT0eth ? (1/rawEth)*1e12 : rawEth*1e12;
+    const skoopUSD = skoopPerEth > 0 ? ethUSD / skoopPerEth : 0;
+
+    // USDC pool price (SKOOP per USDC)
+    const sqrtUsdc = Number(s0usdc.sqrtPriceX96) / Number(2n**96n);
+    const rawUsdc = sqrtUsdc * sqrtUsdc;
+    const skoopIsT0usdc = t0usdc.toLowerCase() === CFG.SKOOP.toLowerCase();
+    // USDC has 6 dec, SKOOP has 6 dec — adjust for decimals ratio (1e0)
+    const skoopPerUsdc = skoopIsT0usdc ? (1/rawUsdc) : rawUsdc;
+
+    // Market cap (max supply 888,888,888)
+    const MAX_SUPPLY = 888888888;
+    const mcap = skoopUSD * MAX_SUPPLY;
+
+    // ── Populate stat cards ──
+    setEl('pm-price', skoopUSD > 0 ? '$' + skoopUSD.toFixed(8) : '—');
+    setEl('pm-eth-price', ethUSD > 0 ? 'ETH: $' + ethUSD.toLocaleString('en-US', {maximumFractionDigits:0}) : '');
+    setEl('pm-per-eth', skoopPerEth > 0 ? Math.round(skoopPerEth).toLocaleString() : '—');
+    setEl('pm-per-usdc', skoopPerUsdc > 0 ? Math.round(skoopPerUsdc).toLocaleString() : '—');
+    setEl('pm-mcap', mcap > 0 ? '$' + (mcap >= 1e6 ? (mcap/1e6).toFixed(2)+'M' : mcap >= 1e3 ? (mcap/1e3).toFixed(1)+'K' : mcap.toFixed(0)) : '—');
+
+    // Update home tile
+    const sub = document.getElementById('home-skoop-price');
+    if(sub && skoopUSD > 0) sub.textContent = '$' + skoopUSD.toFixed(6);
+
+    // ── Draw chart from Swap events ──────────────────────────────────────────
+    await drawPriceChart(pub, poolETH, t0eth, ethUSD, skoopIsT0eth);
+
+  } catch(e){
+    setEl('pm-chart-status', 'Price unavailable');
+    console.error('renderPriceModal:', e);
+  }
+}
+
+async function drawPriceChart(pub, poolContract, t0eth, ethUSD, skoopIsT0){
+  const statusEl = document.getElementById('pm-chart-status');
+  const canvas = document.getElementById('pm-chart');
+  if(!canvas) return;
+  const ctx = canvas.getContext('2d');
+
+  try{
+    // Fetch Swap events from last ~10800 blocks (~6h on Base)
+    const latest = await pub.getBlockNumber();
+    const LOOKBACK = 9000; // stay under 10k limit
+    const fromBlock = latest - LOOKBACK;
+
+    const ABI_SWAP = ["event Swap(address indexed sender,address indexed recipient,int256 amount0,int256 amount1,uint160 sqrtPriceX96,uint128 liquidity,int24 tick)"];
+    const poolWithSwap = new ethers.Contract(POOL_ETH_SKOOP, ABI_SWAP, pub);
+    const events = await poolWithSwap.queryFilter(poolWithSwap.filters.Swap(), fromBlock, latest);
+
+    let prices = [];
+    for(const ev of events){
+      const sqrtPf = Number(ev.args.sqrtPriceX96) / Number(2n**96n);
+      const raw = sqrtPf * sqrtPf;
+      const skoopPerEth = skoopIsT0 ? (1/raw)*1e12 : raw*1e12;
+      const usd = skoopPerEth > 0 ? ethUSD / skoopPerEth : 0;
+      if(usd > 0) prices.push(usd);
+    }
+
+    if(prices.length < 2){
+      statusEl.textContent = 'Accumulating price history…';
+      drawFlatChart(ctx, canvas);
+      return;
+    }
+
+    // Bucket into ~40 points
+    const BUCKETS = Math.min(40, prices.length);
+    const chunk = Math.ceil(prices.length / BUCKETS);
+    const pts = [];
+    for(let i = 0; i < prices.length; i += chunk){
+      const slice = prices.slice(i, i + chunk);
+      pts.push(slice.reduce((a,b) => a+b, 0) / slice.length);
+    }
+
+    const mn = Math.min(...pts), mx = Math.max(...pts);
+    const delta = pts[pts.length-1] - pts[0];
+    const pct = pts[0] > 0 ? (delta/pts[0]*100).toFixed(2) : '0.00';
+    const sign = delta >= 0 ? '+' : '';
+    statusEl.textContent = `${sign}${pct}% · ${events.length} swaps`;
+
+    // Draw
+    const W = canvas.offsetWidth || 360;
+    const H = 130;
+    canvas.width = W; canvas.height = H;
+    const PAD = { t:12, b:20, l:8, r:8 };
+    const gw = W - PAD.l - PAD.r, gh = H - PAD.t - PAD.b;
+
+    // Background blocks (pastel bands)
+    const bands = ['#fdcec133','#cde6d733','#fae2d833','#e3d1e433','#ffddad33'];
+    const bw = gw / bands.length;
+    bands.forEach((c,i)=>{ ctx.fillStyle=c; ctx.fillRect(PAD.l+i*bw, PAD.t, bw, gh); });
+
+    // Gradient fill under curve
+    const toX = i => PAD.l + (i/(pts.length-1))*gw;
+    const toY = v => PAD.t + gh - ((v-mn)/(mx-mn||1))*gh;
+    const grad = ctx.createLinearGradient(0, PAD.t, 0, PAD.t+gh);
+    grad.addColorStop(0, 'rgba(253,175,154,0.45)');
+    grad.addColorStop(1, 'rgba(253,175,154,0)');
+    ctx.beginPath();
+    ctx.moveTo(toX(0), toY(pts[0]));
+    for(let i=1;i<pts.length;i++){
+      const cx=(toX(i-1)+toX(i))/2;
+      ctx.quadraticCurveTo(toX(i-1),toY(pts[i-1]),cx,( toY(pts[i-1])+toY(pts[i]))/2);
+    }
+    ctx.quadraticCurveTo(toX(pts.length-2),toY(pts[pts.length-2]),toX(pts.length-1),toY(pts[pts.length-1]));
+    ctx.lineTo(toX(pts.length-1), PAD.t+gh);
+    ctx.lineTo(toX(0), PAD.t+gh);
+    ctx.closePath();
+    ctx.fillStyle = grad;
+    ctx.fill();
+
+    // Line
+    ctx.beginPath();
+    ctx.moveTo(toX(0), toY(pts[0]));
+    for(let i=1;i<pts.length;i++){
+      const cx=(toX(i-1)+toX(i))/2;
+      ctx.quadraticCurveTo(toX(i-1),toY(pts[i-1]),cx,(toY(pts[i-1])+toY(pts[i]))/2);
+    }
+    ctx.quadraticCurveTo(toX(pts.length-2),toY(pts[pts.length-2]),toX(pts.length-1),toY(pts[pts.length-1]));
+    ctx.strokeStyle = '#e8876a';
+    ctx.lineWidth = 2;
+    ctx.stroke();
+
+    // Glow dot at current price
+    const lx = toX(pts.length-1), ly = toY(pts[pts.length-1]);
+    ctx.beginPath(); ctx.arc(lx,ly,5,0,Math.PI*2);
+    ctx.fillStyle='#e8876a'; ctx.fill();
+    ctx.beginPath(); ctx.arc(lx,ly,9,0,Math.PI*2);
+    ctx.fillStyle='rgba(232,135,106,0.2)'; ctx.fill();
+
+    // Price labels
+    ctx.fillStyle='rgba(42,31,26,0.45)';
+    ctx.font='9px Instrument Sans, sans-serif';
+    ctx.textAlign='right';
+    ctx.fillText('$'+mx.toFixed(8), W-PAD.r, PAD.t+8);
+    ctx.fillText('$'+mn.toFixed(8), W-PAD.r, PAD.t+gh-2);
+
+  } catch(e){
+    statusEl.textContent = 'Chart unavailable';
+    drawFlatChart(ctx, canvas);
+  }
+}
+
+function drawFlatChart(ctx, canvas){
+  const W = canvas.offsetWidth || 360, H = 130;
+  canvas.width = W; canvas.height = H;
+  ctx.fillStyle = 'rgba(253,206,193,0.2)';
+  ctx.fillRect(0,0,W,H);
+  ctx.strokeStyle = '#fdaf9a';
+  ctx.lineWidth = 1.5;
+  ctx.setLineDash([4,4]);
+  ctx.beginPath(); ctx.moveTo(0,H/2); ctx.lineTo(W,H/2); ctx.stroke();
+  ctx.setLineDash([]);
+}
+
 if(window.ethereum){
-  window.ethereum.request({method:'eth_accounts'}).then(a=>{
-    if(a.length)openWalletModal();
+  window.ethereum.request({method:'eth_accounts'}).then(async a=>{
+    if(a.length) await openWalletModal();
   }).catch(()=>{});
 }
 document.addEventListener('visibilitychange',async function(){
