@@ -10,7 +10,7 @@
 <meta name="apple-mobile-web-app-title" content="SKOOP">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="theme-color" content="#fdcec1">
-<meta name="description" content="KOKOS SKOOP \— Buy, earn and pay with SKOOP tokens at KOKOS Ice Cream Nashville">
+<meta name="description" content="KOKOS SKOOP — Buy, earn and pay with SKOOP tokens at KOKOS Ice Cream Nashville">
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="KOKOS.png">
 <link rel="icon" type="image/png" href="KOKOS.png">
@@ -49,7 +49,6 @@ html,body{height:100%;overflow:hidden;background:var(--coral);font-family:'Instr
 .nav-item.active .nav-icon{background:var(--coral);}
 .nav-label{font-size:10px;font-weight:600;letter-spacing:0.4px;color:var(--ink-light);transition:color 0.15s;}
 .nav-item.active .nav-label{color:var(--coral-deep);}
-/* GATE */
 #connect-gate{flex:1;display:flex;flex-direction:column;background:var(--coral);overflow:hidden;}
 .gate-blocks{display:grid;grid-template-columns:1fr 1fr;grid-template-rows:1fr 1fr;height:240px;flex-shrink:0;position:relative;}
 .gate-block{position:relative;overflow:hidden;}
@@ -103,7 +102,6 @@ html,body{height:100%;overflow:hidden;background:var(--coral);font-family:'Instr
 .gate-footer-cta p{font-family:'Cormorant Garamond',serif;font-size:18px;font-style:italic;font-weight:600;color:var(--ink);margin-bottom:14px;line-height:1.3;}
 .btn-cta-repeat{width:100%;padding:15px;background:var(--coral-deep);color:var(--white);border:none;border-radius:var(--r);font-family:'Instrument Sans',sans-serif;font-size:14px;font-weight:600;cursor:pointer;transition:all 0.2s;}
 .btn-cta-repeat:hover{background:var(--ink);}
-/* APP */
 .hdr{display:flex;align-items:center;padding:0 20px;height:72px;flex-shrink:0;}
 .hdr-logo{width:44px;height:44px;border-radius:50%;overflow:hidden;flex-shrink:0;box-shadow:0 2px 12px rgba(42,31,26,0.15);}
 .hdr-logo img{width:100%;height:100%;object-fit:cover;}
@@ -168,7 +166,7 @@ html,body{height:100%;overflow:hidden;background:var(--coral);font-family:'Instr
 .btn-swap:disabled{background:var(--border);color:var(--ink-light);cursor:not-allowed;}
 .backdrop{display:none;position:absolute;inset:0;background:rgba(42,31,26,0.35);z-index:150;}
 .backdrop.open{display:block;}
-.tok-sheet{display:none;position:absolute;bottom:0;left:0;right:0;background:var(--white);border-top-left-radius:24px;border-top-right-radius:24px;padding:16px 20px 44px;z-index:200;box-shadow:0 -4px 40px rgba(0,0,0,0.12);}
+.tok-sheet{display:none;position:absolute;bottom:0;left:0;right:0;background:var(--white);border-top-left-radius:24px;border-top-right-radius:24px;padding:16px 20px calc(var(--nav-h) + env(safe-area-inset-bottom,0px) + 16px);z-index:200;box-shadow:0 -4px 40px rgba(0,0,0,0.12);}
 .tok-sheet.open{display:block;}
 .sheet-handle{width:36px;height:4px;background:var(--border-mid);border-radius:2px;margin:0 auto 20px;}
 .sheet-title{font-family:'Cormorant Garamond',serif;font-size:20px;font-weight:600;color:var(--ink);margin-bottom:16px;}
@@ -216,19 +214,11 @@ html,body{height:100%;overflow:hidden;background:var(--coral);font-family:'Instr
 .qr-italic{font-family:'Cormorant Garamond',serif;font-size:18px;font-weight:600;font-style:italic;color:var(--ink);margin-bottom:20px;}
 #my-qr-div{display:inline-block;}
 .qr-addr{font-size:10px;color:var(--ink-light);font-weight:500;margin-top:14px;word-break:break-all;line-height:1.6;}
+/* SUCCESS SCREEN — new animated version */
 .success-screen{display:none;position:absolute;inset:0;z-index:300;flex-direction:column;overflow:hidden;animation:successFadeIn 0.3s ease;}
 .success-screen.show{display:flex;}
 @keyframes successFadeIn{from{opacity:0;transform:translateY(16px);}to{opacity:1;transform:translateY(0);}}
-#success-check-anim{animation:successPop 0.45s cubic-bezier(0.34,1.56,0.64,1);}
 @keyframes successPop{from{transform:scale(0.3);opacity:0;}to{transform:scale(1);opacity:1;}}
-.success-blocks{display:grid;grid-template-columns:1fr 1fr;grid-template-rows:1fr 1fr;flex:1;position:relative;}
-.sb1{background:var(--coral);}.sb2{background:var(--mint);}.sb3{background:var(--sand);}.sb4{background:var(--lavender);}
-.success-center{position:absolute;top:50%;left:50%;transform:translate(-50%,-55%);z-index:5;display:flex;flex-direction:column;align-items:center;text-align:center;width:100%;padding:0 32px;}
-.success-logo{width:100px;height:100px;border-radius:50%;overflow:hidden;box-shadow:0 8px 32px rgba(42,31,26,0.2);margin-bottom:16px;}
-.success-logo img{width:100%;height:100%;object-fit:cover;}
-.success-title{font-family:'Cormorant Garamond',serif;font-size:38px;font-weight:600;color:var(--ink);letter-spacing:-0.5px;line-height:1;margin-bottom:8px;}
-.success-sub{font-size:14px;color:var(--ink-mid);font-weight:500;line-height:1.6;}
-.success-bottom{background:var(--white);border-top-left-radius:28px;border-top-right-radius:28px;padding:24px 24px 36px;position:relative;z-index:5;}
 .sc-row{display:flex;justify-content:space-between;font-size:12px;padding:5px 0;border-bottom:1px solid var(--border);}
 .sc-row:last-child{border-bottom:none;}
 .sc-row .sk{color:var(--ink-light);font-weight:500;}.sc-row .sv{font-weight:600;color:var(--ink);font-size:11px;word-break:break-all;text-align:right;max-width:55%;}
@@ -238,6 +228,7 @@ html,body{height:100%;overflow:hidden;background:var(--coral);font-family:'Instr
 #toast.show{display:flex;}#toast.ok{background:var(--coral-deep);}#toast.err{background:#b91c1c;}
 .spinner{width:16px;height:16px;border:2px solid rgba(255,255,255,0.3);border-top-color:white;border-radius:50%;animation:spin 0.7s linear infinite;flex-shrink:0;}
 @keyframes spin{to{transform:rotate(360deg);}}
+@keyframes sheetUp{from{transform:translateY(100%);opacity:0;}to{transform:translateY(0);opacity:1;}}
 #net-banner{display:none;background:#b91c1c;color:white;padding:9px 20px;font-size:12px;font-weight:600;text-align:center;cursor:pointer;}
 #net-banner.show{display:block;}
 </style>
@@ -245,30 +236,23 @@ html,body{height:100%;overflow:hidden;background:var(--coral);font-family:'Instr
 <body>
 <div id="app">
 <div id="toast"></div>
-<div id="net-banner" onclick="switchToBase()">&#9888; Wrong network \— tap to switch to Base</div>
+<div id="net-banner" onclick="switchToBase()">&#9888; Wrong network — tap to switch to Base</div>
 
-<!-- SUCCESS -->
+<!-- SUCCESS SCREEN — new animated version -->
 <div class="success-screen" id="success-screen">
-  <!-- Color stripe top -->
   <div style="display:flex;height:6px;flex-shrink:0;">
     <div style="flex:1;background:var(--coral)"></div><div style="flex:1;background:var(--mint)"></div>
     <div style="flex:1;background:var(--apricot)"></div><div style="flex:1;background:var(--lavender)"></div>
     <div style="flex:1;background:var(--sand)"></div>
   </div>
-  <!-- Main content -->
   <div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:2rem 1.5rem;gap:1.25rem;text-align:center;background:var(--cream);">
-    <!-- Animated check -->
-    <div id="success-check-anim" style="width:90px;height:90px;border-radius:50%;background:var(--mint);display:flex;align-items:center;justify-content:center;box-shadow:0 8px 32px rgba(17,72,61,0.18);">
+    <div style="width:90px;height:90px;border-radius:50%;background:var(--mint);display:flex;align-items:center;justify-content:center;box-shadow:0 8px 32px rgba(17,72,61,0.18);animation:successPop 0.45s cubic-bezier(0.34,1.56,0.64,1);">
       <svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="var(--green)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
     </div>
-    <!-- Headline -->
     <div>
-      <div style="font-family:'Cormorant Garamond',serif;font-size:2.4rem;font-weight:600;color:var(--ink);line-height:1;letter-spacing:-0.5px;margin-bottom:0.4rem;">
-        Payment<br><em style="color:var(--coral-deep);">captured!</em>
-      </div>
-      <div style="font-size:0.85rem;color:var(--ink-mid);font-weight:500;">Your SKOOP is locked in escrow</div>
+      <div style="font-family:'Cormorant Garamond',serif;font-size:2.4rem;font-weight:600;color:var(--ink);line-height:1;letter-spacing:-0.5px;margin-bottom:0.4rem;">Payment<br><em style="color:var(--coral-deep);">captured!</em></div>
+      <div style="font-size:0.85rem;color:var(--ink-mid);font-weight:500;" id="success-sub">Your SKOOP is locked in escrow</div>
     </div>
-    <!-- Amount card -->
     <div style="width:100%;background:var(--white);border:1.5px solid var(--border);border-radius:var(--r);overflow:hidden;">
       <div style="background:var(--coral);padding:0.75rem 1rem;display:flex;align-items:center;gap:0.75rem;">
         <img src="KOKOS_SKOOP.png" style="width:32px;height:32px;border-radius:50%;flex-shrink:0;">
@@ -279,7 +263,6 @@ html,body{height:100%;overflow:hidden;background:var(--coral);font-family:'Instr
       </div>
       <div style="padding:0.75rem 1rem;" id="success-detail"></div>
     </div>
-    <!-- Enjoy message -->
     <div style="background:var(--mint);border-radius:var(--r-sm);padding:0.75rem 1rem;width:100%;display:flex;align-items:center;gap:0.75rem;">
       <span style="font-size:1.4rem;">🍦</span>
       <div style="text-align:left;">
@@ -288,7 +271,6 @@ html,body{height:100%;overflow:hidden;background:var(--coral);font-family:'Instr
       </div>
     </div>
   </div>
-  <!-- Done button -->
   <div style="padding:1rem 1.5rem;padding-bottom:calc(1rem + env(safe-area-inset-bottom,0px));background:var(--white);border-top:1px solid var(--border);flex-shrink:0;">
     <button class="btn-done" onclick="closeSuccess()">Done — go earn your reward</button>
   </div>
@@ -310,31 +292,29 @@ html,body{height:100%;overflow:hidden;background:var(--coral);font-family:'Instr
         Connect Wallet
       </button>
       <div id="wallet-hint" style="display:none;margin:12px 0;">
-        <div style="font-size:10px;font-weight:600;letter-spacing:1.5px;text-transform:uppercase;color:var(--ink-light);text-align:center;margin-bottom:10px;">Open in your wallet app</div>
-        <div style="display:flex;flex-direction:column;gap:8px;">
+        <div style="font-size:11px;font-weight:600;color:var(--ink-mid);text-align:center;margin-bottom:8px;letter-spacing:0.5px;text-transform:uppercase;">Open in your wallet app</div>
+        <div style="display:flex;flex-direction:column;gap:6px;">
           <a href="https://metamask.app.link/dapp/kokosicecream.github.io/website/Customer_dapp/index.html"
-             style="display:flex;align-items:center;gap:12px;background:var(--white);border:1.5px solid var(--border-mid);border-radius:var(--r-sm);padding:12px 14px;text-decoration:none;color:var(--ink);">
-            <img src="https://upload.wikimedia.org/wikipedia/commons/3/36/MetaMask_Fox.svg" style="width:28px;height:28px;flex-shrink:0;">
-            <div style="flex:1;"><div style="font-size:13px;font-weight:600;">MetaMask</div><div style="font-size:10px;color:var(--ink-light);margin-top:1px;">Opens &amp; connects inside MetaMask browser</div></div>
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="opacity:0.3;flex-shrink:0;"><path d="M9 18l6-6-6-6"/></svg>
+             style="display:flex;align-items:center;gap:10px;background:var(--white);border:1px solid var(--border-mid);border-radius:var(--r-sm);padding:10px 14px;text-decoration:none;color:var(--ink);font-size:13px;font-weight:600;">
+            <img src="https://upload.wikimedia.org/wikipedia/commons/3/36/MetaMask_Fox.svg" style="width:24px;height:24px;">
+            Open in MetaMask
           </a>
           <a href="https://go.cb-w.com/dapp?cb_url=https%3A%2F%2Fkokosicecream.github.io%2Fwebsite%2FCustomer_dapp%2Findex.html"
-             style="display:flex;align-items:center;gap:12px;background:var(--white);border:1.5px solid var(--border-mid);border-radius:var(--r-sm);padding:12px 14px;text-decoration:none;color:var(--ink);">
-            <img src="https://www.coinbase.com/favicon.ico" style="width:28px;height:28px;border-radius:6px;flex-shrink:0;">
-            <div style="flex:1;"><div style="font-size:13px;font-weight:600;">Base / Coinbase Wallet</div><div style="font-size:10px;color:var(--ink-light);margin-top:1px;">Opens dapp in wallet browser</div></div>
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="opacity:0.3;flex-shrink:0;"><path d="M9 18l6-6-6-6"/></svg>
+             style="display:flex;align-items:center;gap:10px;background:var(--white);border:1px solid var(--border-mid);border-radius:var(--r-sm);padding:10px 14px;text-decoration:none;color:var(--ink);font-size:13px;font-weight:600;">
+            <img src="https://www.coinbase.com/favicon.ico" style="width:24px;height:24px;border-radius:4px;">
+            Open in Coinbase Wallet
           </a>
         </div>
-        <div style="font-size:10px;color:var(--ink-light);text-align:center;margin-top:10px;line-height:1.6;">Already in a wallet browser? Tap Connect Wallet above.<br>Other wallet? Tap Connect Wallet and scan the QR code.</div>
+        <div style="font-size:10px;color:var(--ink-light);text-align:center;margin-top:8px;">or use the WalletConnect button above</div>
       </div>
-      <div class="ca-line" onclick="navigator.clipboard.writeText('0xfd3ce21c5Acd8BbbE576d0E2336C210C3cEBeb92').then(()=>showToast('CA copied','ok'))">
+      <div class="ca-line" onclick="navigator.clipboard.writeText('0xfd3ce21c5acd8bbbe576d0e2336c210c3cebeb92').then(()=>showToast('CA copied','ok'))">
         SKOOP &middot; <span style="text-decoration:underline dotted;">0xfd3ce21c5Acd8BbbE576d0E2336C210C3cEBeb92</span> &middot; tap to copy
       </div>
       <div class="gate-divider"><span>About SKOOP</span></div>
       <div class="about-kicker">The KOKOS Token</div>
       <h2 class="about-heading">Your skoop,<br><em>on-chain.</em></h2>
-      <p class="about-body">SKOOP is the loyalty and payment token for KOKOS Ice Cream \— Nashville's original plant-based scoop shop. Built on Base, it lets you buy tokens, pay at the register, and earn rewards just for being a regular. No points cards. No apps. Just your web3 wallet.</p>
-      <p class="about-body" style="margin-top:-8px;">Every SKOOP transaction at the shop flows through an on-chain escrow and settles transparently \— no middlemen, no processing fees eating into your purchase. It's the first crypto-native checkout experience in Nashville's food scene.</p>
+      <p class="about-body">SKOOP is the loyalty and payment token for KOKOS Ice Cream — Nashville's original plant-based scoop shop. Built on Base, it lets you buy tokens, pay at the register, and earn rewards just for being a regular. No points cards. No apps. Just your web3 wallet.</p>
+      <p class="about-body" style="margin-top:-8px;">Every SKOOP transaction at the shop flows through an on-chain escrow and settles transparently — no middlemen, no processing fees eating into your purchase. It's the first crypto-native checkout experience in Nashville's food scene.</p>
       <div class="stat-strip">
         <div class="stat-cell"><div class="stat-big">Base</div><div class="stat-lbl">Network</div></div>
         <div class="stat-cell"><div class="stat-big">$0</div><div class="stat-lbl">Middle&shy;men</div></div>
@@ -352,14 +332,14 @@ html,body{height:100%;overflow:hidden;background:var(--coral);font-family:'Instr
       <div class="gate-divider"><span>How It Works</span></div>
       <h2 class="hiw-heading">Three ways<br>to <em>use SKOOP</em></h2>
       <div class="step-list">
-        <div class="step"><div class="step-num">1</div><div class="step-content"><div class="step-title">Get SKOOP</div><div class="step-desc">Connect your wallet and tap Buy. Swap USDC or ETH for SKOOP directly through Uniswap V3 on Base \— no account required, no KYC.</div></div></div>
-        <div class="step"><div class="step-num">2</div><div class="step-content"><div class="step-title">Pay at the shop</div><div class="step-desc">The KOKOS team rings up your order and shows you a checkout QR. Open the Pay tab, scan it, review the total, and confirm \— SKOOP goes to escrow instantly.</div></div></div>
+        <div class="step"><div class="step-num">1</div><div class="step-content"><div class="step-title">Get SKOOP</div><div class="step-desc">Connect your wallet and tap Buy. Swap USDC or ETH for SKOOP directly through Uniswap V3 on Base — no account required, no KYC.</div></div></div>
+        <div class="step"><div class="step-num">2</div><div class="step-content"><div class="step-title">Pay at the shop</div><div class="step-desc">The KOKOS team rings up your order and shows you a checkout QR. Open the Pay tab, scan it, review the total, and confirm — SKOOP goes to escrow instantly.</div></div></div>
         <div class="step"><div class="step-num">3</div><div class="step-content"><div class="step-title">Earn rewards</div><div class="step-desc">Paying by card or cash? Show your My QR tab to the team after your purchase. They'll scan it and send SKOOP straight to your wallet as a reward.</div></div></div>
-        <div class="step"><div class="step-num">4</div><div class="step-content"><div class="step-title">Settlement &amp; burn</div><div class="step-desc">SKOOP captured in escrow settles on-chain and a portion burns \— reducing supply over time. Every scoop you buy makes the token a little more scarce.</div></div></div>
+        <div class="step"><div class="step-num">4</div><div class="step-content"><div class="step-title">Settlement &amp; burn</div><div class="step-desc">SKOOP captured in escrow settles on-chain and a portion burns — reducing supply over time. Every scoop you buy makes the token a little more scarce.</div></div></div>
       </div>
       <div class="earn-pay-grid">
-        <div class="ep-card"><div class="ep-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 12 20 22 4 22 4 12"/><rect x="2" y="7" width="20" height="5"/><path d="M12 22V7M12 7H7.5a2.5 2.5 0 010-5C11 2 12 7 12 7zM12 7h4.5a2.5 2.5 0 000-5C13 2 12 7 12 7z"/></svg></div><div class="ep-title">Earn SKOOP</div><div class="ep-body">Pay any way at KOKOS and show your QR. The team sends SKOOP to your wallet as a thank-you.</div></div>
-        <div class="ep-card"><div class="ep-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="2" width="14" height="20" rx="2"/><path d="M9 7h6M9 11h6M9 15h4"/></svg></div><div class="ep-title">Pay with SKOOP</div><div class="ep-body">Scan the shop's checkout QR, confirm the total, and your SKOOP pays for your order on-chain.</div></div>
+        <div class="ep-card"><div class="ep-icon">🎁</div><div class="ep-title">Earn SKOOP</div><div class="ep-body">Pay any way at KOKOS and show your QR. The team sends SKOOP to your wallet as a thank-you.</div></div>
+        <div class="ep-card"><div class="ep-icon">📱</div><div class="ep-title">Pay with SKOOP</div><div class="ep-body">Scan the shop's checkout QR, confirm the total, and your SKOOP pays for your order on-chain.</div></div>
       </div>
       <div class="gate-footer-cta">
         <p>Ready to SKOOP?<br><em>Connect your wallet to start.</em></p>
@@ -385,9 +365,9 @@ html,body{height:100%;overflow:hidden;background:var(--coral);font-family:'Instr
     <div class="home-balance-block">
       <div class="bal-eyebrow">Your balance</div>
       <div class="bal-number" id="home-bal">&#8212;</div>
-      <div class="bal-sub" id="home-usd">SKOOP &middot; Connect to load</div>
-      <div style="font-size:12px;color:var(--ink-mid);font-weight:500;margin-top:2px;" id="home-usd-val"></div>
-      <div style="margin-top:10px;font-size:9px;font-weight:500;color:var(--ink-light);letter-spacing:0.3px;word-break:break-all;opacity:0.7;cursor:pointer;" onclick="navigator.clipboard.writeText('0xfd3ce21c5Acd8BbbE576d0E2336C210C3cEBeb92').then(()=>showToast('CA copied','ok'))">CA: 0xfd3ce21c5Acd8BbbE576d0E2336C210C3cEBeb92</div>
+      <div class="bal-sub" id="home-usd">SKOOP</div>
+      <div style="font-size:12px;color:var(--ink-mid);font-weight:500;margin-bottom:4px;min-height:16px;" id="home-usd-val"></div>
+      <div style="margin-top:6px;font-size:9px;font-weight:500;color:var(--ink-light);letter-spacing:0.3px;word-break:break-all;opacity:0.7;cursor:pointer;" onclick="navigator.clipboard.writeText('0xfd3ce21c5acd8bbbe576d0e2336c210c3cebeb92').then(()=>showToast('CA copied','ok'))">CA: 0xfd3ce21c5Acd8BbbE576d0E2336C210C3cEBeb92</div>
     </div>
     <div class="action-grid">
       <button class="action-cell ac-mint" onclick="goTo('buy')"><div class="ac-icon">&#x1F4B1;</div><div><div class="ac-label">Buy SKOOP</div><div class="ac-sub">USDC or ETH</div></div></button>
@@ -417,12 +397,13 @@ html,body{height:100%;overflow:hidden;background:var(--coral);font-family:'Instr
       <div class="sp-eyebrow">You pay</div>
       <button class="tok-btn" onclick="openTokSheet()"><div class="tok-ic ti-eth" id="from-icon">&#926;</div><div class="tok-name" id="from-name">ETH</div><div class="tok-chev">&#9660;</div></button>
       <input class="amt-input" id="from-amt" type="number" placeholder="0" min="0" step="any" oninput="onAmt()">
+      <div id="from-usd" style="font-size:12px;color:var(--ink-mid);font-weight:500;margin-top:2px;min-height:16px;"></div>
       <div class="bal-hint">Balance: <span id="from-bal">&#8212;</span> <button class="max-tag" onclick="setMax()">MAX</button></div>
     </div>
     <div class="swap-block-arrow">&#8595;</div>
     <div class="swap-block-to">
       <div class="sp-eyebrow">You receive</div>
-      <div class="skoop-pill">&#127846; SKOOP</div>
+      <div class="skoop-pill"><img src="KOKOS_SKOOP.png" alt="SKOOP" style="width:20px;height:20px;border-radius:50%;object-fit:cover;"> SKOOP</div>
       <div class="out-amount" id="out-amt">0</div>
       <div class="out-loading" id="out-loading">Getting quote&#8230;</div>
     </div>
@@ -454,7 +435,7 @@ html,body{height:100%;overflow:hidden;background:var(--coral);font-family:'Instr
         </div>
       </div>
       <button class="btn-cam" id="btn-cam" onclick="startScan()">&#128247; &nbsp;Start Camera</button>
-      <div class="info-block" style="background:var(--lavender);"><div class="ib-title">How it works</div><div class="ib-text">The shop rings up your order and generates a QR. Scan it here, review the total, and confirm \— SKOOP goes to escrow and burns in the next settlement.</div></div>
+      <div class="info-block" style="background:var(--lavender);"><div class="ib-title">How it works</div><div class="ib-text">The shop rings up your order and generates a QR. Scan it here, review the total, and confirm — SKOOP goes to escrow and burns in the next settlement.</div></div>
     </div>
     <div class="pay-state" id="pay-confirm">
       <div class="cc-wrap" style="padding-top:16px;">
@@ -469,7 +450,7 @@ html,body{height:100%;overflow:hidden;background:var(--coral);font-family:'Instr
           </div>
         </div>
         <button class="btn-confirm" id="btn-confirm" onclick="confirmPay()">Confirm &amp; Pay with SKOOP</button>
-        <button class="btn-cancel" onclick="cancelPay()">Cancel \— scan again</button>
+        <button class="btn-cancel" onclick="cancelPay()">Cancel — scan again</button>
       </div>
     </div>
   </div>
@@ -485,7 +466,7 @@ html,body{height:100%;overflow:hidden;background:var(--coral);font-family:'Instr
       <div id="my-qr-div"></div>
       <div class="qr-addr" id="qr-addr">Connect wallet to generate QR</div>
     </div>
-    <div class="info-block" style="background:var(--lavender);margin:0 20px 16px;"><div class="ib-title">Current balance</div><div class="ib-text"><span id="qr-bal">&#8212;</span> SKOOP &middot; KOKOS Ice Cream, 3 City Ave Ste 700, Nashville TN</div></div>
+    <div class="info-block" style="background:var(--lavender);margin:0 20px 16px;"><div class="ib-title">Current balance</div><div class="ib-text"><span id="qr-bal">&#8212;</span> SKOOP &middot; KOKOS Ice Cream, Nashville TN</div></div>
   </div>
 </div>
 
@@ -497,9 +478,8 @@ html,body{height:100%;overflow:hidden;background:var(--coral);font-family:'Instr
 </div>
 </div>
 
-
 <!-- PRICE MODAL -->
-<div id="price-modal" style="display:none;position:absolute;inset:0;z-index:400;background:rgba(42,31,26,0.5);backdrop-filter:blur(6px);align-items:flex-end;justify-content:center;" onclick="closePriceModal()">
+<div id="price-modal" style="display:none;position:absolute;inset:0;z-index:400;background:rgba(42,31,26,0.5);backdrop-filter:blur(6px);align-items:flex-end;justify-content:center;" onclick="if(event.target===this)closePriceModal()">
   <div style="background:var(--cream);border-top-left-radius:28px;border-top-right-radius:28px;width:100%;max-width:430px;overflow:hidden;box-shadow:0 -8px 48px rgba(42,31,26,0.22);animation:sheetUp 0.28s cubic-bezier(0.34,1.56,0.64,1);" onclick="event.stopPropagation()">
     <div style="display:flex;height:5px;flex-shrink:0;"><div style="flex:1;background:var(--coral)"></div><div style="flex:1;background:var(--mint)"></div><div style="flex:1;background:var(--apricot)"></div><div style="flex:1;background:var(--lavender)"></div><div style="flex:1;background:var(--sand)"></div></div>
     <div style="padding:20px 20px 36px;">
@@ -525,51 +505,46 @@ html,body{height:100%;overflow:hidden;background:var(--coral);font-family:'Instr
         </div>
         <canvas id="pm-chart" height="130" style="width:100%;display:block;"></canvas>
       </div>
-      <div style="display:flex;gap:8px;">
-        <button onclick="renderPriceModal()" style="flex:1;padding:13px;background:var(--mint);border:1.5px solid var(--border-mid);border-radius:var(--r);font-family:'Instrument Sans',sans-serif;font-size:12px;font-weight:600;color:var(--ink-mid);cursor:pointer;">Refresh</button>
-        <a href="https://app.uniswap.org/explore/tokens/base/0xfd3ce21c5acd8bbbe576d0e2336c210c3cebeb92" target="_blank" rel="noopener" style="flex:2;display:flex;align-items:center;justify-content:center;background:var(--apricot);border:1.5px solid var(--border-mid);border-radius:var(--r);padding:13px;text-decoration:none;color:var(--ink-mid);font-size:12px;font-weight:600;">Trade on Uniswap</a>
-      </div>
+      <a href="https://app.uniswap.org/explore/tokens/base/0xfd3ce21c5acd8bbbe576d0e2336c210c3cebeb92" target="_blank" rel="noopener" style="display:flex;align-items:center;justify-content:center;gap:8px;background:var(--apricot);border:1.5px solid var(--border-mid);border-radius:var(--r);padding:14px;text-decoration:none;color:var(--ink-mid);font-size:12px;font-weight:600;">Trade on Uniswap ↗</a>
     </div>
   </div>
 </div>
+
 <script>
 const CFG={
   CHAIN_ID:8453,CHAIN_HEX:'0x2105',RPC:'https://mainnet.base.org',
-  SKOOP:'0xfd3ce21c5Acd8BbbE576d0E2336C210C3cEBeb92',
-  ESCROW:'0x85E8cdedAe8ECd23ee21cdc90D75CbAAe9a54991',
-  POS_SIGNER:'0xa22675c629743a126E136a80244ddd2c3b2A4b12',
-  ROUTER:'0x2626664c2603336E57B271c5C0b26F421741e481',
-  QUOTER:'0x3d4e44Eb1374240CE5F1B136cf395a8eae25D0aE',
-  USDC:'0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913',
+  SKOOP:'0xfd3ce21c5acd8bbbe576d0e2336c210c3cebeb92',
+  ESCROW:'0x85e8cdedae8ecd23ee21cdc90d75cbaae9a54991',
+  POS_SIGNER:'0xa22675c629743a126e136a80244ddd2c3b2a4b12',
+  ROUTER:'0x2626664c2603336e57b271c5c0b26f421741e481',
+  USDC:'0x833589fcd6edb6e08f4c7c32d4f71b54bda02913',
   WETH:'0x4200000000000000000000000000000000000006',
   FEE:3000,SKOOP_DEC:6,USDC_DEC:6,WETH_DEC:18,
 };
 const ABI_ERC20=["function balanceOf(address) view returns (uint256)","function allowance(address,address) view returns (uint256)","function approve(address,uint256) returns (bool)"];
-const ABI_QUOTER=["function quoteExactInputSingle((address tokenIn,address tokenOut,uint256 amountIn,uint24 fee,uint160 sqrtPriceLimitX96)) returns (uint256 amountOut,uint160 sqrtPriceX96After,uint32 initializedTicksCrossed,uint256 gasEstimate)"];
 const ABI_ROUTER=["function exactInputSingle((address tokenIn,address tokenOut,uint24 fee,address recipient,uint256 amountIn,uint256 amountOutMinimum,uint160 sqrtPriceLimitX96)) payable returns (uint256)"];
 const ABI_ESCROW=[{inputs:[{components:[{name:"receiptId",type:"bytes32"},{name:"orderId",type:"bytes32"},{name:"storeIdHash",type:"bytes32"},{name:"terminalIdHash",type:"bytes32"},{name:"tokenAmount",type:"uint256"},{name:"subtotalCents",type:"uint256"},{name:"taxCents",type:"uint256"},{name:"totalCents",type:"uint256"},{name:"itemCount",type:"uint256"},{name:"cartHash",type:"bytes32"},{name:"deadline",type:"uint256"}],internalType:"struct KOKOSPaymentEscrowPOS.PaymentIntent",name:"intent",type:"tuple"},{name:"signature",type:"bytes"}],name:"capturePayment",outputs:[],stateMutability:"nonpayable",type:"function"}];
-
-let provider,signer,userAddr,selToken="ETH",slip=0.5,quoteTimer,curQuote,pendingIntent,scannerRunning=false,ethPriceUSD=0,skoopPriceUSD=0;
-
 
 const POOL_ETH_SKOOP  = '0xc1d89ca13d5cbc24b92e9f40b36d43da347c5198';
 const POOL_USDC_SKOOP = '0x64ef20f32445eb0a86f4b97ca895fe508af253cd';
 const ABI_POOL_IMM=["function token0() view returns (address)","function token1() view returns (address)","function fee() view returns (uint24)"];
-const ABI_POOL_S0=["function slot0() view returns (uint160 sqrtPriceX96,int24,uint16,uint16,uint16,uint8,bool)","function token0() view returns (address)"];
+const poolFees={};
 
+let provider,signer,userAddr,selToken="ETH",slip=0.5,quoteTimer,curQuote,pendingIntent,scannerRunning=false,ethPriceUSD=0,skoopPriceUSD=0;
+
+// ── ETH PRICE — CoinGecko (works on kokosicecream.com) + on-chain fallback ──
 async function fetchEthPrice(){
-  // CoinGecko works from kokosicecream.com — on-chain pool as fallback
   try{
     const r=await fetch('https://api.coingecko.com/api/v3/simple/price?ids=ethereum&vs_currencies=usd');
     const d=await r.json();
     const p=d?.ethereum?.usd||0;
     if(p>100&&p<1000000){ethPriceUSD=p;await fetchSkoopPrice();return;}
   }catch(e){}
-  // On-chain fallback: WETH/USDC 0.05% pool on Base
+  // On-chain fallback: WETH/USDC 0.05% pool on Base — no external API, no CORS ever
   try{
-    const ABI_S=['function slot0() view returns (uint160 sqrtPriceX96,int24,uint16,uint16,uint16,uint8,bool)','function token0() view returns (address)'];
+    const ABI=['function slot0() view returns (uint160 sqrtPriceX96,int24,uint16,uint16,uint16,uint8,bool)','function token0() view returns (address)'];
     const pub=new ethers.JsonRpcProvider(CFG.RPC);
-    const pool=new ethers.Contract('0xd0b53D9277642d899DF5C87A3966A349A798F224',ABI_S,pub);
+    const pool=new ethers.Contract('0xd0b53D9277642d899DF5C87A3966A349A798F224',ABI,pub);
     const [s0,t0]=await Promise.all([pool.slot0(),pool.token0()]);
     const sqrtPf=Number(s0.sqrtPriceX96)/Number(2n**96n);
     const raw=sqrtPf*sqrtPf;
@@ -581,8 +556,9 @@ async function fetchEthPrice(){
 
 async function fetchSkoopPrice(){
   try{
+    const ABI=['function slot0() view returns (uint160 sqrtPriceX96,int24,uint16,uint16,uint16,uint8,bool)','function token0() view returns (address)'];
     const pub=new ethers.JsonRpcProvider(CFG.RPC);
-    const pool=new ethers.Contract(POOL_ETH_SKOOP,ABI_POOL_S0,pub);
+    const pool=new ethers.Contract(POOL_ETH_SKOOP,ABI,pub);
     const [s0,t0]=await Promise.all([pool.slot0(),pool.token0()]);
     const sqrtPf=Number(s0.sqrtPriceX96)/Number(2n**96n);
     const priceRaw=sqrtPf*sqrtPf;
@@ -590,8 +566,6 @@ async function fetchSkoopPrice(){
     const skoopPerEth=skoopIsT0?(1/priceRaw)*1e12:priceRaw*1e12;
     skoopPriceUSD=skoopPerEth>0?ethPriceUSD/skoopPerEth:0;
     updateSkoopBalanceDisplay();
-    const sub=document.getElementById('home-skoop-price');
-    if(sub&&skoopPriceUSD>0)sub.textContent='$'+skoopPriceUSD.toFixed(6);
   }catch(e){}
 }
 
@@ -599,13 +573,14 @@ function updateSkoopBalanceDisplay(){
   const valEl=document.getElementById("home-usd-val");
   if(!valEl||!window._skoopBal||!skoopPriceUSD)return;
   valEl.textContent=(window._skoopBal*skoopPriceUSD).toLocaleString("en-US",{style:"currency",currency:"USD",maximumFractionDigits:2});
+  const sub=document.getElementById('home-skoop-price');
+  if(sub&&skoopPriceUSD>0)sub.textContent='$'+skoopPriceUSD.toFixed(6);
 }
 
 // Show wallet deep links when no injected wallet
-(function(){
-  if(!window.ethereum){const h=document.getElementById('wallet-hint');if(h)h.style.display='block';}
-})();
+(function(){if(!window.ethereum){const h=document.getElementById('wallet-hint');if(h)h.style.display='block';}})();
 
+// ── WALLET CONNECT ────────────────────────────────────────────────────────────
 async function openWalletModal(){
   if(window.ethereum){
     const btn=document.getElementById('gate-connect-btn');
@@ -625,6 +600,7 @@ async function openWalletModal(){
     }catch(e){
       if(btn){btn.textContent='Connect Wallet';btn.disabled=false;}
       if(e.code===4001){showToast("Connection rejected","err");return;}
+      // Retry once (handles MetaMask deep link timing)
       try{
         await new Promise(r=>setTimeout(r,700));
         provider=new ethers.BrowserProvider(window.ethereum);
@@ -643,7 +619,7 @@ async function openWalletModal(){
 
 async function connectWalletConnect(){
   const WCEthProvider=window["@walletconnect/ethereum-provider"]?.EthereumProvider;
-  if(!WCEthProvider){showToast("WalletConnect not loaded \— refresh","err");return;}
+  if(!WCEthProvider){showToast("WalletConnect not loaded — refresh","err");return;}
   try{
     showToast("Opening wallet...","");
     const wcp=await WCEthProvider.init({
@@ -661,40 +637,36 @@ async function connectWalletConnect(){
     wcp.on('disconnect',()=>{ window._wcp=null; disconnectWallet(); });
     wcp.on('accountsChanged',a=>{if(a[0]){userAddr=a[0];updatePills();refreshBals();}});
   }catch(e){
-    const msg=e?.message||'';
-    if(!msg.includes('closed')&&!msg.includes('rejected')&&!msg.includes('Modal'))showToast(msg||"Connection failed","err");
-    // Reset connect button on any WC failure
     const btn=document.getElementById('gate-connect-btn');
     if(btn){btn.textContent='Connect Wallet';btn.disabled=false;}
+    const msg=e?.message||'';
+    if(!msg.includes('closed')&&!msg.includes('rejected')&&!msg.includes('Modal'))showToast(msg||"Connection failed","err");
   }
 }
 
 async function disconnectWallet(){
   try{if(window._wcp)await window._wcp.disconnect();}catch(e){}
   window._wcp=null;provider=null;signer=null;userAddr=null;
-  // Null-safe reset — elements may not exist if gate was never fully shown
+  // Null-safe reset
   const setT=(id,v)=>{const el=document.getElementById(id);if(el)el.textContent=v;};
   const setH=(id,v)=>{const el=document.getElementById(id);if(el)el.innerHTML=v;};
-  const setS=(id,k,v)=>{const el=document.getElementById(id);if(el)el.style[k]=v;};
-  setS("main-app","display","none");
-  setS("bottom-nav","display","none");
+  document.getElementById("main-app").style.display="none";
+  document.getElementById("bottom-nav").style.display="none";
   const gate=document.getElementById("connect-gate");
   if(gate){gate.style.display="flex";gate.style.flexDirection="column";gate.style.flex="1";}
-  setT("home-bal","—");
-  setT("home-usd","SKOOP");
-  setT("home-usd-val","");
-  setT("wallet-pill","0x…");
-  setT("buy-pill","0x…");
+  setT("home-bal","—");setT("home-usd","SKOOP");setT("home-usd-val","");
+  setT("wallet-pill","0x…");setT("buy-pill","0x…");
   setT("qr-addr","Connect wallet to generate QR");
-  setT("qr-bal","—");
-  setH("my-qr-div","");
+  setT("qr-bal","—");setH("my-qr-div","");
 }
+
 async function onConnected(){
   document.getElementById("connect-gate").style.display="none";
   const m=document.getElementById("main-app");
   m.style.display="flex";m.style.flexDirection="column";m.style.flex="1";m.style.overflow="hidden";
   document.getElementById("bottom-nav").style.display="flex";
-  updatePills();await checkNet();await refreshBals();setTimeout(buildMyQR,200);fetchEthPrice();
+  updatePills();await checkNet();await refreshBals();setTimeout(buildMyQR,200);
+  loadPoolImmutables();fetchEthPrice();
 }
 
 function updatePills(){
@@ -708,14 +680,11 @@ async function checkNet(){
     const net=await provider.getNetwork();
     if(Number(net.chainId)!==CFG.CHAIN_ID){
       try{
-        // Use provider.send() — works for both MetaMask and WalletConnect
         await provider.send("wallet_switchEthereumChain",[{chainId:CFG.CHAIN_HEX}]);
-        // Re-init signer after network switch
-        signer=await provider.getSigner();
-        userAddr=await signer.getAddress();
-      }catch(switchErr){
+        signer=await provider.getSigner();userAddr=await signer.getAddress();
+      }catch(e){
         document.getElementById("net-banner").classList.add("show");
-        document.getElementById("net-label").textContent="Wrong network";
+        document.getElementById("net-label").textContent="Wrong";
         document.getElementById("net-label").className="pill pill-danger";
         return false;
       }
@@ -737,14 +706,15 @@ async function refreshBals(){
   try{
     const sk=new ethers.Contract(CFG.SKOOP,ABI_ERC20,provider);
     const raw=await sk.balanceOf(userAddr);
-    const fmt=parseFloat(ethers.formatUnits(raw,CFG.SKOOP_DEC)).toLocaleString("en-US",{maximumFractionDigits:2});
+    const skoopBal=parseFloat(ethers.formatUnits(raw,CFG.SKOOP_DEC));
+    window._skoopBal=skoopBal;
+    const fmt=skoopBal.toLocaleString("en-US",{maximumFractionDigits:2});
     document.getElementById("home-bal").textContent=fmt;
-    document.getElementById("home-usd").textContent="SKOOP \· Nashville plant-based ice cream";
+    document.getElementById("home-usd").textContent="SKOOP";
     document.getElementById("qr-bal").textContent=fmt;
+    updateSkoopBalanceDisplay();
   }catch(e){
-    document.getElementById("home-bal").textContent="0";
-    document.getElementById("home-usd").textContent="SKOOP \· contract pending on this network";
-    document.getElementById("qr-bal").textContent="0";
+    document.getElementById("home-bal").textContent="—";
   }
   try{const eb=await provider.getBalance(userAddr);document.getElementById("bal-eth").textContent=parseFloat(ethers.formatEther(eb)).toFixed(4)+" ETH";}catch(e){}
   try{const uc=new ethers.Contract(CFG.USDC,ABI_ERC20,provider);document.getElementById("bal-usdc").textContent=parseFloat(ethers.formatUnits(await uc.balanceOf(userAddr),6)).toFixed(2)+" USDC";}catch(e){}
@@ -753,14 +723,45 @@ async function refreshBals(){
 
 async function updateFromBal(){
   if(!provider||!userAddr)return;
-  let b="\—";
+  let b="—";
   try{
-    if(selToken==="ETH")b=parseFloat(ethers.formatEther(await provider.getBalance(userAddr))).toFixed(4)+" ETH";
-    else{const c=new ethers.Contract(CFG.USDC,ABI_ERC20,provider);b=parseFloat(ethers.formatUnits(await c.balanceOf(userAddr),6)).toFixed(2)+" USDC";}
+    if(selToken==="ETH"){
+      const raw=await provider.getBalance(userAddr);
+      const eth=parseFloat(ethers.formatEther(raw));
+      const usd=ethPriceUSD>0?" (≈$"+(eth*ethPriceUSD).toLocaleString("en-US",{maximumFractionDigits:2})+")":"";
+      b=eth.toFixed(4)+" ETH"+usd;
+    }else{
+      const c=new ethers.Contract(CFG.USDC,ABI_ERC20,provider);
+      b=parseFloat(ethers.formatUnits(await c.balanceOf(userAddr),6)).toFixed(2)+" USDC";
+    }
   }catch(e){}
   document.getElementById("from-bal").textContent=b;
 }
 
+// ── VISIBILITYCHANGE — silent reconnect, never re-run onConnected if in app ──
+document.addEventListener('visibilitychange',async function(){
+  if(document.visibilityState!=='visible'||!window.ethereum)return;
+  if(provider&&userAddr){try{await refreshBals();}catch(e){}return;}
+  try{
+    const a=await window.ethereum.request({method:'eth_accounts'});
+    if(!a.length)return;
+    const gateVisible=document.getElementById('connect-gate').style.display!=='none';
+    provider=new ethers.BrowserProvider(window.ethereum);
+    signer=await provider.getSigner();
+    userAddr=await signer.getAddress();
+    if(gateVisible){await onConnected();}
+    else{updatePills();try{await checkNet();}catch(e){}try{await refreshBals();}catch(e){}}
+  }catch(e){}
+});
+
+// Auto-connect on load if wallet already authorised
+if(window.ethereum){
+  window.ethereum.request({method:'eth_accounts'}).then(async a=>{
+    if(a.length)await openWalletModal();
+  }).catch(()=>{});
+}
+
+// ── SWAP ──────────────────────────────────────────────────────────────────────
 function openTokSheet(){document.getElementById("tok-sheet").classList.add("open");document.getElementById("tok-back").classList.add("open");}
 function closeTokSheet(){document.getElementById("tok-sheet").classList.remove("open");document.getElementById("tok-back").classList.remove("open");}
 function selectToken(t){
@@ -788,76 +789,91 @@ function resetOut(){
   document.getElementById("swap-dets").classList.remove("show");
   document.getElementById("btn-swap").disabled=true;
   document.getElementById("btn-swap").textContent="Enter amount";
+  document.getElementById("from-usd").textContent="";
   curQuote=null;
 }
 function onAmt(){
   clearTimeout(quoteTimer);
   const v=parseFloat(document.getElementById("from-amt").value);
   if(!v||v<=0){resetOut();return;}
+  if(selToken==="ETH"&&ethPriceUSD>0){
+    document.getElementById("from-usd").textContent="≈ $"+(v*ethPriceUSD).toLocaleString("en-US",{maximumFractionDigits:2});
+  }else{document.getElementById("from-usd").textContent="";}
   document.getElementById("out-loading").classList.add("show");
   document.getElementById("out-loading").textContent="Getting quote…";
   document.getElementById("btn-swap").disabled=true;
   document.getElementById("btn-swap").textContent="Getting quote…";
   quoteTimer=setTimeout(()=>fetchQuote(v),600);
 }
+
+async function loadPoolFee(poolAddr){
+  if(poolFees[poolAddr]!=null)return poolFees[poolAddr];
+  try{
+    const p=new ethers.Contract(poolAddr,ABI_POOL_IMM,provider);
+    const fee=await p.fee();poolFees[poolAddr]=Number(fee);return poolFees[poolAddr];
+  }catch(e){return CFG.FEE;}
+}
+async function loadPoolImmutables(){
+  if(provider)await Promise.all([loadPoolFee(POOL_ETH_SKOOP),loadPoolFee(POOL_USDC_SKOOP)]);
+}
+
 async function fetchQuote(amt){
   if(!provider)return;
-  const tokenIn=selToken==="USDC"?CFG.USDC:CFG.WETH;
-  const dec=selToken==="USDC"?CFG.USDC_DEC:CFG.WETH_DEC;
-  const amtIn=ethers.parseUnits(amt.toString(),dec);
-  let amtOut=null;
-  let isEstimate=false;
-
-  // Tier 1: QuoterV2
   try{
-    const q=new ethers.Contract(CFG.QUOTER,ABI_QUOTER,provider);
-    const result=await q.quoteExactInputSingle.staticCall({tokenIn,tokenOut:CFG.SKOOP,amountIn:amtIn,fee:CFG.FEE,sqrtPriceLimitX96:0n});
-    amtOut=Array.isArray(result)?result[0]:result;
-  }catch(e1){
-    // Tier 2: QuoterV1
+    await loadPoolImmutables();
+    const isUSDC=selToken==="USDC";
+    const poolAddr=isUSDC?POOL_USDC_SKOOP:POOL_ETH_SKOOP;
+    const tokenIn=isUSDC?CFG.USDC:CFG.WETH;
+    const decIn=isUSDC?CFG.USDC_DEC:CFG.WETH_DEC;
+    const amtIn=ethers.parseUnits(amt.toString(),decIn);
+    const fee=await loadPoolFee(poolAddr);
+    let amtOut=null,isEstimate=false;
+    // Tier 1: QuoterV2
     try{
-      const ABI_Q1=["function quoteExactInputSingle(address tokenIn,address tokenOut,uint24 fee,uint256 amountIn,uint160 sqrtPriceLimitX96) external returns (uint256 amountOut)"];
-      const q1=new ethers.Contract('0xb27308f9F90D607463bb33eA1BeBb41C27CE5AB6',ABI_Q1,provider);
-      amtOut=await q1.quoteExactInputSingle.staticCall(tokenIn,CFG.SKOOP,CFG.FEE,amtIn,0n);
-    }catch(e2){
-      // Tier 3: slot0 spot price estimate
+      const ABI_Q2=["function quoteExactInputSingle((address tokenIn,address tokenOut,uint256 amountIn,uint24 fee,uint160 sqrtPriceLimitX96)) returns (uint256 amountOut,uint160 sqrtPriceX96After,uint32 initializedTicksCrossed,uint256 gasEstimate)"];
+      const q=new ethers.Contract('0x3d4e44eb1374240ce5f1b136cf395a8eae25d0ae',ABI_Q2,provider);
+      const [out]=await q.quoteExactInputSingle.staticCall({tokenIn,tokenOut:CFG.SKOOP,amountIn:amtIn,fee,sqrtPriceLimitX96:0n});
+      amtOut=out;
+    }catch(e1){
+      // Tier 2: QuoterV1
       try{
-        const poolAddr=selToken==="USDC"?POOL_USDC_SKOOP:POOL_ETH_SKOOP;
-        const pool=new ethers.Contract(poolAddr,ABI_POOL_S0,provider);
-        const [s0,t0]=await Promise.all([pool.slot0(),pool.token0()]);
-        const sqrtPf=Number(s0.sqrtPriceX96)/Number(2n**96n);
-        const priceRaw=sqrtPf*sqrtPf;
-        const skoopIsT0=t0.toLowerCase()===CFG.SKOOP.toLowerCase();
-        let skoopPerIn;
-        if(selToken==="ETH"){
-          skoopPerIn=skoopIsT0?(1/priceRaw)*1e12:priceRaw*1e12;
-        } else {
-          skoopPerIn=skoopIsT0?(1/priceRaw):priceRaw;
+        const ABI_Q1=["function quoteExactInputSingle(address,address,uint24,uint256,uint160) returns (uint256)"];
+        const q=new ethers.Contract('0xb27308f9f90d607463bb33ea1bebb41c27ce5ab6',ABI_Q1,provider);
+        amtOut=await q.quoteExactInputSingle.staticCall(tokenIn,CFG.SKOOP,fee,amtIn,0n);
+      }catch(e2){
+        // Tier 3: slot0 spot estimate
+        try{
+          const ABI_P=["function slot0() view returns (uint160 sqrtPriceX96,int24,uint16,uint16,uint16,uint8,bool)","function token0() view returns (address)"];
+          const pool=new ethers.Contract(poolAddr,ABI_P,provider);
+          const [s0,t0]=await Promise.all([pool.slot0(),pool.token0()]);
+          const sqrtPf=Number(s0.sqrtPriceX96)/Number(2n**96n);
+          const priceRaw=sqrtPf*sqrtPf;
+          const skoopIsT0=t0.toLowerCase()===CFG.SKOOP.toLowerCase();
+          const inAmt=parseFloat(ethers.formatUnits(amtIn,decIn));
+          const skoopPerIn=skoopIsT0?(isUSDC?1/priceRaw:(1/priceRaw)*1e12):(isUSDC?priceRaw:priceRaw*1e12);
+          amtOut=ethers.parseUnits((inAmt*skoopPerIn*(1-fee/1e6)).toFixed(6),CFG.SKOOP_DEC);
+          isEstimate=true;
+        }catch(e3){
+          document.getElementById("out-loading").textContent="Quote unavailable — try again";
+          document.getElementById("btn-swap").textContent="Retry";return;
         }
-        const inAmt=parseFloat(ethers.formatUnits(amtIn,dec));
-        const estOut=inAmt*skoopPerIn;
-        amtOut=ethers.parseUnits(estOut.toFixed(6),CFG.SKOOP_DEC);
-        isEstimate=true;
-      }catch(e3){
-        document.getElementById("out-loading").textContent="Quote unavailable — try again";
-        document.getElementById("btn-swap").textContent="Retry";
-        console.error("All quote methods failed:",e1,e2,e3);
-        return;
       }
     }
+    curQuote={amtOut,amtIn,tokenIn,fee};
+    const out=parseFloat(ethers.formatUnits(amtOut,CFG.SKOOP_DEC));
+    const min=out*(1-slip/100);
+    document.getElementById("out-amt").textContent=(isEstimate?"~":"")+out.toLocaleString("en-US",{maximumFractionDigits:2});
+    document.getElementById("out-loading").classList.remove("show");
+    document.getElementById("det-route").textContent=selToken+" → SKOOP ("+(fee/10000).toFixed(2)+"%)";
+    document.getElementById("det-impact").textContent=isEstimate?"~estimated":"< 1%";
+    document.getElementById("det-min").textContent=min.toLocaleString("en-US",{maximumFractionDigits:2})+" SKOOP";
+    document.getElementById("swap-dets").classList.add("show");
+    document.getElementById("btn-swap").disabled=false;
+    document.getElementById("btn-swap").textContent=isEstimate?"Swap (estimated)":"Swap for SKOOP";
+  }catch(e){
+    document.getElementById("out-loading").textContent="Quote unavailable";
+    document.getElementById("btn-swap").textContent="Pool unavailable";
   }
-
-  curQuote={amtOut,amtIn,tokenIn};
-  const out=parseFloat(ethers.formatUnits(amtOut,CFG.SKOOP_DEC));
-  const min=out*(1-slip/100);
-  document.getElementById("out-amt").textContent=(isEstimate?"~":"")+out.toLocaleString("en-US",{maximumFractionDigits:2});
-  document.getElementById("out-loading").classList.remove("show");
-  document.getElementById("det-route").textContent=selToken+" → SKOOP (0.30%)"+(isEstimate?" ~est":"");
-  document.getElementById("det-impact").textContent="< 1%";
-  document.getElementById("det-min").textContent=min.toLocaleString("en-US",{maximumFractionDigits:2})+" SKOOP";
-  document.getElementById("swap-dets").classList.add("show");
-  document.getElementById("btn-swap").disabled=false;
-  document.getElementById("btn-swap").textContent=isEstimate?"Swap (estimated)":"Swap for SKOOP";
 }
 
 async function execSwap(){
@@ -869,45 +885,36 @@ async function execSwap(){
     const minOut=curQuote.amtOut*BigInt(Math.floor((1-slip/100)*10000))/10000n;
     let tx;
     if(selToken==="ETH"){
-      // ETH: send value directly, no approval needed
-      tx=await router.exactInputSingle({tokenIn:CFG.WETH,tokenOut:CFG.SKOOP,fee:CFG.FEE,recipient:userAddr,amountIn:curQuote.amtIn,amountOutMinimum:minOut,sqrtPriceLimitX96:0n},{value:curQuote.amtIn});
+      tx=await router.exactInputSingle({tokenIn:CFG.WETH,tokenOut:CFG.SKOOP,fee:curQuote.fee||CFG.FEE,recipient:userAddr,amountIn:curQuote.amtIn,amountOutMinimum:minOut,sqrtPriceLimitX96:0n},{value:curQuote.amtIn});
     }else{
       const tc=new ethers.Contract(curQuote.tokenIn,ABI_ERC20,signer);
       const al=await tc.allowance(userAddr,CFG.ROUTER);
-      // EXACT approval \— only approve the amount being swapped, no unlimited allowance
       if(al<curQuote.amtIn){showToast("Approving…","");await(await tc.approve(CFG.ROUTER,curQuote.amtIn)).wait();}
-      tx=await router.exactInputSingle({tokenIn:curQuote.tokenIn,tokenOut:CFG.SKOOP,fee:CFG.FEE,recipient:userAddr,amountIn:curQuote.amtIn,amountOutMinimum:minOut,sqrtPriceLimitX96:0n});
+      tx=await router.exactInputSingle({tokenIn:curQuote.tokenIn,tokenOut:CFG.SKOOP,fee:curQuote.fee||CFG.FEE,recipient:userAddr,amountIn:curQuote.amtIn,amountOutMinimum:minOut,sqrtPriceLimitX96:0n});
     }
     showToast("Submitted…","");await tx.wait();
     showToast("Swap complete!","ok");
     document.getElementById("from-amt").value="";resetOut();await refreshBals();
-  }catch(e){showToast(e?.reason||e?.shortMessage||e?.message||"Payment failed","err");}
+  }catch(e){showToast(e?.reason||e?.shortMessage||e?.message||"Swap failed","err");}
   btn.disabled=false;btn.textContent="Swap for SKOOP";
 }
 
+// ── QR SCANNER ────────────────────────────────────────────────────────────────
 function startScan(){
   if(scannerRunning)return;
-  if(typeof Html5Qrcode==="undefined"){showToast("Scanner loading \— try again","err");return;}
+  if(typeof Html5Qrcode==="undefined"){showToast("Scanner loading — try again","err");return;}
   const scanner=new Html5Qrcode("qr-reader");
   document.getElementById("scan-ui").style.display="none";
   document.getElementById("btn-cam").style.display="none";
-  scanner.start(
-    {facingMode:"environment"},
-    {fps:15,qrbox:{width:260,height:260}},
+  scanner.start({facingMode:"environment"},{fps:15,qrbox:{width:260,height:260}},
     txt=>{
-      scanner.stop().catch(()=>{});
-      scannerRunning=false;
+      scanner.stop().catch(()=>{});scannerRunning=false;
       document.getElementById("scan-ui").style.display="flex";
       document.getElementById("btn-cam").style.display="flex";
       parseQR(txt);
-    },
-    ()=>{}
+    },()=>{}
   ).then(()=>scannerRunning=true)
-   .catch(e=>{
-     showToast("Camera error: "+e,"err");
-     document.getElementById("scan-ui").style.display="flex";
-     document.getElementById("btn-cam").style.display="flex";
-   });
+   .catch(e=>{showToast("Camera error: "+e,"err");document.getElementById("scan-ui").style.display="flex";document.getElementById("btn-cam").style.display="flex";});
 }
 
 function parseQR(raw){
@@ -918,17 +925,14 @@ function parseQR(raw){
       const receiptId=d.r;
       const storeIdHash=ethers.id("KOKOS_NASHVILLE_01");
       const terminalIdHash=ethers.id("POS_1");
-      // orderId and cartHash must match what the POS signed exactly
-      // POS now includes 'o' and 'ch' in the compact payload
+      // Read orderId and cartHash directly from POS payload — must match signed digest exactly
       const orderId=d.o||ethers.id("ORD_"+receiptId);
       const cartHash=d.ch||ethers.id(CFG.ESCROW+receiptId);
       intent={receiptId,orderId,storeIdHash,terminalIdHash,tokenAmount:d.t,subtotalCents:d.sc,taxCents:d.tc,totalCents:d.xc,itemCount:d.ic,cartHash,deadline:d.dl,signature:d.sig};
-    }else{
-      intent=d;
-    }
+    }else{intent=d;}
     const req=["receiptId","tokenAmount","subtotalCents","taxCents","totalCents","itemCount","deadline","signature"];
     for(const f of req){if(intent[f]===undefined||intent[f]===null){throw new Error("Missing: "+f);}}
-    if(Date.now()/1000>Number(intent.deadline)){showToast("QR expired \— ask shop to regenerate","err");return;}
+    if(Date.now()/1000>Number(intent.deadline)){showToast("QR expired — ask shop to regenerate","err");return;}
     pendingIntent=intent;showConfirm(intent);
   }catch(e){
     showToast("Scan error: "+e.message,"err");
@@ -959,7 +963,6 @@ async function confirmPay(){
     const tokAmt=BigInt(d.tokenAmount);
     const sk=new ethers.Contract(CFG.SKOOP,ABI_ERC20,signer);
     const al=await sk.allowance(userAddr,CFG.ESCROW);
-    // EXACT approval \— only approve the exact SKOOP amount for this payment
     if(al<tokAmt){showToast("Approving SKOOP…","");await(await sk.approve(CFG.ESCROW,tokAmt)).wait();}
     const intent={
       receiptId:d.receiptId,orderId:d.orderId,
@@ -974,18 +977,15 @@ async function confirmPay(){
     const fmt=parseFloat(ethers.formatUnits(tokAmt,CFG.SKOOP_DEC));
     const totalUSD='$'+(Number(d.totalCents)/100).toFixed(2);
     document.getElementById('success-total-display').textContent=totalUSD+' · '+fmt.toLocaleString('en-US',{maximumFractionDigits:2})+' SKOOP';
-    document.getElementById("success-detail").innerHTML=`
-      <div class="sc-row"><span class="sk">SKOOP paid</span><span class="sv" style="color:var(--coral-deep);font-family:'Cormorant Garamond',serif;font-size:1.1rem;">${fmt.toLocaleString("en-US",{maximumFractionDigits:2})} SKOOP</span></div>
-      <div class="sc-row"><span class="sk">Total</span><span class="sv">${totalUSD}</span></div>
-      <div class="sc-row"><span class="sk">Tx</span><span class="sv" style="font-family:monospace;font-size:0.62rem;">${rcpt.hash.slice(0,20)}…</span></div>
-      <div class="sc-row"><span class="sk">Block</span><span class="sv">${rcpt.blockNumber}</span></div>`;
+    document.getElementById("success-detail").innerHTML=
+      `<div class="sc-row"><span class="sk">SKOOP paid</span><span class="sv" style="color:var(--coral-deep);">${fmt.toLocaleString("en-US",{maximumFractionDigits:2})} SKOOP</span></div>`+
+      `<div class="sc-row"><span class="sk">Total</span><span class="sv">${totalUSD}</span></div>`+
+      `<div class="sc-row"><span class="sk">Tx</span><span class="sv" style="font-family:monospace;font-size:0.62rem;">${rcpt.hash.slice(0,20)}…</span></div>`+
+      `<div class="sc-row"><span class="sk">Block</span><span class="sv">${rcpt.blockNumber}</span></div>`;
     document.getElementById("success-screen").classList.add("show");
     pendingIntent=null;await refreshBals();
   }catch(e){
-    const msg=e?.reason||e?.shortMessage||e?.data?.message||e?.message||"Payment failed";
-    showToast(msg.slice(0,80),"err",8000);
-    btn.disabled=false;btn.textContent="Confirm & Pay with SKOOP";
-    return;
+    showToast(e?.reason||e?.shortMessage||e?.data?.message||e?.message||"Payment failed","err");
   }
   btn.disabled=false;btn.textContent="Confirm & Pay with SKOOP";
 }
@@ -994,7 +994,7 @@ function closeSuccess(){
   document.getElementById("success-screen").classList.remove("show");
   document.getElementById("pay-confirm").classList.remove("active");
   document.getElementById("pay-scan").classList.add("active");
-  goTo("qr"); // Go to My QR so they can show wallet for 10% reward
+  goTo("qr"); // Show My QR so they can earn their reward
 }
 
 function buildMyQR(){
@@ -1014,254 +1014,121 @@ function goTo(name){
   if(name==="qr")setTimeout(buildMyQR,80);
 }
 
-let toastT;
-function showToast(msg,type="",dur=4000){
-  const el=document.getElementById("toast");
-  el.className="show"+(type?" "+type:"");
-  el.innerHTML=(type==="ok"?"✓ ":type==="err"?"✕ ":"")+msg;
-  clearTimeout(toastT);toastT=setTimeout(()=>el.classList.remove("show"),dur);
+// ── PRICE MODAL ───────────────────────────────────────────────────────────────
+async function openPriceModal(){
+  document.getElementById('price-modal').style.display='flex';
+  await renderPriceModal();
 }
-
-// ── INIT ──────────────────────────────────────────────────────────────────────
-
-// ─── PRICE MODAL ──────────────────────────────────────────────────────────────
-let priceModalOpen = false;
-let priceModalRefreshTimer = null;
-
-function openPriceModal(){
-  const m = document.getElementById('price-modal');
-  m.style.display = 'flex';
-  priceModalOpen = true;
-  renderPriceModal();
-  // Auto-refresh every 30s while open
-  priceModalRefreshTimer = setInterval(renderPriceModal, 30000);
-}
-
 function closePriceModal(){
-  document.getElementById('price-modal').style.display = 'none';
-  priceModalOpen = false;
-  clearInterval(priceModalRefreshTimer);
+  document.getElementById('price-modal').style.display='none';
 }
 
 async function renderPriceModal(){
-  // Use prices already fetched by fetchEthPrice/fetchSkoopPrice on connect
-  // Re-fetch from pool if we don't have them yet
-  if(!skoopPriceUSD || !ethPriceUSD){
-    await fetchEthPrice(); // populates ethPriceUSD + skoopPriceUSD via fetchSkoopPrice
-  }
+  // Use cached prices (populated on connect via fetchEthPrice)
+  // Re-fetch if not available yet
+  if(!skoopPriceUSD||!ethPriceUSD) await fetchEthPrice();
 
-  const price = skoopPriceUSD;
-  const ethP  = ethPriceUSD;
+  const price=skoopPriceUSD, ethP=ethPriceUSD;
+  const setEl=(id,val)=>{const el=document.getElementById(id);if(el)el.textContent=val;};
 
-  if(price > 0){
-    const setEl=(id,val)=>{const el=document.getElementById(id);if(el)el.textContent=val;};
-    setEl('pm-price', '$' + price.toFixed(8));
-    setEl('pm-eth-price', 'ETH: $' + ethP.toLocaleString('en-US',{maximumFractionDigits:0}));
-    setEl('pm-per-eth', Math.round(ethP/price).toLocaleString('en-US'));
-    setEl('pm-per-usdc', Math.round(1/price).toLocaleString('en-US'));
-    const mcap = price * 888888888;
-    setEl('pm-mcap', '$'+(mcap>=1e6?(mcap/1e6).toFixed(2)+'M':mcap>=1e3?(mcap/1e3).toFixed(1)+'K':mcap.toFixed(0)));
+  if(price>0){
+    setEl('pm-price','$'+price.toFixed(8));
+    setEl('pm-eth-price','ETH: $'+ethP.toLocaleString('en-US',{maximumFractionDigits:0}));
+    setEl('pm-per-eth',Math.round(ethP/price).toLocaleString('en-US'));
+    setEl('pm-per-usdc',Math.round(1/price).toLocaleString('en-US'));
+    const mcap=price*888888888;
+    setEl('pm-mcap','$'+(mcap>=1e6?(mcap/1e6).toFixed(2)+'M':mcap>=1e3?(mcap/1e3).toFixed(1)+'K':mcap.toFixed(0)));
     const sub=document.getElementById('home-skoop-price');
-    if(sub) sub.textContent='$'+price.toFixed(6);
+    if(sub)sub.textContent='$'+price.toFixed(6);
   }
-
   await drawPriceChart();
 }
 
-
 async function drawPriceChart(){
-  const canvas = document.getElementById('pm-chart');
-  const ctx = canvas.getContext('2d');
-  const statusEl = document.getElementById('pm-chart-status');
-  canvas.width = canvas.offsetWidth || 390;
-
+  const canvas=document.getElementById('pm-chart');
+  const ctx=canvas.getContext('2d');
+  const statusEl=document.getElementById('pm-chart-status');
+  canvas.width=canvas.offsetWidth||390;
   try{
-    const pub = new ethers.JsonRpcProvider(CFG.RPC);
-    const ABI_SWAP = ["event Swap(address indexed sender,address indexed recipient,int256 amount0,int256 amount1,uint160 sqrtPriceX96,uint128 liquidity,int24 tick)"];
-    const pool = new ethers.Contract(POOL_ETH_SKOOP, ABI_SWAP, pub);
-    const currentBlock = await pub.getBlockNumber();
-    const fromBlock = currentBlock - 9000; // ~5h, under 10k block limit
-    const events = await pool.queryFilter(pool.filters.Swap(), fromBlock);
-
-    if(events.length < 2){
-      statusEl.textContent = events.length + ' swaps — not enough data yet';
-      drawFlatLine(ctx, canvas, skoopPriceUSD);
-      return;
-    }
-
-    statusEl.textContent = events.length + ' swaps · 6h';
-
-    const Q96f = Number(2n**96n);
-    const prices = events.map(e => {
-      const sqrtPf = Number(e.args.sqrtPriceX96) / Q96f;
-      const priceRaw = sqrtPf * sqrtPf;
-      const skoopPerEth = priceRaw * 1e12;
-      return skoopPerEth > 0 ? ethPriceUSD / skoopPerEth : 0;
-    }).filter(p => p > 0);
-
-    if(!prices.length){ drawFlatLine(ctx, canvas, skoopPriceUSD); return; }
-    drawLineChart(ctx, canvas, prices);
-
-  }catch(e){
-    document.getElementById('pm-chart-status').textContent = 'Chart unavailable';
-    drawFlatLine(ctx, canvas, skoopPriceUSD);
-  }
+    const pub=new ethers.JsonRpcProvider(CFG.RPC);
+    const ABI_SWAP=["event Swap(address indexed sender,address indexed recipient,int256 amount0,int256 amount1,uint160 sqrtPriceX96,uint128 liquidity,int24 tick)"];
+    const pool=new ethers.Contract(POOL_ETH_SKOOP,ABI_SWAP,pub);
+    const currentBlock=await pub.getBlockNumber();
+    const fromBlock=currentBlock-9000;
+    const events=await pool.queryFilter(pool.filters.Swap(),fromBlock);
+    if(events.length<2){statusEl.textContent=events.length+' swaps — not enough data yet';drawFlatLine(ctx,canvas,skoopPriceUSD);return;}
+    statusEl.textContent=events.length+' swaps · ~6h';
+    const Q96f=Number(2n**96n);
+    const prices=events.map(e=>{
+      const sqrtPf=Number(e.args.sqrtPriceX96)/Q96f;
+      const priceRaw=sqrtPf*sqrtPf;
+      const skoopPerEth=priceRaw*1e12;
+      return skoopPerEth>0?ethPriceUSD/skoopPerEth:0;
+    }).filter(p=>p>0);
+    if(!prices.length){drawFlatLine(ctx,canvas,skoopPriceUSD);return;}
+    drawLineChart(ctx,canvas,prices);
+  }catch(e){statusEl.textContent='Chart unavailable';drawFlatLine(ctx,canvas,skoopPriceUSD);}
 }
 
-function drawLineChart(ctx, canvas, prices){
-  const W = canvas.width, H = canvas.height;
-  const pad = { top:16, right:16, bottom:32, left:58 };
-  const chartW = W - pad.left - pad.right;
-  const chartH = H - pad.top - pad.bottom;
-  const minP = Math.min(...prices) * 0.993;
-  const maxP = Math.max(...prices) * 1.007;
-  const range = maxP - minP || maxP * 0.01;
-  const n = prices.length;
-
-  ctx.clearRect(0, 0, W, H);
-
-  // pastel background blocks
-  const blocks = [
-    {color:'rgba(253,206,193,0.18)', x:pad.left, w:chartW/4},
-    {color:'rgba(205,230,215,0.18)', x:pad.left+chartW/4, w:chartW/4},
-    {color:'rgba(250,226,216,0.18)', x:pad.left+chartW*2/4, w:chartW/4},
-    {color:'rgba(255,221,173,0.18)', x:pad.left+chartW*3/4, w:chartW/4},
-  ];
-  blocks.forEach(b => { ctx.fillStyle = b.color; ctx.fillRect(b.x, pad.top, b.w, chartH); });
-
-  // grid lines
-  for(let i=0; i<=4; i++){
-    const t = i/4;
-    const y = pad.top + chartH*(1-t);
-    ctx.strokeStyle = 'rgba(42,31,26,0.07)'; ctx.lineWidth = 1; ctx.setLineDash([3,4]);
-    ctx.beginPath(); ctx.moveTo(pad.left, y); ctx.lineTo(W-pad.right, y); ctx.stroke();
-    ctx.setLineDash([]);
-    ctx.fillStyle = 'rgba(107,79,71,0.5)';
-    ctx.font = '600 9px "Instrument Sans", sans-serif'; ctx.textAlign = 'right';
-    ctx.fillText('$'+(minP + range*t).toFixed(6), pad.left-5, y+3);
+function drawLineChart(ctx,canvas,prices){
+  const W=canvas.width,H=canvas.height;
+  const pad={top:16,right:16,bottom:32,left:58};
+  const chartW=W-pad.left-pad.right,chartH=H-pad.top-pad.bottom;
+  const minP=Math.min(...prices)*0.993,maxP=Math.max(...prices)*1.007;
+  const range=maxP-minP||maxP*0.01;
+  const n=prices.length;
+  ctx.clearRect(0,0,W,H);
+  [{color:'rgba(253,206,193,0.18)',x:pad.left,w:chartW/4},{color:'rgba(205,230,215,0.18)',x:pad.left+chartW/4,w:chartW/4},{color:'rgba(250,226,216,0.18)',x:pad.left+chartW*2/4,w:chartW/4},{color:'rgba(255,221,173,0.18)',x:pad.left+chartW*3/4,w:chartW/4}]
+    .forEach(b=>{ctx.fillStyle=b.color;ctx.fillRect(b.x,pad.top,b.w,chartH);});
+  for(let i=0;i<=4;i++){
+    const t=i/4,y=pad.top+chartH*(1-t);
+    ctx.strokeStyle='rgba(42,31,26,0.07)';ctx.lineWidth=1;ctx.setLineDash([3,4]);
+    ctx.beginPath();ctx.moveTo(pad.left,y);ctx.lineTo(W-pad.right,y);ctx.stroke();ctx.setLineDash([]);
+    ctx.fillStyle='rgba(107,79,71,0.5)';ctx.font='600 9px "Instrument Sans",sans-serif';ctx.textAlign='right';
+    ctx.fillText('$'+(minP+range*t).toFixed(6),pad.left-5,y+3);
   }
-
-  // X axis labels
-  ctx.fillStyle = 'rgba(107,79,71,0.45)';
-  ctx.font = '600 9px "Instrument Sans", sans-serif'; ctx.textAlign = 'center';
-  [['6h ago', pad.left], ['3h ago', pad.left+chartW/2], ['now', pad.left+chartW]].forEach(([label, x]) => {
-    ctx.fillText(label, x, H - 6);
-  });
-
-  function ptX(i){ return pad.left + (i/(n-1))*chartW; }
-  function ptY(p){ return pad.top + chartH*(1-(p-minP)/range); }
-
-  // gradient fill
-  const grad = ctx.createLinearGradient(0, pad.top, 0, pad.top+chartH);
-  grad.addColorStop(0, 'rgba(232,135,106,0.28)');
-  grad.addColorStop(0.6, 'rgba(253,175,154,0.10)');
-  grad.addColorStop(1, 'rgba(253,206,193,0.02)');
-  ctx.beginPath();
-  ctx.moveTo(ptX(0), ptY(prices[0]));
-  for(let i=1; i<n-1; i++){
-    const mx=(ptX(i)+ptX(i+1))/2, my=(ptY(prices[i])+ptY(prices[i+1]))/2;
-    ctx.quadraticCurveTo(ptX(i), ptY(prices[i]), mx, my);
-  }
-  ctx.lineTo(ptX(n-1), ptY(prices[n-1]));
-  ctx.lineTo(ptX(n-1), pad.top+chartH); ctx.lineTo(ptX(0), pad.top+chartH);
-  ctx.closePath(); ctx.fillStyle = grad; ctx.fill();
-
-  // main line
-  ctx.beginPath(); ctx.moveTo(ptX(0), ptY(prices[0]));
-  for(let i=1; i<n-1; i++){
-    const mx=(ptX(i)+ptX(i+1))/2, my=(ptY(prices[i])+ptY(prices[i+1]))/2;
-    ctx.quadraticCurveTo(ptX(i), ptY(prices[i]), mx, my);
-  }
-  ctx.lineTo(ptX(n-1), ptY(prices[n-1]));
-  ctx.strokeStyle = '#e8876a'; ctx.lineWidth = 2.5;
-  ctx.lineJoin = 'round'; ctx.lineCap = 'round'; ctx.stroke();
-
-  // glow dot at latest
-  const lx = ptX(n-1), ly = ptY(prices[n-1]);
-  ctx.beginPath(); ctx.arc(lx, ly, 7, 0, Math.PI*2);
-  ctx.fillStyle = 'rgba(232,135,106,0.20)'; ctx.fill();
-  ctx.beginPath(); ctx.arc(lx, ly, 4, 0, Math.PI*2);
-  ctx.fillStyle = '#e8876a'; ctx.fill();
-  ctx.beginPath(); ctx.arc(lx, ly, 2, 0, Math.PI*2);
-  ctx.fillStyle = '#fffaf7'; ctx.fill();
-
-  // first dot
-  ctx.beginPath(); ctx.arc(ptX(0), ptY(prices[0]), 3, 0, Math.PI*2);
-  ctx.fillStyle = 'rgba(232,135,106,0.5)'; ctx.fill();
-
-  // delta label
-  const delta = prices[n-1] - prices[0];
-  const deltaPct = (delta/prices[0]*100).toFixed(2);
-  const sign = delta >= 0 ? '+' : '';
-  const labelColor = delta >= 0 ? '#2d7a5f' : '#b91c1c';
-  const labelBg = delta >= 0 ? 'rgba(205,230,215,0.7)' : 'rgba(253,206,193,0.7)';
-  const label = sign + deltaPct + '%';
-  ctx.font = '700 10px "Instrument Sans", sans-serif';
-  const tw = ctx.measureText(label).width;
-  const lbx = W - pad.right - tw - 10, lby = pad.top + 4;
-  ctx.fillStyle = labelBg;
-  ctx.beginPath();
-  (function(x,y,w,h,r){
-    ctx.moveTo(x+r,y);ctx.lineTo(x+w-r,y);ctx.quadraticCurveTo(x+w,y,x+w,y+r);
-    ctx.lineTo(x+w,y+h-r);ctx.quadraticCurveTo(x+w,y+h,x+w-r,y+h);
-    ctx.lineTo(x+r,y+h);ctx.quadraticCurveTo(x,y+h,x,y+h-r);
-    ctx.lineTo(x,y+r);ctx.quadraticCurveTo(x,y,x+r,y);ctx.closePath();
-  })(lbx-4, lby-1, tw+8, 14, 4);
-  ctx.fill();
-  ctx.fillStyle = labelColor; ctx.textAlign = 'left';
-  ctx.fillText(label, lbx, lby+10);
+  ctx.fillStyle='rgba(107,79,71,0.45)';ctx.font='600 9px "Instrument Sans",sans-serif';ctx.textAlign='center';
+  [['6h ago',pad.left],['3h ago',pad.left+chartW/2],['now',pad.left+chartW]].forEach(([l,x])=>ctx.fillText(l,x,H-6));
+  function ptX(i){return pad.left+(i/(n-1))*chartW;}
+  function ptY(p){return pad.top+chartH*(1-(p-minP)/range);}
+  const grad=ctx.createLinearGradient(0,pad.top,0,pad.top+chartH);
+  grad.addColorStop(0,'rgba(232,135,106,0.28)');grad.addColorStop(0.6,'rgba(253,175,154,0.10)');grad.addColorStop(1,'rgba(253,206,193,0.02)');
+  ctx.beginPath();ctx.moveTo(ptX(0),ptY(prices[0]));
+  for(let i=1;i<n-1;i++){const mx=(ptX(i)+ptX(i+1))/2,my=(ptY(prices[i])+ptY(prices[i+1]))/2;ctx.quadraticCurveTo(ptX(i),ptY(prices[i]),mx,my);}
+  ctx.lineTo(ptX(n-1),ptY(prices[n-1]));ctx.lineTo(ptX(n-1),pad.top+chartH);ctx.lineTo(ptX(0),pad.top+chartH);ctx.closePath();ctx.fillStyle=grad;ctx.fill();
+  ctx.beginPath();ctx.moveTo(ptX(0),ptY(prices[0]));
+  for(let i=1;i<n-1;i++){const mx=(ptX(i)+ptX(i+1))/2,my=(ptY(prices[i])+ptY(prices[i+1]))/2;ctx.quadraticCurveTo(ptX(i),ptY(prices[i]),mx,my);}
+  ctx.lineTo(ptX(n-1),ptY(prices[n-1]));ctx.strokeStyle='#e8876a';ctx.lineWidth=2.5;ctx.lineJoin='round';ctx.lineCap='round';ctx.stroke();
+  const lx=ptX(n-1),ly=ptY(prices[n-1]);
+  ctx.beginPath();ctx.arc(lx,ly,7,0,Math.PI*2);ctx.fillStyle='rgba(232,135,106,0.20)';ctx.fill();
+  ctx.beginPath();ctx.arc(lx,ly,4,0,Math.PI*2);ctx.fillStyle='#e8876a';ctx.fill();
+  ctx.beginPath();ctx.arc(lx,ly,2,0,Math.PI*2);ctx.fillStyle='#fffaf7';ctx.fill();
+  ctx.beginPath();ctx.arc(ptX(0),ptY(prices[0]),3,0,Math.PI*2);ctx.fillStyle='rgba(232,135,106,0.5)';ctx.fill();
+  const delta=prices[n-1]-prices[0],deltaPct=(delta/prices[0]*100).toFixed(2),sign=delta>=0?'+':'';
+  const lc=delta>=0?'#2d7a5f':'#b91c1c',lb=delta>=0?'rgba(205,230,215,0.7)':'rgba(253,206,193,0.7)',label=sign+deltaPct+'%';
+  ctx.font='700 10px "Instrument Sans",sans-serif';const tw=ctx.measureText(label).width;
+  const lbx=W-pad.right-tw-10,lby=pad.top+4;ctx.fillStyle=lb;ctx.beginPath();
+  (function(x,y,w,h,r){ctx.moveTo(x+r,y);ctx.lineTo(x+w-r,y);ctx.quadraticCurveTo(x+w,y,x+w,y+r);ctx.lineTo(x+w,y+h-r);ctx.quadraticCurveTo(x+w,y+h,x+w-r,y+h);ctx.lineTo(x+r,y+h);ctx.quadraticCurveTo(x,y+h,x,y+h-r);ctx.lineTo(x,y+r);ctx.quadraticCurveTo(x,y,x+r,y);ctx.closePath();})(lbx-4,lby-1,tw+8,14,4);
+  ctx.fill();ctx.fillStyle=lc;ctx.textAlign='left';ctx.fillText(label,lbx,lby+10);
 }
 
-function drawFlatLine(ctx, canvas, price){
-  const W = canvas.width, H = canvas.height;
-  ctx.clearRect(0, 0, W, H);
-  const colors = ['rgba(253,206,193,0.2)','rgba(205,230,215,0.2)','rgba(250,226,216,0.2)','rgba(255,221,173,0.2)'];
-  colors.forEach((c,i)=>{ ctx.fillStyle=c; ctx.fillRect(W/4*i, 0, W/4, H); });
-  ctx.strokeStyle = 'rgba(232,135,106,0.35)'; ctx.setLineDash([5,5]); ctx.lineWidth = 1.5;
-  ctx.beginPath(); ctx.moveTo(20, H/2); ctx.lineTo(W-20, H/2); ctx.stroke();
-  ctx.setLineDash([]);
-  if(price > 0){
-    ctx.font = '600 11px "Instrument Sans", sans-serif'; ctx.textAlign = 'center';
-    ctx.fillStyle = 'rgba(107,79,71,0.5)';
-    ctx.fillText('$' + price.toFixed(6), W/2, H/2 - 8);
-  }
-  ctx.font = '500 10px "Instrument Sans", sans-serif';
-  ctx.fillStyle = 'rgba(107,79,71,0.35)';
-  ctx.fillText('Accumulating price history…', W/2, H/2 + 16);
+function drawFlatLine(ctx,canvas,price){
+  const W=canvas.width,H=canvas.height;ctx.clearRect(0,0,W,H);
+  ['rgba(253,206,193,0.2)','rgba(205,230,215,0.2)','rgba(250,226,216,0.2)','rgba(255,221,173,0.2)'].forEach((c,i)=>{ctx.fillStyle=c;ctx.fillRect(W/4*i,0,W/4,H);});
+  ctx.strokeStyle='rgba(232,135,106,0.35)';ctx.setLineDash([5,5]);ctx.lineWidth=1.5;
+  ctx.beginPath();ctx.moveTo(20,H/2);ctx.lineTo(W-20,H/2);ctx.stroke();ctx.setLineDash([]);
+  if(price>0){ctx.font='600 11px "Instrument Sans",sans-serif';ctx.textAlign='center';ctx.fillStyle='rgba(107,79,71,0.5)';ctx.fillText('$'+price.toFixed(6),W/2,H/2-8);}
+  ctx.font='500 10px "Instrument Sans",sans-serif';ctx.fillStyle='rgba(107,79,71,0.35)';ctx.fillText('Accumulating price history\u2026',W/2,H/2+16);
 }
 
-
-if(window.ethereum){
-  window.ethereum.request({method:'eth_accounts'}).then(async a=>{
-    if(a.length) await openWalletModal();
-  }).catch(()=>{});
+// ── TOAST ─────────────────────────────────────────────────────────────────────
+let toastT;
+function showToast(msg,type=""){
+  const el=document.getElementById("toast");
+  el.className="show"+(type?" "+type:"");
+  el.innerHTML=(type==="ok"?"✓ ":type==="err"?"✕ ":"")+msg;
+  clearTimeout(toastT);toastT=setTimeout(()=>el.classList.remove("show"),4000);
 }
-document.addEventListener('visibilitychange',async function(){
-  if(document.visibilityState!=='visible'||!window.ethereum)return;
-  if(provider&&userAddr){
-    // Already connected — just refresh balances silently
-    try{await refreshBals();}catch(e){}
-    return;
-  }
-  // Not connected — check if wallet still has accounts and silently reconnect
-  try{
-    const a=await window.ethereum.request({method:'eth_accounts'});
-    if(!a.length)return; // user disconnected in wallet — don't force reconnect
-    provider=new ethers.BrowserProvider(window.ethereum);
-    signer=await provider.getSigner();
-    userAddr=await signer.getAddress();
-    // Only run UI setup if gate is still showing (first connect)
-    const gateVisible=document.getElementById('connect-gate').style.display!=='none';
-    if(gateVisible){
-      await onConnected();
-    } else {
-      // Already in app — just restore provider state silently
-      updatePills();
-      try{await checkNet();}catch(e){}
-      try{await refreshBals();}catch(e){}
-    }
-  }catch(e){}
-});
 </script>
 </body>
 </html>
