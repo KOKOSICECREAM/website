@@ -401,10 +401,39 @@ let cart={},capturedReceipts=[];
 let rewardScannerActive=false,rewardScanner=null,scannedRewardAddr=null;
 let activeCat='all',toastTimer=null,calcSkoopAmount=0;
 
+async function fetchEthPriceOnChain(){
+  // On-chain fallback: WETH/USDC 0.05% pool on Base — no external API, no CORS ever
+  const ABI_P2=['function slot0() view returns (uint160 sqrtPriceX96,int24,uint16,uint16,uint16,uint8,bool)','function token0() view returns (address)'];
+  const WETH='0x4200000000000000000000000000000000000006';
+  const pub=new ethers.JsonRpcProvider(CFG.RPC);
+  const pool=new ethers.Contract('0xd0b53D9277642d899DF5C87A3966A349A798F224',ABI_P2,pub);
+  const [s0,t0]=await Promise.all([pool.slot0(),pool.token0()]);
+  const sqrtPf=Number(s0.sqrtPriceX96)/Number(2n**96n);
+  const raw=sqrtPf*sqrtPf;
+  const wethIsT0=t0.toLowerCase()===WETH.toLowerCase();
+  const p=wethIsT0?(1/raw)*1e12:raw*1e12;
+  if(p>100&&p<1000000)return p;
+  throw new Error('implausible price');
+}
+
 async function fetchSkoopPrice(){
   try{
-    const r=await fetch('https://api.coingecko.com/api/v3/simple/price?ids=ethereum&vs_currencies=usd');
-    const d=await r.json();ethPriceUSD=d?.ethereum?.usd||0;if(!ethPriceUSD)return;
+    // Tier 1: CoinGecko
+    let gotEth=false;
+    try{
+      const r=await fetch('https://api.coingecko.com/api/v3/simple/price?ids=ethereum&vs_currencies=usd');
+      const d=await r.json();
+      const p=d?.ethereum?.usd||0;
+      if(p>100&&p<1000000){ethPriceUSD=p;gotEth=true;}
+    }catch(e){}
+
+    // Tier 2: on-chain WETH/USDC pool (same as customer dapp)
+    if(!gotEth){
+      try{ethPriceUSD=await fetchEthPriceOnChain();gotEth=true;}catch(e){}
+    }
+
+    if(!gotEth)throw new Error('ETH price unavailable');
+
     const pub=new ethers.JsonRpcProvider(CFG.RPC);
     const pool=new ethers.Contract(CFG.POOL_ETH_SKOOP,ABI_POOL,pub);
     const [s0,t0]=await Promise.all([pool.slot0(),pool.token0()]);
