@@ -970,7 +970,12 @@ async function confirmPay(){
     const tokAmt=BigInt(d.tokenAmount);
     const sk=new ethers.Contract(CFG.SKOOP,ABI_ERC20,signer);
     const al=await sk.allowance(userAddr,CFG.ESCROW);
-    if(al<tokAmt){showToast("Approving SKOOP…","");await(await sk.approve(CFG.ESCROW,tokAmt)).wait();}
+    if(al<tokAmt){
+      // Approve MaxUint256 so future payments never need a second approval popup
+      showToast("Approving SKOOP — one-time only…","");
+      await(await sk.approve(CFG.ESCROW,ethers.MaxUint256)).wait();
+      showToast("Approved! Sending payment…","");
+    }
     const intent={
       receiptId:d.receiptId,orderId:d.orderId,
       storeIdHash:d.storeIdHash,terminalIdHash:d.terminalIdHash,
