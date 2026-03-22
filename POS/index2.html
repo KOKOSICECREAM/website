@@ -86,7 +86,7 @@ html,body{height:100%;font-family:'Instrument Sans',sans-serif;background:var(--
 #actions-panel{border-left:1px solid var(--border);display:flex;flex-direction:column;overflow:hidden;background:var(--cream);}
 .action-view{display:none;flex-direction:column;flex:1;overflow:hidden;}
 .action-view.active{display:flex;}
-#rewards-view{padding:1.25rem;gap:1rem;}
+#rewards-view{padding:1.25rem;gap:1rem;overflow-y:auto;}
 #rewards-view h3{font-family:'Cormorant Garamond',serif;font-size:1.1rem;font-style:italic;font-weight:400;color:var(--ink-mid);}
 .field-group{display:flex;flex-direction:column;gap:0.4rem;}
 .field-label{font-size:0.72rem;font-weight:600;color:var(--ink-mid);letter-spacing:0.05em;text-transform:uppercase;}
@@ -234,20 +234,26 @@ html,body{height:100%;font-family:'Instrument Sans',sans-serif;background:var(--
         <div class="addr-display" id="reward-addr" style="font-size:0.68rem;word-break:break-all;min-height:38px;">—</div>
       </div>
 
-      <!-- ─── REWARD CALCULATOR ─── -->
+      <!-- REWARD CALCULATOR -->
       <div style="background:var(--sand);border-radius:12px;padding:0.875rem;display:flex;flex-direction:column;gap:0.6rem;">
-        <div style="font-size:0.65rem;font-weight:600;text-transform:uppercase;letter-spacing:0.08em;color:var(--ink-mid);">Reward Calculator — 5%</div>
+        <div style="font-size:0.65rem;font-weight:600;text-transform:uppercase;letter-spacing:0.08em;color:var(--ink-mid);">Square / Cash Sale — 5% Reward</div>
         <div style="display:flex;align-items:center;gap:0.4rem;">
           <span style="font-size:1rem;font-weight:700;color:var(--ink-mid);">$</span>
           <input class="field-input" type="number" id="sale-total" placeholder="Square sale total" min="0" step="0.01"
             style="flex:1;font-size:1rem;font-weight:600;padding:0.5rem 0.75rem;" oninput="calcReward(this.value)">
         </div>
         <div style="display:flex;justify-content:space-between;align-items:center;padding:0 0.1rem;">
-          <span style="font-size:0.7rem;color:var(--ink-mid);">5% of sale in SKOOP</span>
+          <span style="font-size:0.7rem;color:var(--ink-mid);">5% of Square/cash sale</span>
           <span id="calc-skoop-display" style="font-size:0.88rem;font-weight:700;color:var(--green);">—</span>
         </div>
         <button class="action-btn primary" id="calc-apply-btn" onclick="applyCalcReward()" disabled
-          style="padding:0.45rem;font-size:0.75rem;">↓ Use This Amount</button>
+          style="padding:0.45rem;font-size:0.75rem;">&#8595; Use This Amount</button>
+      </div>
+
+      <!-- Rate reference -->
+      <div style="background:var(--mint);border-radius:8px;padding:0.5rem 0.75rem;font-size:0.68rem;color:var(--green);display:flex;justify-content:space-between;">
+        <span>💳 Square/Cash: <strong>5%</strong></span>
+        <span>🍦 Paid in SKOOP: <strong>10%</strong> (auto)</span>
       </div>
 
       <div class="field-group">
@@ -371,14 +377,19 @@ async function fetchSkoopPrice(){
     const d = await r.json();
     ethPriceUSD = d?.ethereum?.usd || 0;
     if(!ethPriceUSD) return;
+
     const pub  = new ethers.JsonRpcProvider(CFG.RPC);
     const pool = new ethers.Contract(CFG.POOL_ETH_SKOOP, ABI_POOL, pub);
     const [s0, t0] = await Promise.all([pool.slot0(), pool.token0()]);
+
     const sqrtPf = Number(s0.sqrtPriceX96) / Number(2n**96n);
     const priceRaw = sqrtPf * sqrtPf;
+
     const skoopIsT0 = t0.toLowerCase() === CFG.SKOOP.toLowerCase();
     const skoopPerEth = skoopIsT0 ? (1/priceRaw)*1e12 : priceRaw*1e12;
+
     skoopPriceUSD = skoopPerEth > 0 ? ethPriceUSD / skoopPerEth : 0;
+
     const ind = document.getElementById('price-indicator');
     if(skoopPriceUSD > 0){
       ind.textContent = 'SKOOP $'+skoopPriceUSD.toFixed(6)+'  ·  ETH $'+ethPriceUSD.toLocaleString('en-US',{maximumFractionDigits:0});
@@ -565,6 +576,26 @@ async function pollForPayment(receiptId){
         document.getElementById('modal-status').textContent='✓ Payment confirmed!';
         document.getElementById('modal-status').style.background='var(--mint)';
         showToast('Payment received ✓','success');
+
+        // Auto-calculate 10% SKOOP reward for paying with SKOOP
+        if(skoopPriceUSD > 0){
+          const ev = events[0];
+          const paidCents = Number(ev.args.totalCents);
+          const rewardSkoop = Math.round((paidCents / 100) * 0.10 / skoopPriceUSD);
+          if(rewardSkoop > 0){
+            setTimeout(()=>{
+              mobileTab('rewards');
+              switchPanel('rewards');
+              const input = document.getElementById('reward-amount');
+              input.value = rewardSkoop;
+              input.dispatchEvent(new Event('input'));
+              document.getElementById('reward-usd-hint').textContent =
+                '10% SKOOP payment bonus — scan customer wallet to send';
+              showToast('10% reward ready — scan customer wallet 🎁','success');
+            }, 2700);
+          }
+        }
+
         cart={}; renderCart(); setTimeout(closeModal,2500); loadReceipts();
       }
     }catch{}
@@ -611,11 +642,11 @@ function resetRewards(){
   document.getElementById('reward-addr').textContent='—';
   document.getElementById('reward-addr-input').value='';
   document.getElementById('reward-amount').value='';
-  document.getElementById('reward-usd-hint').textContent='';
-  document.getElementById('reward-send-btn').disabled=true;
   document.getElementById('sale-total').value='';
   document.getElementById('calc-skoop-display').textContent='—';
   document.getElementById('calc-apply-btn').disabled=true;
+  document.getElementById('reward-usd-hint').textContent='';
+  document.getElementById('reward-send-btn').disabled=true;
   calcSkoopAmount=0;
 }
 
@@ -636,7 +667,8 @@ function calcReward(saleTotalStr){
   if(!saleTotal||saleTotal<=0||!skoopPriceUSD){
     display.textContent='—'; applyBtn.disabled=true; calcSkoopAmount=0; return;
   }
-  calcSkoopAmount=Math.round((saleTotal*0.05)/skoopPriceUSD);
+  const rewardUSD=saleTotal*0.05;
+  calcSkoopAmount=Math.round(rewardUSD/skoopPriceUSD);
   display.textContent=calcSkoopAmount.toLocaleString()+' SKOOP';
   applyBtn.disabled=false;
 }
@@ -743,8 +775,10 @@ renderMenu();
 renderCart();
 initMobileLayout();
 updateDailyLimitDisplay();
+
 fetchSkoopPrice();
 setInterval(fetchSkoopPrice, 60000);
+
 if(window.ethereum){
   window.ethereum.request({method:'eth_accounts'}).then(accounts=>{
     if(accounts.length) connectWallet();
