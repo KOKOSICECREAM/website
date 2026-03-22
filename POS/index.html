@@ -383,7 +383,7 @@ const CFG={
 };
 let skoopPriceUSD=0,ethPriceUSD=0;
 const ABI_ERC20=["function balanceOf(address) view returns (uint256)","function allowance(address,address) view returns (uint256)","function approve(address,uint256) returns (bool)","function transfer(address,uint256) returns (bool)"];
-const ABI_ESCROW=[{inputs:[{components:[{name:"receiptId",type:"bytes32"},{name:"orderId",type:"bytes32"},{name:"storeIdHash",type:"bytes32"},{name:"terminalIdHash",type:"bytes32"},{name:"tokenAmount",type:"uint256"},{name:"subtotalCents",type:"uint256"},{name:"taxCents",type:"uint256"},{name:"totalCents",type:"uint256"},{name:"itemCount",type:"uint256"},{name:"cartHash",type:"bytes32"},{name:"deadline",type:"uint256"}],internalType:"struct KOKOSPaymentEscrowPOS.PaymentIntent",name:"intent",type:"tuple"},{name:"signature",type:"bytes"}],name:"capturePayment",outputs:[],stateMutability:"nonpayable",type:"function"},{inputs:[{name:"receiptIds",type:"bytes32[]"}],name:"burnPayments",outputs:[],stateMutability:"nonpayable",type:"function"},{anonymous:false,inputs:[{indexed:true,name:"receiptId",type:"bytes32"},{indexed:true,name:"orderId",type:"bytes32"},{indexed:true,name:"payer",type:"address"},{indexed:false,name:"tokenAmount",type:"uint256"},{indexed:false,name:"totalCents",type:"uint256"},{indexed:false,name:"itemCount",type:"uint256"},{indexed:false,name:"storeIdHash",type:"bytes32"},{indexed:false,name:"terminalIdHash",type:"bytes32"},{indexed:false,name:"cartHash",type:"bytes32"},{indexed:false,name:"timestamp",type:"uint256"}],name:"PaymentCaptured",type:"event"}];
+const ABI_ESCROW=[{inputs:[{components:[{name:"receiptId",type:"bytes32"},{name:"orderId",type:"bytes32"},{name:"storeIdHash",type:"bytes32"},{name:"terminalIdHash",type:"bytes32"},{name:"tokenAmount",type:"uint256"},{name:"subtotalCents",type:"uint256"},{name:"taxCents",type:"uint256"},{name:"totalCents",type:"uint256"},{name:"itemCount",type:"uint256"},{name:"cartHash",type:"bytes32"},{name:"deadline",type:"uint256"}],internalType:"struct KOKOSPaymentEscrowPOS.PaymentIntent",name:"intent",type:"tuple"},{name:"signature",type:"bytes"}],name:"capturePayment",outputs:[],stateMutability:"nonpayable",type:"function"},{inputs:[{name:"receiptIds",type:"bytes32[]"}],name:"burnPayments",outputs:[],stateMutability:"nonpayable",type:"function"},{anonymous:false,inputs:[{indexed:true,name:"receiptId",type:"bytes32"},{indexed:true,name:"orderId",type:"bytes32"},{indexed:true,name:"payer",type:"address"},{indexed:false,name:"tokenAmount",type:"uint256"},{indexed:false,name:"totalCents",type:"uint256"},{indexed:false,name:"itemCount",type:"uint256"},{indexed:false,name:"storeIdHash",type:"bytes32"},{indexed:false,name:"terminalIdHash",type:"bytes32"},{indexed:false,name:"cartHash",type:"bytes32"},{indexed:false,name:"timestamp",type:"uint256"}],name:"PaymentCaptured",type:"event"},{anonymous:false,inputs:[{indexed:true,name:"receiptId",type:"bytes32"},{indexed:true,name:"orderId",type:"bytes32"},{indexed:true,name:"payer",type:"address"},{indexed:false,name:"tokenAmount",type:"uint256"},{indexed:false,name:"timestamp",type:"uint256"}],name:"PaymentBurned",type:"event"},{anonymous:false,inputs:[{indexed:false,name:"paymentCount",type:"uint256"},{indexed:false,name:"totalTokenAmount",type:"uint256"},{indexed:false,name:"timestamp",type:"uint256"}],name:"BatchBurnExecuted",type:"event"}];
 const ABI_POOL=["function slot0() view returns (uint160 sqrtPriceX96,int24,uint16,uint16,uint16,uint8,bool)","function token0() view returns (address)"];
 const MENU=[
   {id:'s1',cat:'scoops',emoji:'🍦',name:'Kids Scoop',price:5.00},
@@ -849,15 +849,23 @@ async function loadReceipts(){
     const escrow=new ethers.Contract(CFG.ESCROW,ABI_ESCROW,pubProvider);
     const latest=await pubProvider.getBlockNumber();
     const CHUNK=9000,LOOKBACK=45000,fromBlock=Math.max(0,latest-LOOKBACK);
-    let allEvents=[];
+    let capturedEvents=[],burnedEvents=[];
     for(let start=fromBlock;start<latest;start+=CHUNK){
       const end=Math.min(start+CHUNK-1,latest);
-      const chunk=await escrow.queryFilter(escrow.filters.PaymentCaptured(),start,end);
-      allEvents=allEvents.concat(chunk);
+      const [cc,bb]=await Promise.all([
+        escrow.queryFilter(escrow.filters.PaymentCaptured(),start,end),
+        escrow.queryFilter(escrow.filters.PaymentBurned(),start,end),
+      ]);
+      capturedEvents=capturedEvents.concat(cc);
+      burnedEvents=burnedEvents.concat(bb);
     }
-    capturedReceipts=allEvents.map(e=>({receiptId:e.args.receiptId,amount:e.args.tokenAmount}));
+    // Build set of burned receiptIds so we can exclude them
+    const burnedIds=new Set(burnedEvents.map(e=>e.args.receiptId.toLowerCase()));
+    capturedReceipts=capturedEvents
+      .filter(e=>!burnedIds.has(e.args.receiptId.toLowerCase()))
+      .map(e=>({receiptId:e.args.receiptId,amount:e.args.tokenAmount}));
     renderReceipts();
-    if(capturedReceipts.length===0)showToast('No receipts found in last 45k blocks','');
+    if(capturedReceipts.length===0)showToast('No unburned receipts found','');
   }catch(e){showToast('Receipt load error: '+(e?.message||'unknown').slice(0,60),'error');}
 }
 function renderReceipts(){
