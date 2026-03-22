@@ -558,51 +558,25 @@ const ABI_POOL_IMM=["function token0() view returns (address)","function token1(
 const ABI_POOL_S0=["function slot0() view returns (uint160 sqrtPriceX96,int24,uint16,uint16,uint16,uint8,bool)","function token0() view returns (address)"];
 
 async function fetchEthPrice(){
-  // Try multiple CORS-friendly sources in order
-  const sources = [
-    // Binance — no CORS, no key
-    async () => {
-      const r = await fetch('https://api.binance.com/api/v3/ticker/price?symbol=ETHUSDT');
-      const d = await r.json();
-      return parseFloat(d.price);
-    },
-    // Coinbase — no CORS, no key
-    async () => {
-      const r = await fetch('https://api.coinbase.com/v2/prices/ETH-USD/spot');
-      const d = await r.json();
-      return parseFloat(d.data.amount);
-    },
-    // KuCoin — no CORS
-    async () => {
-      const r = await fetch('https://api.kucoin.com/api/v1/market/orderbook/level1?symbol=ETH-USDT');
-      const d = await r.json();
-      return parseFloat(d.data.price);
-    },
-    // On-chain fallback: WETH/USDC pool on Base (always works, no CORS)
-    async () => {
-      const WETH_USDC_POOL = '0xd0b53D9277642d899DF5C87A3966A349A798F224'; // Base WETH/USDC 0.05%
-      const pub = new ethers.JsonRpcProvider(CFG.RPC);
-      const pool = new ethers.Contract(WETH_USDC_POOL, ABI_POOL_S0, pub);
-      const [s0, t0] = await Promise.all([pool.slot0(), pool.token0()]);
-      const sqrtPf = Number(s0.sqrtPriceX96) / Number(2n**96n);
-      const priceRaw = sqrtPf * sqrtPf;
-      // WETH is token0 or token1, USDC is the other (6 dec vs 18 dec = 1e12 adjustment)
-      const wethIsT0 = t0.toLowerCase() === CFG.WETH.toLowerCase();
-      const usdcPerWeth = wethIsT0 ? (1/priceRaw)*1e12 : priceRaw*1e12;
-      return usdcPerWeth;
-    },
-  ];
-
-  for (const source of sources) {
-    try {
-      const price = await source();
-      if (price && price > 100 && price < 1000000) { // sanity check
-        ethPriceUSD = price;
-        if (ethPriceUSD > 0) await fetchSkoopPrice();
-        return;
-      }
-    } catch(e) { /* try next */ }
-  }
+  // CoinGecko works from kokosicecream.com — on-chain pool as fallback
+  try{
+    const r=await fetch('https://api.coingecko.com/api/v3/simple/price?ids=ethereum&vs_currencies=usd');
+    const d=await r.json();
+    const p=d?.ethereum?.usd||0;
+    if(p>100&&p<1000000){ethPriceUSD=p;await fetchSkoopPrice();return;}
+  }catch(e){}
+  // On-chain fallback: WETH/USDC 0.05% pool on Base
+  try{
+    const ABI_S=['function slot0() view returns (uint160 sqrtPriceX96,int24,uint16,uint16,uint16,uint8,bool)','function token0() view returns (address)'];
+    const pub=new ethers.JsonRpcProvider(CFG.RPC);
+    const pool=new ethers.Contract('0xd0b53D9277642d899DF5C87A3966A349A798F224',ABI_S,pub);
+    const [s0,t0]=await Promise.all([pool.slot0(),pool.token0()]);
+    const sqrtPf=Number(s0.sqrtPriceX96)/Number(2n**96n);
+    const raw=sqrtPf*sqrtPf;
+    const wethIsT0=t0.toLowerCase()===CFG.WETH.toLowerCase();
+    const p=wethIsT0?(1/raw)*1e12:raw*1e12;
+    if(p>100&&p<1000000){ethPriceUSD=p;await fetchSkoopPrice();}
+  }catch(e){}
 }
 
 async function fetchSkoopPrice(){
@@ -1070,72 +1044,30 @@ function closePriceModal(){
 }
 
 async function renderPriceModal(){
-  const setEl = (id, val) => { const el = document.getElementById(id); if(el) el.textContent = val; };
-  setEl('pm-chart-status', 'Loading…');
-
-  try{
-    // ── Fetch ETH price ──
-    // Fetch ETH price from CORS-friendly sources
-    let ethUSD = 0;
-    const ethSources = [
-      async () => { const r=await fetch('https://api.binance.com/api/v3/ticker/price?symbol=ETHUSDT'); const d=await r.json(); return parseFloat(d.price); },
-      async () => { const r=await fetch('https://api.coinbase.com/v2/prices/ETH-USD/spot'); const d=await r.json(); return parseFloat(d.data.amount); },
-      async () => { const r=await fetch('https://api.kucoin.com/api/v1/market/orderbook/level1?symbol=ETH-USDT'); const d=await r.json(); return parseFloat(d.data.price); },
-    ];
-    for (const src of ethSources) {
-      try { const p=await src(); if(p>100&&p<1000000){ethUSD=p;break;} } catch(e){}
-    }
-    // Fall back to cached value if all fail
-    if (!ethUSD && ethPriceUSD > 0) ethUSD = ethPriceUSD;
-    if (!ethUSD) throw new Error('ETH price unavailable');
-
-    // ── Get SKOOP price from ETH pool slot0 ──
-    const pub = new ethers.JsonRpcProvider(CFG.RPC);
-    const poolETH = new ethers.Contract(POOL_ETH_SKOOP, ABI_POOL_S0, pub);
-    const poolUSDC = new ethers.Contract(POOL_USDC_SKOOP, ABI_POOL_S0, pub);
-
-    const [[s0eth, t0eth], [s0usdc, t0usdc]] = await Promise.all([
-      Promise.all([poolETH.slot0(), poolETH.token0()]),
-      Promise.all([poolUSDC.slot0(), poolUSDC.token0()]),
-    ]);
-
-    // ETH pool price
-    const sqrtEth = Number(s0eth.sqrtPriceX96) / Number(2n**96n);
-    const rawEth = sqrtEth * sqrtEth;
-    const skoopIsT0eth = t0eth.toLowerCase() === CFG.SKOOP.toLowerCase();
-    const skoopPerEth = skoopIsT0eth ? (1/rawEth)*1e12 : rawEth*1e12;
-    const skoopUSD = skoopPerEth > 0 ? ethUSD / skoopPerEth : 0;
-
-    // USDC pool price (SKOOP per USDC)
-    const sqrtUsdc = Number(s0usdc.sqrtPriceX96) / Number(2n**96n);
-    const rawUsdc = sqrtUsdc * sqrtUsdc;
-    const skoopIsT0usdc = t0usdc.toLowerCase() === CFG.SKOOP.toLowerCase();
-    // USDC has 6 dec, SKOOP has 6 dec — adjust for decimals ratio (1e0)
-    const skoopPerUsdc = skoopIsT0usdc ? (1/rawUsdc) : rawUsdc;
-
-    // Market cap (max supply 888,888,888)
-    const MAX_SUPPLY = 888888888;
-    const mcap = skoopUSD * MAX_SUPPLY;
-
-    // ── Populate stat cards ──
-    setEl('pm-price', skoopUSD > 0 ? '$' + skoopUSD.toFixed(8) : '—');
-    setEl('pm-eth-price', ethUSD > 0 ? 'ETH: $' + ethUSD.toLocaleString('en-US', {maximumFractionDigits:0}) : '');
-    setEl('pm-per-eth', skoopPerEth > 0 ? Math.round(skoopPerEth).toLocaleString() : '—');
-    setEl('pm-per-usdc', skoopPerUsdc > 0 ? Math.round(skoopPerUsdc).toLocaleString() : '—');
-    setEl('pm-mcap', mcap > 0 ? '$' + (mcap >= 1e6 ? (mcap/1e6).toFixed(2)+'M' : mcap >= 1e3 ? (mcap/1e3).toFixed(1)+'K' : mcap.toFixed(0)) : '—');
-
-    // Update home tile
-    const sub = document.getElementById('home-skoop-price');
-    if(sub && skoopUSD > 0) sub.textContent = '$' + skoopUSD.toFixed(6);
-
-    // ── Draw chart from Swap events ──────────────────────────────────────────
-    await drawPriceChart();
-
-  } catch(e){
-    setEl('pm-chart-status', 'Price unavailable');
-    console.error('renderPriceModal:', e);
+  // Use prices already fetched by fetchEthPrice/fetchSkoopPrice on connect
+  // Re-fetch from pool if we don't have them yet
+  if(!skoopPriceUSD || !ethPriceUSD){
+    await fetchEthPrice(); // populates ethPriceUSD + skoopPriceUSD via fetchSkoopPrice
   }
+
+  const price = skoopPriceUSD;
+  const ethP  = ethPriceUSD;
+
+  if(price > 0){
+    const setEl=(id,val)=>{const el=document.getElementById(id);if(el)el.textContent=val;};
+    setEl('pm-price', '$' + price.toFixed(8));
+    setEl('pm-eth-price', 'ETH: $' + ethP.toLocaleString('en-US',{maximumFractionDigits:0}));
+    setEl('pm-per-eth', Math.round(ethP/price).toLocaleString('en-US'));
+    setEl('pm-per-usdc', Math.round(1/price).toLocaleString('en-US'));
+    const mcap = price * 888888888;
+    setEl('pm-mcap', '$'+(mcap>=1e6?(mcap/1e6).toFixed(2)+'M':mcap>=1e3?(mcap/1e3).toFixed(1)+'K':mcap.toFixed(0)));
+    const sub=document.getElementById('home-skoop-price');
+    if(sub) sub.textContent='$'+price.toFixed(6);
+  }
+
+  await drawPriceChart();
 }
+
 
 async function drawPriceChart(){
   const canvas = document.getElementById('pm-chart');
