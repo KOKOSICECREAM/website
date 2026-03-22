@@ -307,7 +307,7 @@ const CFG={
 };
 let skoopPriceUSD=0,ethPriceUSD=0;
 const ABI_ERC20=["function balanceOf(address) view returns (uint256)","function allowance(address,address) view returns (uint256)","function approve(address,uint256) returns (bool)","function transfer(address,uint256) returns (bool)"];
-const ABI_ESCROW=[{inputs:[{components:[{name:"receiptId",type:"bytes32"},{name:"orderId",type:"bytes32"},{name:"storeIdHash",type:"bytes32"},{name:"terminalIdHash",type:"bytes32"},{name:"tokenAmount",type:"uint256"},{name:"subtotalCents",type:"uint256"},{name:"taxCents",type:"uint256"},{name:"totalCents",type:"uint256"},{name:"itemCount",type:"uint256"},{name:"cartHash",type:"bytes32"},{name:"deadline",type:"uint256"}],internalType:"struct KOKOSPaymentEscrowPOS.PaymentIntent",name:"intent",type:"tuple"},{name:"signature",type:"bytes"}],name:"capturePayment",outputs:[],stateMutability:"nonpayable",type:"function"},{inputs:[{name:"receiptIds",type:"bytes32[]"}],name:"burnPayments",outputs:[],stateMutability:"nonpayable",type:"function"},{anonymous:false,inputs:[{indexed:true,name:"receiptId",type:"bytes32"},{indexed:true,name:"payer",type:"address"},{indexed:false,name:"tokenAmount",type:"uint256"},{indexed:false,name:"totalCents",type:"uint256"}],name:"PaymentCaptured",type:"event"}];
+const ABI_ESCROW=[{inputs:[{components:[{name:"receiptId",type:"bytes32"},{name:"orderId",type:"bytes32"},{name:"storeIdHash",type:"bytes32"},{name:"terminalIdHash",type:"bytes32"},{name:"tokenAmount",type:"uint256"},{name:"subtotalCents",type:"uint256"},{name:"taxCents",type:"uint256"},{name:"totalCents",type:"uint256"},{name:"itemCount",type:"uint256"},{name:"cartHash",type:"bytes32"},{name:"deadline",type:"uint256"}],internalType:"struct KOKOSPaymentEscrowPOS.PaymentIntent",name:"intent",type:"tuple"},{name:"signature",type:"bytes"}],name:"capturePayment",outputs:[],stateMutability:"nonpayable",type:"function"},{inputs:[{name:"receiptIds",type:"bytes32[]"}],name:"burnPayments",outputs:[],stateMutability:"nonpayable",type:"function"},{anonymous:false,inputs:[{indexed:true,name:"receiptId",type:"bytes32"},{indexed:true,name:"orderId",type:"bytes32"},{indexed:true,name:"payer",type:"address"},{indexed:false,name:"tokenAmount",type:"uint256"},{indexed:false,name:"totalCents",type:"uint256"},{indexed:false,name:"itemCount",type:"uint256"},{indexed:false,name:"storeIdHash",type:"bytes32"},{indexed:false,name:"terminalIdHash",type:"bytes32"},{indexed:false,name:"cartHash",type:"bytes32"},{indexed:false,name:"timestamp",type:"uint256"}],name:"PaymentCaptured",type:"event"}];
 const ABI_POOL=["function slot0() view returns (uint160 sqrtPriceX96,int24,uint16,uint16,uint16,uint8,bool)","function token0() view returns (address)"];
 const MENU=[
   {id:'s1',cat:'scoops',emoji:'🍦',name:'Kids Scoop',price:5.00},
@@ -469,41 +469,57 @@ async function regenerateQR(){document.getElementById('qr-canvas-wrap').style.op
 function closeModal(){document.getElementById('modal-overlay').classList.remove('open');}
 
 async function pollForPayment(receiptId){
-  if(!provider)return;
-  const escrow=new ethers.Contract(CFG.ESCROW,ABI_ESCROW,provider);
-  const filter=escrow.filters.PaymentCaptured(receiptId);
-  const startBlock=await provider.getBlockNumber();
-  let attempts=0;
-  const poll=setInterval(async()=>{
-    attempts++;if(attempts>60){clearInterval(poll);return;}
-    try{
-      const events=await escrow.queryFilter(filter,startBlock-2);
-      if(events.length>0){
+  // Use public RPC for polling — wallet providers throttle eth_getLogs
+  const pubProvider = new ethers.JsonRpcProvider(CFG.RPC);
+  const escrow = new ethers.Contract(CFG.ESCROW, ABI_ESCROW, pubProvider);
+  let startBlock;
+  try { startBlock = await pubProvider.getBlockNumber() - 5; }
+  catch(e) { startBlock = 0; }
+  let attempts = 0;
+  document.getElementById('modal-status').textContent = 'Waiting for payment… (0s)';
+  const poll = setInterval(async () => {
+    attempts++;
+    const elapsed = attempts * 3;
+    if (attempts > 200) { // 10 min timeout
+      clearInterval(poll);
+      document.getElementById('modal-status').textContent = 'Timed out — regenerate QR if still unpaid';
+      return;
+    }
+    document.getElementById('modal-status').textContent = `Waiting for payment… (${elapsed}s)`;
+    try {
+      // Query from startBlock with no end block = latest
+      const events = await escrow.queryFilter(
+        escrow.filters.PaymentCaptured(receiptId),
+        startBlock
+      );
+      if (events.length > 0) {
         clearInterval(poll);
-        document.getElementById('modal-status').textContent='✓ Payment confirmed!';
-        document.getElementById('modal-status').style.background='var(--mint)';
-        showToast('Payment received ✓','success');
+        document.getElementById('modal-status').textContent = '✓ Payment confirmed!';
+        document.getElementById('modal-status').style.background = 'var(--mint)';
+        showToast('Payment received ✓', 'success');
         // Auto-calculate 10% SKOOP reward for paying with SKOOP
-        if(skoopPriceUSD>0){
-          const ev=events[0];
-          const paidCents=Number(ev.args.totalCents);
-          const rewardSkoop=Math.round((paidCents/100)*0.10/skoopPriceUSD);
-          if(rewardSkoop>0){
-            const pendingId=savePendingReward(receiptId,rewardSkoop,paidCents);
-            setTimeout(()=>{
-              mobileTab('rewards');switchPanel('rewards');
-              const input=document.getElementById('reward-amount');
-              input.value=rewardSkoop;input.dispatchEvent(new Event('input'));
-              document.getElementById('reward-usd-hint').textContent='10% SKOOP payment bonus — scan customer wallet to send';
-              showToast('10% reward ready — scan customer wallet 🎁','success');
-              renderPendingRewards();startRewardTimeout(pendingId,rewardSkoop);
-            },2700);
+        if (skoopPriceUSD > 0) {
+          const ev = events[0];
+          const paidCents = Number(ev.args.totalCents);
+          const rewardSkoop = Math.round((paidCents / 100) * 0.10 / skoopPriceUSD);
+          if (rewardSkoop > 0) {
+            const pendingId = savePendingReward(receiptId, rewardSkoop, paidCents);
+            setTimeout(() => {
+              mobileTab('rewards'); switchPanel('rewards');
+              const input = document.getElementById('reward-amount');
+              input.value = rewardSkoop; input.dispatchEvent(new Event('input'));
+              document.getElementById('reward-usd-hint').textContent = '10% SKOOP payment bonus — scan customer wallet to send';
+              showToast('10% reward ready — scan customer wallet 🎁', 'success');
+              renderPendingRewards(); startRewardTimeout(pendingId, rewardSkoop);
+            }, 2700);
           }
         }
-        cart={};renderCart();setTimeout(closeModal,2500);loadReceipts();
+        cart = {}; renderCart(); setTimeout(closeModal, 2500); loadReceipts();
       }
-    }catch{}
-  },5000);
+    } catch(e) {
+      // silent — keep polling
+    }
+  }, 3000); // poll every 3s instead of 5s
 }
 
 function switchPanel(panel){
@@ -661,13 +677,20 @@ async function sendReward(){
 }
 
 async function loadReceipts(){
-  if(!provider)return;
   try{
-    const escrow=new ethers.Contract(CFG.ESCROW,ABI_ESCROW,provider);
-    const events=await escrow.queryFilter(escrow.filters.PaymentCaptured(),-50000);
-    capturedReceipts=events.map(e=>({receiptId:e.args.receiptId,amount:e.args.tokenAmount}));
+    const pubProvider = new ethers.JsonRpcProvider(CFG.RPC);
+    const escrow = new ethers.Contract(CFG.ESCROW, ABI_ESCROW, pubProvider);
+    // ethers v6 does not support negative fromBlock — compute explicit range
+    const latest = await pubProvider.getBlockNumber();
+    const fromBlock = Math.max(0, latest - 50000);
+    const events = await escrow.queryFilter(escrow.filters.PaymentCaptured(), fromBlock, latest);
+    capturedReceipts = events.map(e => ({receiptId: e.args.receiptId, amount: e.args.tokenAmount}));
     renderReceipts();
-  }catch(e){}
+    if(capturedReceipts.length === 0) showToast('No receipts found in last 50k blocks', '');
+  } catch(e) {
+    showToast('Receipt load error: ' + (e?.message||'unknown').slice(0,60), 'error');
+    console.error('loadReceipts:', e);
+  }
 }
 function renderReceipts(){
   const list=document.getElementById('receipt-list');
