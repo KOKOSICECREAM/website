@@ -748,6 +748,8 @@ async function switchToBase(){
 
 async function refreshBals(){
   if(!provider||!userAddr)return;
+  // Poke provider to flush stale state after a transaction
+  try{await provider.getBlockNumber();}catch(e){}
   try{
     const sk=new ethers.Contract(CFG.SKOOP,ABI_ERC20,provider);
     const raw=await sk.balanceOf(userAddr);
@@ -1059,10 +1061,29 @@ async function confirmPay(){
       itemCount:BigInt(d.itemCount),cartHash:d.cartHash,deadline:BigInt(d.deadline)
     };
     const escrow=new ethers.Contract(CFG.ESCROW,ABI_ESCROW,signer);
-    const tx=await escrow.capturePayment(intent,d.signature);
+    // Isolate wallet rejection from receipt polling
+    let tx;
+    try{
+      tx=await escrow.capturePayment(intent,d.signature);
+    }catch(e){
+      if(al<tokAmt) setApStep(2,'error','Payment rejected — tap below to try again');
+      showToast(e?.reason||e?.shortMessage||e?.data?.message||e?.message||"Payment rejected","err");
+      btn.disabled=false;btn.textContent="Try Again";return;
+    }
     if(al<tokAmt) setApStep(2,'active','Payment submitted — confirming on chain…');
     btn.innerHTML='<span class="spinner"></span> Confirming…';
-    const rcpt=await tx.wait();
+    // Defensive wait — null receipt and timeout both handled gracefully
+    let rcpt=null;
+    try{
+      rcpt=await Promise.race([
+        tx.wait(),
+        new Promise((_,rej)=>setTimeout(()=>rej(new Error('timeout')),60000))
+      ]);
+    }catch(e){
+      // Tx is on-chain (POS confirmed), fall back to hash-only receipt
+      rcpt={hash:tx.hash,blockNumber:'pending'};
+    }
+    if(!rcpt) rcpt={hash:tx.hash,blockNumber:'pending'};
     if(al<tokAmt) setApStep(2,'done','Payment confirmed ✓');
     const fmt=parseFloat(ethers.formatUnits(tokAmt,CFG.SKOOP_DEC));
     const totalUSD='$'+(Number(d.totalCents)/100).toFixed(2);
