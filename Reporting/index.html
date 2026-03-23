@@ -225,6 +225,7 @@ tfoot td{background:var(--green-lt);font-weight:700;color:var(--green);border-to
       <th>Date / Time (CT)</th><th class="r">Receipts Burned</th><th class="r">SKOOP Burned</th><th>Tx Hash</th>
     </tr></thead>
     <tbody id="tb-burn"><tr><td colspan="4" class="empty">Run a scan to load settlement data</td></tr></tbody>
+    <tfoot id="tf-burn" style="display:none;"></tfoot>
     </table>
   </div>
 
@@ -527,14 +528,22 @@ function renderTx(){
 }
 
 function renderBurns(){
+  const tfoot=document.getElementById('tf-burn');
   document.getElementById('meta-burn').textContent=fBurns.length+' batches';
-  document.getElementById('tb-burn').innerHTML=!fBurns.length?'<tr><td colspan="4" class="empty">No settlements in this period</td></tr>':
-    fBurns.map(b=>`<tr>
-      <td style="white-space:nowrap;font-size:0.72rem;">${toCT(b.ts)}</td>
-      <td class="r">${b.count}</td>
-      <td class="r g" style="font-weight:700;">${fSK(b.totalSkoop)} SKOOP</td>
-      <td><a class="lnk" href="https://basescan.org/tx/${b.txHash}" target="_blank" rel="noopener">${shh(b.txHash)}</a></td>
-    </tr>`).join('');
+  if(!fBurns.length){
+    document.getElementById('tb-burn').innerHTML='<tr><td colspan="4" class="empty">No settlements in this period</td></tr>';
+    tfoot.style.display='none';return;
+  }
+  document.getElementById('tb-burn').innerHTML=fBurns.map(b=>`<tr>
+    <td style="white-space:nowrap;font-size:0.72rem;">${toCT(b.ts)}</td>
+    <td class="r">${b.count}</td>
+    <td class="r g" style="font-weight:700;">${fSK(b.totalSkoop)} SKOOP</td>
+    <td><a class="lnk" href="https://basescan.org/tx/${b.txHash}" target="_blank" rel="noopener">${shh(b.txHash)}</a></td>
+  </tr>`).join('');
+  const totCount=fBurns.reduce((s,b)=>s+b.count,0);
+  const totSkoop=fBurns.reduce((s,b)=>s+BigInt(b.totalSkoop),0n);
+  tfoot.style.display='';
+  tfoot.innerHTML=`<tr><td>Totals</td><td class="r">${totCount} receipts</td><td class="r">${fSK(totSkoop)} SKOOP</td><td></td></tr>`;
 }
 
 function renderRew(){
