@@ -388,18 +388,37 @@ async function runScan(){
     let cc=[],pb=[],bb=[],tf=[];
 
     // Base public RPC caps eth_getLogs at 10k blocks per call.
-    // Chunk at 9k, but run all 4 event types in parallel per chunk — still fast.
+    // Chunk at 9k, 4 event types in parallel, 300ms between chunks.
+    // Auto-retry with backoff on rate limit errors.
     const chunks=Math.ceil((latest-fromBlock)/CFG.CHUNK);let done=0;
+
+    async function queryChunk(s,e,attempt=0){
+      try{
+        return await Promise.all([
+          esc.queryFilter(esc.filters.PaymentCaptured(),s,e),
+          esc.queryFilter(esc.filters.PaymentBurned(),s,e),
+          esc.queryFilter(esc.filters.BatchBurnExecuted(),s,e),
+          sk.queryFilter(sk.filters.Transfer(CFG.POS_SIGNER,null),s,e),
+        ]);
+      }catch(err){
+        const msg=JSON.stringify(err);
+        const isRate=msg.includes('rate limit')||msg.includes('-32016')||msg.includes('over rate');
+        if(isRate&&attempt<4){
+          const wait=1500*(attempt+1);
+          setBar(10+Math.round((done/chunks)*82),`Rate limited — retrying in ${wait/1000}s…`);
+          await new Promise(r=>setTimeout(r,wait));
+          return queryChunk(s,e,attempt+1);
+        }
+        throw err;
+      }
+    }
+
     for(let s=fromBlock;s<latest;s+=CFG.CHUNK){
       const e=Math.min(s+CFG.CHUNK-1,latest);
       setBar(10+Math.round((done/chunks)*82),`Chunk ${done+1} of ${chunks}`);
-      const[a,b,c,d]=await Promise.all([
-        esc.queryFilter(esc.filters.PaymentCaptured(),s,e),
-        esc.queryFilter(esc.filters.PaymentBurned(),s,e),
-        esc.queryFilter(esc.filters.BatchBurnExecuted(),s,e),
-        sk.queryFilter(sk.filters.Transfer(CFG.POS_SIGNER,null),s,e),
-      ]);
+      const[a,b,c,d]=await queryChunk(s,e);
       cc=cc.concat(a);pb=pb.concat(b);bb=bb.concat(c);tf=tf.concat(d);done++;
+      if(done<chunks)await new Promise(r=>setTimeout(r,300));
     }
 
     setBar(92,'Processing events…');
