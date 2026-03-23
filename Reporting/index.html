@@ -374,9 +374,9 @@ async function runScan(){
   try{
     const pub=new ethers.JsonRpcProvider(CFG.RPC);
     const latest=await pub.getBlockNumber();
-    const{from:fromTs}=getRange();
-    const secBack=Math.floor(Date.now()/1000)-fromTs;
-    const fromBlock=period==='all'?CFG.DEPLOY:Math.max(CFG.DEPLOY,latest-Math.ceil(secBack/2)-200);
+    // Always scan from deploy block to latest — contract just launched so total
+    // history is small. Period filtering happens in JS after load, not by block range.
+    const fromBlock=CFG.DEPLOY;
     const total=latest-fromBlock;
     const chunks=Math.ceil(total/CFG.CHUNK);
 
