@@ -256,7 +256,7 @@ const CFG={
   POOL:'0xc1d89ca13d5cbc24b92e9f40b36d43da347c5198',
   WETH_USDC:'0xd0b53D9277642d899DF5C87A3966A349A798F224',
   WETH:'0x4200000000000000000000000000000000000006',
-  DEC:6,DEPLOY:25968794,CHUNK:9000,
+  DEC:6,DEPLOY:25968794,CHUNK:50000,
 };
 const ABI_ESC=[
   {anonymous:false,inputs:[{indexed:true,name:"receiptId",type:"bytes32"},{indexed:true,name:"orderId",type:"bytes32"},{indexed:true,name:"payer",type:"address"},{indexed:false,name:"tokenAmount",type:"uint256"},{indexed:false,name:"totalCents",type:"uint256"},{indexed:false,name:"itemCount",type:"uint256"},{indexed:false,name:"storeIdHash",type:"bytes32"},{indexed:false,name:"terminalIdHash",type:"bytes32"},{indexed:false,name:"cartHash",type:"bytes32"},{indexed:false,name:"timestamp",type:"uint256"}],name:"PaymentCaptured",type:"event"},
@@ -377,25 +377,37 @@ async function runScan(){
     // Always scan from deploy block to latest — contract just launched so total
     // history is small. Period filtering happens in JS after load, not by block range.
     const fromBlock=CFG.DEPLOY;
-    const total=latest-fromBlock;
-    const chunks=Math.ceil(total/CFG.CHUNK);
 
     setBar(4,'Loading price…');await fetchPrice();
 
     const esc=new ethers.Contract(CFG.ESCROW,ABI_ESC,pub);
     const sk=new ethers.Contract(CFG.SKOOP,ABI_TRF,pub);
-    let cc=[],pb=[],bb=[],tf=[];let done=0;
+    let cc=[],pb=[],bb=[],tf=[];
 
-    for(let s=fromBlock;s<latest;s+=CFG.CHUNK){
-      const e=Math.min(s+CFG.CHUNK-1,latest);
-      setBar(4+Math.round((done/chunks)*84),`Blocks ${s.toLocaleString()}–${e.toLocaleString()}`);
-      const[a,b,c,d]=await Promise.all([
-        esc.queryFilter(esc.filters.PaymentCaptured(),s,e),
-        esc.queryFilter(esc.filters.PaymentBurned(),s,e),
-        esc.queryFilter(esc.filters.BatchBurnExecuted(),s,e),
-        sk.queryFilter(sk.filters.Transfer(CFG.POS_SIGNER,null),s,e),
+    // Try full range in one parallel shot — fast when RPC allows it
+    setBar(15,'Fetching events…');
+    try{
+      [cc,pb,bb,tf]=await Promise.all([
+        esc.queryFilter(esc.filters.PaymentCaptured(),fromBlock,latest),
+        esc.queryFilter(esc.filters.PaymentBurned(),fromBlock,latest),
+        esc.queryFilter(esc.filters.BatchBurnExecuted(),fromBlock,latest),
+        sk.queryFilter(sk.filters.Transfer(CFG.POS_SIGNER,null),fromBlock,latest),
       ]);
-      cc=cc.concat(a);pb=pb.concat(b);bb=bb.concat(c);tf=tf.concat(d);done++;
+    }catch(rpcErr){
+      // RPC rejected large range — fall back to chunked scan
+      cc=[];pb=[];bb=[];tf=[];
+      const chunks=Math.ceil((latest-fromBlock)/CFG.CHUNK);let done=0;
+      for(let s=fromBlock;s<latest;s+=CFG.CHUNK){
+        const e=Math.min(s+CFG.CHUNK-1,latest);
+        setBar(15+Math.round((done/chunks)*70),`Chunk ${done+1}/${chunks}…`);
+        const[a,b,c,d]=await Promise.all([
+          esc.queryFilter(esc.filters.PaymentCaptured(),s,e),
+          esc.queryFilter(esc.filters.PaymentBurned(),s,e),
+          esc.queryFilter(esc.filters.BatchBurnExecuted(),s,e),
+          sk.queryFilter(sk.filters.Transfer(CFG.POS_SIGNER,null),s,e),
+        ]);
+        cc=cc.concat(a);pb=pb.concat(b);bb=bb.concat(c);tf=tf.concat(d);done++;
+      }
     }
 
     setBar(92,'Processing events…');
