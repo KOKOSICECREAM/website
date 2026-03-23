@@ -796,14 +796,19 @@ async function loadActivityFeed(){
     const readProvider=new ethers.JsonRpcProvider(CFG.RPC);
     const sk=new ethers.Contract(CFG.SKOOP,ABI_ERC20,readProvider);
     const currentBlock=await readProvider.getBlockNumber();
-    const fromBlock=currentBlock-100000; // ~5 days on Base
+    const fromBlock=currentBlock-500000; // ~25 days on Base
+    // Checksum all addresses — avoids case-sensitivity filter issues in ethers v6
+    const posSigner=ethers.getAddress(CFG.POS_SIGNER);
+    const escrowAddr=ethers.getAddress(CFG.ESCROW);
+    const userChecked=ethers.getAddress(userAddr);
     // Incoming rewards (POS_SIGNER → user) and outgoing payments (user → ESCROW)
-    const filterIn=sk.filters.Transfer(CFG.POS_SIGNER,userAddr);
-    const filterOut=sk.filters.Transfer(userAddr,CFG.ESCROW);
+    const filterIn=sk.filters.Transfer(posSigner,userChecked);
+    const filterOut=sk.filters.Transfer(userChecked,escrowAddr);
     const [rewards,payments]=await Promise.all([
       sk.queryFilter(filterIn,fromBlock),
       sk.queryFilter(filterOut,fromBlock)
     ]);
+    console.log('SKOOP activity — rewards:',rewards.length,'payments:',payments.length,'fromBlock:',fromBlock,'currentBlock:',currentBlock,'posSigner:',posSigner,'user:',userChecked);
     const all=[
       ...rewards.map(e=>({type:'reward',amt:e.args.value,block:e.blockNumber,hash:e.transactionHash})),
       ...payments.map(e=>({type:'payment',amt:e.args.value,block:e.blockNumber,hash:e.transactionHash}))
