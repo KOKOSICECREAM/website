@@ -794,47 +794,39 @@ async function loadActivityFeed(){
   list.innerHTML='<div class="tx-row"><div class="tx-dot td-mint" style="font-size:11px;">⏳</div><div class="tx-info"><div class="tx-name">Loading activity…</div></div></div>';
   try{
     const readProvider=new ethers.JsonRpcProvider(CFG.RPC);
-    const sk=new ethers.Contract(CFG.SKOOP,ABI_ERC20,readProvider);
     const currentBlock=await readProvider.getBlockNumber();
-    const fromBlock=currentBlock-500000; // ~25 days on Base
-    // Checksum all addresses — avoids case-sensitivity filter issues in ethers v6
-    const posSigner=ethers.getAddress(CFG.POS_SIGNER);
-    const escrowAddr=ethers.getAddress(CFG.ESCROW);
-    const userChecked=ethers.getAddress(userAddr);
-    // Incoming rewards (POS_SIGNER → user) and outgoing payments (user → ESCROW)
-    const filterIn=sk.filters.Transfer(posSigner,userChecked);
-    const filterOut=sk.filters.Transfer(userChecked,escrowAddr);
-    const [rewards,payments]=await Promise.all([
-      sk.queryFilter(filterIn,fromBlock),
-      sk.queryFilter(filterOut,fromBlock)
-    ]);
-    console.log('SKOOP activity — rewards:',rewards.length,'payments:',payments.length,'fromBlock:',fromBlock,'currentBlock:',currentBlock,'posSigner:',posSigner,'user:',userChecked);
-    const all=[
-      ...rewards.map(e=>({type:'reward',amt:e.args.value,block:e.blockNumber,hash:e.transactionHash})),
-      ...payments.map(e=>({type:'payment',amt:e.args.value,block:e.blockNumber,hash:e.transactionHash}))
-    ].sort((a,b)=>b.block-a.block).slice(0,20);
-    if(!all.length){
-      list.innerHTML='<div class="tx-row"><div class="tx-dot td-apricot">🍦</div><div class="tx-info"><div class="tx-name">No activity yet</div><div class="tx-date">Buy SKOOP or pay at the shop to get started</div></div></div>';
+    const fromBlock=currentBlock-5000; // ~2.5 hrs on Base — rewards started today
+    const topic0=ethers.id('Transfer(address,address,uint256)');
+    const pad=a=>'0x'+ethers.getAddress(a).slice(2).toLowerCase().padStart(64,'0');
+
+    // Single call — POS_SIGNER → connected wallet only
+    const logs=await readProvider.send('eth_getLogs',[{
+      address:CFG.SKOOP,
+      topics:[topic0, pad(CFG.POS_SIGNER), pad(userAddr)],
+      fromBlock:'0x'+fromBlock.toString(16),
+      toBlock:'0x'+currentBlock.toString(16)
+    }]);
+
+    console.log('SKOOP rewards found:',logs.length,'from:',CFG.POS_SIGNER,'to:',userAddr);
+
+    if(!logs.length){
+      list.innerHTML='<div class="tx-row"><div class="tx-dot td-apricot">🍦</div><div class="tx-info"><div class="tx-name">No rewards yet today</div><div class="tx-date">Pay at the shop — show your QR to earn SKOOP</div></div></div>';
       return;
     }
-    list.innerHTML=all.map(tx=>{
-      const amt=parseFloat(ethers.formatUnits(tx.amt,CFG.SKOOP_DEC));
+    list.innerHTML=logs.slice().reverse().map(log=>{
+      const amt=parseFloat(ethers.formatUnits(BigInt(log.data),CFG.SKOOP_DEC));
       const fmtAmt=amt.toLocaleString("en-US",{maximumFractionDigits:2});
-      const isReward=tx.type==='reward';
-      const dot=isReward?'td-mint':'td-lavender';
-      const icon=isReward?'🎁':'🧾';
-      const label=isReward?'Reward earned':'Payment sent';
-      const amtClass=isReward?'amt-plus':'amt-minus';
-      const sign=isReward?'+':'−';
-      const shortHash=tx.hash.slice(0,10)+'…';
-      return `<div class="tx-row" onclick="window.open('https://basescan.org/tx/${tx.hash}','_blank')" style="cursor:pointer;">
-        <div class="tx-dot ${dot}">${icon}</div>
-        <div class="tx-info"><div class="tx-name">${label}</div><div class="tx-date">Block ${tx.block} · ${shortHash}</div></div>
-        <div class="tx-val"><div class="amt ${amtClass}">${sign}${fmtAmt}</div></div>
+      const block=parseInt(log.blockNumber,16);
+      const shortHash=log.transactionHash.slice(0,10)+'…';
+      return `<div class="tx-row" onclick="window.open('https://basescan.org/tx/${log.transactionHash}','_blank')" style="cursor:pointer;">
+        <div class="tx-dot td-mint">🎁</div>
+        <div class="tx-info"><div class="tx-name">Reward earned</div><div class="tx-date">Block ${block} · ${shortHash}</div></div>
+        <div class="tx-val"><div class="amt amt-plus">+${fmtAmt}</div></div>
       </div>`;
     }).join('');
   }catch(e){
-    list.innerHTML='<div class="tx-row"><div class="tx-dot td-apricot">⚠️</div><div class="tx-info"><div class="tx-name">Could not load activity</div><div class="tx-date">'+e.message.slice(0,40)+'</div></div></div>';
+    console.error('loadActivityFeed error:',e);
+    list.innerHTML='<div class="tx-row"><div class="tx-dot td-apricot">⚠️</div><div class="tx-info"><div class="tx-name">Could not load activity</div><div class="tx-date">'+e.message.slice(0,60)+'</div></div></div>';
   }
 }
 
