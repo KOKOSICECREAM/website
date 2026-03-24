@@ -249,15 +249,74 @@ footer{background:var(--green-dk);padding:4rem 2rem 2rem;}
 #toast.show{transform:translateX(-50%) translateY(0);}
 
 @media(max-width:640px){
-  section{padding:4rem 1.25rem;}
-  #stats,#token{padding:4rem 1.25rem;}
-  #hero .hero-content{padding:6rem 1.25rem 0;}
-  #hero .hero-ticker{padding:1rem 1.25rem;gap:1.25rem;overflow-x:auto;}
-  h1.hero-title{font-size:3.2rem;letter-spacing:-1px;}
-  .hero-actions{flex-direction:column;align-items:flex-start;}
+  /* Layout */
+  section{padding:3.5rem 1.1rem;}
+  #stats,#token{padding:3.5rem 1.1rem;}
+
+  /* Nav */
+  .nav-logo-text span{display:none;}
+
+  /* Hero */
+  #hero .hero-content{padding:5.5rem 1.1rem 0;}
+  #hero .hero-ticker{padding:0.875rem 1.1rem;gap:1rem;overflow-x:auto;-webkit-overflow-scrolling:touch;}
+  .ticker-val{font-size:1.1rem;}
+  h1.hero-title{font-size:2.8rem;letter-spacing:-1px;}
+  h1.hero-title .outline{-webkit-text-stroke:1.5px var(--ink);}
+  .hero-sub{font-size:0.92rem;}
+  .hero-actions{flex-direction:column;align-items:stretch;}
   .btn-hero-primary,.btn-hero-secondary{width:100%;justify-content:center;}
-  .stats-grid{grid-template-columns:1fr 1fr;}
+
+  /* Stats grid — 1 col so numbers never clip */
+  .stats-grid{grid-template-columns:1fr;}
+  .sb-val{font-size:2rem;}
+
+  /* Section headings */
+  h2.section-title{font-size:2.1rem;letter-spacing:-0.5px;}
+
+  /* Why grid */
+  .why-grid{grid-template-columns:1fr;gap:2rem;}
+
+  /* DeFi cols */
+  .defi-cols{grid-template-columns:1fr;gap:2rem;}
+
+  /* Chart */
+  #price-chart-canvas{width:100%!important;}
+  .chart-header{flex-direction:column;align-items:flex-start;gap:0.75rem;}
+  .chart-title-block .chart-price{font-size:1.6rem;}
+  .chart-footer{gap:1rem;}
+  .cf-val{font-size:0.92rem;}
+
+  /* How grid */
   .how-grid{grid-template-columns:1fr;}
+
+  /* Token grid — 1 col, full address visible */
+  .token-grid{grid-template-columns:1fr;}
+  .tdc-val{font-size:0.65rem;max-width:55%;}
+  .token-cta{padding:1.75rem 1.25rem;}
+
+  /* Burn */
+  .burn-visual{grid-template-columns:1fr;}
+  .burn-stat-row{grid-template-columns:1fr 1fr;}
+  .bs-val{font-size:1.5rem;}
+
+  /* Press */
+  .press-grid{grid-template-columns:1fr;}
+
+  /* Footer */
+  .footer-top{grid-template-columns:1fr!important;gap:2rem;}
+  .footer-bottom{flex-direction:column;gap:0.5rem;text-align:center;}
+}
+
+/* Mid breakpoint — tablet */
+@media(min-width:641px) and (max-width:899px){
+  .stats-grid{grid-template-columns:1fr 1fr 1fr;}
+  .sb-val{font-size:1.9rem;}
+  .why-grid{grid-template-columns:1fr;}
+  .defi-cols{grid-template-columns:1fr;}
+  .burn-visual{grid-template-columns:1fr;}
+  .press-grid{grid-template-columns:1fr 1fr;}
+  .token-grid{grid-template-columns:1fr;}
+  h2.section-title{font-size:2.6rem;}
 }
 </style>
 </head>
@@ -271,6 +330,7 @@ footer{background:var(--green-dk);padding:4rem 2rem 2rem;}
   </a>
   <div class="nav-links">
     <a href="https://kokosicecream.com/">← Back to KOKOS</a>
+    <a href="https://app.uniswap.org/explore/tokens/base/0xfd3ce21c5acd8bbbe576d0e2336c210c3cebeb92" target="_blank" rel="noopener">Uniswap ↗</a>
     <a href="https://kokosicecream.com/Customer_dapp/index.html" class="nav-cta">Get SKOOP →</a>
   </div>
   <div style="display:flex;align-items:center;gap:0.75rem;">
@@ -393,7 +453,7 @@ footer{background:var(--green-dk);padding:4rem 2rem 2rem;}
     <h2 class="section-title reveal reveal-delay-1">Why does ice cream<br><em>need crypto?</em></h2>
     <div class="why-grid">
       <div class="why-text reveal reveal-delay-2">
-        <p>Crypto IS the future of finance and small businesses need <strong>a better loyalty system.</strong> One that the customer actually owns. One that isn't locked inside an app that disappears when the business pivots. One that works even if KOKOS isn't here tomorrow.</p>
+        <p>It doesn't need crypto. It needs <strong>a better loyalty system.</strong> One that the customer actually owns. One that isn't locked inside an app that disappears when the business pivots. One that works even if KOKOS isn't here tomorrow.</p>
         <p>SKOOP is built on Base — an Ethereum Layer 2 with near-zero fees and two-second finality. Every payment, every reward, every settlement is a public transaction anyone can verify. <strong>No middleware. No middlemen. No black box.</strong></p>
         <p>This is what DeFi actually means in practice: a micro-economy between a local business and its community, running on open infrastructure, owned by neither party and beholden to neither..</p>
         <p>The escrow contract is <strong>immutable and ownerless</strong> — not even KOKOS can change the rules after deployment. When you pay in SKOOP, the logic is fixed in code. That's the promise of trustless finance applied to a $9 ice cream.</p>
@@ -663,7 +723,6 @@ footer{background:var(--green-dk);padding:4rem 2rem 2rem;}
         <a href="https://basescan.org/token/0xfd3ce21c5acd8bbbe576d0e2336c210c3cebeb92" target="_blank" rel="noopener">Basescan ↗</a>
         <a href="https://medium.com/@kokos_ice_cream" target="_blank" rel="noopener">Medium ↗</a>
       </div>
-    </div>
     </div>
     <div class="footer-bottom">
       <span>© 2025 KOKOS Ice Cream · Nashville, TN · Plant based · Handcrafted</span>
