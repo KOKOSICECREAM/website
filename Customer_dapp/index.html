@@ -852,6 +852,7 @@ async function disconnectWallet(){
   // Disconnect all provider types cleanly
   try{if(window._wcp)await window._wcp.disconnect();}catch(e){}
   try{if(window._cbProvider)await window._cbProvider.disconnect();}catch(e){}
+  if(window._balancePollTimer){clearInterval(window._balancePollTimer);window._balancePollTimer=null;}
   window._wcp=null;window._cbProvider=null;
   provider=null;signer=null;userAddr=null;
   document.getElementById("main-app").style.display="none";
@@ -877,6 +878,8 @@ async function onConnected(){
   document.getElementById("bottom-nav").style.display="flex";
   updatePills();await checkNet();await refreshBals();setTimeout(buildMyQR,200);setTimeout(loadActivityFeed,500);
   loadPoolImmutables();fetchEthPrice();
+  if(window._balancePollTimer)clearInterval(window._balancePollTimer);
+  window._balancePollTimer=setInterval(()=>{if(userAddr){refreshBals().catch(()=>{});}else{clearInterval(window._balancePollTimer);}},30000);
 }
 
 function updatePills(){
@@ -1149,6 +1152,7 @@ async function execSwap(){
     showToast("Submitted…","");await tx.wait();
     showToast("Swap complete!","ok");
     document.getElementById("from-amt").value="";resetOut();await refreshBals();
+    setTimeout(()=>refreshBals().catch(()=>{}),4000);
   }catch(e){showToast(e?.reason||e?.shortMessage||e?.message||"Swap failed","err");}
   btn.disabled=false;btn.textContent="Swap for SKOOP";
 }
@@ -1321,6 +1325,7 @@ async function confirmPay(){
       }
       refreshBals();
     }).catch(()=>refreshBals());
+    setTimeout(()=>refreshBals().catch(()=>{}),4000);
   }catch(e){
     if(document.getElementById('approval-progress').classList.contains('show'))
       setApStep(2,'error','Payment rejected — tap below to try again');
