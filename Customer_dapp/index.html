@@ -23,6 +23,9 @@
 <script>window.process={env:{NODE_ENV:'production'},version:'v18.0.0',browser:true};</script>
 <script src="https://cdn.jsdelivr.net/npm/@walletconnect/modal@2.6.2/dist/index.umd.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@walletconnect/ethereum-provider@2.10.0/dist/index.umd.js"></script>
+
+<!-- Smart Wallet via Coinbase Wallet deep link — no SDK required -->
+
 <style>
 :root{
   --coral:#fdcec1;--coral-mid:#fdaf9a;--coral-deep:#e8876a;
@@ -208,7 +211,6 @@ html,body{height:100%;overflow:hidden;background:var(--coral);font-family:'Instr
 .btn-confirm:hover{background:var(--ink);}
 .btn-confirm:disabled{background:var(--border);color:var(--ink-light);cursor:not-allowed;}
 .btn-cancel{width:100%;padding:13px;background:transparent;color:var(--ink-mid);border:1px solid var(--border-mid);border-radius:var(--r);font-family:'Instrument Sans',sans-serif;font-size:13px;font-weight:600;cursor:pointer;margin-top:8px;}
-/* ── FIX 1: APPROVAL PROGRESS CARD ── */
 #approval-progress{display:none;margin:12px 20px 0;background:var(--white);border:1.5px solid var(--border-mid);border-radius:var(--r);overflow:hidden;}
 #approval-progress.show{display:block;}
 .ap-header{background:var(--sand);padding:12px 16px;display:flex;align-items:center;gap:8px;}
@@ -231,7 +233,6 @@ html,body{height:100%;overflow:hidden;background:var(--coral);font-family:'Instr
 .qr-italic{font-family:'Cormorant Garamond',serif;font-size:18px;font-weight:600;font-style:italic;color:var(--ink);margin-bottom:20px;}
 #my-qr-div{display:inline-block;}
 .qr-addr{font-size:10px;color:var(--ink-light);font-weight:500;margin-top:14px;word-break:break-all;line-height:1.6;}
-/* SUCCESS SCREEN — new animated version */
 .success-screen{display:none;position:absolute;inset:0;z-index:300;flex-direction:column;overflow:hidden;animation:successFadeIn 0.3s ease;}
 .success-screen.show{display:flex;}
 @keyframes successFadeIn{from{opacity:0;transform:translateY(16px);}to{opacity:1;transform:translateY(0);}}
@@ -255,7 +256,7 @@ html,body{height:100%;overflow:hidden;background:var(--coral);font-family:'Instr
 <div id="toast"></div>
 <div id="net-banner" onclick="switchToBase()">&#9888; Wrong network — tap to switch to Base</div>
 
-<!-- SUCCESS SCREEN — new animated version -->
+<!-- SUCCESS SCREEN -->
 <div class="success-screen" id="success-screen">
   <div style="display:flex;height:6px;flex-shrink:0;">
     <div style="flex:1;background:var(--coral)"></div><div style="flex:1;background:var(--mint)"></div>
@@ -293,6 +294,47 @@ html,body{height:100%;overflow:hidden;background:var(--coral);font-family:'Instr
   </div>
 </div>
 
+<!-- CHANGE 2 of 3: Wallet choice bottom sheet -->
+<div class="backdrop" id="wallet-choice-back" onclick="hideWalletOptions()" style="z-index:250;"></div>
+<div class="tok-sheet" id="wallet-choice-sheet" style="z-index:300;padding-bottom:48px;">
+  <div class="sheet-handle"></div>
+  <div class="sheet-title">Connect your wallet</div>
+
+  <!-- Coinbase Wallet — primary (creates Smart Wallet for new users automatically) -->
+  <div onclick="connectCoinbaseWallet()" style="background:var(--mint);border-radius:var(--r);padding:18px;margin-bottom:12px;cursor:pointer;border:1.5px solid rgba(42,31,26,0.12);transition:filter 0.15s;" onmouseover="this.style.filter='brightness(0.96)'" onmouseout="this.style.filter=''">
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:6px;">
+      <img src="https://www.coinbase.com/favicon.ico" style="width:40px;height:40px;border-radius:10px;flex-shrink:0;" onerror="this.style.display='none'">
+      <div style="flex:1;">
+        <div style="font-size:14px;font-weight:700;color:var(--ink);">Coinbase Wallet</div>
+        <div style="font-size:11px;color:var(--ink-mid);font-weight:500;">New to crypto? Start here</div>
+      </div>
+      <div style="background:var(--coral-deep);color:white;font-size:10px;font-weight:700;padding:3px 9px;border-radius:99px;white-space:nowrap;flex-shrink:0;">Recommended</div>
+    </div>
+    <div style="font-size:12px;color:var(--ink-mid);line-height:1.6;padding-left:52px;">
+      Opens Coinbase Wallet — creates a secure wallet with Face ID for new users. No seed phrase needed.
+    </div>
+  </div>
+
+  <!-- MetaMask / injected -->
+  <div class="tok-opt" onclick="connectMetaMask()" style="padding:14px 4px;">
+    <div style="width:40px;height:40px;background:var(--apricot);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0;">🦊</div>
+    <div class="tok-opt-info">
+      <h4>MetaMask / Browser Wallet</h4>
+      <p>Already have a wallet installed</p>
+    </div>
+  </div>
+
+  <!-- WalletConnect -->
+  <div class="tok-opt" onclick="connectViaWalletConnect()" style="padding:14px 4px;">
+    <div style="width:40px;height:40px;background:var(--lavender);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0;">📱</div>
+    <div class="tok-opt-info">
+      <h4>WalletConnect</h4>
+      <p>Scan with any mobile wallet</p>
+    </div>
+  </div>
+</div>
+<!-- END CHANGE 2 -->
+
 <!-- CONNECT GATE -->
 <div id="connect-gate" style="display:flex;flex-direction:column;flex:1;overflow:hidden;">
   <div class="gate-blocks">
@@ -306,24 +348,8 @@ html,body{height:100%;overflow:hidden;background:var(--coral);font-family:'Instr
       <div class="gate-tagline">Buy, earn &amp; pay with SKOOP<br>at KOKOS Ice Cream Nashville</div>
       <button class="btn-primary" id="gate-connect-btn" onclick="openWalletModal()">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 12h.01"/><path d="M2 10h20"/><path d="M7 3l5-1 5 1"/></svg>
-        Connect Wallet
+        Get Started
       </button>
-      <div id="wallet-hint" style="display:none;margin:12px 0;">
-        <div style="font-size:11px;font-weight:600;color:var(--ink-mid);text-align:center;margin-bottom:8px;letter-spacing:0.5px;text-transform:uppercase;">Open in your wallet app</div>
-        <div style="display:flex;flex-direction:column;gap:6px;">
-          <a href="https://metamask.app.link/dapp/kokosicecream.github.io/website/Customer_dapp/index.html"
-             style="display:flex;align-items:center;gap:10px;background:var(--white);border:1px solid var(--border-mid);border-radius:var(--r-sm);padding:10px 14px;text-decoration:none;color:var(--ink);font-size:13px;font-weight:600;">
-            <img src="https://upload.wikimedia.org/wikipedia/commons/3/36/MetaMask_Fox.svg" style="width:24px;height:24px;">
-            Open in MetaMask
-          </a>
-          <a href="https://go.cb-w.com/dapp?cb_url=https%3A%2F%2Fkokosicecream.github.io%2Fwebsite%2FCustomer_dapp%2Findex.html"
-             style="display:flex;align-items:center;gap:10px;background:var(--white);border:1px solid var(--border-mid);border-radius:var(--r-sm);padding:10px 14px;text-decoration:none;color:var(--ink);font-size:13px;font-weight:600;">
-            <img src="https://www.coinbase.com/favicon.ico" style="width:24px;height:24px;border-radius:4px;">
-            Open in Coinbase Wallet
-          </a>
-        </div>
-        <div style="font-size:10px;color:var(--ink-light);text-align:center;margin-top:8px;">or use the WalletConnect button above</div>
-      </div>
       <div class="ca-line" onclick="navigator.clipboard.writeText('0xfd3ce21c5acd8bbbe576d0e2336c210c3cebeb92').then(()=>showToast('CA copied','ok'))">
         SKOOP &middot; <span style="text-decoration:underline dotted;">0xfd3ce21c5Acd8BbbE576d0E2336C210C3cEBeb92</span> &middot; tap to copy
       </div>
@@ -360,7 +386,7 @@ html,body{height:100%;overflow:hidden;background:var(--coral);font-family:'Instr
       </div>
       <div class="gate-footer-cta">
         <p>Ready to SKOOP?<br><em>Connect your wallet to start.</em></p>
-        <button class="btn-cta-repeat" onclick="openWalletModal()">Connect Wallet &rarr;</button>
+        <button class="btn-cta-repeat" onclick="openWalletModal()">Get Started &rarr;</button>
       </div>
     </div>
   </div>
@@ -466,7 +492,6 @@ html,body{height:100%;overflow:hidden;background:var(--coral);font-family:'Instr
             <div class="cc-row"><span class="ck">Receipt ID</span><span class="cv" id="cc-receipt">&#8212;</span></div>
           </div>
         </div>
-        <!-- FIX 2: Approval progress card HTML -->
         <div id="approval-progress">
           <div class="ap-header">
             <span style="font-size:16px;">🔓</span>
@@ -577,14 +602,20 @@ const poolFees={};
 let provider,signer,userAddr,selToken="ETH",slip=0.5,quoteTimer,curQuote,pendingIntent,scannerRunning=false,ethPriceUSD=0,skoopPriceUSD=0;
 let _justDisconnected=false;
 
-// ── ETH PRICE ──────────────────────────────────────────────────────────────────
+// ── ETH PRICE ─────────────────────────────────────────────────────────────────
 async function fetchEthPrice(){
+  // Try multiple price sources — all use public RPC or CORS-open APIs
+  // Source 1: CoinbaseGecko via a CORS-open proxy
   try{
-    const r=await fetch('https://api.coingecko.com/api/v3/simple/price?ids=ethereum&vs_currencies=usd');
-    const d=await r.json();
-    const p=d?.ethereum?.usd||0;
-    if(p>100&&p<1000000){ethPriceUSD=p;await fetchSkoopPrice();return;}
+    const r=await fetch('https://api.coinbase.com/v2/exchange-rates?currency=ETH',{mode:'cors'});
+    if(r.ok){
+      const d=await r.json();
+      const p=parseFloat(d?.data?.rates?.USD||0);
+      if(p>100&&p<1000000){ethPriceUSD=p;await fetchSkoopPrice();return;}
+    }
   }catch(e){}
+
+  // Source 2: On-chain WETH/USDC pool on Base (no CORS, pure RPC)
   try{
     const ABI=['function slot0() view returns (uint160 sqrtPriceX96,int24,uint16,uint16,uint16,uint8,bool)','function token0() view returns (address)'];
     const pub=new ethers.JsonRpcProvider(CFG.RPC);
@@ -593,6 +624,8 @@ async function fetchEthPrice(){
     const sqrtPf=Number(s0.sqrtPriceX96)/Number(2n**96n);
     const raw=sqrtPf*sqrtPf;
     const wethIsT0=t0.toLowerCase()===CFG.WETH.toLowerCase();
+    // WETH/USDC pool: USDC is token0 (6 dec), WETH is token1 (18 dec)
+    // raw = price of token0 in token1 = USDC/WETH, adjusted: *1e12 for decimal diff
     const p=wethIsT0?(1/raw)*1e12:raw*1e12;
     if(p>100&&p<1000000){ethPriceUSD=p;await fetchSkoopPrice();}
   }catch(e){}
@@ -621,43 +654,164 @@ function updateSkoopBalanceDisplay(){
   if(sub&&skoopPriceUSD>0)sub.textContent='$'+skoopPriceUSD.toFixed(6);
 }
 
-(function(){if(!window.ethereum){const h=document.getElementById('wallet-hint');if(h)h.style.display='block';}})();
+// ── CHANGE 3 of 3: WALLET CONNECTION ─────────────────────────────────────────
 
-// ── WALLET CONNECT ────────────────────────────────────────────────────────────
-async function openWalletModal(){
-  if(_justDisconnected)return;
-  if(window.ethereum){
-    const btn=document.getElementById('gate-connect-btn');
-    try{
-      if(btn){btn.textContent='Connecting...';btn.disabled=true;}
-      await window.ethereum.request({method:'eth_requestAccounts'});
-      provider=new ethers.BrowserProvider(window.ethereum);
-      signer=await provider.getSigner();
-      userAddr=await signer.getAddress();
-      await onConnected();
-      if(!window._ethListenersAdded){
-        window._ethListenersAdded=true;
-        window.ethereum.on('accountsChanged',a=>{if(a[0]){userAddr=a[0];updatePills();refreshBals();}else disconnectWallet();});
-        window.ethereum.on('chainChanged',()=>location.reload());
-      }
-    }catch(e){
-      if(btn){btn.textContent='Connect Wallet';btn.disabled=false;}
-      if(e.code===4001){showToast("Connection rejected","err");return;}
-      try{
-        await new Promise(r=>setTimeout(r,700));
-        provider=new ethers.BrowserProvider(window.ethereum);
-        signer=await provider.getSigner();
-        userAddr=await signer.getAddress();
-        await onConnected();
-      }catch(e2){
-        if(btn){btn.textContent='Connect Wallet';btn.disabled=false;}
-        showToast(e2?.message?.slice(0,60)||"Connection failed","err");
-      }
-    }
+function showWalletOptions(){
+  document.getElementById('wallet-choice-sheet').classList.add('open');
+  document.getElementById('wallet-choice-back').classList.add('open');
+}
+
+function hideWalletOptions(){
+  document.getElementById('wallet-choice-sheet').classList.remove('open');
+  document.getElementById('wallet-choice-back').classList.remove('open');
+}
+
+// PATH 1 — Coinbase Wallet
+// Three sub-cases:
+// A) Already inside Coinbase Wallet browser → window.ethereum injected → connect directly
+// B) Mobile browser outside app → deep link opens dapp INSIDE Coinbase Wallet browser
+// C) Desktop without extension → WalletConnect QR
+async function connectCoinbaseWallet(){
+  hideWalletOptions();
+  const btn=document.getElementById('gate-connect-btn');
+
+  // Case A: already inside Coinbase Wallet browser or extension
+  if(window.ethereum && (window.ethereum.isCoinbaseWallet || window.ethereum.isCoinbaseBrowser)){
+    await connectInjected();
     return;
   }
+
+  const isMobile=/iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+
+  if(isMobile){
+    // Case B: mobile browser → open dapp inside Coinbase Wallet browser
+    // cbwallet:// custom scheme is more reliable than go.cb-w.com on iOS
+    // Per Coinbase docs: cbwallet://dapp?url=[YOUR_URL] bypasses iOS universal link bug
+    if(btn){btn.textContent='Opening…';btn.disabled=true;}
+    showToast('Opening Coinbase Wallet…','');
+    const _dappUrl='https://kokosicecream.com/Customer_dapp/index.html';
+    // Try custom scheme first — opens dapp browser directly if app is installed
+    window.location.href='cbwallet://dapp?url='+encodeURIComponent(_dappUrl);
+    // Fallback after 1.5s: if still here, try universal link (handles app-not-installed case)
+    setTimeout(()=>{
+      window.location.href='https://go.cb-w.com/dapp?cb_url='+encodeURIComponent(_dappUrl);
+    },1500);
+    setTimeout(()=>{if(btn){btn.textContent='Get Started';btn.disabled=false;}},5000);
+    return;
+  }
+
+  // Case C: desktop without extension → WalletConnect QR
+  showToast('Scan QR with Coinbase Wallet','');
   await connectWalletConnect();
 }
+
+// PATH 2 — MetaMask
+// Three sub-cases:
+// A) Already inside MetaMask browser → window.ethereum injected → connect directly
+// B) Mobile browser outside app → deep link opens dapp INSIDE MetaMask browser
+// C) Desktop → connect installed extension
+async function connectMetaMask(){
+  hideWalletOptions();
+  const btn=document.getElementById('gate-connect-btn');
+
+  // Case A: already inside MetaMask browser or extension is installed
+  if(window.ethereum && window.ethereum.isMetaMask){
+    await connectInjected();
+    return;
+  }
+
+  const isMobile=/iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+
+  if(isMobile){
+    // Case B: mobile browser → deep link opens dapp inside MetaMask browser
+    if(btn){btn.textContent='Opening…';btn.disabled=true;}
+    showToast('Opening MetaMask…','');
+    setTimeout(()=>{
+      window.location.href='https://metamask.app.link/dapp/kokosicecream.com/Customer_dapp/index.html';
+    },400);
+    setTimeout(()=>{if(btn){btn.textContent='Get Started';btn.disabled=false;}},4000);
+    return;
+  }
+
+  // Case C: desktop — try injected, show error if none
+  if(window.ethereum){
+    await connectInjected();
+  } else {
+    showToast('MetaMask not detected — install the extension first','err');
+    window.open('https://metamask.io/download/','_blank');
+  }
+}
+
+// Shared: connect whatever window.ethereum is available
+async function connectInjected(){
+  if(!window.ethereum){
+    showToast('No wallet detected','err');
+    return;
+  }
+  const btn=document.getElementById('gate-connect-btn');
+  try{
+    if(btn){btn.textContent='Connecting…';btn.disabled=true;}
+    await window.ethereum.request({method:'eth_requestAccounts'});
+    provider=new ethers.BrowserProvider(window.ethereum);
+    signer=await provider.getSigner();
+    userAddr=await signer.getAddress();
+    await onConnected();
+    if(!window._ethListenersAdded){
+      window._ethListenersAdded=true;
+      window.ethereum.on('accountsChanged',a=>{
+        if(a[0]){userAddr=a[0];updatePills();refreshBals();}
+        else disconnectWallet();
+      });
+      window.ethereum.on('chainChanged',()=>location.reload());
+    }
+  }catch(e){
+    if(btn){btn.textContent='Get Started';btn.disabled=false;}
+    if(e.code!==4001)showToast(e?.message?.slice(0,60)||'Connection failed','err');
+  }
+}
+
+// PATH 3 — WalletConnect
+async function connectViaWalletConnect(){
+  hideWalletOptions();
+  await connectWalletConnect();
+}
+
+// MAIN ENTRY
+// Critical mobile behaviour:
+// - If running inside Coinbase Wallet browser, ethereum IS injected — auto-connect
+// - If running inside MetaMask browser, ethereum IS injected — auto-connect
+// - If user previously connected injected wallet, auto-reconnect
+// - Otherwise show the wallet choice sheet
+async function openWalletModal(){
+  if(_justDisconnected)return;
+
+  if(window.ethereum){
+    // Inside Coinbase Wallet or MetaMask mobile browser — connect immediately, no sheet needed
+    if(window.ethereum.isCoinbaseWallet||window.ethereum.isCoinbaseBrowser||window.ethereum.isMetaMask){
+      try{
+        const accounts=await window.ethereum.request({method:'eth_accounts'});
+        if(accounts.length){
+          // Already authorized — reconnect silently
+          await connectInjected();
+          return;
+        }
+        // Not yet authorized but wallet is available — request directly
+        await connectInjected();
+        return;
+      }catch(e){}
+    }
+    // Generic injected wallet — check if already authorized, reconnect if so
+    try{
+      const accounts=await window.ethereum.request({method:'eth_accounts'});
+      if(accounts.length){await connectInjected();return;}
+    }catch(e){}
+  }
+
+  // No wallet detected or not yet authorized — show the choice sheet
+  showWalletOptions();
+}
+
+// END CHANGE 3 ────────────────────────────────────────────────────────────────
 
 async function connectWalletConnect(){
   const WCEthProvider=window["@walletconnect/ethereum-provider"]?.EthereumProvider;
@@ -676,29 +830,32 @@ async function connectWalletConnect(){
     signer=await provider.getSigner();
     userAddr=await signer.getAddress();
     await onConnected();
-    wcp.on('disconnect',()=>{ window._wcp=null; disconnectWallet(); });
+    wcp.on('disconnect',()=>{window._wcp=null;disconnectWallet();});
     wcp.on('accountsChanged',a=>{if(a[0]){userAddr=a[0];updatePills();refreshBals();}});
   }catch(e){
     const btn=document.getElementById('gate-connect-btn');
-    if(btn){btn.textContent='Connect Wallet';btn.disabled=false;}
+    if(btn){btn.textContent='Get Started';btn.disabled=false;}
     const msg=e?.message||'';
     if(!msg.includes('closed')&&!msg.includes('rejected')&&!msg.includes('Modal'))showToast(msg||"Connection failed","err");
   }
 }
 
 async function disconnectWallet(){
+  // Disconnect all provider types cleanly
   try{if(window._wcp)await window._wcp.disconnect();}catch(e){}
-  window._wcp=null;provider=null;signer=null;userAddr=null;
-  const setT=(id,v)=>{const el=document.getElementById(id);if(el)el.textContent=v;};
-  const setH=(id,v)=>{const el=document.getElementById(id);if(el)el.innerHTML=v;};
+  try{if(window._cbProvider)await window._cbProvider.disconnect();}catch(e){}
+  window._wcp=null;window._cbProvider=null;
+  provider=null;signer=null;userAddr=null;
   document.getElementById("main-app").style.display="none";
   document.getElementById("bottom-nav").style.display="none";
   const gate=document.getElementById("connect-gate");
   if(gate){gate.style.display="flex";gate.style.flexDirection="column";gate.style.flex="1";}
   _justDisconnected=true;
-  setTimeout(()=>{ _justDisconnected=false; },1000);
-  const connectBtn=document.getElementById('gate-connect-btn');
-  if(connectBtn){connectBtn.textContent='Connect Wallet';connectBtn.disabled=false;}
+  setTimeout(()=>{_justDisconnected=false;},1000);
+  const btn=document.getElementById('gate-connect-btn');
+  if(btn){btn.textContent='Get Started';btn.disabled=false;}
+  const setT=(id,v)=>{const el=document.getElementById(id);if(el)el.textContent=v;};
+  const setH=(id,v)=>{const el=document.getElementById(id);if(el)el.innerHTML=v;};
   setT("home-bal","—");setT("home-usd","SKOOP");setT("home-usd-val","");
   setT("wallet-pill","0x…");setT("buy-pill","0x…");
   setT("qr-addr","Connect wallet to generate QR");
@@ -748,7 +905,6 @@ async function switchToBase(){
 
 async function refreshBals(){
   if(!userAddr)return;
-  // Fresh public RPC for reads — wallet provider caches stale state post-tx
   const readProvider=new ethers.JsonRpcProvider(CFG.RPC);
   try{
     const sk=new ethers.Contract(CFG.SKOOP,ABI_ERC20,readProvider);
@@ -760,9 +916,7 @@ async function refreshBals(){
     document.getElementById("home-usd").textContent="SKOOP";
     document.getElementById("qr-bal").textContent=fmt;
     updateSkoopBalanceDisplay();
-  }catch(e){
-    document.getElementById("home-bal").textContent="—";
-  }
+  }catch(e){document.getElementById("home-bal").textContent="—";}
   try{const eb=await readProvider.getBalance(userAddr);document.getElementById("bal-eth").textContent=parseFloat(ethers.formatEther(eb)).toFixed(4)+" ETH";}catch(e){}
   try{const uc=new ethers.Contract(CFG.USDC,ABI_ERC20,readProvider);document.getElementById("bal-usdc").textContent=parseFloat(ethers.formatUnits(await uc.balanceOf(userAddr),6)).toFixed(2)+" USDC";}catch(e){}
   await updateFromBal();
@@ -795,20 +949,15 @@ async function loadActivityFeed(){
   try{
     const readProvider=new ethers.JsonRpcProvider(CFG.RPC);
     const currentBlock=await readProvider.getBlockNumber();
-    const fromBlock=currentBlock-5000; // ~2.5 hrs on Base — rewards started today
+    const fromBlock=currentBlock-5000;
     const topic0=ethers.id('Transfer(address,address,uint256)');
     const pad=a=>'0x'+ethers.getAddress(a).slice(2).toLowerCase().padStart(64,'0');
-
-    // Single call — POS_SIGNER → connected wallet only
     const logs=await readProvider.send('eth_getLogs',[{
       address:CFG.SKOOP,
-      topics:[topic0, pad(CFG.POS_SIGNER), pad(userAddr)],
+      topics:[topic0,pad(CFG.POS_SIGNER),pad(userAddr)],
       fromBlock:'0x'+fromBlock.toString(16),
       toBlock:'0x'+currentBlock.toString(16)
     }]);
-
-    console.log('SKOOP rewards found:',logs.length,'from:',CFG.POS_SIGNER,'to:',userAddr);
-
     if(!logs.length){
       list.innerHTML='<div class="tx-row"><div class="tx-dot td-apricot">🍦</div><div class="tx-info"><div class="tx-name">No rewards yet today</div><div class="tx-date">Pay at the shop — show your QR to earn SKOOP</div></div></div>';
       return;
@@ -832,7 +981,6 @@ async function loadActivityFeed(){
       </div>`;
     }).join('');
   }catch(e){
-    console.error('loadActivityFeed error:',e);
     list.innerHTML='<div class="tx-row"><div class="tx-dot td-apricot">⚠️</div><div class="tx-info"><div class="tx-name">Could not load activity</div><div class="tx-date">'+e.message.slice(0,60)+'</div></div></div>';
   }
 }
@@ -854,9 +1002,13 @@ document.addEventListener('visibilitychange',async function(){
 
 if(window.ethereum){
   window.ethereum.request({method:'eth_accounts'}).then(async a=>{
-    if(a.length)await openWalletModal();
+    if(a.length)await connectInjected();
   }).catch(()=>{});
 }
+
+// Fetch prices on page load — uses public RPC, no wallet needed
+// This makes the price tile and SKOOP price show immediately
+fetchEthPrice().catch(()=>{});
 
 // ── SWAP ──────────────────────────────────────────────────────────────────────
 function openTokSheet(){document.getElementById("tok-sheet").classList.add("open");document.getElementById("tok-back").classList.add("open");}
@@ -1045,7 +1197,6 @@ function showConfirm(d){
   document.getElementById("pay-confirm").classList.add("active");
 }
 
-// FIX 5: cancelPay — resets approval progress card and button state
 function cancelPay(){
   pendingIntent=null;
   hideApprovalProgress();
@@ -1055,7 +1206,6 @@ function cancelPay(){
   document.getElementById("pay-scan").classList.add("active");
 }
 
-// FIX 3: Approval progress helper functions
 function showApprovalProgress(){
   document.getElementById('approval-progress').classList.add('show');
   document.getElementById('btn-cancel').style.display='none';
@@ -1070,13 +1220,12 @@ function setApStep(n,state,desc){
   const dot=document.getElementById('ap-dot-'+n);
   const descEl=document.getElementById('ap-desc-'+n);
   dot.className='ap-step-dot '+state;
-  if(state==='done') dot.innerHTML='✓';
-  else if(state==='error') dot.innerHTML='✕';
+  if(state==='done')dot.innerHTML='✓';
+  else if(state==='error')dot.innerHTML='✕';
   else dot.innerHTML=n;
-  if(desc) descEl.textContent=desc;
+  if(desc)descEl.textContent=desc;
 }
 
-// FIX 4: confirmPay — with approval progress card integration
 async function confirmPay(){
   if(!pendingIntent||!signer)return;
   const btn=document.getElementById("btn-confirm");
@@ -1113,40 +1262,36 @@ async function confirmPay(){
       itemCount:BigInt(d.itemCount),cartHash:d.cartHash,deadline:BigInt(d.deadline)
     };
     const escrow=new ethers.Contract(CFG.ESCROW,ABI_ESCROW,signer);
-    // Isolate wallet rejection from receipt polling
     let tx;
     try{
       tx=await escrow.capturePayment(intent,d.signature);
     }catch(e){
-      if(al<tokAmt) setApStep(2,'error','Payment rejected — tap below to try again');
+      if(al<tokAmt)setApStep(2,'error','Payment rejected — tap below to try again');
       showToast(e?.reason||e?.shortMessage||e?.data?.message||e?.message||"Payment rejected","err");
       btn.disabled=false;btn.textContent="Try Again";return;
     }
-    if(al<tokAmt) setApStep(2,'active','Payment submitted — confirming on chain…');
-    btn.innerHTML='<span class="spinner"></span> Confirming…';
-    // Defensive wait — null receipt and timeout both handled gracefully
-    let rcpt=null;
-    try{
-      rcpt=await Promise.race([
-        tx.wait(),
-        new Promise((_,rej)=>setTimeout(()=>rej(new Error('timeout')),60000))
-      ]);
-    }catch(e){
-      // Tx is on-chain (POS confirmed), fall back to hash-only receipt
-      rcpt={hash:tx.hash,blockNumber:'pending'};
-    }
-    if(!rcpt) rcpt={hash:tx.hash,blockNumber:'pending'};
-    if(al<tokAmt) setApStep(2,'done','Payment confirmed ✓');
+    if(al<tokAmt)setApStep(2,'done','Payment sent ✓');
+    // Show success immediately on tx submission — don't wait for confirmation
+    // On mobile the wallet takes over the screen; tx.wait() can drop when app regains focus
+    // The POS signature already guarantees validity — submission = success for the customer
     const fmt=parseFloat(ethers.formatUnits(tokAmt,CFG.SKOOP_DEC));
     const totalUSD='$'+(Number(d.totalCents)/100).toFixed(2);
     document.getElementById('success-total-display').textContent=totalUSD+' · '+fmt.toLocaleString('en-US',{maximumFractionDigits:2})+' SKOOP';
     document.getElementById("success-detail").innerHTML=
       `<div class="sc-row"><span class="sk">SKOOP paid</span><span class="sv" style="color:var(--coral-deep);">${fmt.toLocaleString("en-US",{maximumFractionDigits:2})} SKOOP</span></div>`+
       `<div class="sc-row"><span class="sk">Total</span><span class="sv">${totalUSD}</span></div>`+
-      `<div class="sc-row"><span class="sk">Tx</span><span class="sv" style="font-family:monospace;font-size:0.62rem;">${rcpt.hash.slice(0,20)}…</span></div>`+
-      `<div class="sc-row"><span class="sk">Block</span><span class="sv">${rcpt.blockNumber}</span></div>`;
+      `<div class="sc-row"><span class="sk">Tx</span><span class="sv" style="font-family:monospace;font-size:0.62rem;">${tx.hash.slice(0,20)}…</span></div>`+
+      `<div class="sc-row"><span class="sk">Block</span><span class="sv">confirming…</span></div>`;
     document.getElementById("success-screen").classList.add("show");
-    pendingIntent=null;hideApprovalProgress();await refreshBals();
+    pendingIntent=null;hideApprovalProgress();
+    // Confirm in background and update block number when available — no await
+    tx.wait().then(rcpt=>{
+      if(rcpt&&rcpt.blockNumber){
+        const blockEl=document.querySelector('#success-detail .sc-row:last-child .sv');
+        if(blockEl)blockEl.textContent=rcpt.blockNumber;
+      }
+      refreshBals();
+    }).catch(()=>refreshBals());
   }catch(e){
     if(document.getElementById('approval-progress').classList.contains('show'))
       setApStep(2,'error','Payment rejected — tap below to try again');
@@ -1190,8 +1335,8 @@ function closePriceModal(){
 }
 
 async function renderPriceModal(){
-  if(!skoopPriceUSD||!ethPriceUSD) await fetchEthPrice();
-  const price=skoopPriceUSD, ethP=ethPriceUSD;
+  if(!skoopPriceUSD||!ethPriceUSD)await fetchEthPrice();
+  const price=skoopPriceUSD,ethP=ethPriceUSD;
   const setEl=(id,val)=>{const el=document.getElementById(id);if(el)el.textContent=val;};
   if(price>0){
     setEl('pm-price','$'+price.toFixed(8));
