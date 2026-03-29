@@ -492,6 +492,14 @@ html,body{height:100%;overflow:hidden;background:var(--coral);font-family:'Instr
             <div class="cc-row"><span class="ck">Receipt ID</span><span class="cv" id="cc-receipt">&#8212;</span></div>
           </div>
         </div>
+        <!-- First-time approval notice — shown before user taps pay -->
+        <div id="first-time-notice" style="display:none;background:var(--sand);border-radius:var(--r-sm);padding:12px 14px;margin-bottom:0;align-items:flex-start;gap:10px;border:1.5px solid rgba(42,31,26,0.12);">
+          <span style="font-size:18px;flex-shrink:0;">🔐</span>
+          <div>
+            <div style="font-size:12px;font-weight:700;color:var(--ink);margin-bottom:3px;">First-time setup — 2 quick steps</div>
+            <div style="font-size:11px;color:var(--ink-mid);line-height:1.6;">Your wallet will ask to <strong>approve SKOOP</strong> first — this is a one-time permission. Your payment follows automatically. No second scan needed.</div>
+          </div>
+        </div>
         <div id="approval-progress">
           <div class="ap-header">
             <span style="font-size:16px;">🔓</span>
@@ -1185,7 +1193,7 @@ function parseQR(raw){
   }
 }
 
-function showConfirm(d){
+async function showConfirm(d){
   const sk=parseFloat(ethers.formatUnits(BigInt(d.tokenAmount),CFG.SKOOP_DEC));
   document.getElementById("cc-usd").textContent="$"+(Number(d.totalCents)/100).toFixed(2);
   document.getElementById("cc-skoop").textContent=sk.toLocaleString("en-US",{maximumFractionDigits:2})+" SKOOP";
@@ -1195,13 +1203,33 @@ function showConfirm(d){
   document.getElementById("cc-receipt").textContent=d.receiptId.slice(0,20)+"…";
   document.getElementById("pay-scan").classList.remove("active");
   document.getElementById("pay-confirm").classList.add("active");
+  // Check if first-time approval needed and show friendly notice
+  try{
+    if(signer&&userAddr){
+      const readProvider=new ethers.JsonRpcProvider(CFG.RPC);
+      const sk2=new ethers.Contract(CFG.SKOOP,ABI_ERC20,readProvider);
+      const al=await sk2.allowance(userAddr,CFG.ESCROW);
+      const firstTime=al<BigInt(d.tokenAmount);
+      const notice=document.getElementById('first-time-notice');
+      const btn=document.getElementById('btn-confirm');
+      if(firstTime){
+        if(notice)notice.style.display='flex';
+        if(btn)btn.textContent='Step 1 of 2 — Approve SKOOP';
+      }else{
+        if(notice)notice.style.display='none';
+        if(btn)btn.textContent='Confirm & Pay with SKOOP';
+      }
+    }
+  }catch(e){}
 }
 
 function cancelPay(){
   pendingIntent=null;
   hideApprovalProgress();
-  document.getElementById("btn-confirm").disabled=false;
-  document.getElementById("btn-confirm").textContent="Confirm & Pay with SKOOP";
+  const btn=document.getElementById("btn-confirm");
+  if(btn){btn.disabled=false;btn.textContent="Confirm & Pay with SKOOP";}
+  const notice=document.getElementById('first-time-notice');
+  if(notice)notice.style.display='none';
   document.getElementById("pay-confirm").classList.remove("active");
   document.getElementById("pay-scan").classList.add("active");
 }
@@ -1251,6 +1279,8 @@ async function confirmPay(){
       setApStep(1,'done','Approved ✓ — SKOOP spending unlocked forever');
       setApStep(2,'active','Waiting for your wallet — confirm the payment');
       btn.innerHTML='<span class="spinner"></span> Step 2 of 2 — Sending payment…';
+      // Small delay after approval — lets mobile wallet UI fully dismiss before next prompt
+      await new Promise(r=>setTimeout(r,600));
     }else{
       btn.innerHTML='<span class="spinner"></span> Processing…';
     }
