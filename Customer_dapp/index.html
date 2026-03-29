@@ -1533,39 +1533,56 @@ function drawFlatLine(ctx,canvas,price){
 function playChaChingSound(){
   try{
     const ctx=new(window.AudioContext||window.webkitAudioContext)();
-    const master=ctx.createGain();
-    master.gain.setValueAtTime(0.35,ctx.currentTime);
-    master.connect(ctx.destination);
+    const now=ctx.currentTime;
 
-    function playTone(freq,startTime,duration,type,gainPeak,decayTime){
+    // Bell tone: instant attack, exponential decay
+    function bell(freq,start,decay,vol){
       const osc=ctx.createOscillator();
       const g=ctx.createGain();
-      osc.connect(g);g.connect(master);
-      osc.type=type;
-      osc.frequency.setValueAtTime(freq,ctx.currentTime+startTime);
-      g.gain.setValueAtTime(0,ctx.currentTime+startTime);
-      g.gain.linearRampToValueAtTime(gainPeak,ctx.currentTime+startTime+0.008);
-      g.gain.exponentialRampToValueAtTime(0.001,ctx.currentTime+startTime+decayTime);
-      osc.start(ctx.currentTime+startTime);
-      osc.stop(ctx.currentTime+startTime+decayTime);
+      osc.connect(g);g.connect(ctx.destination);
+      osc.type='sine';
+      osc.frequency.setValueAtTime(freq,now+start);
+      g.gain.setValueAtTime(vol,now+start);
+      g.gain.exponentialRampToValueAtTime(0.0001,now+start+decay);
+      osc.start(now+start);
+      osc.stop(now+start+decay+0.05);
     }
 
-    // "CHA" — metallic scrape: burst of high noise-like tones
-    playTone(3200,0,0.06,'square',1.0,0.06);
-    playTone(2800,0,0.06,'square',0.7,0.06);
-    playTone(4100,0.01,0.05,'square',0.5,0.05);
+    // Metallic click: short filtered noise burst
+    function mclick(start,vol){
+      const len=Math.floor(ctx.sampleRate*0.04);
+      const buf=ctx.createBuffer(1,len,ctx.sampleRate);
+      const d=buf.getChannelData(0);
+      for(let i=0;i<len;i++)d[i]=(Math.random()*2-1)*(1-i/len);
+      const src=ctx.createBufferSource();
+      const hpf=ctx.createBiquadFilter();
+      const g=ctx.createGain();
+      hpf.type='highpass';hpf.frequency.value=2000;
+      src.buffer=buf;
+      src.connect(hpf);hpf.connect(g);g.connect(ctx.destination);
+      g.gain.setValueAtTime(vol,now+start);
+      g.gain.exponentialRampToValueAtTime(0.0001,now+start+0.04);
+      src.start(now+start);
+      src.stop(now+start+0.06);
+    }
 
-    // Brief gap then "CHING" — bell ring: clean sine with long decay
-    playTone(1480,0.07,0.55,'sine',1.0,0.55);   // main bell tone
-    playTone(2960,0.07,0.40,'sine',0.4,0.40);   // octave overtone
-    playTone(4440,0.07,0.25,'sine',0.15,0.25);  // upper harmonic
+    // "CHA" — sharp mechanical strike
+    mclick(0, 1.2);
+    bell(220,  0,    0.06, 0.4);
+    bell(440,  0,    0.05, 0.2);
+    bell(880,  0,    0.04, 0.1);
 
-    // Close context after sound finishes
-    setTimeout(()=>{try{ctx.close();}catch(e){}},900);
+    // "CHING" — bright ringing bell 80ms later
+    mclick(0.08, 0.3);
+    bell(2637, 0.08, 0.9,  0.6);
+    bell(3520, 0.08, 0.6,  0.25);
+    bell(5274, 0.08, 0.4,  0.12);
+    bell(1760, 0.08, 1.0,  0.15);
+
+    setTimeout(()=>{try{ctx.close();}catch(e){}},1400);
   }catch(e){}
 }
 
-// ── SOUND ─────────────────────────────────────────────────────────────────────
 // ── TOAST ─────────────────────────────────────────────────────────────────────
 let toastT;
 function showToast(msg,type=""){
