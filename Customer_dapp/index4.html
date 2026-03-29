@@ -316,7 +316,7 @@ html,body{height:100%;overflow:hidden;background:var(--coral);font-family:'Instr
   </div>
 
   <!-- MetaMask / injected -->
-  <div class="tok-opt" onclick="connectInjected()" style="padding:14px 4px;">
+  <div class="tok-opt" onclick="connectMetaMask()" style="padding:14px 4px;">
     <div style="width:40px;height:40px;background:var(--apricot);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0;">🦊</div>
     <div class="tok-opt-info">
       <h4>MetaMask / Browser Wallet</h4>
@@ -604,7 +604,18 @@ let _justDisconnected=false;
 
 // ── ETH PRICE ─────────────────────────────────────────────────────────────────
 async function fetchEthPrice(){
-  // Fetch ETH price directly from on-chain WETH/USDC pool — no CORS issues
+  // Try multiple price sources — all use public RPC or CORS-open APIs
+  // Source 1: CoinbaseGecko via a CORS-open proxy
+  try{
+    const r=await fetch('https://api.coinbase.com/v2/exchange-rates?currency=ETH',{mode:'cors'});
+    if(r.ok){
+      const d=await r.json();
+      const p=parseFloat(d?.data?.rates?.USD||0);
+      if(p>100&&p<1000000){ethPriceUSD=p;await fetchSkoopPrice();return;}
+    }
+  }catch(e){}
+
+  // Source 2: On-chain WETH/USDC pool on Base (no CORS, pure RPC)
   try{
     const ABI=['function slot0() view returns (uint160 sqrtPriceX96,int24,uint16,uint16,uint16,uint8,bool)','function token0() view returns (address)'];
     const pub=new ethers.JsonRpcProvider(CFG.RPC);
@@ -613,6 +624,8 @@ async function fetchEthPrice(){
     const sqrtPf=Number(s0.sqrtPriceX96)/Number(2n**96n);
     const raw=sqrtPf*sqrtPf;
     const wethIsT0=t0.toLowerCase()===CFG.WETH.toLowerCase();
+    // WETH/USDC pool: USDC is token0 (6 dec), WETH is token1 (18 dec)
+    // raw = price of token0 in token1 = USDC/WETH, adjusted: *1e12 for decimal diff
     const p=wethIsT0?(1/raw)*1e12:raw*1e12;
     if(p>100&&p<1000000){ethPriceUSD=p;await fetchSkoopPrice();}
   }catch(e){}
@@ -654,47 +667,83 @@ function hideWalletOptions(){
 }
 
 // PATH 1 — Coinbase Wallet
-// On mobile: deep links into Coinbase Wallet app which auto-creates Smart Wallet
-// Inside Coinbase Wallet browser: window.ethereum is injected, connect directly
-// On desktop: WalletConnect QR so user can scan with their phone
+// Three sub-cases:
+// A) Already inside Coinbase Wallet browser → window.ethereum injected → connect directly
+// B) Mobile browser outside app → deep link opens dapp INSIDE Coinbase Wallet browser
+// C) Desktop without extension → WalletConnect QR
 async function connectCoinbaseWallet(){
   hideWalletOptions();
   const btn=document.getElementById('gate-connect-btn');
 
-  // Already inside Coinbase Wallet browser (mobile or desktop extension)
+  // Case A: already inside Coinbase Wallet browser or extension
   if(window.ethereum && (window.ethereum.isCoinbaseWallet || window.ethereum.isCoinbaseBrowser)){
     await connectInjected();
     return;
   }
 
-  // Mobile browser (not inside Coinbase Wallet yet) — deep link to open dapp inside the app
-  // Coinbase Wallet creates a Smart Wallet automatically for new users via Face ID
   const isMobile=/iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+
   if(isMobile){
+    // Case B: mobile browser → deep link into Coinbase Wallet dapp browser
+    // Coinbase Wallet auto-creates Smart Wallet (Face ID) for new users
+    // The dapp URL inside the wallet browser will have window.ethereum injected
+    // so when it loads, openWalletModal auto-connects via connectInjected()
     if(btn){btn.textContent='Opening…';btn.disabled=true;}
     showToast('Opening Coinbase Wallet…','');
-    // Small delay so toast shows before navigation
     setTimeout(()=>{
-      window.location.href='https://go.cb-w.com/dapp?cb_url=https%3A%2F%2Fkokosicecream.com';
-    },300);
-    // Re-enable button in case user comes back / navigation blocked
-    setTimeout(()=>{
-      if(btn){btn.textContent='Get Started';btn.disabled=false;}
-    },3000);
+      // Use the universal link format — opens app, navigates to dapp browser
+      window.location.href='https://go.cb-w.com/dapp?cb_url=https%3A%2F%2Fkokosicecream.com%2F';
+    },400);
+    setTimeout(()=>{if(btn){btn.textContent='Get Started';btn.disabled=false;}},4000);
     return;
   }
 
-  // Desktop without Coinbase extension: show WalletConnect QR
-  // User scans with Coinbase Wallet mobile to connect
-  showToast('Scan QR with Coinbase Wallet on your phone','');
+  // Case C: desktop without extension → WalletConnect QR
+  showToast('Scan QR with Coinbase Wallet','');
   await connectWalletConnect();
 }
 
-// PATH 2 — MetaMask / any injected browser wallet
-async function connectInjected(){
+// PATH 2 — MetaMask
+// Three sub-cases:
+// A) Already inside MetaMask browser → window.ethereum injected → connect directly
+// B) Mobile browser outside app → deep link opens dapp INSIDE MetaMask browser
+// C) Desktop → connect installed extension
+async function connectMetaMask(){
   hideWalletOptions();
+  const btn=document.getElementById('gate-connect-btn');
+
+  // Case A: already inside MetaMask browser or extension is installed
+  if(window.ethereum && window.ethereum.isMetaMask){
+    await connectInjected();
+    return;
+  }
+
+  const isMobile=/iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+
+  if(isMobile){
+    // Case B: mobile browser → deep link opens dapp inside MetaMask browser
+    if(btn){btn.textContent='Opening…';btn.disabled=true;}
+    showToast('Opening MetaMask…','');
+    setTimeout(()=>{
+      window.location.href='https://metamask.app.link/dapp/kokosicecream.com';
+    },400);
+    setTimeout(()=>{if(btn){btn.textContent='Get Started';btn.disabled=false;}},4000);
+    return;
+  }
+
+  // Case C: desktop — try injected, show error if none
+  if(window.ethereum){
+    await connectInjected();
+  } else {
+    showToast('MetaMask not detected — install the extension first','err');
+    window.open('https://metamask.io/download/','_blank');
+  }
+}
+
+// Shared: connect whatever window.ethereum is available
+async function connectInjected(){
   if(!window.ethereum){
-    showToast('No wallet detected — use Coinbase Wallet instead','err');
+    showToast('No wallet detected','err');
     return;
   }
   const btn=document.getElementById('gate-connect-btn');
@@ -954,6 +1003,10 @@ if(window.ethereum){
     if(a.length)await connectInjected();
   }).catch(()=>{});
 }
+
+// Fetch prices on page load — uses public RPC, no wallet needed
+// This makes the price tile and SKOOP price show immediately
+fetchEthPrice().catch(()=>{});
 
 // ── SWAP ──────────────────────────────────────────────────────────────────────
 function openTokSheet(){document.getElementById("tok-sheet").classList.add("open");document.getElementById("tok-back").classList.add("open");}
