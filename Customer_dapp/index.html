@@ -1271,9 +1271,6 @@ async function confirmPay(){
       btn.disabled=false;btn.textContent="Try Again";return;
     }
     if(al<tokAmt)setApStep(2,'done','Payment sent ✓');
-    // Show success immediately on tx submission — don't wait for confirmation
-    // On mobile the wallet takes over the screen; tx.wait() can drop when app regains focus
-    // The POS signature already guarantees validity — submission = success for the customer
     const fmt=parseFloat(ethers.formatUnits(tokAmt,CFG.SKOOP_DEC));
     const totalUSD='$'+(Number(d.totalCents)/100).toFixed(2);
     document.getElementById('success-total-display').textContent=totalUSD+' · '+fmt.toLocaleString('en-US',{maximumFractionDigits:2})+' SKOOP';
@@ -1284,7 +1281,6 @@ async function confirmPay(){
       `<div class="sc-row"><span class="sk">Block</span><span class="sv">confirming…</span></div>`;
     document.getElementById("success-screen").classList.add("show");
     pendingIntent=null;hideApprovalProgress();
-    // Confirm in background and update block number when available — no await
     tx.wait().then(rcpt=>{
       if(rcpt&&rcpt.blockNumber){
         const blockEl=document.querySelector('#success-detail .sc-row:last-child .sv');
@@ -1295,7 +1291,6 @@ async function confirmPay(){
   }catch(e){
     if(document.getElementById('approval-progress').classList.contains('show'))
       setApStep(2,'error','Payment rejected — tap below to try again');
-    showToast(e?.reason||e?.shortMessage||e?.data?.message||e?.message||"Payment failed","err");
     btn.disabled=false;btn.textContent="Try Again";return;
   }
   btn.disabled=false;btn.textContent="Confirm & Pay with SKOOP";
