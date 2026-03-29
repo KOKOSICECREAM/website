@@ -686,13 +686,17 @@ async function connectCoinbaseWallet(){
   if(isMobile){
     // Case B: mobile browser → deep link into Coinbase Wallet dapp browser
     // Coinbase Wallet auto-creates Smart Wallet (Face ID) for new users
-    // The dapp URL inside the wallet browser will have window.ethereum injected
-    // so when it loads, openWalletModal auto-connects via connectInjected()
+    // When the dapp loads inside Coinbase Wallet, window.ethereum is injected
+    // and openWalletModal() auto-connects immediately
     if(btn){btn.textContent='Opening…';btn.disabled=true;}
     showToast('Opening Coinbase Wallet…','');
     setTimeout(()=>{
-      // Use the universal link format — opens app, navigates to dapp browser
-      window.location.href='https://go.cb-w.com/dapp?cb_url=https%3A%2F%2Fkokosicecream.com%2F';
+      // Correct format per Coinbase docs: cb_url value is NOT double-encoded
+      // https://go.cb-w.com/dapp?cb_url=https://your-dapp.com/
+      // Per Coinbase docs, cb_url is passed with minimal encoding
+      // Their example: cb_url=https://nft.coinbase.com/@barmstrong (slashes not encoded)
+      // Try both: raw URL first (matches Coinbase docs example exactly)
+      window.location.href='https://go.cb-w.com/dapp?cb_url=https://kokosicecream.com/Customer_dapp/index.html';
     },400);
     setTimeout(()=>{if(btn){btn.textContent='Get Started';btn.disabled=false;}},4000);
     return;
@@ -725,7 +729,7 @@ async function connectMetaMask(){
     if(btn){btn.textContent='Opening…';btn.disabled=true;}
     showToast('Opening MetaMask…','');
     setTimeout(()=>{
-      window.location.href='https://metamask.app.link/dapp/kokosicecream.com';
+      window.location.href='https://metamask.app.link/dapp/kokosicecream.com/Customer_dapp/index.html';
     },400);
     setTimeout(()=>{if(btn){btn.textContent='Get Started';btn.disabled=false;}},4000);
     return;
