@@ -24,11 +24,7 @@
 <script src="https://cdn.jsdelivr.net/npm/@walletconnect/modal@2.6.2/dist/index.umd.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@walletconnect/ethereum-provider@2.10.0/dist/index.umd.js"></script>
 
-<!-- CHANGE 1 of 3: Coinbase Wallet SDK v3 UMD — Smart Wallet + CDN compatible -->
-<script src="https://cdn.jsdelivr.net/npm/@coinbase/wallet-sdk@3.9.3/dist/index.js"
-  onload="window._cbSdkReady=true;console.log('[SKOOP] Coinbase SDK ready ✓');"
-  onerror="console.warn('[SKOOP] Coinbase SDK failed — Smart Wallet unavailable');"></script>
-<!-- END CHANGE 1 -->
+<!-- Smart Wallet via Coinbase Wallet deep link — no SDK required -->
 
 <style>
 :root{
@@ -298,24 +294,24 @@ html,body{height:100%;overflow:hidden;background:var(--coral);font-family:'Instr
   </div>
 </div>
 
-<!-- CHANGE 2 of 3: Wallet choice bottom sheet (replaces single connect button flow) -->
+<!-- CHANGE 2 of 3: Wallet choice bottom sheet -->
 <div class="backdrop" id="wallet-choice-back" onclick="hideWalletOptions()" style="z-index:250;"></div>
 <div class="tok-sheet" id="wallet-choice-sheet" style="z-index:300;padding-bottom:48px;">
   <div class="sheet-handle"></div>
   <div class="sheet-title">Connect your wallet</div>
 
-  <!-- Smart Wallet — primary, most prominent -->
-  <div onclick="connectSmartWallet()" style="background:var(--mint);border-radius:var(--r);padding:18px;margin-bottom:12px;cursor:pointer;border:1.5px solid rgba(42,31,26,0.12);transition:filter 0.15s;" onmouseover="this.style.filter='brightness(0.96)'" onmouseout="this.style.filter=''">
+  <!-- Coinbase Wallet — primary (creates Smart Wallet for new users automatically) -->
+  <div onclick="connectCoinbaseWallet()" style="background:var(--mint);border-radius:var(--r);padding:18px;margin-bottom:12px;cursor:pointer;border:1.5px solid rgba(42,31,26,0.12);transition:filter 0.15s;" onmouseover="this.style.filter='brightness(0.96)'" onmouseout="this.style.filter=''">
     <div style="display:flex;align-items:center;gap:12px;margin-bottom:6px;">
-      <div style="width:40px;height:40px;background:white;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0;">🔑</div>
+      <img src="https://www.coinbase.com/favicon.ico" style="width:40px;height:40px;border-radius:10px;flex-shrink:0;" onerror="this.style.display='none'">
       <div style="flex:1;">
-        <div style="font-size:14px;font-weight:700;color:var(--ink);">Smart Wallet</div>
+        <div style="font-size:14px;font-weight:700;color:var(--ink);">Coinbase Wallet</div>
         <div style="font-size:11px;color:var(--ink-mid);font-weight:500;">New to crypto? Start here</div>
       </div>
       <div style="background:var(--coral-deep);color:white;font-size:10px;font-weight:700;padding:3px 9px;border-radius:99px;white-space:nowrap;flex-shrink:0;">Recommended</div>
     </div>
     <div style="font-size:12px;color:var(--ink-mid);line-height:1.6;padding-left:52px;">
-      Create a wallet with Face ID or fingerprint — no seed phrase, no app download. Takes seconds.
+      Opens Coinbase Wallet — creates a secure wallet with Face ID for new users. No seed phrase needed.
     </div>
   </div>
 
@@ -657,46 +653,34 @@ function hideWalletOptions(){
   document.getElementById('wallet-choice-back').classList.remove('open');
 }
 
-// PATH 1 — Coinbase Smart Wallet (Face ID / passkey, no crypto knowledge needed)
-async function connectSmartWallet(){
+// PATH 1 — Coinbase Wallet (opens app via deep link on mobile, or injected on desktop)
+// Coinbase Wallet automatically creates a Smart Wallet (Face ID / passkey) for new users
+async function connectCoinbaseWallet(){
   hideWalletOptions();
   const btn=document.getElementById('gate-connect-btn');
-  if(!window.CoinbaseWalletSDK){
-    // SDK still loading — wait up to 3s then retry
-    showToast('Loading Smart Wallet…','');
-    let waited=0;
-    while(!window.CoinbaseWalletSDK&&waited<3000){
-      await new Promise(r=>setTimeout(r,200));waited+=200;
-    }
-    if(!window.CoinbaseWalletSDK){showToast('Smart Wallet unavailable — try another option','err');return;}
+
+  // If Coinbase Wallet extension is already injected, use it directly
+  if(window.ethereum && window.ethereum.isCoinbaseWallet){
+    await connectInjected();
+    return;
   }
-  try{
-    if(btn){btn.textContent='Setting up…';btn.disabled=true;}
-    const sdk=new window.CoinbaseWalletSDK({
-      appName:'SKOOP by KOKOS',
-      appLogoUrl:'https://kokosicecream.github.io/website/Customer_dapp/KOKOS_SKOOP.png',
-      darkMode:false,
-    });
-    // smartWalletOnly = passkey/Face ID flow, no seed phrase, no app download required
-    const cbProvider=sdk.makeWeb3Provider(CFG.RPC, CFG.CHAIN_ID, {options:'smartWalletOnly'});
-    await cbProvider.request({method:'eth_requestAccounts'});
-    provider=new ethers.BrowserProvider(cbProvider);
-    signer=await provider.getSigner();
-    userAddr=await signer.getAddress();
-    window._cbProvider=cbProvider;
-    cbProvider.on('accountsChanged',a=>{
-      if(a[0]){userAddr=a[0];updatePills();refreshBals();}
-      else disconnectWallet();
-    });
-    await onConnected();
-  }catch(e){
-    if(btn){btn.textContent='Get Started';btn.disabled=false;}
-    if(e.code===4001||e?.message?.includes('rejected')||e?.message?.includes('User denied')){
-      showToast('Cancelled','err');
-    }else{
-      showToast(e?.message?.slice(0,60)||'Smart Wallet connection failed','err');
-    }
+
+  // On mobile: open Coinbase Wallet app via deep link
+  // The app handles Smart Wallet creation automatically for new users
+  const isMobile=/iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+  if(isMobile){
+    hideWalletOptions();
+    showToast('Opening Coinbase Wallet…','');
+    // Deep link opens the dapp inside Coinbase Wallet browser
+    // New users get guided through Smart Wallet (Face ID) creation automatically
+    window.location.href='https://go.cb-w.com/dapp?cb_url=https%3A%2F%2Fkokosicecream.com';
+    return;
   }
+
+  // On desktop without extension: fall through to WalletConnect
+  // which shows a QR the user can scan with Coinbase Wallet mobile
+  showToast('Opening QR — scan with Coinbase Wallet','');
+  await connectWalletConnect();
 }
 
 // PATH 2 — MetaMask / injected browser wallet
