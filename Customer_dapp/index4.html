@@ -23,6 +23,15 @@
 <script>window.process={env:{NODE_ENV:'production'},version:'v18.0.0',browser:true};</script>
 <script src="https://cdn.jsdelivr.net/npm/@walletconnect/modal@2.6.2/dist/index.umd.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@walletconnect/ethereum-provider@2.10.0/dist/index.umd.js"></script>
+
+<!-- CHANGE 1 of 3: Coinbase Wallet SDK v4 for Smart Wallet support -->
+<script type="module">
+  import { CoinbaseWalletSDK } from 'https://cdn.jsdelivr.net/npm/@coinbase/wallet-sdk@4.3.7/+esm';
+  window.CoinbaseWalletSDK = CoinbaseWalletSDK;
+  window._cbSdkReady = true;
+</script>
+<!-- END CHANGE 1 -->
+
 <style>
 :root{
   --coral:#fdcec1;--coral-mid:#fdaf9a;--coral-deep:#e8876a;
@@ -208,13 +217,28 @@ html,body{height:100%;overflow:hidden;background:var(--coral);font-family:'Instr
 .btn-confirm:hover{background:var(--ink);}
 .btn-confirm:disabled{background:var(--border);color:var(--ink-light);cursor:not-allowed;}
 .btn-cancel{width:100%;padding:13px;background:transparent;color:var(--ink-mid);border:1px solid var(--border-mid);border-radius:var(--r);font-family:'Instrument Sans',sans-serif;font-size:13px;font-weight:600;cursor:pointer;margin-top:8px;}
+#approval-progress{display:none;margin:12px 20px 0;background:var(--white);border:1.5px solid var(--border-mid);border-radius:var(--r);overflow:hidden;}
+#approval-progress.show{display:block;}
+.ap-header{background:var(--sand);padding:12px 16px;display:flex;align-items:center;gap:8px;}
+.ap-header-text{font-size:12px;font-weight:600;color:var(--ink);}
+.ap-header-sub{font-size:10px;color:var(--ink-mid);font-weight:500;margin-top:1px;}
+.ap-steps{padding:14px 16px;display:flex;flex-direction:column;gap:10px;}
+.ap-step{display:flex;align-items:center;gap:12px;}
+.ap-step-dot{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:12px;font-weight:700;transition:all 0.3s;}
+.ap-step-dot.waiting{background:var(--border);color:var(--ink-light);}
+.ap-step-dot.active{background:var(--sand);color:var(--ink);animation:apPulse 1.2s ease infinite;}
+.ap-step-dot.done{background:var(--mint);color:var(--green);}
+.ap-step-dot.error{background:#fff0ee;color:#c0392b;}
+@keyframes apPulse{0%,100%{transform:scale(1);}50%{transform:scale(1.1);}}
+.ap-step-label{font-size:12px;font-weight:600;color:var(--ink);}
+.ap-step-desc{font-size:10px;color:var(--ink-mid);font-weight:500;margin-top:1px;line-height:1.4;}
+.ap-connector{width:2px;height:10px;background:var(--border);margin-left:13px;}
 #screen-qr{background:var(--sand);}
 .qr-card{background:var(--white);margin:16px 20px;border-radius:var(--r);padding:28px 24px;text-align:center;}
 .qr-eyebrow{font-size:10px;font-weight:600;letter-spacing:2px;text-transform:uppercase;color:var(--ink-light);margin-bottom:4px;}
 .qr-italic{font-family:'Cormorant Garamond',serif;font-size:18px;font-weight:600;font-style:italic;color:var(--ink);margin-bottom:20px;}
 #my-qr-div{display:inline-block;}
 .qr-addr{font-size:10px;color:var(--ink-light);font-weight:500;margin-top:14px;word-break:break-all;line-height:1.6;}
-/* SUCCESS SCREEN — new animated version */
 .success-screen{display:none;position:absolute;inset:0;z-index:300;flex-direction:column;overflow:hidden;animation:successFadeIn 0.3s ease;}
 .success-screen.show{display:flex;}
 @keyframes successFadeIn{from{opacity:0;transform:translateY(16px);}to{opacity:1;transform:translateY(0);}}
@@ -238,7 +262,7 @@ html,body{height:100%;overflow:hidden;background:var(--coral);font-family:'Instr
 <div id="toast"></div>
 <div id="net-banner" onclick="switchToBase()">&#9888; Wrong network — tap to switch to Base</div>
 
-<!-- SUCCESS SCREEN — new animated version -->
+<!-- SUCCESS SCREEN -->
 <div class="success-screen" id="success-screen">
   <div style="display:flex;height:6px;flex-shrink:0;">
     <div style="flex:1;background:var(--coral)"></div><div style="flex:1;background:var(--mint)"></div>
@@ -276,6 +300,47 @@ html,body{height:100%;overflow:hidden;background:var(--coral);font-family:'Instr
   </div>
 </div>
 
+<!-- CHANGE 2 of 3: Wallet choice bottom sheet (replaces single connect button flow) -->
+<div class="backdrop" id="wallet-choice-back" onclick="hideWalletOptions()" style="z-index:250;"></div>
+<div class="tok-sheet" id="wallet-choice-sheet" style="z-index:300;padding-bottom:48px;">
+  <div class="sheet-handle"></div>
+  <div class="sheet-title">Connect your wallet</div>
+
+  <!-- Smart Wallet — primary, most prominent -->
+  <div onclick="connectSmartWallet()" style="background:var(--mint);border-radius:var(--r);padding:18px;margin-bottom:12px;cursor:pointer;border:1.5px solid rgba(42,31,26,0.12);transition:filter 0.15s;" onmouseover="this.style.filter='brightness(0.96)'" onmouseout="this.style.filter=''">
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:6px;">
+      <div style="width:40px;height:40px;background:white;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0;">🔑</div>
+      <div style="flex:1;">
+        <div style="font-size:14px;font-weight:700;color:var(--ink);">Smart Wallet</div>
+        <div style="font-size:11px;color:var(--ink-mid);font-weight:500;">New to crypto? Start here</div>
+      </div>
+      <div style="background:var(--coral-deep);color:white;font-size:10px;font-weight:700;padding:3px 9px;border-radius:99px;white-space:nowrap;flex-shrink:0;">Recommended</div>
+    </div>
+    <div style="font-size:12px;color:var(--ink-mid);line-height:1.6;padding-left:52px;">
+      Create a wallet with Face ID or fingerprint — no seed phrase, no app download. Takes seconds.
+    </div>
+  </div>
+
+  <!-- MetaMask / injected -->
+  <div class="tok-opt" onclick="connectInjected()" style="padding:14px 4px;">
+    <div style="width:40px;height:40px;background:var(--apricot);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0;">🦊</div>
+    <div class="tok-opt-info">
+      <h4>MetaMask / Browser Wallet</h4>
+      <p>Already have a wallet installed</p>
+    </div>
+  </div>
+
+  <!-- WalletConnect -->
+  <div class="tok-opt" onclick="connectViaWalletConnect()" style="padding:14px 4px;">
+    <div style="width:40px;height:40px;background:var(--lavender);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0;">📱</div>
+    <div class="tok-opt-info">
+      <h4>WalletConnect</h4>
+      <p>Scan with any mobile wallet</p>
+    </div>
+  </div>
+</div>
+<!-- END CHANGE 2 -->
+
 <!-- CONNECT GATE -->
 <div id="connect-gate" style="display:flex;flex-direction:column;flex:1;overflow:hidden;">
   <div class="gate-blocks">
@@ -289,24 +354,8 @@ html,body{height:100%;overflow:hidden;background:var(--coral);font-family:'Instr
       <div class="gate-tagline">Buy, earn &amp; pay with SKOOP<br>at KOKOS Ice Cream Nashville</div>
       <button class="btn-primary" id="gate-connect-btn" onclick="openWalletModal()">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 12h.01"/><path d="M2 10h20"/><path d="M7 3l5-1 5 1"/></svg>
-        Connect Wallet
+        Get Started
       </button>
-      <div id="wallet-hint" style="display:none;margin:12px 0;">
-        <div style="font-size:11px;font-weight:600;color:var(--ink-mid);text-align:center;margin-bottom:8px;letter-spacing:0.5px;text-transform:uppercase;">Open in your wallet app</div>
-        <div style="display:flex;flex-direction:column;gap:6px;">
-          <a href="https://metamask.app.link/dapp/kokosicecream.github.io/website/Customer_dapp/index.html"
-             style="display:flex;align-items:center;gap:10px;background:var(--white);border:1px solid var(--border-mid);border-radius:var(--r-sm);padding:10px 14px;text-decoration:none;color:var(--ink);font-size:13px;font-weight:600;">
-            <img src="https://upload.wikimedia.org/wikipedia/commons/3/36/MetaMask_Fox.svg" style="width:24px;height:24px;">
-            Open in MetaMask
-          </a>
-          <a href="https://go.cb-w.com/dapp?cb_url=https%3A%2F%2Fkokosicecream.github.io%2Fwebsite%2FCustomer_dapp%2Findex.html"
-             style="display:flex;align-items:center;gap:10px;background:var(--white);border:1px solid var(--border-mid);border-radius:var(--r-sm);padding:10px 14px;text-decoration:none;color:var(--ink);font-size:13px;font-weight:600;">
-            <img src="https://www.coinbase.com/favicon.ico" style="width:24px;height:24px;border-radius:4px;">
-            Open in Coinbase Wallet
-          </a>
-        </div>
-        <div style="font-size:10px;color:var(--ink-light);text-align:center;margin-top:8px;">or use the WalletConnect button above</div>
-      </div>
       <div class="ca-line" onclick="navigator.clipboard.writeText('0xfd3ce21c5acd8bbbe576d0e2336c210c3cebeb92').then(()=>showToast('CA copied','ok'))">
         SKOOP &middot; <span style="text-decoration:underline dotted;">0xfd3ce21c5Acd8BbbE576d0E2336C210C3cEBeb92</span> &middot; tap to copy
       </div>
@@ -343,7 +392,7 @@ html,body{height:100%;overflow:hidden;background:var(--coral);font-family:'Instr
       </div>
       <div class="gate-footer-cta">
         <p>Ready to SKOOP?<br><em>Connect your wallet to start.</em></p>
-        <button class="btn-cta-repeat" onclick="openWalletModal()">Connect Wallet &rarr;</button>
+        <button class="btn-cta-repeat" onclick="openWalletModal()">Get Started &rarr;</button>
       </div>
     </div>
   </div>
@@ -449,8 +498,34 @@ html,body{height:100%;overflow:hidden;background:var(--coral);font-family:'Instr
             <div class="cc-row"><span class="ck">Receipt ID</span><span class="cv" id="cc-receipt">&#8212;</span></div>
           </div>
         </div>
+        <div id="approval-progress">
+          <div class="ap-header">
+            <span style="font-size:16px;">🔓</span>
+            <div>
+              <div class="ap-header-text">First-time setup required</div>
+              <div class="ap-header-sub">Two wallet confirmations — one time only, ever</div>
+            </div>
+          </div>
+          <div class="ap-steps">
+            <div class="ap-step">
+              <div class="ap-step-dot waiting" id="ap-dot-1">1</div>
+              <div class="ap-step-info">
+                <div class="ap-step-label">Approve SKOOP</div>
+                <div class="ap-step-desc" id="ap-desc-1">Allow the KOKOS escrow to accept your SKOOP — tap Confirm in your wallet</div>
+              </div>
+            </div>
+            <div class="ap-connector"></div>
+            <div class="ap-step">
+              <div class="ap-step-dot waiting" id="ap-dot-2">2</div>
+              <div class="ap-step-info">
+                <div class="ap-step-label">Send Payment</div>
+                <div class="ap-step-desc" id="ap-desc-2">Confirm the payment transaction in your wallet</div>
+              </div>
+            </div>
+          </div>
+        </div>
         <button class="btn-confirm" id="btn-confirm" onclick="confirmPay()">Confirm &amp; Pay with SKOOP</button>
-        <button class="btn-cancel" onclick="cancelPay()">Cancel — scan again</button>
+        <button class="btn-cancel" id="btn-cancel" onclick="cancelPay()">Cancel — scan again</button>
       </div>
     </div>
   </div>
@@ -521,7 +596,7 @@ const CFG={
   WETH:'0x4200000000000000000000000000000000000006',
   FEE:3000,SKOOP_DEC:6,USDC_DEC:6,WETH_DEC:18,
 };
-const ABI_ERC20=["function balanceOf(address) view returns (uint256)","function allowance(address,address) view returns (uint256)","function approve(address,uint256) returns (bool)"];
+const ABI_ERC20=["function balanceOf(address) view returns (uint256)","function allowance(address,address) view returns (uint256)","function approve(address,uint256) returns (bool)","event Transfer(address indexed from, address indexed to, uint256 value)"];
 const ABI_ROUTER=["function exactInputSingle((address tokenIn,address tokenOut,uint24 fee,address recipient,uint256 amountIn,uint256 amountOutMinimum,uint160 sqrtPriceLimitX96)) payable returns (uint256)"];
 const ABI_ESCROW=[{inputs:[{components:[{name:"receiptId",type:"bytes32"},{name:"orderId",type:"bytes32"},{name:"storeIdHash",type:"bytes32"},{name:"terminalIdHash",type:"bytes32"},{name:"tokenAmount",type:"uint256"},{name:"subtotalCents",type:"uint256"},{name:"taxCents",type:"uint256"},{name:"totalCents",type:"uint256"},{name:"itemCount",type:"uint256"},{name:"cartHash",type:"bytes32"},{name:"deadline",type:"uint256"}],internalType:"struct KOKOSPaymentEscrowPOS.PaymentIntent",name:"intent",type:"tuple"},{name:"signature",type:"bytes"}],name:"capturePayment",outputs:[],stateMutability:"nonpayable",type:"function"}];
 
@@ -531,9 +606,9 @@ const ABI_POOL_IMM=["function token0() view returns (address)","function token1(
 const poolFees={};
 
 let provider,signer,userAddr,selToken="ETH",slip=0.5,quoteTimer,curQuote,pendingIntent,scannerRunning=false,ethPriceUSD=0,skoopPriceUSD=0;
-let _justDisconnected=false; // prevents immediate auto-reconnect after explicit disconnect
+let _justDisconnected=false;
 
-// ── ETH PRICE — CoinGecko (works on kokosicecream.com) + on-chain fallback ──
+// ── ETH PRICE ─────────────────────────────────────────────────────────────────
 async function fetchEthPrice(){
   try{
     const r=await fetch('https://api.coingecko.com/api/v3/simple/price?ids=ethereum&vs_currencies=usd');
@@ -541,7 +616,6 @@ async function fetchEthPrice(){
     const p=d?.ethereum?.usd||0;
     if(p>100&&p<1000000){ethPriceUSD=p;await fetchSkoopPrice();return;}
   }catch(e){}
-  // On-chain fallback: WETH/USDC 0.05% pool on Base — no external API, no CORS ever
   try{
     const ABI=['function slot0() view returns (uint160 sqrtPriceX96,int24,uint16,uint16,uint16,uint8,bool)','function token0() view returns (address)'];
     const pub=new ethers.JsonRpcProvider(CFG.RPC);
@@ -578,46 +652,109 @@ function updateSkoopBalanceDisplay(){
   if(sub&&skoopPriceUSD>0)sub.textContent='$'+skoopPriceUSD.toFixed(6);
 }
 
-// Show wallet deep links when no injected wallet
-(function(){if(!window.ethereum){const h=document.getElementById('wallet-hint');if(h)h.style.display='block';}})();
+// ── CHANGE 3 of 3: WALLET CONNECTION — three paths ────────────────────────────
 
-// ── WALLET CONNECT ────────────────────────────────────────────────────────────
-async function openWalletModal(){
-  if(_justDisconnected)return; // don't reconnect immediately after explicit disconnect
-  if(window.ethereum){
-    const btn=document.getElementById('gate-connect-btn');
-    try{
-      if(btn){btn.textContent='Connecting...';btn.disabled=true;}
-      await window.ethereum.request({method:'eth_requestAccounts'});
-      provider=new ethers.BrowserProvider(window.ethereum);
-      signer=await provider.getSigner();
-      userAddr=await signer.getAddress();
-      await onConnected();
-      // Add listeners only once
-      if(!window._ethListenersAdded){
-        window._ethListenersAdded=true;
-        window.ethereum.on('accountsChanged',a=>{if(a[0]){userAddr=a[0];updatePills();refreshBals();}else disconnectWallet();});
-        window.ethereum.on('chainChanged',()=>location.reload());
-      }
-    }catch(e){
-      if(btn){btn.textContent='Connect Wallet';btn.disabled=false;}
-      if(e.code===4001){showToast("Connection rejected","err");return;}
-      // Retry once (handles MetaMask deep link timing)
-      try{
-        await new Promise(r=>setTimeout(r,700));
-        provider=new ethers.BrowserProvider(window.ethereum);
-        signer=await provider.getSigner();
-        userAddr=await signer.getAddress();
-        await onConnected();
-      }catch(e2){
-        if(btn){btn.textContent='Connect Wallet';btn.disabled=false;}
-        showToast(e2?.message?.slice(0,60)||"Connection failed","err");
-      }
+function showWalletOptions(){
+  document.getElementById('wallet-choice-sheet').classList.add('open');
+  document.getElementById('wallet-choice-back').classList.add('open');
+}
+
+function hideWalletOptions(){
+  document.getElementById('wallet-choice-sheet').classList.remove('open');
+  document.getElementById('wallet-choice-back').classList.remove('open');
+}
+
+// PATH 1 — Coinbase Smart Wallet (Face ID / passkey, no crypto knowledge needed)
+async function connectSmartWallet(){
+  hideWalletOptions();
+  const btn=document.getElementById('gate-connect-btn');
+  if(!window.CoinbaseWalletSDK){
+    // SDK still loading — wait up to 3s then retry
+    showToast('Loading Smart Wallet…','');
+    let waited=0;
+    while(!window.CoinbaseWalletSDK&&waited<3000){
+      await new Promise(r=>setTimeout(r,200));waited+=200;
     }
+    if(!window.CoinbaseWalletSDK){showToast('Smart Wallet unavailable — try another option','err');return;}
+  }
+  try{
+    if(btn){btn.textContent='Setting up…';btn.disabled=true;}
+    const sdk=new window.CoinbaseWalletSDK({
+      appName:'SKOOP by KOKOS',
+      appLogoUrl:'https://kokosicecream.github.io/website/Customer_dapp/KOKOS_SKOOP.png',
+      appChainIds:[8453],
+    });
+    // smartWalletOnly = passkey/Face ID flow, no seed phrase, no app download
+    const cbProvider=sdk.makeWeb3Provider({options:'smartWalletOnly'});
+    await cbProvider.request({method:'eth_requestAccounts'});
+    provider=new ethers.BrowserProvider(cbProvider);
+    signer=await provider.getSigner();
+    userAddr=await signer.getAddress();
+    window._cbProvider=cbProvider;
+    cbProvider.on('accountsChanged',a=>{
+      if(a[0]){userAddr=a[0];updatePills();refreshBals();}
+      else disconnectWallet();
+    });
+    await onConnected();
+  }catch(e){
+    if(btn){btn.textContent='Get Started';btn.disabled=false;}
+    if(e.code===4001||e?.message?.includes('rejected')||e?.message?.includes('User denied')){
+      showToast('Cancelled','err');
+    }else{
+      showToast(e?.message?.slice(0,60)||'Smart Wallet connection failed','err');
+    }
+  }
+}
+
+// PATH 2 — MetaMask / injected browser wallet
+async function connectInjected(){
+  hideWalletOptions();
+  if(!window.ethereum){
+    showToast('No wallet found — try Smart Wallet instead','err');
     return;
   }
+  const btn=document.getElementById('gate-connect-btn');
+  try{
+    if(btn){btn.textContent='Connecting…';btn.disabled=true;}
+    await window.ethereum.request({method:'eth_requestAccounts'});
+    provider=new ethers.BrowserProvider(window.ethereum);
+    signer=await provider.getSigner();
+    userAddr=await signer.getAddress();
+    await onConnected();
+    if(!window._ethListenersAdded){
+      window._ethListenersAdded=true;
+      window.ethereum.on('accountsChanged',a=>{
+        if(a[0]){userAddr=a[0];updatePills();refreshBals();}
+        else disconnectWallet();
+      });
+      window.ethereum.on('chainChanged',()=>location.reload());
+    }
+  }catch(e){
+    if(btn){btn.textContent='Get Started';btn.disabled=false;}
+    if(e.code!==4001)showToast(e?.message?.slice(0,60)||'Connection failed','err');
+  }
+}
+
+// PATH 3 — WalletConnect (unchanged logic from original)
+async function connectViaWalletConnect(){
+  hideWalletOptions();
   await connectWalletConnect();
 }
+
+// MAIN ENTRY — shows choice sheet, or auto-reconnects injected wallet
+async function openWalletModal(){
+  if(_justDisconnected)return;
+  // Auto-reconnect if injected wallet already authorized
+  if(window.ethereum){
+    try{
+      const accounts=await window.ethereum.request({method:'eth_accounts'});
+      if(accounts.length){await connectInjected();return;}
+    }catch(e){}
+  }
+  showWalletOptions();
+}
+
+// END CHANGE 3 ────────────────────────────────────────────────────────────────
 
 async function connectWalletConnect(){
   const WCEthProvider=window["@walletconnect/ethereum-provider"]?.EthereumProvider;
@@ -636,31 +773,32 @@ async function connectWalletConnect(){
     signer=await provider.getSigner();
     userAddr=await signer.getAddress();
     await onConnected();
-    wcp.on('disconnect',()=>{ window._wcp=null; disconnectWallet(); });
+    wcp.on('disconnect',()=>{window._wcp=null;disconnectWallet();});
     wcp.on('accountsChanged',a=>{if(a[0]){userAddr=a[0];updatePills();refreshBals();}});
   }catch(e){
     const btn=document.getElementById('gate-connect-btn');
-    if(btn){btn.textContent='Connect Wallet';btn.disabled=false;}
+    if(btn){btn.textContent='Get Started';btn.disabled=false;}
     const msg=e?.message||'';
     if(!msg.includes('closed')&&!msg.includes('rejected')&&!msg.includes('Modal'))showToast(msg||"Connection failed","err");
   }
 }
 
 async function disconnectWallet(){
+  // Disconnect all provider types cleanly
   try{if(window._wcp)await window._wcp.disconnect();}catch(e){}
-  window._wcp=null;provider=null;signer=null;userAddr=null;
-  // Null-safe reset
-  const setT=(id,v)=>{const el=document.getElementById(id);if(el)el.textContent=v;};
-  const setH=(id,v)=>{const el=document.getElementById(id);if(el)el.innerHTML=v;};
+  try{if(window._cbProvider)await window._cbProvider.disconnect();}catch(e){}
+  window._wcp=null;window._cbProvider=null;
+  provider=null;signer=null;userAddr=null;
   document.getElementById("main-app").style.display="none";
   document.getElementById("bottom-nav").style.display="none";
   const gate=document.getElementById("connect-gate");
   if(gate){gate.style.display="flex";gate.style.flexDirection="column";gate.style.flex="1";}
-  // Block immediate auto-reconnect, then reset button
   _justDisconnected=true;
-  setTimeout(()=>{ _justDisconnected=false; },1000);
-  const connectBtn=document.getElementById('gate-connect-btn');
-  if(connectBtn){connectBtn.textContent='Connect Wallet';connectBtn.disabled=false;}
+  setTimeout(()=>{_justDisconnected=false;},1000);
+  const btn=document.getElementById('gate-connect-btn');
+  if(btn){btn.textContent='Get Started';btn.disabled=false;}
+  const setT=(id,v)=>{const el=document.getElementById(id);if(el)el.textContent=v;};
+  const setH=(id,v)=>{const el=document.getElementById(id);if(el)el.innerHTML=v;};
   setT("home-bal","—");setT("home-usd","SKOOP");setT("home-usd-val","");
   setT("wallet-pill","0x…");setT("buy-pill","0x…");
   setT("qr-addr","Connect wallet to generate QR");
@@ -672,7 +810,7 @@ async function onConnected(){
   const m=document.getElementById("main-app");
   m.style.display="flex";m.style.flexDirection="column";m.style.flex="1";m.style.overflow="hidden";
   document.getElementById("bottom-nav").style.display="flex";
-  updatePills();await checkNet();await refreshBals();setTimeout(buildMyQR,200);
+  updatePills();await checkNet();await refreshBals();setTimeout(buildMyQR,200);setTimeout(loadActivityFeed,500);
   loadPoolImmutables();fetchEthPrice();
 }
 
@@ -709,9 +847,10 @@ async function switchToBase(){
 }
 
 async function refreshBals(){
-  if(!provider||!userAddr)return;
+  if(!userAddr)return;
+  const readProvider=new ethers.JsonRpcProvider(CFG.RPC);
   try{
-    const sk=new ethers.Contract(CFG.SKOOP,ABI_ERC20,provider);
+    const sk=new ethers.Contract(CFG.SKOOP,ABI_ERC20,readProvider);
     const raw=await sk.balanceOf(userAddr);
     const skoopBal=parseFloat(ethers.formatUnits(raw,CFG.SKOOP_DEC));
     window._skoopBal=skoopBal;
@@ -720,32 +859,75 @@ async function refreshBals(){
     document.getElementById("home-usd").textContent="SKOOP";
     document.getElementById("qr-bal").textContent=fmt;
     updateSkoopBalanceDisplay();
-  }catch(e){
-    document.getElementById("home-bal").textContent="—";
-  }
-  try{const eb=await provider.getBalance(userAddr);document.getElementById("bal-eth").textContent=parseFloat(ethers.formatEther(eb)).toFixed(4)+" ETH";}catch(e){}
-  try{const uc=new ethers.Contract(CFG.USDC,ABI_ERC20,provider);document.getElementById("bal-usdc").textContent=parseFloat(ethers.formatUnits(await uc.balanceOf(userAddr),6)).toFixed(2)+" USDC";}catch(e){}
+  }catch(e){document.getElementById("home-bal").textContent="—";}
+  try{const eb=await readProvider.getBalance(userAddr);document.getElementById("bal-eth").textContent=parseFloat(ethers.formatEther(eb)).toFixed(4)+" ETH";}catch(e){}
+  try{const uc=new ethers.Contract(CFG.USDC,ABI_ERC20,readProvider);document.getElementById("bal-usdc").textContent=parseFloat(ethers.formatUnits(await uc.balanceOf(userAddr),6)).toFixed(2)+" USDC";}catch(e){}
   await updateFromBal();
+  loadActivityFeed();
 }
 
 async function updateFromBal(){
-  if(!provider||!userAddr)return;
+  if(!userAddr)return;
+  const readProvider=new ethers.JsonRpcProvider(CFG.RPC);
   let b="—";
   try{
     if(selToken==="ETH"){
-      const raw=await provider.getBalance(userAddr);
+      const raw=await readProvider.getBalance(userAddr);
       const eth=parseFloat(ethers.formatEther(raw));
       const usd=ethPriceUSD>0?" (≈$"+(eth*ethPriceUSD).toLocaleString("en-US",{maximumFractionDigits:2})+")":"";
       b=eth.toFixed(4)+" ETH"+usd;
     }else{
-      const c=new ethers.Contract(CFG.USDC,ABI_ERC20,provider);
+      const c=new ethers.Contract(CFG.USDC,ABI_ERC20,readProvider);
       b=parseFloat(ethers.formatUnits(await c.balanceOf(userAddr),6)).toFixed(2)+" USDC";
     }
   }catch(e){}
   document.getElementById("from-bal").textContent=b;
 }
 
-// ── VISIBILITYCHANGE — silent reconnect, never re-run onConnected if in app ──
+async function loadActivityFeed(){
+  if(!userAddr)return;
+  const list=document.querySelector('.tx-list');
+  if(!list)return;
+  list.innerHTML='<div class="tx-row"><div class="tx-dot td-mint" style="font-size:11px;">⏳</div><div class="tx-info"><div class="tx-name">Loading activity…</div></div></div>';
+  try{
+    const readProvider=new ethers.JsonRpcProvider(CFG.RPC);
+    const currentBlock=await readProvider.getBlockNumber();
+    const fromBlock=currentBlock-5000;
+    const topic0=ethers.id('Transfer(address,address,uint256)');
+    const pad=a=>'0x'+ethers.getAddress(a).slice(2).toLowerCase().padStart(64,'0');
+    const logs=await readProvider.send('eth_getLogs',[{
+      address:CFG.SKOOP,
+      topics:[topic0,pad(CFG.POS_SIGNER),pad(userAddr)],
+      fromBlock:'0x'+fromBlock.toString(16),
+      toBlock:'0x'+currentBlock.toString(16)
+    }]);
+    if(!logs.length){
+      list.innerHTML='<div class="tx-row"><div class="tx-dot td-apricot">🍦</div><div class="tx-info"><div class="tx-name">No rewards yet today</div><div class="tx-date">Pay at the shop — show your QR to earn SKOOP</div></div></div>';
+      return;
+    }
+    const totalAmt=logs.reduce((sum,log)=>sum+parseFloat(ethers.formatUnits(BigInt(log.data),CFG.SKOOP_DEC)),0);
+    const totalFmt=totalAmt.toLocaleString("en-US",{maximumFractionDigits:2});
+    const summaryRow=`<div class="tx-row" style="background:var(--mint);">
+      <div class="tx-dot td-mint">🍦</div>
+      <div class="tx-info"><div class="tx-name" style="font-weight:700;">Total rewards today</div><div class="tx-date">${logs.length} visit${logs.length>1?'s':''}</div></div>
+      <div class="tx-val"><div class="amt amt-plus" style="font-size:20px;">+${totalFmt}</div></div>
+    </div>`;
+    list.innerHTML=summaryRow+logs.slice().reverse().map(log=>{
+      const amt=parseFloat(ethers.formatUnits(BigInt(log.data),CFG.SKOOP_DEC));
+      const fmtAmt=amt.toLocaleString("en-US",{maximumFractionDigits:2});
+      const block=parseInt(log.blockNumber,16);
+      const shortHash=log.transactionHash.slice(0,10)+'…';
+      return `<div class="tx-row" onclick="window.open('https://basescan.org/tx/${log.transactionHash}','_blank')" style="cursor:pointer;">
+        <div class="tx-dot td-mint">🎁</div>
+        <div class="tx-info"><div class="tx-name">Reward earned</div><div class="tx-date">Block ${block} · ${shortHash}</div></div>
+        <div class="tx-val"><div class="amt amt-plus">+${fmtAmt}</div></div>
+      </div>`;
+    }).join('');
+  }catch(e){
+    list.innerHTML='<div class="tx-row"><div class="tx-dot td-apricot">⚠️</div><div class="tx-info"><div class="tx-name">Could not load activity</div><div class="tx-date">'+e.message.slice(0,60)+'</div></div></div>';
+  }
+}
+
 document.addEventListener('visibilitychange',async function(){
   if(document.visibilityState!=='visible'||!window.ethereum)return;
   if(provider&&userAddr){try{await refreshBals();}catch(e){}return;}
@@ -761,10 +943,9 @@ document.addEventListener('visibilitychange',async function(){
   }catch(e){}
 });
 
-// Auto-connect on load if wallet already authorised
 if(window.ethereum){
   window.ethereum.request({method:'eth_accounts'}).then(async a=>{
-    if(a.length)await openWalletModal();
+    if(a.length)await connectInjected();
   }).catch(()=>{});
 }
 
@@ -835,20 +1016,17 @@ async function fetchQuote(amt){
     const amtIn=ethers.parseUnits(amt.toString(),decIn);
     const fee=await loadPoolFee(poolAddr);
     let amtOut=null,isEstimate=false;
-    // Tier 1: QuoterV2
     try{
       const ABI_Q2=["function quoteExactInputSingle((address tokenIn,address tokenOut,uint256 amountIn,uint24 fee,uint160 sqrtPriceLimitX96)) returns (uint256 amountOut,uint160 sqrtPriceX96After,uint32 initializedTicksCrossed,uint256 gasEstimate)"];
       const q=new ethers.Contract('0x3d4e44eb1374240ce5f1b136cf395a8eae25d0ae',ABI_Q2,provider);
       const [out]=await q.quoteExactInputSingle.staticCall({tokenIn,tokenOut:CFG.SKOOP,amountIn:amtIn,fee,sqrtPriceLimitX96:0n});
       amtOut=out;
     }catch(e1){
-      // Tier 2: QuoterV1
       try{
         const ABI_Q1=["function quoteExactInputSingle(address,address,uint24,uint256,uint160) returns (uint256)"];
         const q=new ethers.Contract('0xb27308f9f90d607463bb33ea1bebb41c27ce5ab6',ABI_Q1,provider);
         amtOut=await q.quoteExactInputSingle.staticCall(tokenIn,CFG.SKOOP,fee,amtIn,0n);
       }catch(e2){
-        // Tier 3: slot0 spot estimate
         try{
           const ABI_P=["function slot0() view returns (uint160 sqrtPriceX96,int24,uint16,uint16,uint16,uint8,bool)","function token0() view returns (address)"];
           const pool=new ethers.Contract(poolAddr,ABI_P,provider);
@@ -932,7 +1110,6 @@ function parseQR(raw){
       const receiptId=d.r;
       const storeIdHash=ethers.id("KOKOS_NASHVILLE_01");
       const terminalIdHash=ethers.id("POS_1");
-      // Read orderId and cartHash directly from POS payload — must match signed digest exactly
       const orderId=d.o||ethers.id("ORD_"+receiptId);
       const cartHash=d.ch||ethers.id(CFG.ESCROW+receiptId);
       intent={receiptId,orderId,storeIdHash,terminalIdHash,tokenAmount:d.t,subtotalCents:d.sc,taxCents:d.tc,totalCents:d.xc,itemCount:d.ic,cartHash,deadline:d.dl,signature:d.sig};
@@ -959,22 +1136,62 @@ function showConfirm(d){
   document.getElementById("pay-confirm").classList.add("active");
 }
 
-function cancelPay(){pendingIntent=null;document.getElementById("pay-confirm").classList.remove("active");document.getElementById("pay-scan").classList.add("active");}
+function cancelPay(){
+  pendingIntent=null;
+  hideApprovalProgress();
+  document.getElementById("btn-confirm").disabled=false;
+  document.getElementById("btn-confirm").textContent="Confirm & Pay with SKOOP";
+  document.getElementById("pay-confirm").classList.remove("active");
+  document.getElementById("pay-scan").classList.add("active");
+}
+
+function showApprovalProgress(){
+  document.getElementById('approval-progress').classList.add('show');
+  document.getElementById('btn-cancel').style.display='none';
+  setApStep(1,'active','Waiting for your wallet — tap Confirm to approve');
+  setApStep(2,'waiting','Confirm the payment transaction in your wallet');
+}
+function hideApprovalProgress(){
+  document.getElementById('approval-progress').classList.remove('show');
+  document.getElementById('btn-cancel').style.display='';
+}
+function setApStep(n,state,desc){
+  const dot=document.getElementById('ap-dot-'+n);
+  const descEl=document.getElementById('ap-desc-'+n);
+  dot.className='ap-step-dot '+state;
+  if(state==='done')dot.innerHTML='✓';
+  else if(state==='error')dot.innerHTML='✕';
+  else dot.innerHTML=n;
+  if(desc)descEl.textContent=desc;
+}
 
 async function confirmPay(){
   if(!pendingIntent||!signer)return;
   const btn=document.getElementById("btn-confirm");
-  btn.disabled=true;btn.innerHTML='<span class="spinner"></span> Processing...';
+  btn.disabled=true;
   try{
     const d=pendingIntent;
     const tokAmt=BigInt(d.tokenAmount);
     const sk=new ethers.Contract(CFG.SKOOP,ABI_ERC20,signer);
     const al=await sk.allowance(userAddr,CFG.ESCROW);
     if(al<tokAmt){
-      // Approve MaxUint256 so future payments never need a second approval popup
-      showToast("Approving SKOOP — one-time only…","");
-      await(await sk.approve(CFG.ESCROW,ethers.MaxUint256)).wait();
-      showToast("Approved! Sending payment…","");
+      showApprovalProgress();
+      setApStep(1,'active','Waiting for your wallet — tap Confirm to approve');
+      btn.innerHTML='<span class="spinner"></span> Step 1 of 2 — Approving…';
+      try{
+        const approveTx=await sk.approve(CFG.ESCROW,ethers.MaxUint256);
+        setApStep(1,'active','Approval submitted — confirming on chain…');
+        btn.innerHTML='<span class="spinner"></span> Confirming approval…';
+        await approveTx.wait();
+      }catch(e){
+        setApStep(1,'error','Approval rejected — tap below to try again');
+        btn.disabled=false;btn.textContent="Try Again";return;
+      }
+      setApStep(1,'done','Approved ✓ — SKOOP spending unlocked forever');
+      setApStep(2,'active','Waiting for your wallet — confirm the payment');
+      btn.innerHTML='<span class="spinner"></span> Step 2 of 2 — Sending payment…';
+    }else{
+      btn.innerHTML='<span class="spinner"></span> Processing…';
     }
     const intent={
       receiptId:d.receiptId,orderId:d.orderId,
@@ -984,8 +1201,27 @@ async function confirmPay(){
       itemCount:BigInt(d.itemCount),cartHash:d.cartHash,deadline:BigInt(d.deadline)
     };
     const escrow=new ethers.Contract(CFG.ESCROW,ABI_ESCROW,signer);
-    const tx=await escrow.capturePayment(intent,d.signature);
-    showToast("Confirming…","");const rcpt=await tx.wait();
+    let tx;
+    try{
+      tx=await escrow.capturePayment(intent,d.signature);
+    }catch(e){
+      if(al<tokAmt)setApStep(2,'error','Payment rejected — tap below to try again');
+      showToast(e?.reason||e?.shortMessage||e?.data?.message||e?.message||"Payment rejected","err");
+      btn.disabled=false;btn.textContent="Try Again";return;
+    }
+    if(al<tokAmt)setApStep(2,'active','Payment submitted — confirming on chain…');
+    btn.innerHTML='<span class="spinner"></span> Confirming…';
+    let rcpt=null;
+    try{
+      rcpt=await Promise.race([
+        tx.wait(),
+        new Promise((_,rej)=>setTimeout(()=>rej(new Error('timeout')),60000))
+      ]);
+    }catch(e){
+      rcpt={hash:tx.hash,blockNumber:'pending'};
+    }
+    if(!rcpt)rcpt={hash:tx.hash,blockNumber:'pending'};
+    if(al<tokAmt)setApStep(2,'done','Payment confirmed ✓');
     const fmt=parseFloat(ethers.formatUnits(tokAmt,CFG.SKOOP_DEC));
     const totalUSD='$'+(Number(d.totalCents)/100).toFixed(2);
     document.getElementById('success-total-display').textContent=totalUSD+' · '+fmt.toLocaleString('en-US',{maximumFractionDigits:2})+' SKOOP';
@@ -995,9 +1231,12 @@ async function confirmPay(){
       `<div class="sc-row"><span class="sk">Tx</span><span class="sv" style="font-family:monospace;font-size:0.62rem;">${rcpt.hash.slice(0,20)}…</span></div>`+
       `<div class="sc-row"><span class="sk">Block</span><span class="sv">${rcpt.blockNumber}</span></div>`;
     document.getElementById("success-screen").classList.add("show");
-    pendingIntent=null;await refreshBals();
+    pendingIntent=null;hideApprovalProgress();await refreshBals();
   }catch(e){
+    if(document.getElementById('approval-progress').classList.contains('show'))
+      setApStep(2,'error','Payment rejected — tap below to try again');
     showToast(e?.reason||e?.shortMessage||e?.data?.message||e?.message||"Payment failed","err");
+    btn.disabled=false;btn.textContent="Try Again";return;
   }
   btn.disabled=false;btn.textContent="Confirm & Pay with SKOOP";
 }
@@ -1006,7 +1245,7 @@ function closeSuccess(){
   document.getElementById("success-screen").classList.remove("show");
   document.getElementById("pay-confirm").classList.remove("active");
   document.getElementById("pay-scan").classList.add("active");
-  goTo("qr"); // Show My QR so they can earn their reward
+  goTo("qr");
 }
 
 function buildMyQR(){
@@ -1036,13 +1275,9 @@ function closePriceModal(){
 }
 
 async function renderPriceModal(){
-  // Use cached prices (populated on connect via fetchEthPrice)
-  // Re-fetch if not available yet
-  if(!skoopPriceUSD||!ethPriceUSD) await fetchEthPrice();
-
-  const price=skoopPriceUSD, ethP=ethPriceUSD;
+  if(!skoopPriceUSD||!ethPriceUSD)await fetchEthPrice();
+  const price=skoopPriceUSD,ethP=ethPriceUSD;
   const setEl=(id,val)=>{const el=document.getElementById(id);if(el)el.textContent=val;};
-
   if(price>0){
     setEl('pm-price','$'+price.toFixed(8));
     setEl('pm-eth-price','ETH: $'+ethP.toLocaleString('en-US',{maximumFractionDigits:0}));
