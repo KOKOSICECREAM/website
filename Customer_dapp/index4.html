@@ -24,12 +24,10 @@
 <script src="https://cdn.jsdelivr.net/npm/@walletconnect/modal@2.6.2/dist/index.umd.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@walletconnect/ethereum-provider@2.10.0/dist/index.umd.js"></script>
 
-<!-- CHANGE 1 of 3: Coinbase Wallet SDK v4 for Smart Wallet support -->
-<script type="module">
-  import { CoinbaseWalletSDK } from 'https://cdn.jsdelivr.net/npm/@coinbase/wallet-sdk@4.3.7/+esm';
-  window.CoinbaseWalletSDK = CoinbaseWalletSDK;
-  window._cbSdkReady = true;
-</script>
+<!-- CHANGE 1 of 3: Coinbase Wallet SDK v3 UMD — Smart Wallet + CDN compatible -->
+<script src="https://cdn.jsdelivr.net/npm/@coinbase/wallet-sdk@3.9.3/dist/index.js"
+  onload="window._cbSdkReady=true;console.log('[SKOOP] Coinbase SDK ready ✓');"
+  onerror="console.warn('[SKOOP] Coinbase SDK failed — Smart Wallet unavailable');"></script>
 <!-- END CHANGE 1 -->
 
 <style>
@@ -610,12 +608,7 @@ let _justDisconnected=false;
 
 // ── ETH PRICE ─────────────────────────────────────────────────────────────────
 async function fetchEthPrice(){
-  try{
-    const r=await fetch('https://api.coingecko.com/api/v3/simple/price?ids=ethereum&vs_currencies=usd');
-    const d=await r.json();
-    const p=d?.ethereum?.usd||0;
-    if(p>100&&p<1000000){ethPriceUSD=p;await fetchSkoopPrice();return;}
-  }catch(e){}
+  // Fetch ETH price directly from on-chain WETH/USDC pool — no CORS issues
   try{
     const ABI=['function slot0() view returns (uint160 sqrtPriceX96,int24,uint16,uint16,uint16,uint8,bool)','function token0() view returns (address)'];
     const pub=new ethers.JsonRpcProvider(CFG.RPC);
@@ -682,10 +675,10 @@ async function connectSmartWallet(){
     const sdk=new window.CoinbaseWalletSDK({
       appName:'SKOOP by KOKOS',
       appLogoUrl:'https://kokosicecream.github.io/website/Customer_dapp/KOKOS_SKOOP.png',
-      appChainIds:[8453],
+      darkMode:false,
     });
-    // smartWalletOnly = passkey/Face ID flow, no seed phrase, no app download
-    const cbProvider=sdk.makeWeb3Provider({options:'smartWalletOnly'});
+    // smartWalletOnly = passkey/Face ID flow, no seed phrase, no app download required
+    const cbProvider=sdk.makeWeb3Provider(CFG.RPC, CFG.CHAIN_ID, {options:'smartWalletOnly'});
     await cbProvider.request({method:'eth_requestAccounts'});
     provider=new ethers.BrowserProvider(cbProvider);
     signer=await provider.getSigner();
