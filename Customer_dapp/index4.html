@@ -641,7 +641,7 @@ function updateSkoopBalanceDisplay(){
   if(sub&&skoopPriceUSD>0)sub.textContent='$'+skoopPriceUSD.toFixed(6);
 }
 
-// ── CHANGE 3 of 3: WALLET CONNECTION — three paths ────────────────────────────
+// ── CHANGE 3 of 3: WALLET CONNECTION ─────────────────────────────────────────
 
 function showWalletOptions(){
   document.getElementById('wallet-choice-sheet').classList.add('open');
@@ -653,41 +653,48 @@ function hideWalletOptions(){
   document.getElementById('wallet-choice-back').classList.remove('open');
 }
 
-// PATH 1 — Coinbase Wallet (opens app via deep link on mobile, or injected on desktop)
-// Coinbase Wallet automatically creates a Smart Wallet (Face ID / passkey) for new users
+// PATH 1 — Coinbase Wallet
+// On mobile: deep links into Coinbase Wallet app which auto-creates Smart Wallet
+// Inside Coinbase Wallet browser: window.ethereum is injected, connect directly
+// On desktop: WalletConnect QR so user can scan with their phone
 async function connectCoinbaseWallet(){
   hideWalletOptions();
   const btn=document.getElementById('gate-connect-btn');
 
-  // If Coinbase Wallet extension is already injected, use it directly
-  if(window.ethereum && window.ethereum.isCoinbaseWallet){
+  // Already inside Coinbase Wallet browser (mobile or desktop extension)
+  if(window.ethereum && (window.ethereum.isCoinbaseWallet || window.ethereum.isCoinbaseBrowser)){
     await connectInjected();
     return;
   }
 
-  // On mobile: open Coinbase Wallet app via deep link
-  // The app handles Smart Wallet creation automatically for new users
+  // Mobile browser (not inside Coinbase Wallet yet) — deep link to open dapp inside the app
+  // Coinbase Wallet creates a Smart Wallet automatically for new users via Face ID
   const isMobile=/iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
   if(isMobile){
-    hideWalletOptions();
+    if(btn){btn.textContent='Opening…';btn.disabled=true;}
     showToast('Opening Coinbase Wallet…','');
-    // Deep link opens the dapp inside Coinbase Wallet browser
-    // New users get guided through Smart Wallet (Face ID) creation automatically
-    window.location.href='https://go.cb-w.com/dapp?cb_url=https%3A%2F%2Fkokosicecream.com';
+    // Small delay so toast shows before navigation
+    setTimeout(()=>{
+      window.location.href='https://go.cb-w.com/dapp?cb_url=https%3A%2F%2Fkokosicecream.com';
+    },300);
+    // Re-enable button in case user comes back / navigation blocked
+    setTimeout(()=>{
+      if(btn){btn.textContent='Get Started';btn.disabled=false;}
+    },3000);
     return;
   }
 
-  // On desktop without extension: fall through to WalletConnect
-  // which shows a QR the user can scan with Coinbase Wallet mobile
-  showToast('Opening QR — scan with Coinbase Wallet','');
+  // Desktop without Coinbase extension: show WalletConnect QR
+  // User scans with Coinbase Wallet mobile to connect
+  showToast('Scan QR with Coinbase Wallet on your phone','');
   await connectWalletConnect();
 }
 
-// PATH 2 — MetaMask / injected browser wallet
+// PATH 2 — MetaMask / any injected browser wallet
 async function connectInjected(){
   hideWalletOptions();
   if(!window.ethereum){
-    showToast('No wallet found — try Smart Wallet instead','err');
+    showToast('No wallet detected — use Coinbase Wallet instead','err');
     return;
   }
   const btn=document.getElementById('gate-connect-btn');
@@ -712,22 +719,44 @@ async function connectInjected(){
   }
 }
 
-// PATH 3 — WalletConnect (unchanged logic from original)
+// PATH 3 — WalletConnect
 async function connectViaWalletConnect(){
   hideWalletOptions();
   await connectWalletConnect();
 }
 
-// MAIN ENTRY — shows choice sheet, or auto-reconnects injected wallet
+// MAIN ENTRY
+// Critical mobile behaviour:
+// - If running inside Coinbase Wallet browser, ethereum IS injected — auto-connect
+// - If running inside MetaMask browser, ethereum IS injected — auto-connect
+// - If user previously connected injected wallet, auto-reconnect
+// - Otherwise show the wallet choice sheet
 async function openWalletModal(){
   if(_justDisconnected)return;
-  // Auto-reconnect if injected wallet already authorized
+
   if(window.ethereum){
+    // Inside Coinbase Wallet or MetaMask mobile browser — connect immediately, no sheet needed
+    if(window.ethereum.isCoinbaseWallet||window.ethereum.isCoinbaseBrowser||window.ethereum.isMetaMask){
+      try{
+        const accounts=await window.ethereum.request({method:'eth_accounts'});
+        if(accounts.length){
+          // Already authorized — reconnect silently
+          await connectInjected();
+          return;
+        }
+        // Not yet authorized but wallet is available — request directly
+        await connectInjected();
+        return;
+      }catch(e){}
+    }
+    // Generic injected wallet — check if already authorized, reconnect if so
     try{
       const accounts=await window.ethereum.request({method:'eth_accounts'});
       if(accounts.length){await connectInjected();return;}
     }catch(e){}
   }
+
+  // No wallet detected or not yet authorized — show the choice sheet
   showWalletOptions();
 }
 
