@@ -1381,7 +1381,8 @@ async function confirmPay(){
       `<div class="sc-row"><span class="sk">Block</span><span class="sv">confirming…</span></div>`;
     // Short delay before showing success — gives mobile wallet UI time to fully dismiss
     setTimeout(()=>{
-      navigator.vibrate&&navigator.vibrate([100,50,100]); // haptic on success
+      navigator.vibrate&&navigator.vibrate([100,50,100]);
+      playChaChingSound();
       document.getElementById("success-screen").classList.add("show");
     }, 400);
     pendingIntent=null;hideApprovalProgress();
@@ -1528,6 +1529,43 @@ function drawFlatLine(ctx,canvas,price){
   ctx.font='500 10px "Instrument Sans",sans-serif';ctx.fillStyle='rgba(107,79,71,0.35)';ctx.fillText('Accumulating price history\u2026',W/2,H/2+16);
 }
 
+// ── SOUND ─────────────────────────────────────────────────────────────────────
+function playChaChingSound(){
+  try{
+    const ctx=new(window.AudioContext||window.webkitAudioContext)();
+    const master=ctx.createGain();
+    master.gain.setValueAtTime(0.35,ctx.currentTime);
+    master.connect(ctx.destination);
+
+    function playTone(freq,startTime,duration,type,gainPeak,decayTime){
+      const osc=ctx.createOscillator();
+      const g=ctx.createGain();
+      osc.connect(g);g.connect(master);
+      osc.type=type;
+      osc.frequency.setValueAtTime(freq,ctx.currentTime+startTime);
+      g.gain.setValueAtTime(0,ctx.currentTime+startTime);
+      g.gain.linearRampToValueAtTime(gainPeak,ctx.currentTime+startTime+0.008);
+      g.gain.exponentialRampToValueAtTime(0.001,ctx.currentTime+startTime+decayTime);
+      osc.start(ctx.currentTime+startTime);
+      osc.stop(ctx.currentTime+startTime+decayTime);
+    }
+
+    // "CHA" — metallic scrape: burst of high noise-like tones
+    playTone(3200,0,0.06,'square',1.0,0.06);
+    playTone(2800,0,0.06,'square',0.7,0.06);
+    playTone(4100,0.01,0.05,'square',0.5,0.05);
+
+    // Brief gap then "CHING" — bell ring: clean sine with long decay
+    playTone(1480,0.07,0.55,'sine',1.0,0.55);   // main bell tone
+    playTone(2960,0.07,0.40,'sine',0.4,0.40);   // octave overtone
+    playTone(4440,0.07,0.25,'sine',0.15,0.25);  // upper harmonic
+
+    // Close context after sound finishes
+    setTimeout(()=>{try{ctx.close();}catch(e){}},900);
+  }catch(e){}
+}
+
+// ── SOUND ─────────────────────────────────────────────────────────────────────
 // ── TOAST ─────────────────────────────────────────────────────────────────────
 let toastT;
 function showToast(msg,type=""){
