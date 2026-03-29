@@ -242,6 +242,8 @@ html,body{height:100%;overflow:hidden;background:var(--coral);font-family:'Instr
 .sc-row .sk{color:var(--ink-light);font-weight:500;}.sc-row .sv{font-weight:600;color:var(--ink);font-size:11px;word-break:break-all;text-align:right;max-width:55%;}
 .btn-done{width:100%;padding:17px;background:var(--coral-deep);color:var(--white);border:none;border-radius:var(--r);font-family:'Instrument Sans',sans-serif;font-size:15px;font-weight:600;cursor:pointer;transition:all 0.2s;}
 .btn-done:hover{background:var(--ink);}
+@keyframes balPulse{0%,100%{opacity:1;}50%{opacity:0.4;}}
+.bal-updating{animation:balPulse 1s ease infinite;}
 #toast{position:absolute;top:16px;left:16px;right:16px;background:var(--ink);color:var(--white);border-radius:var(--r);padding:13px 16px;font-size:13px;font-weight:600;z-index:999;display:none;align-items:center;gap:8px;box-shadow:0 4px 24px rgba(0,0,0,0.2);}
 #toast.show{display:flex;}#toast.ok{background:var(--coral-deep);}#toast.err{background:#b91c1c;}
 .spinner{width:16px;height:16px;border:2px solid rgba(255,255,255,0.3);border-top-color:white;border-radius:50%;animation:spin 0.7s linear infinite;flex-shrink:0;}
@@ -486,6 +488,7 @@ html,body{height:100%;overflow:hidden;background:var(--coral);font-family:'Instr
           <div class="cc-head"><div style="font-size:28px">&#127978;</div><div class="cc-head-text"><div class="store">KOKOS Ice Cream &middot; Nashville</div><div class="total" id="cc-usd">$0.00</div></div></div>
           <div class="cc-body">
             <div class="cc-row"><span class="ck">SKOOP amount</span><span class="cv big" id="cc-skoop">0</span></div>
+            <div class="cc-row"><span class="ck">Your balance</span><span class="cv" id="cc-balance" style="font-size:13px;">—</span></div>
             <div class="cc-row"><span class="ck">Items</span><span class="cv" id="cc-items">&#8212;</span></div>
             <div class="cc-row"><span class="ck">Subtotal</span><span class="cv" id="cc-sub">&#8212;</span></div>
             <div class="cc-row"><span class="ck">Expires</span><span class="cv" id="cc-exp">&#8212;</span></div>
@@ -917,17 +920,22 @@ async function switchToBase(){
 async function refreshBals(){
   if(!userAddr)return;
   const readProvider=new ethers.JsonRpcProvider(CFG.RPC);
+  // Show pulse while loading
+  const balEl=document.getElementById("home-bal");
+  if(balEl)balEl.classList.add("bal-updating");
   try{
     const sk=new ethers.Contract(CFG.SKOOP,ABI_ERC20,readProvider);
     const raw=await sk.balanceOf(userAddr);
     const skoopBal=parseFloat(ethers.formatUnits(raw,CFG.SKOOP_DEC));
     window._skoopBal=skoopBal;
     const fmt=skoopBal.toLocaleString("en-US",{maximumFractionDigits:2});
-    document.getElementById("home-bal").textContent=fmt;
+    if(balEl){balEl.textContent=fmt;balEl.classList.remove("bal-updating");}
     document.getElementById("home-usd").textContent="SKOOP";
     document.getElementById("qr-bal").textContent=fmt;
     updateSkoopBalanceDisplay();
-  }catch(e){document.getElementById("home-bal").textContent="—";}
+  }catch(e){
+    if(balEl){balEl.textContent="—";balEl.classList.remove("bal-updating");}
+  }
   try{const eb=await readProvider.getBalance(userAddr);document.getElementById("bal-eth").textContent=parseFloat(ethers.formatEther(eb)).toFixed(4)+" ETH";}catch(e){}
   try{const uc=new ethers.Contract(CFG.USDC,ABI_ERC20,readProvider);document.getElementById("bal-usdc").textContent=parseFloat(ethers.formatUnits(await uc.balanceOf(userAddr),6)).toFixed(2)+" USDC";}catch(e){}
   await updateFromBal();
@@ -1158,21 +1166,50 @@ async function execSwap(){
 }
 
 // ── QR SCANNER ────────────────────────────────────────────────────────────────
+function setScanState(state){
+  // state: 'ready' | 'scanning' | 'retry'
+  const ui=document.getElementById("scan-ui");
+  const btn=document.getElementById("btn-cam");
+  const hint=document.querySelector(".scan-hint");
+  if(state==='scanning'){
+    if(ui)ui.style.display="none";
+    if(btn)btn.style.display="none";
+  } else if(state==='retry'){
+    if(ui)ui.style.display="flex";
+    if(hint)hint.textContent="Tap below to try again";
+    if(btn){btn.style.display="flex";btn.innerHTML='&#128247; &nbsp;Retry Camera';}
+  } else {
+    if(ui)ui.style.display="flex";
+    if(hint)hint.textContent="Point at the shop checkout QR";
+    if(btn){btn.style.display="flex";btn.innerHTML='&#128247; &nbsp;Start Camera';}
+  }
+}
+
 function startScan(){
   if(scannerRunning)return;
-  if(typeof Html5Qrcode==="undefined"){showToast("Scanner loading — try again","err");return;}
+  if(typeof Html5Qrcode==="undefined"){
+    showToast("Scanner loading — try again","err");
+    setScanState('retry');return;
+  }
   const scanner=new Html5Qrcode("qr-reader");
-  document.getElementById("scan-ui").style.display="none";
-  document.getElementById("btn-cam").style.display="none";
+  setScanState('scanning');
   scanner.start({facingMode:"environment"},{fps:15,qrbox:{width:260,height:260}},
     txt=>{
       scanner.stop().catch(()=>{});scannerRunning=false;
-      document.getElementById("scan-ui").style.display="flex";
-      document.getElementById("btn-cam").style.display="flex";
+      setScanState('ready');
       parseQR(txt);
     },()=>{}
   ).then(()=>scannerRunning=true)
-   .catch(e=>{showToast("Camera error: "+e,"err");document.getElementById("scan-ui").style.display="flex";document.getElementById("btn-cam").style.display="flex";});
+   .catch(e=>{
+     scannerRunning=false;
+     const msg=e?.toString()||'';
+     if(msg.toLowerCase().includes('permission')||msg.toLowerCase().includes('denied')){
+       showToast("Camera permission denied — allow camera access in settings","err");
+     } else {
+       showToast("Camera error — tap Retry","err");
+     }
+     setScanState('retry');
+   });
 }
 
 function parseQR(raw){
@@ -1192,8 +1229,8 @@ function parseQR(raw){
     if(Date.now()/1000>Number(intent.deadline)){showToast("QR expired — ask shop to regenerate","err");return;}
     pendingIntent=intent;showConfirm(intent);
   }catch(e){
-    showToast("Scan error: "+e.message,"err");
-    setTimeout(startScan,2000);
+    showToast("Scan error — point at the QR and try again","err");
+    setScanState('retry');
   }
 }
 
@@ -1207,21 +1244,42 @@ async function showConfirm(d){
   document.getElementById("cc-receipt").textContent=d.receiptId.slice(0,20)+"…";
   document.getElementById("pay-scan").classList.remove("active");
   document.getElementById("pay-confirm").classList.add("active");
-  // Check if first-time approval needed and show friendly notice
+  // Check balance, allowance and show relevant notices
   try{
     if(signer&&userAddr){
       const readProvider=new ethers.JsonRpcProvider(CFG.RPC);
       const sk2=new ethers.Contract(CFG.SKOOP,ABI_ERC20,readProvider);
-      const al=await sk2.allowance(userAddr,CFG.ESCROW);
+      const [al,rawBal]=await Promise.all([
+        sk2.allowance(userAddr,CFG.ESCROW),
+        sk2.balanceOf(userAddr)
+      ]);
+      const balFloat=parseFloat(ethers.formatUnits(rawBal,CFG.SKOOP_DEC));
+      const tokFloat=parseFloat(ethers.formatUnits(BigInt(d.tokenAmount),CFG.SKOOP_DEC));
+      // Show balance on confirm screen
+      const balEl=document.getElementById('cc-balance');
+      if(balEl){
+        balEl.textContent=balFloat.toLocaleString('en-US',{maximumFractionDigits:2})+' SKOOP';
+        if(balFloat<tokFloat){
+          balEl.style.color='#b91c1c';
+          balEl.textContent+=' — insufficient';
+        } else {
+          balEl.style.color='';
+        }
+      }
+      // First-time approval notice
       const firstTime=al<BigInt(d.tokenAmount);
       const notice=document.getElementById('first-time-notice');
       const btn=document.getElementById('btn-confirm');
-      if(firstTime){
+      if(balFloat<tokFloat){
+        // Insufficient — disable pay button
+        if(btn){btn.textContent='Insufficient SKOOP balance';btn.disabled=true;}
+        if(notice)notice.style.display='none';
+      } else if(firstTime){
         if(notice)notice.style.display='flex';
-        if(btn)btn.textContent='Step 1 of 2 — Approve SKOOP';
+        if(btn){btn.textContent='Step 1 of 2 — Approve SKOOP';btn.disabled=false;}
       }else{
         if(notice)notice.style.display='none';
-        if(btn)btn.textContent='Confirm & Pay with SKOOP';
+        if(btn){btn.textContent='Confirm & Pay with SKOOP';btn.disabled=false;}
       }
     }
   }catch(e){}
@@ -1266,6 +1324,14 @@ async function confirmPay(){
     const d=pendingIntent;
     const tokAmt=BigInt(d.tokenAmount);
     const sk=new ethers.Contract(CFG.SKOOP,ABI_ERC20,signer);
+    // Guard: check balance before doing anything
+    const readProvider2=new ethers.JsonRpcProvider(CFG.RPC);
+    const sk2=new ethers.Contract(CFG.SKOOP,ABI_ERC20,readProvider2);
+    const liveBal=await sk2.balanceOf(userAddr);
+    if(liveBal<tokAmt){
+      showToast('Not enough SKOOP — buy more to pay','err');
+      btn.disabled=false;btn.textContent='Confirm & Pay with SKOOP';return;
+    }
     const al=await sk.allowance(userAddr,CFG.ESCROW);
     if(al<tokAmt){
       showApprovalProgress();
@@ -1315,6 +1381,7 @@ async function confirmPay(){
       `<div class="sc-row"><span class="sk">Block</span><span class="sv">confirming…</span></div>`;
     // Short delay before showing success — gives mobile wallet UI time to fully dismiss
     setTimeout(()=>{
+      navigator.vibrate&&navigator.vibrate([100,50,100]); // haptic on success
       document.getElementById("success-screen").classList.add("show");
     }, 400);
     pendingIntent=null;hideApprovalProgress();
