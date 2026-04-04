@@ -1458,7 +1458,7 @@ async function drawPriceChart(){
   const statusEl=document.getElementById('pm-chart-status');
   canvas.width=canvas.offsetWidth||390;
   try{
-    const url=`https://api.geckoterminal.com/api/v2/networks/base/pools/${POOL_ETH_SKOOP}/ohlcv/hour?aggregate=1&limit=24&currency=usd&token=quote`;
+    const url=`https://api.geckoterminal.com/api/v2/networks/base/pools/${POOL_ETH_SKOOP}/ohlcv/hour?aggregate=1&limit=24&currency=usd&token=base`;
     const r=await fetch(url);
     if(!r.ok)throw new Error('GT status '+r.status);
     const json=await r.json();
@@ -1496,77 +1496,6 @@ async function drawPriceChart(){
     }
     drawCandlestickChart(ctx,canvas,buckets,true);
   }catch(e){statusEl.textContent='Chart unavailable';drawFlatLine(ctx,canvas,skoopPriceUSD);}
-}
-
-function drawCandlestickChart(ctx,canvas,candles,isFallback=false){
-  const W=canvas.width,H=canvas.height;
-  const pad={top:18,right:16,bottom:28,left:62};
-  const chartW=W-pad.left-pad.right,chartH=H-pad.top-pad.bottom;
-  ctx.clearRect(0,0,W,H);
-  [{color:'rgba(253,206,193,0.18)',x:pad.left,w:chartW/4},{color:'rgba(205,230,215,0.18)',x:pad.left+chartW/4,w:chartW/4},{color:'rgba(250,226,216,0.18)',x:pad.left+chartW*2/4,w:chartW/4},{color:'rgba(255,221,173,0.18)',x:pad.left+chartW*3/4,w:chartW/4}]
-    .forEach(b=>{ctx.fillStyle=b.color;ctx.fillRect(b.x,pad.top,b.w,chartH);});
-  const allLows=candles.map(c=>c.l),allHighs=candles.map(c=>c.h);
-  const minP=Math.min(...allLows)*0.997,maxP=Math.max(...allHighs)*1.003;
-  const range=maxP-minP||maxP*0.01;
-  const n=candles.length;
-  function pY(p){return pad.top+chartH*(1-(p-minP)/range);}
-  function pX(i){return pad.left+(i+0.5)/n*chartW;}
-  const candleW=Math.max(3,Math.floor(chartW/n*0.55));
-  for(let i=0;i<=4;i++){
-    const t=i/4,y=pad.top+chartH*(1-t);
-    ctx.strokeStyle='rgba(42,31,26,0.07)';ctx.lineWidth=1;ctx.setLineDash([3,4]);
-    ctx.beginPath();ctx.moveTo(pad.left,y);ctx.lineTo(W-pad.right,y);ctx.stroke();ctx.setLineDash([]);
-    ctx.fillStyle='rgba(107,79,71,0.5)';ctx.font='600 9px "Instrument Sans",sans-serif';ctx.textAlign='right';
-    ctx.fillText('$'+(minP+range*t).toFixed(6),pad.left-5,y+3);
-  }
-  ctx.fillStyle='rgba(107,79,71,0.45)';ctx.font='600 9px "Instrument Sans",sans-serif';ctx.textAlign='center';
-  const labelCount=Math.min(5,n);
-  for(let i=0;i<labelCount;i++){
-    const idx=Math.round(i/(labelCount-1)*(n-1));
-    const hoursAgo=Math.round((n-1-idx));
-    const lbl=hoursAgo===0?'now':(isFallback?'~'+hoursAgo+'h':hoursAgo+'h ago');
-    ctx.fillText(lbl,pX(idx),H-6);
-  }
-  candles.forEach((c,i)=>{
-    const x=pX(i);
-    const isGreen=c.c>=c.o;
-    const bodyColor=isGreen?'#cde6d7':'#fdcec1';
-    const wickColor=isGreen?'rgba(205,230,215,0.8)':'rgba(253,206,193,0.8)';
-    ctx.strokeStyle=wickColor;ctx.lineWidth=1.5;
-    ctx.beginPath();ctx.moveTo(x,pY(c.h));ctx.lineTo(x,pY(c.l));ctx.stroke();
-    const bodyTop=pY(Math.max(c.o,c.c));
-    const bodyBot=pY(Math.min(c.o,c.c));
-    const bodyH=Math.max(1.5,bodyBot-bodyTop);
-    ctx.fillStyle=bodyColor;
-    ctx.beginPath();
-    ctx.roundRect(x-candleW/2,bodyTop,candleW,bodyH,2);
-    ctx.fill();
-    if(bodyH<=1.5){
-      ctx.strokeStyle=bodyColor;ctx.lineWidth=1.5;
-      ctx.beginPath();ctx.moveTo(x-candleW/2,bodyTop);ctx.lineTo(x+candleW/2,bodyTop);ctx.stroke();
-    }
-  });
-  const first=candles[0].o,last=candles[candles.length-1].c;
-  const delta=last-first,deltaPct=(delta/first*100).toFixed(2),sign=delta>=0?'+':'';
-  const lc=delta>=0?'#11483d':'#e8876a',lb=delta>=0?'rgba(205,230,215,0.85)':'rgba(253,206,193,0.85)';
-  const label=sign+deltaPct+'%'+(isFallback?' (est)':'');
-  ctx.font='700 10px "Instrument Sans",sans-serif';
-  const tw=ctx.measureText(label).width;
-  const lbx=W-pad.right-tw-12,lby=pad.top+4;
-  ctx.fillStyle=lb;
-  ctx.beginPath();
-  ctx.roundRect(lbx-4,lby-1,tw+8,14,4);
-  ctx.fill();
-  ctx.fillStyle=lc;ctx.textAlign='left';ctx.fillText(label,lbx,lby+10);
-}
-
-function drawFlatLine(ctx,canvas,price){
-  const W=canvas.width,H=canvas.height;ctx.clearRect(0,0,W,H);
-  ['rgba(253,206,193,0.2)','rgba(205,230,215,0.2)','rgba(250,226,216,0.2)','rgba(255,221,173,0.2)'].forEach((c,i)=>{ctx.fillStyle=c;ctx.fillRect(W/4*i,0,W/4,H);});
-  ctx.strokeStyle='rgba(232,135,106,0.35)';ctx.setLineDash([5,5]);ctx.lineWidth=1.5;
-  ctx.beginPath();ctx.moveTo(20,H/2);ctx.lineTo(W-20,H/2);ctx.stroke();ctx.setLineDash([]);
-  if(price>0){ctx.font='600 11px "Instrument Sans",sans-serif';ctx.textAlign='center';ctx.fillStyle='rgba(107,79,71,0.5)';ctx.fillText('$'+price.toFixed(6),W/2,H/2-8);}
-  ctx.font='500 10px "Instrument Sans",sans-serif';ctx.fillStyle='rgba(107,79,71,0.35)';ctx.fillText('Accumulating price history\u2026',W/2,H/2+16);
 }
 
 // ── SOUND ─────────────────────────────────────────────────────────────────────
