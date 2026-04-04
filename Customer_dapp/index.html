@@ -1469,7 +1469,7 @@ function drawCandlestickChart(ctx,canvas,candles,isFallback=false){
   [{color:'rgba(253,206,193,0.18)',x:pad.left,w:chartW/4},{color:'rgba(205,230,215,0.18)',x:pad.left+chartW/4,w:chartW/4},{color:'rgba(250,226,216,0.18)',x:pad.left+chartW*2/4,w:chartW/4},{color:'rgba(255,221,173,0.18)',x:pad.left+chartW*3/4,w:chartW/4}]
     .forEach(b=>{ctx.fillStyle=b.color;ctx.fillRect(b.x,pad.top,b.w,chartH);});
   const allLows=candles.map(c=>c.l),allHighs=candles.map(c=>c.h);
-  const minP=Math.min(...allLows)*0.997,maxP=Math.max(...allHighs)*1.003;
+  const minP=Math.min(...allLows)*0.990,maxP=Math.max(...allHighs)*1.010;
   const range=maxP-minP||maxP*0.01;
   const n=candles.length;
   function pY(p){return pad.top+chartH*(1-(p-minP)/range);}
@@ -1499,7 +1499,7 @@ function drawCandlestickChart(ctx,canvas,candles,isFallback=false){
     ctx.beginPath();ctx.moveTo(x,pY(c.h));ctx.lineTo(x,pY(c.l));ctx.stroke();
     const bodyTop=pY(Math.max(c.o,c.c));
     const bodyBot=pY(Math.min(c.o,c.c));
-    const bodyH=Math.max(1.5,bodyBot-bodyTop);
+    const bodyH=Math.max(4,bodyBot-bodyTop);
     ctx.fillStyle=bodyColor;
     ctx.beginPath();
     ctx.roundRect(x-candleW/2,bodyTop,candleW,bodyH,2);
