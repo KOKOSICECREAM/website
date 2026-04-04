@@ -1492,8 +1492,8 @@ function drawCandlestickChart(ctx,canvas,candles,isFallback=false){
   const labelCount=Math.min(5,n);
   for(let i=0;i<labelCount;i++){
     const idx=Math.round(i/(labelCount-1)*(n-1));
-    const hoursAgo=Math.round((n-1-idx));
-    const lbl=hoursAgo===0?'now':(isFallback?'~'+hoursAgo+'h':hoursAgo+'h ago');
+    const daysAgo=Math.round((n-1-idx));
+    const lbl=daysAgo===0?'today':(isFallback?'~'+daysAgo+'d':daysAgo+'d ago');
     ctx.fillText(lbl,pX(idx),H-6);
   }
   candles.forEach((c,i)=>{
