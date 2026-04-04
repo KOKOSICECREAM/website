@@ -1458,36 +1458,60 @@ async function drawPriceChart(){
   const statusEl=document.getElementById('pm-chart-status');
   canvas.width=canvas.offsetWidth||390;
   try{
+    const url=`https://api.geckoterminal.com/api/v2/networks/base/pools/${POOL_ETH_SKOOP}/ohlcv/hour?aggregate=1&limit=24&currency=usd&token=quote`;
+    const r=await fetch(url);
+    if(!r.ok)throw new Error('GT status '+r.status);
+    const json=await r.json();
+    const raw=json?.data?.attributes?.ohlcv_list;
+    if(!raw||raw.length<2)throw new Error('no data');
+    const candles=raw.slice().reverse().map(c=>({
+      t:c[0],o:parseFloat(c[1]),h:parseFloat(c[2]),l:parseFloat(c[3]),c:parseFloat(c[4]),v:parseFloat(c[5])
+    }));
+    statusEl.textContent=candles.length+'h · 24h candles';
+    drawCandlestickChart(ctx,canvas,candles);
+    return;
+  }catch(e){}
+  try{
     const pub=new ethers.JsonRpcProvider(CFG.RPC);
     const ABI_SWAP=["event Swap(address indexed sender,address indexed recipient,int256 amount0,int256 amount1,uint160 sqrtPriceX96,uint128 liquidity,int24 tick)"];
     const pool=new ethers.Contract(POOL_ETH_SKOOP,ABI_SWAP,pub);
     const currentBlock=await pub.getBlockNumber();
     const fromBlock=currentBlock-9000;
     const events=await pool.queryFilter(pool.filters.Swap(),fromBlock);
-    if(events.length<2){statusEl.textContent=events.length+' swaps — not enough data yet';drawFlatLine(ctx,canvas,skoopPriceUSD);return;}
+    if(events.length<2){statusEl.textContent='not enough data yet';drawFlatLine(ctx,canvas,skoopPriceUSD);return;}
     statusEl.textContent=events.length+' swaps · ~6h';
     const Q96f=Number(2n**96n);
     const prices=events.map(e=>{
       const sqrtPf=Number(e.args.sqrtPriceX96)/Q96f;
-      const priceRaw=sqrtPf*sqrtPf;
-      const skoopPerEth=priceRaw*1e12;
+      const raw=sqrtPf*sqrtPf;
+      const skoopPerEth=raw*1e12;
       return skoopPerEth>0?ethPriceUSD/skoopPerEth:0;
     }).filter(p=>p>0);
     if(!prices.length){drawFlatLine(ctx,canvas,skoopPriceUSD);return;}
-    drawLineChart(ctx,canvas,prices);
+    const buckets=[];
+    const bsize=Math.max(1,Math.floor(prices.length/24));
+    for(let i=0;i<prices.length;i+=bsize){
+      const slice=prices.slice(i,i+bsize);
+      buckets.push({o:slice[0],h:Math.max(...slice),l:Math.min(...slice),c:slice[slice.length-1],t:i});
+    }
+    drawCandlestickChart(ctx,canvas,buckets,true);
   }catch(e){statusEl.textContent='Chart unavailable';drawFlatLine(ctx,canvas,skoopPriceUSD);}
 }
 
-function drawLineChart(ctx,canvas,prices){
+function drawCandlestickChart(ctx,canvas,candles,isFallback=false){
   const W=canvas.width,H=canvas.height;
-  const pad={top:16,right:16,bottom:32,left:58};
+  const pad={top:18,right:16,bottom:28,left:62};
   const chartW=W-pad.left-pad.right,chartH=H-pad.top-pad.bottom;
-  const minP=Math.min(...prices)*0.993,maxP=Math.max(...prices)*1.007;
-  const range=maxP-minP||maxP*0.01;
-  const n=prices.length;
   ctx.clearRect(0,0,W,H);
   [{color:'rgba(253,206,193,0.18)',x:pad.left,w:chartW/4},{color:'rgba(205,230,215,0.18)',x:pad.left+chartW/4,w:chartW/4},{color:'rgba(250,226,216,0.18)',x:pad.left+chartW*2/4,w:chartW/4},{color:'rgba(255,221,173,0.18)',x:pad.left+chartW*3/4,w:chartW/4}]
     .forEach(b=>{ctx.fillStyle=b.color;ctx.fillRect(b.x,pad.top,b.w,chartH);});
+  const allLows=candles.map(c=>c.l),allHighs=candles.map(c=>c.h);
+  const minP=Math.min(...allLows)*0.997,maxP=Math.max(...allHighs)*1.003;
+  const range=maxP-minP||maxP*0.01;
+  const n=candles.length;
+  function pY(p){return pad.top+chartH*(1-(p-minP)/range);}
+  function pX(i){return pad.left+(i+0.5)/n*chartW;}
+  const candleW=Math.max(3,Math.floor(chartW/n*0.55));
   for(let i=0;i<=4;i++){
     const t=i/4,y=pad.top+chartH*(1-t);
     ctx.strokeStyle='rgba(42,31,26,0.07)';ctx.lineWidth=1;ctx.setLineDash([3,4]);
@@ -1496,28 +1520,44 @@ function drawLineChart(ctx,canvas,prices){
     ctx.fillText('$'+(minP+range*t).toFixed(6),pad.left-5,y+3);
   }
   ctx.fillStyle='rgba(107,79,71,0.45)';ctx.font='600 9px "Instrument Sans",sans-serif';ctx.textAlign='center';
-  [['6h ago',pad.left],['3h ago',pad.left+chartW/2],['now',pad.left+chartW]].forEach(([l,x])=>ctx.fillText(l,x,H-6));
-  function ptX(i){return pad.left+(i/(n-1))*chartW;}
-  function ptY(p){return pad.top+chartH*(1-(p-minP)/range);}
-  const grad=ctx.createLinearGradient(0,pad.top,0,pad.top+chartH);
-  grad.addColorStop(0,'rgba(232,135,106,0.28)');grad.addColorStop(0.6,'rgba(253,175,154,0.10)');grad.addColorStop(1,'rgba(253,206,193,0.02)');
-  ctx.beginPath();ctx.moveTo(ptX(0),ptY(prices[0]));
-  for(let i=1;i<n-1;i++){const mx=(ptX(i)+ptX(i+1))/2,my=(ptY(prices[i])+ptY(prices[i+1]))/2;ctx.quadraticCurveTo(ptX(i),ptY(prices[i]),mx,my);}
-  ctx.lineTo(ptX(n-1),ptY(prices[n-1]));ctx.lineTo(ptX(n-1),pad.top+chartH);ctx.lineTo(ptX(0),pad.top+chartH);ctx.closePath();ctx.fillStyle=grad;ctx.fill();
-  ctx.beginPath();ctx.moveTo(ptX(0),ptY(prices[0]));
-  for(let i=1;i<n-1;i++){const mx=(ptX(i)+ptX(i+1))/2,my=(ptY(prices[i])+ptY(prices[i+1]))/2;ctx.quadraticCurveTo(ptX(i),ptY(prices[i]),mx,my);}
-  ctx.lineTo(ptX(n-1),ptY(prices[n-1]));ctx.strokeStyle='#e8876a';ctx.lineWidth=2.5;ctx.lineJoin='round';ctx.lineCap='round';ctx.stroke();
-  const lx=ptX(n-1),ly=ptY(prices[n-1]);
-  ctx.beginPath();ctx.arc(lx,ly,7,0,Math.PI*2);ctx.fillStyle='rgba(232,135,106,0.20)';ctx.fill();
-  ctx.beginPath();ctx.arc(lx,ly,4,0,Math.PI*2);ctx.fillStyle='#e8876a';ctx.fill();
-  ctx.beginPath();ctx.arc(lx,ly,2,0,Math.PI*2);ctx.fillStyle='#fffaf7';ctx.fill();
-  ctx.beginPath();ctx.arc(ptX(0),ptY(prices[0]),3,0,Math.PI*2);ctx.fillStyle='rgba(232,135,106,0.5)';ctx.fill();
-  const delta=prices[n-1]-prices[0],deltaPct=(delta/prices[0]*100).toFixed(2),sign=delta>=0?'+':'';
-  const lc=delta>=0?'#2d7a5f':'#b91c1c',lb=delta>=0?'rgba(205,230,215,0.7)':'rgba(253,206,193,0.7)',label=sign+deltaPct+'%';
-  ctx.font='700 10px "Instrument Sans",sans-serif';const tw=ctx.measureText(label).width;
-  const lbx=W-pad.right-tw-10,lby=pad.top+4;ctx.fillStyle=lb;ctx.beginPath();
-  (function(x,y,w,h,r){ctx.moveTo(x+r,y);ctx.lineTo(x+w-r,y);ctx.quadraticCurveTo(x+w,y,x+w,y+r);ctx.lineTo(x+w,y+h-r);ctx.quadraticCurveTo(x+w,y+h,x+w-r,y+h);ctx.lineTo(x+r,y+h);ctx.quadraticCurveTo(x,y+h,x,y+h-r);ctx.lineTo(x,y+r);ctx.quadraticCurveTo(x,y,x+r,y);ctx.closePath();})(lbx-4,lby-1,tw+8,14,4);
-  ctx.fill();ctx.fillStyle=lc;ctx.textAlign='left';ctx.fillText(label,lbx,lby+10);
+  const labelCount=Math.min(5,n);
+  for(let i=0;i<labelCount;i++){
+    const idx=Math.round(i/(labelCount-1)*(n-1));
+    const hoursAgo=Math.round((n-1-idx));
+    const lbl=hoursAgo===0?'now':(isFallback?'~'+hoursAgo+'h':hoursAgo+'h ago');
+    ctx.fillText(lbl,pX(idx),H-6);
+  }
+  candles.forEach((c,i)=>{
+    const x=pX(i);
+    const isGreen=c.c>=c.o;
+    const bodyColor=isGreen?'#cde6d7':'#fdcec1';
+    const wickColor=isGreen?'rgba(205,230,215,0.8)':'rgba(253,206,193,0.8)';
+    ctx.strokeStyle=wickColor;ctx.lineWidth=1.5;
+    ctx.beginPath();ctx.moveTo(x,pY(c.h));ctx.lineTo(x,pY(c.l));ctx.stroke();
+    const bodyTop=pY(Math.max(c.o,c.c));
+    const bodyBot=pY(Math.min(c.o,c.c));
+    const bodyH=Math.max(1.5,bodyBot-bodyTop);
+    ctx.fillStyle=bodyColor;
+    ctx.beginPath();
+    ctx.roundRect(x-candleW/2,bodyTop,candleW,bodyH,2);
+    ctx.fill();
+    if(bodyH<=1.5){
+      ctx.strokeStyle=bodyColor;ctx.lineWidth=1.5;
+      ctx.beginPath();ctx.moveTo(x-candleW/2,bodyTop);ctx.lineTo(x+candleW/2,bodyTop);ctx.stroke();
+    }
+  });
+  const first=candles[0].o,last=candles[candles.length-1].c;
+  const delta=last-first,deltaPct=(delta/first*100).toFixed(2),sign=delta>=0?'+':'';
+  const lc=delta>=0?'#11483d':'#e8876a',lb=delta>=0?'rgba(205,230,215,0.85)':'rgba(253,206,193,0.85)';
+  const label=sign+deltaPct+'%'+(isFallback?' (est)':'');
+  ctx.font='700 10px "Instrument Sans",sans-serif';
+  const tw=ctx.measureText(label).width;
+  const lbx=W-pad.right-tw-12,lby=pad.top+4;
+  ctx.fillStyle=lb;
+  ctx.beginPath();
+  ctx.roundRect(lbx-4,lby-1,tw+8,14,4);
+  ctx.fill();
+  ctx.fillStyle=lc;ctx.textAlign='left';ctx.fillText(label,lbx,lby+10);
 }
 
 function drawFlatLine(ctx,canvas,price){
