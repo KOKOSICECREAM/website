@@ -1499,8 +1499,8 @@ function drawCandlestickChart(ctx,canvas,candles,isFallback=false){
   candles.forEach((c,i)=>{
     const x=pX(i);
     const isGreen=c.c>=c.o;
-    const bodyColor=isGreen?'#cde6d7':'#fdaf9a';
-    const wickColor=isGreen?'#a8d4b8':'#f99880';
+    const bodyColor=isGreen?'#4a9e7a':'#e8876a';
+    const wickColor=isGreen?'#2d7a5f':'#c0603d';
     ctx.strokeStyle=wickColor;ctx.lineWidth=1.5;
     ctx.beginPath();ctx.moveTo(x,pY(c.h));ctx.lineTo(x,pY(c.l));ctx.stroke();
     const bodyTop=pY(Math.max(c.o,c.c));
