@@ -1535,7 +1535,7 @@ async function drawPriceChart(){
   const statusEl=document.getElementById('pm-chart-status');
   canvas.width=canvas.offsetWidth||390;
   try{
-    const url=`https://api.geckoterminal.com/api/v2/networks/base/pools/${POOL_ETH_SKOOP}/ohlcv/hour?aggregate=1&limit=24&currency=usd&token=base`;
+    const url=`https://api.geckoterminal.com/api/v2/networks/base/pools/${POOL_ETH_SKOOP}/ohlcv/day?aggregate=1&limit=30&currency=usd&token=base`;
     const r=await fetch(url);
     if(!r.ok)throw new Error('GT status '+r.status);
     const json=await r.json();
@@ -1544,7 +1544,7 @@ async function drawPriceChart(){
     const candles=raw.slice().reverse().map(c=>({
       t:c[0],o:parseFloat(c[1]),h:parseFloat(c[2]),l:parseFloat(c[3]),c:parseFloat(c[4]),v:parseFloat(c[5])
     }));
-    statusEl.textContent=candles.length+'h · 24h candles';
+    statusEl.textContent=candles.length+'d · 30 day';
     drawCandlestickChart(ctx,canvas,candles);
     return;
   }catch(e){}
