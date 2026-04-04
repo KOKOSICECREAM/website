@@ -1469,8 +1469,14 @@ function drawCandlestickChart(ctx,canvas,candles,isFallback=false){
   [{color:'rgba(253,206,193,0.18)',x:pad.left,w:chartW/4},{color:'rgba(205,230,215,0.18)',x:pad.left+chartW/4,w:chartW/4},{color:'rgba(250,226,216,0.18)',x:pad.left+chartW*2/4,w:chartW/4},{color:'rgba(255,221,173,0.18)',x:pad.left+chartW*3/4,w:chartW/4}]
     .forEach(b=>{ctx.fillStyle=b.color;ctx.fillRect(b.x,pad.top,b.w,chartH);});
   const allLows=candles.map(c=>c.l),allHighs=candles.map(c=>c.h);
-  const minP=Math.min(...allLows)*0.990,maxP=Math.max(...allHighs)*1.010;
-  const range=maxP-minP||maxP*0.01;
+  const dataMin=Math.min(...allLows),dataMax=Math.max(...allHighs);
+  const mid=(dataMin+dataMax)/2;
+  const naturalRange=dataMax-dataMin;
+  const minRange=mid*0.08;
+  const pad2=Math.max(naturalRange*0.05,minRange*0.1);
+  const minP=Math.min(dataMin,mid-minRange/2)-pad2;
+  const maxP=Math.max(dataMax,mid+minRange/2)+pad2;
+  const range=maxP-minP;
   const n=candles.length;
   function pY(p){return pad.top+chartH*(1-(p-minP)/range);}
   function pX(i){return pad.left+(i+0.5)/n*chartW;}
@@ -1568,7 +1574,6 @@ async function drawPriceChart(){
     drawCandlestickChart(ctx,canvas,buckets,true);
   }catch(e){statusEl.textContent='Chart unavailable';drawFlatLine(ctx,canvas,skoopPriceUSD);}
 }
-
 // ── SOUND ─────────────────────────────────────────────────────────────────────
 function playChaChingSound(){
   try{
