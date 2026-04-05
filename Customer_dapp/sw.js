@@ -34,7 +34,9 @@ self.addEventListener('fetch',e=>{
      url.includes('walletconnect')||
      url.includes('coinbase.com')||
      url.includes('geckoterminal')||
-     url.includes('walletlink')){
+     url.includes('walletlink')||
+     url.includes('fonts.gstatic.com')||
+     url.includes('fonts.googleapis.com')){
     return;
   }
   e.respondWith(
