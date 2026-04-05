@@ -13,13 +13,19 @@
       "src": "KOKOS_SKOOP.png",
       "sizes": "192x192",
       "type": "image/png",
-      "purpose": "any maskable"
+      "purpose": "any"
     },
     {
       "src": "KOKOS_SKOOP.png",
       "sizes": "500x500",
       "type": "image/png",
-      "purpose": "any maskable"
+      "purpose": "any"
+    },
+    {
+      "src": "KOKOS_SKOOP.png",
+      "sizes": "500x500",
+      "type": "image/png",
+      "purpose": "maskable"
     }
   ]
 }
