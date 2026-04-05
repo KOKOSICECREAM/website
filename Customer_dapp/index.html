@@ -1140,10 +1140,21 @@ async function fetchQuote(amt){
     document.getElementById("btn-swap").textContent="Pool unavailable";
   }
 }
-
 async function execSwap(){
   if(!curQuote||!signer)return;
   const btn=document.getElementById("btn-swap");
+
+  // Safety cap — prevent accidental large swaps
+  const MAX_USD=500;
+  if(ethPriceUSD>0){
+    const spendUSD=selToken==="ETH"
+      ?parseFloat(ethers.formatEther(curQuote.amtIn))*ethPriceUSD
+      :parseFloat(ethers.formatUnits(curQuote.amtIn,CFG.USDC_DEC));
+    if(spendUSD>MAX_USD){
+      showToast(`Max swap is $${MAX_USD} — reduce your amount`,'err');
+      return;
+    }
+  }
   btn.disabled=true;btn.innerHTML='<span class="spinner"></span> Swapping...';
   try{
     const router=new ethers.Contract(CFG.ROUTER,ABI_ROUTER,signer);
