@@ -1636,6 +1636,7 @@ function showToast(msg,type=""){
   el.innerHTML=(type==="ok"?"✓ ":type==="err"?"✕ ":"")+msg;
   clearTimeout(toastT);toastT=setTimeout(()=>el.classList.remove("show"),4000);
 }
+  if('serviceWorker' in navigator){navigator.serviceWorker.register('./sw.js').catch(()=>{});}
 </script>
 </body>
 </html>
