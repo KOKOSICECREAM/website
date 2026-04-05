@@ -693,20 +693,11 @@ async function connectCoinbaseWallet(){
   }
 
   const isMobile=/iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
-
   if(isMobile){
-    // Case B: mobile browser → open dapp inside Coinbase Wallet browser
-    // cbwallet:// custom scheme is more reliable than go.cb-w.com on iOS
-    // Per Coinbase docs: cbwallet://dapp?url=[YOUR_URL] bypasses iOS universal link bug
     if(btn){btn.textContent='Opening…';btn.disabled=true;}
-    showToast('Opening Coinbase Wallet…','');
+    showToast('Opening Base Wallet…','');
     const _dappUrl='https://kokosicecream.com/Customer_dapp/index.html';
-    // Try custom scheme first — opens dapp browser directly if app is installed
-    window.location.href='cbwallet://dapp?url='+encodeURIComponent(_dappUrl);
-    // Fallback after 1.5s: if still here, try universal link (handles app-not-installed case)
-    setTimeout(()=>{
-      window.location.href='https://go.cb-w.com/dapp?cb_url='+encodeURIComponent(_dappUrl);
-    },1500);
+    window.location.href='https://go.cb-w.com/dapp?cb_url='+encodeURIComponent(_dappUrl);
     setTimeout(()=>{if(btn){btn.textContent='Get Started';btn.disabled=false;}},5000);
     return;
   }
