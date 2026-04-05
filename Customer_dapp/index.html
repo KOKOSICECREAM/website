@@ -833,7 +833,7 @@ async function connectWalletConnect(){
       projectId:'c5be163298ba25127afa6b7529e29059',
       chains:[8453],showQrModal:true,
       qrModalOptions:{themeMode:'light',themeVariables:{'--wcm-accent-color':'#e8876a','--wcm-background-color':'#fdcec1'}},
-      metadata:{name:'SKOOP by KOKOS',description:'KOKOS Ice Cream SKOOP DApp',url:'https://kokosicecream.github.io',icons:['https://kokosicecream.github.io/website/Customer_dapp/KOKOS_SKOOP.png']}
+      metadata:{name:'SKOOP by KOKOS',description:'KOKOS Ice Cream SKOOP DApp',url:'https://kokosicecream.com/Customer_dapp/',icons:['https://kokosicecream.github.io/website/Customer_dapp/KOKOS_SKOOP.png']}
     });
     window._wcp=wcp;
     await wcp.enable();
@@ -968,7 +968,7 @@ async function loadActivityFeed(){
   try{
     const readProvider=new ethers.JsonRpcProvider(CFG.RPC);
     const currentBlock=await readProvider.getBlockNumber();
-    const fromBlock=currentBlock-5000;
+    const fromBlock=currentBlock-43200;
     const topic0=ethers.id('Transfer(address,address,uint256)');
     const pad=a=>'0x'+ethers.getAddress(a).slice(2).toLowerCase().padStart(64,'0');
     const logs=await readProvider.send('eth_getLogs',[{
