@@ -817,14 +817,41 @@ async function fetchPaymentCount(){
 // ── BURN TOTAL ────────────────────────────────────────────────────────────────
 async function fetchBurnTotal(){
   try{
-    const pub=new ethers.JsonRpcProvider(CFG.RPC);
-    const latest=await pub.getBlockNumber();
-    const escrow=new ethers.Contract(CFG.ESCROW,ABI_ESCROW_EVENTS,pub);
-    const events=await escrow.queryFilter(escrow.filters.BatchBurnExecuted(),CFG.DEPLOY_BLOCK,latest);
-    const total=events.reduce((s,e)=>s+BigInt(e.args.totalTokenAmount),0n);
-    const fmt=parseFloat(ethers.formatUnits(total,CFG.DEC)).toLocaleString('en-US',{maximumFractionDigits:2});
-    set('burn-total',total>0n?fmt:'0');
-  }catch{}
+    const pub = new ethers.JsonRpcProvider(CFG.RPC);
+    const latest = await pub.getBlockNumber();
+    
+    // Base RPC often limits to ~2000 blocks per query — chunk it
+    const CHUNK = 2000;
+    let total = 0n;
+    
+    const iface = new ethers.Interface([
+      "event BatchBurnExecuted(uint256 paymentCount, uint256 totalTokenAmount, uint256 timestamp)"
+    ]);
+    
+    for(let from = CFG.DEPLOY_BLOCK; from <= latest; from += CHUNK){
+      const to = Math.min(from + CHUNK - 1, latest);
+      try{
+        const logs = await pub.getLogs({
+          address: CFG.ESCROW,
+          topics: [iface.getEventTopic("BatchBurnExecuted")],
+          fromBlock: from,
+          toBlock: to
+        });
+        for(const log of logs){
+          const parsed = iface.parseLog(log);
+          total += BigInt(parsed.args.totalTokenAmount);
+        }
+      }catch{ /* skip failed chunks */ }
+    }
+    
+    const fmt = parseFloat(ethers.formatUnits(total, CFG.DEC))
+      .toLocaleString('en-US', {maximumFractionDigits: 2});
+    set('burn-total', total > 0n ? fmt : '0');
+    
+  }catch(e){
+    console.error('fetchBurnTotal error:', e);
+    set('burn-total', '0');
+  }
 }
 
 // ── PRICE CHART ───────────────────────────────────────────────────────────────
