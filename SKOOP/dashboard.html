@@ -816,47 +816,16 @@ async function fetchPaymentCount(){
 
 // ── BURN TOTAL ────────────────────────────────────────────────────────────────
 async function fetchBurnTotal(){
-  const cached = localStorage.getItem('skoop_burn');
-  if(cached){
-    const {val, ts} = JSON.parse(cached);
-    if(Date.now() - ts < 86400000){
-      set('burn-total', val);
-      return;
-    }
-  }
-
   try{
     const pub = new ethers.JsonRpcProvider(CFG.RPC);
-    const latest = await pub.getBlockNumber();
-    const iface = new ethers.Interface([
-      "event BatchBurnExecuted(uint256 paymentCount, uint256 totalTokenAmount, uint256 timestamp)"
-    ]);
-    const topic0 = iface.getEvent("BatchBurnExecuted").topicHash;
-
-    const CHUNK = 50000; // fewer total requests
-    const DELAY = 500;   // 500ms between each — well under rate limit
-    let total = 0n;
-
-    for(let from = CFG.DEPLOY_BLOCK; from <= latest; from += CHUNK){
-      const to = Math.min(from + CHUNK - 1, latest);
-      await new Promise(r => setTimeout(r, DELAY));
-      try{
-        const logs = await pub.getLogs({
-          address: CFG.ESCROW, topics: [topic0], fromBlock: from, toBlock: to
-        });
-        for(const log of logs){
-          const parsed = iface.parseLog(log);
-          total += BigInt(parsed.args.totalTokenAmount);
-        }
-      }catch(e){ console.warn('Chunk failed', from, e.message); }
-    }
-
-    const fmt = parseFloat(ethers.formatUnits(total, CFG.DEC))
+    const token = new ethers.Contract(CFG.SKOOP,
+      ["function totalSupply() view returns (uint256)"], pub);
+    const supply = await token.totalSupply();
+    const ORIGINAL = ethers.parseUnits('888888888', CFG.DEC);
+    const burned = ORIGINAL - supply;
+    const fmt = parseFloat(ethers.formatUnits(burned, CFG.DEC))
       .toLocaleString('en-US', {maximumFractionDigits: 2});
-    const val = total > 0n ? fmt : '0';
-    localStorage.setItem('skoop_burn', JSON.stringify({val, ts: Date.now()}));
-    set('burn-total', val);
-
+    set('burn-total', burned > 0n ? fmt : '0');
   }catch(e){
     console.error('fetchBurnTotal:', e);
     set('burn-total', '0');
