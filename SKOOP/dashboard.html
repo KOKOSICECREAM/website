@@ -818,39 +818,19 @@ async function fetchPaymentCount(){
 async function fetchBurnTotal(){
   try{
     const pub = new ethers.JsonRpcProvider(CFG.RPC);
-    const latest = await pub.getBlockNumber();
+    const ABI_ERC20 = ["function balanceOf(address) view returns (uint256)"];
+    const token = new ethers.Contract(CFG.SKOOP, ABI_ERC20, pub);
     
-    // Base RPC often limits to ~2000 blocks per query — chunk it
-    const CHUNK = 2000;
-    let total = 0n;
+    // Burned tokens live at the zero address
+    const burned = await token.balanceOf('0x0000000000000000000000000000000000000000');
     
-    const iface = new ethers.Interface([
-      "event BatchBurnExecuted(uint256 paymentCount, uint256 totalTokenAmount, uint256 timestamp)"
-    ]);
+    const fmt = parseFloat(ethers.formatUnits(burned, CFG.DEC))
+      .toLocaleString('en-US', { maximumFractionDigits: 2 });
     
-    for(let from = CFG.DEPLOY_BLOCK; from <= latest; from += CHUNK){
-      const to = Math.min(from + CHUNK - 1, latest);
-      try{
-        const logs = await pub.getLogs({
-          address: CFG.ESCROW,
-          topics: [iface.getEventTopic("BatchBurnExecuted")],
-          fromBlock: from,
-          toBlock: to
-        });
-        for(const log of logs){
-          const parsed = iface.parseLog(log);
-          total += BigInt(parsed.args.totalTokenAmount);
-        }
-      }catch{ /* skip failed chunks */ }
-    }
-    
-    const fmt = parseFloat(ethers.formatUnits(total, CFG.DEC))
-      .toLocaleString('en-US', {maximumFractionDigits: 2});
-    set('burn-total', total > 0n ? fmt : '0');
-    
-  }catch(e){
-    console.error('fetchBurnTotal error:', e);
-    set('burn-total', '0');
+    set('burn-total', burned > 0n ? fmt : '0');
+  } catch(e) {
+    console.error('fetchBurnTotal:', e);
+    set('burn-total', '?');
   }
 }
 
