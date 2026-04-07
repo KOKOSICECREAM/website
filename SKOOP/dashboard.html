@@ -816,11 +816,10 @@ async function fetchPaymentCount(){
 
 // ── BURN TOTAL ────────────────────────────────────────────────────────────────
 async function fetchBurnTotal(){
-  // Check cache first — only re-fetch once per day
   const cached = localStorage.getItem('skoop_burn');
   if(cached){
     const {val, ts} = JSON.parse(cached);
-    if(Date.now() - ts < 86400000){ // 24 hours
+    if(Date.now() - ts < 86400000){
       set('burn-total', val);
       return;
     }
@@ -834,11 +833,13 @@ async function fetchBurnTotal(){
     ]);
     const topic0 = iface.getEvent("BatchBurnExecuted").topicHash;
 
-    const CHUNK = 10000;
+    const CHUNK = 50000; // fewer total requests
+    const DELAY = 500;   // 500ms between each — well under rate limit
     let total = 0n;
 
     for(let from = CFG.DEPLOY_BLOCK; from <= latest; from += CHUNK){
       const to = Math.min(from + CHUNK - 1, latest);
+      await new Promise(r => setTimeout(r, DELAY));
       try{
         const logs = await pub.getLogs({
           address: CFG.ESCROW, topics: [topic0], fromBlock: from, toBlock: to
@@ -847,14 +848,12 @@ async function fetchBurnTotal(){
           const parsed = iface.parseLog(log);
           total += BigInt(parsed.args.totalTokenAmount);
         }
-        await new Promise(r => setTimeout(r, 50));
       }catch(e){ console.warn('Chunk failed', from, e.message); }
     }
 
     const fmt = parseFloat(ethers.formatUnits(total, CFG.DEC))
       .toLocaleString('en-US', {maximumFractionDigits: 2});
     const val = total > 0n ? fmt : '0';
-    
     localStorage.setItem('skoop_burn', JSON.stringify({val, ts: Date.now()}));
     set('burn-total', val);
 
