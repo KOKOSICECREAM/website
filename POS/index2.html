@@ -576,34 +576,56 @@ async function generateQR(){
   try{signature=await signer.signMessage(ethers.getBytes(digest));}
   catch(e){showToast('Signature rejected','error');closeModal();return;}
   const recovered=ethers.verifyMessage(ethers.getBytes(digest),signature);
-  if(recovered.toLowerCase()!==CFG.SIGNER.toLowerCase()){showToast('⚠️ Wrong signer — connect '+CFG.SIGNER.slice(0,6)+'…','error');closeModal();return;}
+  if(recovered.toLowerCase()!==CFG.SIGNER.toLowerCase()){
+    showToast('Wrong signer — connect '+CFG.SIGNER.slice(0,6)+'…','error');
+    closeModal();return;
+  }
   const qrPayload=JSON.stringify({
     r:receiptId,o:orderId,ch:cartHash,
     t:tokenAmount.toString(),sc:subtotalCents,tc:taxCents,
     xc:totalCents,ic:Object.values(cart).reduce((a,b)=>a+b,0),
     dl:deadline.toString(),sig:signature,
   });
+
   const wrap=document.getElementById('qr-canvas-wrap');
-  wrap.innerHTML='<p style="color:var(--ink-lt);font-size:0.8rem;">Generating…</p>';
-  const stage=document.createElement('div');stage.style.cssText='position:absolute;left:-9999px;top:-9999px;';
-  document.body.appendChild(stage);
+  wrap.innerHTML='<p style="color:#a08880;font-size:0.8rem;padding:1rem;">Generating...</p>';
+  await new Promise(r=>setTimeout(r,80));
+  wrap.innerHTML='';
+
   try{
-    new QRCode(stage,{text:qrPayload,width:220,height:220,colorDark:'#000000',colorLight:'#ffffff',correctLevel:QRCode.CorrectLevel.M});
-    setTimeout(()=>{
-      const el=stage.querySelector('img')||stage.querySelector('canvas');
-      if(!el){showToast('QR render failed','error');document.body.removeChild(stage);return;}
-      el.style.cssText='display:block;width:220px;height:220px;';
-      wrap.innerHTML='';wrap.appendChild(el);document.body.removeChild(stage);
-    },150);
-  }catch(qrErr){document.body.removeChild(stage);showToast('QR error','error');closeModal();return;}
+    new QRCode(wrap,{
+      text:qrPayload,
+      width:220,
+      height:220,
+      colorDark:'#000000',
+      colorLight:'#ffffff',
+      correctLevel:QRCode.CorrectLevel.M
+    });
+    await new Promise(r=>setTimeout(r,60));
+    const rendered=wrap.querySelector('canvas')||wrap.querySelector('img');
+    if(!rendered) throw new Error('nothing rendered');
+    rendered.style.cssText='display:block!important;width:220px!important;height:220px!important;';
+  }catch(err){
+    const img=document.createElement('img');
+    img.style.cssText='display:block;width:220px;height:220px;border-radius:4px;';
+    img.alt='Payment QR';
+    img.onerror=()=>{wrap.innerHTML='<p style="color:red;font-size:0.8rem;padding:1rem;">QR failed — check network</p>';};
+    img.src='https://api.qrserver.com/v1/create-qr-code/?size=220x220&data='+encodeURIComponent(qrPayload);
+    wrap.innerHTML='';
+    wrap.appendChild(img);
+  }
+
   const skoopDisplay=Number(tokenAmount/1000000n).toLocaleString();
-  document.getElementById('modal-summary').innerHTML=`
-    ${Object.entries(cart).map(([id,q])=>{const it=MENU.find(m=>m.id===id);return `<div class="mos-row"><span>${it.emoji} ${it.name} ×${q}</span><span>$${(it.price*q).toFixed(2)}</span></div>`;}).join('')}
-    <div class="mos-row"><span>Tax</span><span>$${(taxCents/100).toFixed(2)}</span></div>
-    <div class="mos-row total"><span>Total</span><span>$${(totalCents/100).toFixed(2)}</span></div>
-    <div class="mos-row skoop"><span style="display:flex;align-items:center;gap:0.35rem;"><img src="https://raw.githubusercontent.com/KOKOSICECREAM/website/main/Customer_dapp/KOKOS_SKOOP.png" alt="" style="height:15px;width:15px;object-fit:contain;border-radius:50%;">≈ SKOOP</span><span>${skoopDisplay} SKOOP</span></div>
-  `;
-  document.getElementById('modal-status').textContent='Waiting for customer to scan…';
+  document.getElementById('modal-summary').innerHTML=
+    Object.entries(cart).map(([id,q])=>{
+      const it=MENU.find(m=>m.id===id);
+      return '<div class="mos-row"><span>'+it.emoji+' '+it.name+' x'+q+'</span><span>$'+(it.price*q).toFixed(2)+'</span></div>';
+    }).join('')+
+    '<div class="mos-row"><span>Tax</span><span>$'+(taxCents/100).toFixed(2)+'</span></div>'+
+    '<div class="mos-row total"><span>Total</span><span>$'+(totalCents/100).toFixed(2)+'</span></div>'+
+    '<div class="mos-row skoop"><span>approx SKOOP</span><span>'+skoopDisplay+' SKOOP</span></div>';
+
+  document.getElementById('modal-status').textContent='Waiting for customer to scan...';
   pollForPayment(receiptId);
 }
 async function regenerateQR(){document.getElementById('qr-canvas-wrap').style.opacity='0.4';await generateQR();document.getElementById('qr-canvas-wrap').style.opacity='1';}
