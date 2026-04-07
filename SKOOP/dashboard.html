@@ -816,21 +816,51 @@ async function fetchPaymentCount(){
 
 // ── BURN TOTAL ────────────────────────────────────────────────────────────────
 async function fetchBurnTotal(){
+  // Check cache first — only re-fetch once per day
+  const cached = localStorage.getItem('skoop_burn');
+  if(cached){
+    const {val, ts} = JSON.parse(cached);
+    if(Date.now() - ts < 86400000){ // 24 hours
+      set('burn-total', val);
+      return;
+    }
+  }
+
   try{
     const pub = new ethers.JsonRpcProvider(CFG.RPC);
-    const ABI_ERC20 = ["function balanceOf(address) view returns (uint256)"];
-    const token = new ethers.Contract(CFG.SKOOP, ABI_ERC20, pub);
+    const latest = await pub.getBlockNumber();
+    const iface = new ethers.Interface([
+      "event BatchBurnExecuted(uint256 paymentCount, uint256 totalTokenAmount, uint256 timestamp)"
+    ]);
+    const topic0 = iface.getEvent("BatchBurnExecuted").topicHash;
+
+    const CHUNK = 10000;
+    let total = 0n;
+
+    for(let from = CFG.DEPLOY_BLOCK; from <= latest; from += CHUNK){
+      const to = Math.min(from + CHUNK - 1, latest);
+      try{
+        const logs = await pub.getLogs({
+          address: CFG.ESCROW, topics: [topic0], fromBlock: from, toBlock: to
+        });
+        for(const log of logs){
+          const parsed = iface.parseLog(log);
+          total += BigInt(parsed.args.totalTokenAmount);
+        }
+        await new Promise(r => setTimeout(r, 50));
+      }catch(e){ console.warn('Chunk failed', from, e.message); }
+    }
+
+    const fmt = parseFloat(ethers.formatUnits(total, CFG.DEC))
+      .toLocaleString('en-US', {maximumFractionDigits: 2});
+    const val = total > 0n ? fmt : '0';
     
-    // Burned tokens live at the zero address
-    const burned = await token.balanceOf('0x0000000000000000000000000000000000000000');
-    
-    const fmt = parseFloat(ethers.formatUnits(burned, CFG.DEC))
-      .toLocaleString('en-US', { maximumFractionDigits: 2 });
-    
-    set('burn-total', burned > 0n ? fmt : '0');
-  } catch(e) {
+    localStorage.setItem('skoop_burn', JSON.stringify({val, ts: Date.now()}));
+    set('burn-total', val);
+
+  }catch(e){
     console.error('fetchBurnTotal:', e);
-    set('burn-total', '?');
+    set('burn-total', '0');
   }
 }
 
