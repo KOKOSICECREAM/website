@@ -157,8 +157,9 @@ html,body{height:100%;font-family:'Instrument Sans',sans-serif;background:var(--
 .modal-header h2{font-family:'Cormorant Garamond',serif;font-size:1.4rem;font-style:italic;font-weight:400;}
 .modal-close{background:none;border:none;font-size:1.4rem;cursor:pointer;color:var(--ink-mid);line-height:1;transition:color 0.12s;}
 .modal-close:hover{color:var(--ink);}
-#qr-canvas-wrap{background:var(--white);border-radius:16px;padding:16px;border:3px solid var(--coral-mid);width:252px;height:252px;flex-shrink:0;overflow:hidden;display:flex;align-items:center;justify-content:center;}
-#qr-canvas-wrap canvas,#qr-canvas-wrap img{display:block!important;width:220px!important;height:220px!important;flex-shrink:0;}
+/* FIX: overflow:visible prevents clipping; 200px QR + 12px padding each side = 228px container */
+#qr-canvas-wrap{background:var(--white);border-radius:16px;padding:12px;border:3px solid var(--coral-mid);width:228px;height:228px;flex-shrink:0;overflow:visible;display:flex;align-items:center;justify-content:center;}
+#qr-canvas-wrap canvas,#qr-canvas-wrap img{display:block!important;width:200px!important;height:200px!important;flex-shrink:0;}
 .modal-order-summary{width:100%;background:var(--white);border-radius:12px;padding:0.875rem 1rem;border:1px solid var(--border);}
 .mos-row{display:flex;justify-content:space-between;font-size:0.78rem;padding:0.2rem 0;color:var(--ink-mid);}
 .mos-row.total{font-size:0.9rem;font-weight:700;color:var(--ink);border-top:1px solid var(--border);padding-top:0.5rem;margin-top:0.25rem;}
@@ -169,7 +170,6 @@ html,body{height:100%;font-family:'Instrument Sans',sans-serif;background:var(--
 #toast.show{transform:translateX(-50%) translateY(0);}
 #toast.success{background:var(--green);color:var(--coral);}
 #toast.error{background:#c0392b;color:#fff;}
-/* ── REWARD SCANNER: renders outside overflow:hidden card, full width ── */
 #reward-qr-reader{display:none;width:100%;border-radius:10px;overflow:hidden;border:1px solid var(--border);background:var(--ink);}
 #reward-qr-reader video{width:100%!important;max-height:220px;object-fit:cover;}
 ::-webkit-scrollbar{width:4px;}::-webkit-scrollbar-track{background:transparent;}::-webkit-scrollbar-thumb{background:var(--coral-mid);border-radius:4px;}
@@ -245,10 +245,7 @@ html,body{height:100%;font-family:'Instrument Sans',sans-serif;background:var(--
   <aside id="actions-panel">
     <div class="action-view active" id="rewards-view">
       <h3>Send Rewards</h3>
-
-      <!-- Scan button card — NO overflow:hidden, qr-reader is a sibling ABOVE it -->
       <div style="background:var(--white);border:1px solid var(--border);border-radius:14px;overflow:visible;">
-        <!-- QR reader lives here, OUTSIDE the overflow:hidden wrapper -->
         <div id="reward-qr-reader"></div>
         <button class="action-btn secondary" id="reward-scan-btn" onclick="toggleRewardScan()"
           style="border-radius:14px 14px 0 0;border:none;border-bottom:1px solid var(--border);width:100%;display:flex;align-items:center;justify-content:center;gap:0.5rem;">
@@ -262,13 +259,10 @@ html,body{height:100%;font-family:'Instrument Sans',sans-serif;background:var(--
           </div>
         </div>
       </div>
-
       <div class="field-group">
         <label class="field-label">Customer Wallet</label>
         <div class="addr-display" id="reward-addr" style="font-size:0.68rem;word-break:break-all;min-height:38px;">—</div>
       </div>
-
-      <!-- REWARD CALCULATOR: 5% for Square/cash sales -->
       <div style="background:var(--sand);border-radius:12px;padding:0.875rem;display:flex;flex-direction:column;gap:0.6rem;">
         <div style="font-size:0.65rem;font-weight:600;text-transform:uppercase;letter-spacing:0.08em;color:var(--ink-mid);">Square / Cash Sale — 5% Reward</div>
         <div style="display:flex;align-items:center;gap:0.4rem;">
@@ -402,7 +396,6 @@ let rewardScannerActive=false,rewardScanner=null,scannedRewardAddr=null;
 let activeCat='all',toastTimer=null,calcSkoopAmount=0;
 
 async function fetchEthPriceOnChain(){
-  // On-chain fallback: WETH/USDC 0.05% pool on Base — no external API, no CORS ever
   const ABI_P2=['function slot0() view returns (uint160 sqrtPriceX96,int24,uint16,uint16,uint16,uint8,bool)','function token0() view returns (address)'];
   const WETH='0x4200000000000000000000000000000000000006';
   const pub=new ethers.JsonRpcProvider(CFG.RPC);
@@ -418,7 +411,6 @@ async function fetchEthPriceOnChain(){
 
 async function fetchSkoopPrice(){
   try{
-    // Tier 1: CoinGecko
     let gotEth=false;
     try{
       const r=await fetch('https://api.coingecko.com/api/v3/simple/price?ids=ethereum&vs_currencies=usd');
@@ -426,14 +418,10 @@ async function fetchSkoopPrice(){
       const p=d?.ethereum?.usd||0;
       if(p>100&&p<1000000){ethPriceUSD=p;gotEth=true;}
     }catch(e){}
-
-    // Tier 2: on-chain WETH/USDC pool (same as customer dapp)
     if(!gotEth){
       try{ethPriceUSD=await fetchEthPriceOnChain();gotEth=true;}catch(e){}
     }
-
     if(!gotEth)throw new Error('ETH price unavailable');
-
     const pub=new ethers.JsonRpcProvider(CFG.RPC);
     const pool=new ethers.Contract(CFG.POOL_ETH_SKOOP,ABI_POOL,pub);
     const [s0,t0]=await Promise.all([pool.slot0(),pool.token0()]);
@@ -555,6 +543,7 @@ async function openCheckout(){
   document.getElementById('modal-overlay').classList.add('open');
   await generateQR();
 }
+
 async function generateQR(){
   const subtotalCents=Math.round(Object.entries(cart).reduce((s,[id,qty])=>{const item=MENU.find(m=>m.id===id);return s+(item?item.price*qty:0);},0)*100);
   const taxCents=Math.round(subtotalCents*CFG.TAX_RATE);
@@ -587,6 +576,7 @@ async function generateQR(){
     dl:deadline.toString(),sig:signature,
   });
 
+  // Render directly into visible container — no off-screen staging (breaks Samsung/Android)
   const wrap=document.getElementById('qr-canvas-wrap');
   wrap.innerHTML='<p style="color:#a08880;font-size:0.8rem;padding:1rem;">Generating...</p>';
   await new Promise(r=>setTimeout(r,80));
@@ -595,22 +585,23 @@ async function generateQR(){
   try{
     new QRCode(wrap,{
       text:qrPayload,
-      width:220,
-      height:220,
+      width:200,
+      height:200,
       colorDark:'#000000',
       colorLight:'#ffffff',
       correctLevel:QRCode.CorrectLevel.M
     });
     await new Promise(r=>setTimeout(r,60));
     const rendered=wrap.querySelector('canvas')||wrap.querySelector('img');
-    if(!rendered) throw new Error('nothing rendered');
-    rendered.style.cssText='display:block!important;width:220px!important;height:220px!important;';
+    if(!rendered)throw new Error('nothing rendered');
+    rendered.style.cssText='display:block!important;width:200px!important;height:200px!important;';
   }catch(err){
+    // Fallback: QR image API — works on any device even if canvas is blocked
     const img=document.createElement('img');
-    img.style.cssText='display:block;width:220px;height:220px;border-radius:4px;';
+    img.style.cssText='display:block;width:200px;height:200px;border-radius:4px;';
     img.alt='Payment QR';
     img.onerror=()=>{wrap.innerHTML='<p style="color:red;font-size:0.8rem;padding:1rem;">QR failed — check network</p>';};
-    img.src='https://api.qrserver.com/v1/create-qr-code/?size=220x220&data='+encodeURIComponent(qrPayload);
+    img.src='https://api.qrserver.com/v1/create-qr-code/?size=200x200&data='+encodeURIComponent(qrPayload);
     wrap.innerHTML='';
     wrap.appendChild(img);
   }
@@ -623,11 +614,12 @@ async function generateQR(){
     }).join('')+
     '<div class="mos-row"><span>Tax</span><span>$'+(taxCents/100).toFixed(2)+'</span></div>'+
     '<div class="mos-row total"><span>Total</span><span>$'+(totalCents/100).toFixed(2)+'</span></div>'+
-    '<div class="mos-row skoop"><span>approx SKOOP</span><span>'+skoopDisplay+' SKOOP</span></div>';
+    '<div class="mos-row skoop"><span>≈ SKOOP</span><span>'+skoopDisplay+' SKOOP</span></div>';
 
-  document.getElementById('modal-status').textContent='Waiting for customer to scan...';
+  document.getElementById('modal-status').textContent='Waiting for customer to scan…';
   pollForPayment(receiptId);
 }
+
 async function regenerateQR(){document.getElementById('qr-canvas-wrap').style.opacity='0.4';await generateQR();document.getElementById('qr-canvas-wrap').style.opacity='1';}
 function closeModal(){
   document.getElementById('modal-overlay').classList.remove('open');
@@ -700,7 +692,6 @@ function switchPanel(panel){
   document.querySelectorAll('.tab-pill button').forEach((b,i)=>{b.classList.toggle('active',(panel==='rewards'&&i===0)||(panel==='burn'&&i===1));});
 }
 
-// ── REWARDS SCANNER ───────────────────────────────────────────────────────────
 function setRewardAddr(addr){
   scannedRewardAddr=addr;
   document.getElementById('reward-addr').textContent=addr;
@@ -881,7 +872,6 @@ async function loadReceipts(){
       capturedEvents=capturedEvents.concat(cc);
       burnedEvents=burnedEvents.concat(bb);
     }
-    // Build set of burned receiptIds so we can exclude them
     const burnedIds=new Set(burnedEvents.map(e=>e.args.receiptId.toLowerCase()));
     capturedReceipts=capturedEvents
       .filter(e=>!burnedIds.has(e.args.receiptId.toLowerCase()))
@@ -910,7 +900,6 @@ async function burnSelected(){
     const tx=await escrow.burnPayments(checked);
     showToast('Broadcasting burn…','');
     const rcpt=await tx.wait();
-    // Parse BatchBurnExecuted for exact totals
     let burnCount=checked.length,burnSkoop=0;
     try{
       const iface=new ethers.Interface([{anonymous:false,inputs:[{name:'paymentCount',type:'uint256'},{name:'totalTokenAmount',type:'uint256'},{name:'timestamp',type:'uint256'}],name:'BatchBurnExecuted',type:'event'}]);
