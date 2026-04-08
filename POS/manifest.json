@@ -6,19 +6,21 @@
   "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",
-  "orientation": "landscape",
+  "orientation": "any",
   "background_color": "#11483d",
   "theme_color": "#11483d",
   "icons": [
     {
-      "src": "KOKOS.png",
+      "src": "https://raw.githubusercontent.com/KOKOSICECREAM/website/main/Customer_dapp/KOKOS.png",
       "sizes": "192x192",
-      "type": "image/png"
+      "type": "image/png",
+      "purpose": "any maskable"
     },
     {
-      "src": "KOKOS.png",
+      "src": "https://raw.githubusercontent.com/KOKOSICECREAM/website/main/Customer_dapp/KOKOS.png",
       "sizes": "512x512",
-      "type": "image/png"
+      "type": "image/png",
+      "purpose": "any maskable"
     }
   ]
 }
