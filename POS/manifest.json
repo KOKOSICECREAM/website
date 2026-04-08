@@ -1,10 +1,10 @@
 {
-  "id": "kokos-pos-terminal",
+  "id": "kokos-pos-android",
   "name": "KOKOS POS",
   "short_name": "KOKOS POS",
   "description": "KOKOS Shop Terminal — accept SKOOP payments",
-  "start_url": "./index.html",
-  "scope": "./",
+  "start_url": "/POS/android.html",
+  "scope": "/POS/",
   "display": "standalone",
   "orientation": "any",
   "background_color": "#11483d",
