@@ -392,9 +392,34 @@
       border-radius: 50%;
       background: #0052FF;
     }
+  /* FULLSCREEN BUTTON */
+  #fs-btn {
+    position: fixed;
+    bottom: 32px;
+    right: 32px;
+    z-index: 9999;
+    background: #8B2A10;
+    color: #EDEAE0;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 13px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    border: none;
+    padding: 14px 24px;
+    border-radius: 4px;
+    cursor: pointer;
+    opacity: 0.92;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+    transition: opacity 0.2s;
+  }
+
+  #fs-btn:active { opacity: 0.7; }
+  #fs-btn.hidden { display: none; }
   </style>
 </head>
 <body>
+
+  <button id="fs-btn" onclick="goFullscreen()">Tap to go fullscreen</button>
 
   <div class="scale-wrapper" id="scaler">
     <div class="screen">
@@ -615,6 +640,30 @@
     }
 
     keepAwake();
+
+    // Fullscreen button
+    function goFullscreen() {
+      const el = document.documentElement;
+      const req = el.requestFullscreen || el.webkitRequestFullscreen || el.mozRequestFullScreen || el.msRequestFullscreen;
+      if (req) {
+        req.call(el).then(() => {
+          document.getElementById('fs-btn').classList.add('hidden');
+        }).catch(() => {
+          document.getElementById('fs-btn').classList.add('hidden');
+        });
+      } else {
+        document.getElementById('fs-btn').classList.add('hidden');
+      }
+    }
+
+    // Hide button automatically if already fullscreen
+    document.addEventListener('fullscreenchange', () => {
+      if (document.fullscreenElement) {
+        document.getElementById('fs-btn').classList.add('hidden');
+      } else {
+        document.getElementById('fs-btn').classList.remove('hidden');
+      }
+    });
   </script>
 </body>
 </html>
