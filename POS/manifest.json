@@ -11,25 +11,25 @@
   "theme_color": "#11483d",
   "icons": [
     {
-      "src": "https://kokosicecream.com/POS/KOKOS.png",
+      "src": "https://raw.githubusercontent.com/KOKOSICECREAM/website/main/POS/KOKOS.png",
       "sizes": "192x192",
       "type": "image/png",
       "purpose": "any"
     },
     {
-      "src": "https://kokosicecream.com/POS/KOKOS.png",
+      "src": "https://raw.githubusercontent.com/KOKOSICECREAM/website/main/POS/KOKOS.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any"
     },
     {
-      "src": "https://kokosicecream.com/POS/KOKOS.png",
+      "src": "https://raw.githubusercontent.com/KOKOSICECREAM/website/main/POS/KOKOS.png",
       "sizes": "192x192",
       "type": "image/png",
       "purpose": "maskable"
     },
     {
-      "src": "https://kokosicecream.com/POS/KOKOS.png",
+      "src": "https://raw.githubusercontent.com/KOKOSICECREAM/website/main/POS/KOKOS.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "maskable"
