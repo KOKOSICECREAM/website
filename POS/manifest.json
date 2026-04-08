@@ -1,14 +1,24 @@
 {
-  "name": "KOKOS Shop POS",
+  "id": "kokos-pos-terminal",
+  "name": "KOKOS POS",
   "short_name": "KOKOS POS",
-  "description": "KOKOS Ice Cream shop terminal — payments, rewards, settlement",
+  "description": "KOKOS Shop Terminal — accept SKOOP payments",
   "start_url": "./index.html",
+  "scope": "./",
   "display": "standalone",
-  "background_color": "#fdcec1",
-  "theme_color": "#fdcec1",
-  "orientation": "any",
+  "orientation": "landscape",
+  "background_color": "#11483d",
+  "theme_color": "#11483d",
   "icons": [
-    { "src": "KOKOS.png", "sizes": "192x192", "type": "image/png" },
-    { "src": "KOKOS.png", "sizes": "512x512", "type": "image/png" }
+    {
+      "src": "KOKOS.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "KOKOS.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
   ]
 }
