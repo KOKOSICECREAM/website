@@ -817,19 +817,14 @@ async function fetchPaymentCount(){
 // ── BURN TOTAL ────────────────────────────────────────────────────────────────
 async function fetchBurnTotal(){
   try{
-    const pub = new ethers.JsonRpcProvider(CFG.RPC);
-    const token = new ethers.Contract(CFG.SKOOP,
-      ["function totalSupply() view returns (uint256)"], pub);
-    const supply = await token.totalSupply();
-    const ORIGINAL = ethers.parseUnits('888888888', CFG.DEC);
-    const burned = ORIGINAL - supply;
-    const fmt = parseFloat(ethers.formatUnits(burned, CFG.DEC))
-      .toLocaleString('en-US', {maximumFractionDigits: 2});
-    set('burn-total', burned > 0n ? fmt : '0');
-  }catch(e){
-    console.error('fetchBurnTotal:', e);
-    set('burn-total', '0');
-  }
+    const pub=new ethers.JsonRpcProvider(CFG.RPC);
+    const latest=await pub.getBlockNumber();
+    const escrow=new ethers.Contract(CFG.ESCROW,ABI_ESCROW_EVENTS,pub);
+    const events=await escrow.queryFilter(escrow.filters.BatchBurnExecuted(),CFG.DEPLOY_BLOCK,latest);
+    const total=events.reduce((s,e)=>s+BigInt(e.args.totalTokenAmount),0n);
+    const fmt=parseFloat(ethers.formatUnits(total,CFG.DEC)).toLocaleString('en-US',{maximumFractionDigits:2});
+    set('burn-total',total>0n?fmt:'0');
+  }catch{}
 }
 
 // ── PRICE CHART ───────────────────────────────────────────────────────────────
