@@ -11,13 +11,13 @@
   "theme_color": "#11483d",
   "icons": [
     {
-      "src": "https://raw.githubusercontent.com/KOKOSICECREAM/website/main/Customer_dapp/KOKOS.png",
+      "src": "KOKOS.png",
       "sizes": "192x192",
       "type": "image/png",
       "purpose": "any maskable"
     },
     {
-      "src": "https://raw.githubusercontent.com/KOKOSICECREAM/website/main/Customer_dapp/KOKOS.png",
+      "src": "KOKOS.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any maskable"
