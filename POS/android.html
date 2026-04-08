@@ -17,6 +17,74 @@
 <script src="https://cdn.jsdelivr.net/npm/ethers@6.13.4/dist/ethers.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+<script type="module">
+  // WalletConnect Web3Modal — loads async, sets window.web3modal when ready
+  import { createWeb3Modal, defaultConfig } from 'https://esm.sh/@web3modal/ethers@4.2.3';
+  try {
+    const modal = createWeb3Modal({
+      ethersConfig: defaultConfig({
+        metadata: {
+          name: 'KOKOS POS',
+          description: 'KOKOS Shop Terminal',
+          url: window.location.origin,
+          icons: ['https://raw.githubusercontent.com/KOKOSICECREAM/website/main/Customer_dapp/KOKOS.png']
+        },
+        enableEIP6963: true,   // detects injected wallets (MetaMask, Coinbase etc)
+        enableInjected: true,
+        enableCoinbase: true,
+      }),
+      projectId: 'c5be163298ba25127afa6b7529e29059',
+      chains: [{
+        chainId: 8453,
+        name: 'Base',
+        currency: 'ETH',
+        explorerUrl: 'https://basescan.org',
+        rpcUrl: 'https://mainnet.base.org'
+      }],
+      featuredWalletIds: [
+        'c57ca95b47569778a828d19178114f4db188b89b763c899ba0be274e97267d96', // MetaMask
+        'fd20dc426fb37566d803205b19bbc1d4096b248ac04548e3cfb6b3a38bd033aa', // Coinbase
+      ],
+      themeMode: 'light',
+      themeVariables: {
+        '--w3m-accent': '#11483d',
+        '--w3m-border-radius-master': '12px',
+      }
+    });
+    window.web3modal = modal;
+
+    // Listen for wallet connection events
+    modal.subscribeProvider(async ({ provider: wcProvider, address, isConnected }) => {
+      if (isConnected && wcProvider && address) {
+        try {
+          const ethProvider = new ethers.BrowserProvider(wcProvider);
+          const net = await ethProvider.getNetwork();
+          if (Number(net.chainId) !== 8453) {
+            try { await wcProvider.request({ method:'wallet_switchEthereumChain', params:[{chainId:'0x2105'}] }); }
+            catch {
+              try {
+                await wcProvider.request({ method:'wallet_addEthereumChain', params:[{
+                  chainId:'0x2105', chainName:'Base',
+                  nativeCurrency:{name:'Ether',symbol:'ETH',decimals:18},
+                  rpcUrls:['https://mainnet.base.org'],
+                  blockExplorerUrls:['https://basescan.org'],
+                }]});
+              } catch { window.showToast('Switch to Base network','error'); return; }
+            }
+          }
+          window.signer = await ethProvider.getSigner();
+          window.signerAddr = address;
+          window.provider = ethProvider;
+          document.getElementById('wallet-btn').textContent = address.slice(0,6)+'…'+address.slice(-4);
+          window.showToast('Wallet connected ✓','success');
+          window.loadReceipts();
+        } catch(e) { window.showToast('Connection failed','error'); }
+      }
+    });
+  } catch(e) {
+    console.warn('WalletConnect failed to load, falling back to injected wallet only:', e);
+  }
+</script>
 <style>
 :root{
   --coral:#fdcec1;--coral-mid:#fdaf9a;--coral-deep:#f0876a;
@@ -37,7 +105,9 @@ html,body{height:100%;overflow:hidden;font-family:'Instrument Sans',sans-serif;b
 .logo-wrap{display:flex;align-items:center;gap:0.5rem;flex-shrink:0;}
 .logo-wrap img{height:30px;width:auto;object-fit:contain;}
 .logo-text{font-family:'Cormorant Garamond',serif;font-size:1.05rem;font-weight:600;letter-spacing:0.1em;color:var(--coral);}
-#price-pill{flex:1;font-size:0.62rem;font-weight:600;color:var(--mint);background:rgba(255,255,255,0.1);padding:0.22rem 0.6rem;border-radius:999px;white-space:nowrap;text-align:center;min-width:0;overflow:hidden;text-overflow:ellipsis;}
+#price-pill{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;min-width:0;gap:1px;}
+#price-pill-main{font-size:0.88rem;font-weight:700;color:var(--mint);white-space:nowrap;letter-spacing:0.01em;}
+#price-pill-change{font-size:0.65rem;font-weight:600;white-space:nowrap;letter-spacing:0.02em;}
 #wallet-btn{background:var(--coral);color:var(--green);border:none;padding:0.38rem 0.9rem;border-radius:999px;font-family:inherit;font-size:0.68rem;font-weight:700;cursor:pointer;white-space:nowrap;flex-shrink:0;}
 
 /* CONTENT: two columns, fills remaining height */
@@ -185,7 +255,10 @@ html,body{height:100%;overflow:hidden;font-family:'Instrument Sans',sans-serif;b
       <span id="logo-text" style="display:none;font-family:'Cormorant Garamond',serif;font-size:1.1rem;font-weight:600;letter-spacing:0.1em;color:var(--coral);vertical-align:middle;"></span>
       <span id="logo-subtitle" style="font-style:italic;font-size:0.78rem;color:rgba(255,255,255,0.65);margin-left:0.4rem;vertical-align:middle;"></span>
     </div>
-    <div id="price-pill">SKOOP: loading…</div>
+    <div id="price-pill">
+      <span id="price-pill-main">SKOOP: loading…</span>
+      <span id="price-pill-change" style="color:rgba(255,255,255,0.45);">24h: —</span>
+    </div>
     <button id="wallet-btn" onclick="connectWallet()">Connect Wallet</button>
   </header>
 
@@ -490,19 +563,39 @@ async function fetchSkoopPrice(){
     const skoopIsT0=t0.toLowerCase()===CFG.SKOOP.toLowerCase();
     const skoopPerEth=skoopIsT0?(1/priceRaw)*1e12:priceRaw*1e12;
     skoopPriceUSD=skoopPerEth>0?ethPriceUSD/skoopPerEth:0;
-    if(skoopPriceUSD>0)document.getElementById('price-pill').textContent='1 USDC = '+Math.round(1/skoopPriceUSD).toLocaleString()+' SKOOP';
+    if(skoopPriceUSD>0){
+      document.getElementById('price-pill-main').textContent='1 USDC = '+Math.round(1/skoopPriceUSD).toLocaleString()+' SKOOP';
+      // Fetch 24h % change from DexScreener
+      try{
+        const ds=await fetch('https://api.dexscreener.com/latest/dex/pairs/base/'+CFG.POOL_ETH_SKOOP);
+        const dj=await ds.json();
+        const change=dj?.pair?.priceChange?.h24;
+        if(change!==undefined&&change!==null){
+          const pct=parseFloat(change);
+          const up=pct>=0;
+          const el=document.getElementById('price-pill-change');
+          el.textContent=(up?'▲':'▼')+' '+Math.abs(pct).toFixed(2)+'% (24h)';
+          el.style.color=up?'#6ee7b7':'#fca5a5';
+        }
+      }catch{}
+    }
     updateTotals();
-  }catch(e){document.getElementById('price-pill').textContent='Price unavailable';}
+  }catch(e){document.getElementById('price-pill-main').textContent='Price unavailable';}
 }
 
 async function connectWallet(){
-  // If a wallet is already injected (MetaMask, Coinbase, Trust etc) — use it
+  // If Web3Modal loaded — use it (handles MetaMask, Coinbase, WalletConnect QR, all wallets)
+  if(window.web3modal){
+    window.web3modal.open();
+    return;
+  }
+  // Web3Modal not loaded yet — fall back to injected wallet
   if(window.ethereum){
     await connectInjectedWallet();
     return;
   }
-  // No injected wallet — show picker to open in MetaMask or Coinbase Wallet
-  showWalletPicker();
+  // Nothing available — show manual instructions
+  showNoWalletModal();
 }
 
 async function connectInjectedWallet(){
@@ -513,27 +606,21 @@ async function connectInjectedWallet(){
     if(Number(net.chainId)!==CFG.CHAIN_ID){
       try{
         await provider.send('wallet_switchEthereumChain',[{chainId:CFG.CHAIN_HEX}]);
-      }catch(e){
-        // Chain not added yet — try adding Base
+      }catch{
         try{
           await provider.send('wallet_addEthereumChain',[{
-            chainId:CFG.CHAIN_HEX,
-            chainName:'Base',
+            chainId:CFG.CHAIN_HEX,chainName:'Base',
             nativeCurrency:{name:'Ether',symbol:'ETH',decimals:18},
             rpcUrls:['https://mainnet.base.org'],
             blockExplorerUrls:['https://basescan.org'],
           }]);
-        }catch{showToast('Please switch to Base network','error');return;}
+        }catch{showToast('Switch to Base network','error');return;}
       }
     }
     signer=await provider.getSigner();
     signerAddr=await signer.getAddress();
-    const btn=document.getElementById('wallet-btn');
-    btn.textContent=signerAddr.slice(0,6)+'…'+signerAddr.slice(-4);
-    // Detect wallet name for toast
-    const isMetaMask=window.ethereum.isMetaMask&&!window.ethereum.isCoinbaseWallet;
-    const isCoinbase=window.ethereum.isCoinbaseWallet||window.ethereum.isWalletLink;
-    const walletName=isMetaMask?'MetaMask':isCoinbase?'Coinbase Wallet':'Wallet';
+    document.getElementById('wallet-btn').textContent=signerAddr.slice(0,6)+'…'+signerAddr.slice(-4);
+    const walletName=window.ethereum.isMetaMask?'MetaMask':window.ethereum.isCoinbaseWallet?'Coinbase Wallet':'Wallet';
     showToast(walletName+' connected ✓','success');
     loadReceipts();
   }catch(e){
@@ -542,55 +629,39 @@ async function connectInjectedWallet(){
   }
 }
 
-function showWalletPicker(){
-  // Build the current page URL for deep linking
-  const url=encodeURIComponent(window.location.href);
-  const mmDeepLink='https://metamask.app.link/dapp/'+window.location.host+window.location.pathname;
-  const cbDeepLink='https://go.cb-wallet.com/dapp?url='+url;
-
-  // Show a simple modal with wallet options
-  const overlay=document.getElementById('wallet-picker-overlay');
-  if(overlay){overlay.style.display='flex';return;}
-
-  const el=document.createElement('div');
-  el.id='wallet-picker-overlay';
+function showNoWalletModal(){
+  let el=document.getElementById('no-wallet-modal');
+  if(el){el.style.display='flex';return;}
+  el=document.createElement('div');
+  el.id='no-wallet-modal';
   el.style.cssText='position:fixed;inset:0;background:rgba(42,31,26,0.65);z-index:999;display:flex;align-items:center;justify-content:center;padding:1.5rem;';
   el.innerHTML=`
     <div style="background:var(--cream);border-radius:20px;width:100%;max-width:320px;overflow:hidden;box-shadow:var(--shadow-lg);">
       <div style="background:var(--coral);padding:1rem 1.25rem;display:flex;align-items:center;justify-content:space-between;">
-        <span style="font-family:'Cormorant Garamond',serif;font-size:1.2rem;font-style:italic;">Connect Wallet</span>
-        <button onclick="document.getElementById('wallet-picker-overlay').style.display='none'" style="background:none;border:none;font-size:1.3rem;cursor:pointer;color:var(--ink-mid);">✕</button>
+        <span style="font-family:'Cormorant Garamond',serif;font-size:1.2rem;font-style:italic;">No Wallet Found</span>
+        <button onclick="document.getElementById('no-wallet-modal').style.display='none'" style="background:none;border:none;font-size:1.3rem;cursor:pointer;color:var(--ink-mid);">✕</button>
       </div>
       <div style="padding:1.25rem;display:flex;flex-direction:column;gap:0.75rem;">
-        <p style="font-size:0.75rem;color:var(--ink-mid);text-align:center;line-height:1.5;">No wallet detected.<br>For best results, open this POS <strong>inside your wallet's built-in browser</strong>, then add to home screen from there.</p>
-        <div style="background:var(--mint);border-radius:10px;padding:0.65rem 0.875rem;font-size:0.68rem;color:var(--green);line-height:1.6;">
-          <strong>Setup steps:</strong><br>
-          1. Install MetaMask or Coinbase Wallet<br>
-          2. Open the wallet app → tap the Browser tab<br>
-          3. Navigate to this POS URL<br>
-          4. Tap menu → "Add to Home Screen"
+        <div style="background:var(--mint);border-radius:10px;padding:0.75rem;font-size:0.72rem;color:var(--green);line-height:1.7;">
+          <strong>Recommended setup:</strong><br>
+          1. Install <strong>MetaMask</strong> or <strong>Coinbase Wallet</strong> from the Play Store<br>
+          2. Open Chrome → go to this POS URL<br>
+          3. Tap Connect Wallet — a QR code will appear<br>
+          4. Scan it with your wallet app
         </div>
-        <a href="${mmDeepLink}" style="display:flex;align-items:center;gap:0.75rem;background:var(--white);border:1.5px solid var(--border);border-radius:12px;padding:0.875rem 1rem;text-decoration:none;color:var(--ink);">
+        <a href="https://metamask.app.link/dapp/${window.location.host}${window.location.pathname}" style="display:flex;align-items:center;gap:0.75rem;background:var(--white);border:1.5px solid var(--border);border-radius:12px;padding:0.875rem 1rem;text-decoration:none;color:var(--ink);">
           <img src="https://upload.wikimedia.org/wikipedia/commons/3/36/MetaMask_Fox.svg" style="width:32px;height:32px;object-fit:contain;">
-          <div>
-            <div style="font-size:0.82rem;font-weight:700;">MetaMask</div>
-            <div style="font-size:0.65rem;color:var(--ink-lt);">Open in MetaMask browser</div>
-          </div>
+          <div><div style="font-size:0.82rem;font-weight:700;">Install MetaMask</div><div style="font-size:0.65rem;color:var(--ink-lt);">Play Store</div></div>
         </a>
-        <a href="${cbDeepLink}" style="display:flex;align-items:center;gap:0.75rem;background:var(--white);border:1.5px solid var(--border);border-radius:12px;padding:0.875rem 1rem;text-decoration:none;color:var(--ink);">
+        <a href="https://go.cb-wallet.com/dapp?url=${encodeURIComponent(window.location.href)}" style="display:flex;align-items:center;gap:0.75rem;background:var(--white);border:1.5px solid var(--border);border-radius:12px;padding:0.875rem 1rem;text-decoration:none;color:var(--ink);">
           <img src="https://avatars.githubusercontent.com/u/18060234" style="width:32px;height:32px;object-fit:contain;border-radius:8px;">
-          <div>
-            <div style="font-size:0.82rem;font-weight:700;">Coinbase Wallet</div>
-            <div style="font-size:0.65rem;color:var(--ink-lt);">Open in Coinbase Wallet browser</div>
-          </div>
+          <div><div style="font-size:0.82rem;font-weight:700;">Install Coinbase Wallet</div><div style="font-size:0.65rem;color:var(--ink-lt);">Play Store</div></div>
         </a>
-        <div style="font-size:0.65rem;color:var(--ink-lt);text-align:center;padding-top:0.25rem;">
-          Already installed? Open your wallet app, tap the browser icon, and navigate to this page.
-        </div>
       </div>
     </div>`;
   document.body.appendChild(el);
 }
+
 
 
 function switchTab(tab){
