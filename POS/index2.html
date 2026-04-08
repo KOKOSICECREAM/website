@@ -152,9 +152,8 @@ html,body{height:100%;overflow:hidden;font-family:'Instrument Sans',sans-serif;b
 .modal-close{background:none;border:none;font-size:1.2rem;cursor:pointer;color:var(--ink-mid);line-height:1;}
 .modal-body{padding:1.1rem;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:0.75rem;width:100%;}
 /* QR: fixed size, no overflow clipping, centered */
-#qr-canvas-wrap{width:210px;height:210px;background:var(--white);border-radius:13px;border:3px solid var(--coral-mid);display:flex;align-items:center;justify-content:center;flex-shrink:0;overflow:visible;margin:0 auto;text-align:center;}
-#qr-canvas-wrap canvas,#qr-canvas-wrap img{display:block!important;width:186px!important;height:186px!important;margin:0 auto;}
-#qr-canvas-wrap table{margin:0 auto;}
+#qr-canvas-wrap{width:210px;height:210px;background:var(--white);border-radius:13px;border:3px solid var(--coral-mid);display:block;overflow:visible;margin:0 auto;padding:12px;box-sizing:border-box;}
+#qr-canvas-wrap canvas,#qr-canvas-wrap img,#qr-canvas-wrap table{display:block!important;width:186px!important;height:186px!important;margin:0 auto!important;}
 .modal-summary{width:100%;background:var(--white);border-radius:9px;padding:0.65rem 0.875rem;border:1px solid var(--border);}
 .mos-row{display:flex;justify-content:space-between;font-size:0.7rem;padding:0.16rem 0;color:var(--ink-mid);}
 .mos-row.total{font-size:0.82rem;font-weight:700;color:var(--ink);border-top:1px solid var(--border);padding-top:0.4rem;margin-top:0.18rem;}
@@ -422,9 +421,9 @@ async function fetchSkoopPrice(){
     const skoopIsT0=t0.toLowerCase()===CFG.SKOOP.toLowerCase();
     const skoopPerEth=skoopIsT0?(1/priceRaw)*1e12:priceRaw*1e12;
     skoopPriceUSD=skoopPerEth>0?ethPriceUSD/skoopPerEth:0;
-    if(skoopPriceUSD>0)document.getElementById('price-indicator').textContent='1 USDC = '+Math.round(1/skoopPriceUSD).toLocaleString()+' SKOOP';
+    if(skoopPriceUSD>0)document.getElementById('price-pill').textContent='1 USDC = '+Math.round(1/skoopPriceUSD).toLocaleString()+' SKOOP';
     updateTotals();
-  }catch(e){document.getElementById('price-indicator').textContent='Price unavailable';}
+  }catch(e){document.getElementById('price-pill').textContent='Price unavailable';}
 }
 
 async function connectWallet(){
@@ -583,9 +582,10 @@ async function generateQR(){
   try{
     new QRCode(wrap,{text:qrPayload,width:186,height:186,colorDark:'#000000',colorLight:'#ffffff',correctLevel:QRCode.CorrectLevel.M});
     await new Promise(r=>setTimeout(r,60));
-    const rendered=wrap.querySelector('canvas')||wrap.querySelector('img');
+    wrap.querySelectorAll('table').forEach(t=>t.remove());
+    const rendered=wrap.querySelector('img')||wrap.querySelector('canvas');
     if(!rendered)throw new Error('nothing rendered');
-    rendered.style.cssText='display:block!important;width:186px!important;height:186px!important;';
+    rendered.style.cssText='display:block!important;width:186px!important;height:186px!important;margin:0 auto!important;';
   }catch(err){
     const img=document.createElement('img');
     img.style.cssText='display:block;width:186px;height:186px;border-radius:4px;';
