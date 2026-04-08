@@ -64,6 +64,7 @@ html,body{height:100%;overflow:hidden;font-family:'Instrument Sans',sans-serif;b
 .menu-item.in-cart{border-color:var(--green);}
 .mi-top{display:flex;justify-content:space-between;align-items:flex-start;}
 .mi-emoji{font-size:1.3rem;line-height:1;}
+.mi-img{width:1.6rem;height:1.6rem;object-fit:cover;border-radius:6px;flex-shrink:0;}
 .mi-badge{min-width:17px;height:17px;border-radius:999px;background:var(--green);color:var(--coral);font-size:0.58rem;font-weight:700;display:flex;align-items:center;justify-content:center;padding:0 3px;opacity:0;}
 .menu-item.in-cart .mi-badge{opacity:1;}
 .mi-name{font-size:0.65rem;font-weight:600;color:var(--ink);line-height:1.2;flex:1;margin-top:0.15rem;}
@@ -180,8 +181,9 @@ html,body{height:100%;overflow:hidden;font-family:'Instrument Sans',sans-serif;b
 
   <header id="topbar">
     <div class="logo-wrap">
-      <img src="https://raw.githubusercontent.com/KOKOSICECREAM/website/main/Customer_dapp/KOKOS.png" alt="KOKOS">
-      <span class="logo-text">POS</span>
+      <img id="logo-img" src="" alt="logo" style="height:30px;width:auto;object-fit:contain;vertical-align:middle;">
+      <span id="logo-text" style="display:none;font-family:'Cormorant Garamond',serif;font-size:1.1rem;font-weight:600;letter-spacing:0.1em;color:var(--coral);vertical-align:middle;"></span>
+      <span id="logo-subtitle" style="font-style:italic;font-size:0.78rem;color:rgba(255,255,255,0.65);margin-left:0.4rem;vertical-align:middle;"></span>
     </div>
     <div id="price-pill">SKOOP: loading…</div>
     <button id="wallet-btn" onclick="connectWallet()">Connect Wallet</button>
@@ -361,16 +363,93 @@ html,body{height:100%;overflow:hidden;font-family:'Instrument Sans',sans-serif;b
 <div id="toast"></div>
 
 <script>
+// ═══════════════════════════════════════════════════════════════
+//  FRANCHISEE CONFIG — edit this section only
+//  Everything below updates automatically from these values
+// ═══════════════════════════════════════════════════════════════
+const BRAND = {
+  // ── Store identity ──────────────────────────────────────────
+  storeName:    'KOKOS Ice Cream',
+  storeSubtitle:'shop terminal',
+  storeId:      'KOKOS_NASHVILLE_01',   // unique per location
+  terminalId:   'POS_1',
+
+  // ── Logo ────────────────────────────────────────────────────
+  // Use a URL to your logo image. Set to '' to show storeName text instead.
+  logoUrl: 'https://raw.githubusercontent.com/KOKOSICECREAM/website/main/Customer_dapp/KOKOS.png',
+
+  // ── Brand colors ────────────────────────────────────────────
+  // These override the CSS variables. Use any valid CSS color.
+  colors: {
+    primary:    '#fdcec1',   // topbar background
+    primaryMid: '#fdaf9a',   // topbar border / QR box border
+    primaryDeep:'#f0876a',   // accents
+    accent:     '#11483d',   // buttons, active states (dark)
+    accentDark: '#0a2e27',   // button hover
+    bg:         '#fffaf7',   // page background
+    surface:    '#fae2d8',   // cart background / secondary surface
+    mint:       '#cde6d7',   // SKOOP equiv / success highlights
+    mintMid:    '#a8d4bb',
+  },
+
+  // ── Wallets & contracts ─────────────────────────────────────
+  // signerWallet: the wallet that signs payment intents (POS operator)
+  signerWallet:   '0x4eCc3f03c018208Ae5932eAB91bbD82F37F56D9B',
+  // ownerWallet: the wallet allowed to burn captured receipts (settlement)
+  ownerWallet:    '0x001b3fB36FE7E3a741A15Ed8bE68610442E3a50b',
+  // skoopToken: SKOOP ERC-20 contract address on Base
+  skoopToken:     '0xfd3ce21c5acd8bbbe576d0e2336c210c3cebeb92',
+  // escrowContract: payment escrow contract address on Base
+  escrowContract: '0x85e8cdedae8ecd23ee21cdc90d75cbaae9a54991',
+  // skoopPool: Uniswap v3 ETH/SKOOP pool used for live price
+  skoopPool:      '0xc1d89ca13d5cbc24b92e9f40b36d43da347c5198',
+
+  // ── Reward limits ───────────────────────────────────────────
+  // Max SKOOP that can be sent as rewards per day from this terminal
+  dailyRewardLimit: 888888,
+
+  // ── Tax rate ────────────────────────────────────────────────
+  taxRate: 0.0925,           // 9.25% — change for your jurisdiction
+
+  // ── Menu categories & items ─────────────────────────────────
+  // Each category: { id, label, emoji (optional) }
+  // Each item: { id, cat (matches category id), emoji, name, price }
+  // Always keep the last item as the 'custom' entry.
+  categories: [
+    { id:'scoops', label:'Scoops' },
+    { id:'drinks', label:'Drinks' },
+    { id:'extras', label:'Extras' },
+  ],
+  menuItems: [
+    // img is optional — use a URL to show a product photo instead of emoji
+    // Leave img out (or set to '') to use emoji fallback
+    { id:'s1', cat:'scoops', emoji:'🍦', name:'Kids Scoop',  price:5.00,  img:'' },
+    { id:'s2', cat:'scoops', emoji:'🍧', name:'Small',       price:7.00,  img:'' },
+    { id:'s3', cat:'scoops', emoji:'🍨', name:'Trio',        price:9.00,  img:'' },
+    { id:'s4', cat:'scoops', emoji:'🫙', name:'Pint',        price:12.00, img:'' },
+    { id:'d1', cat:'drinks', emoji:'☕', name:'Latte',        price:7.00,  img:'' },
+    { id:'d2', cat:'drinks', emoji:'💧', name:'Water',        price:1.00,  img:'' },
+    { id:'e1', cat:'extras', emoji:'🍟', name:'Fries',        price:8.00,  img:'' },
+    { id:'e2', cat:'extras', emoji:'🍦', name:'Cone',         price:0.60,  img:'' },
+    // custom entry — always keep this last
+    { id:'cx', cat:'custom', emoji:'✏️', name:'Custom', price:0, custom:true },
+  ],
+};
+// ═══════════════════════════════════════════════════════════════
+//  CHAIN CONFIG — do not edit unless you know what you're doing
+// ═══════════════════════════════════════════════════════════════
 const CFG={
   CHAIN_ID:8453,CHAIN_HEX:'0x2105',RPC:'https://mainnet.base.org',
-  SKOOP:'0xfd3ce21c5acd8bbbe576d0e2336c210c3cebeb92',
-  ESCROW:'0x85e8cdedae8ecd23ee21cdc90d75cbaae9a54991',
-  SIGNER:'0x4eCc3f03c018208Ae5932eAB91bbD82F37F56D9B',
-  OWNER:'0x001b3fB36FE7E3a741A15Ed8bE68610442E3a50b',
-  POOL_ETH_SKOOP:'0xc1d89ca13d5cbc24b92e9f40b36d43da347c5198',
-  SKOOP_DEC:6,TAX_RATE:0.0925,
-  STORE_ID:'KOKOS_NASHVILLE_01',TERMINAL_ID:'POS_1',
-  DAILY_REWARD_LIMIT:888888,
+  SKOOP:BRAND.skoopToken,
+  ESCROW:BRAND.escrowContract,
+  SIGNER:BRAND.signerWallet,
+  OWNER:BRAND.ownerWallet,
+  POOL_ETH_SKOOP:BRAND.skoopPool,
+  SKOOP_DEC:6,
+  TAX_RATE:BRAND.taxRate,
+  STORE_ID:BRAND.storeId,
+  TERMINAL_ID:BRAND.terminalId,
+  DAILY_REWARD_LIMIT:BRAND.dailyRewardLimit,
 };
 let skoopPriceUSD=0,ethPriceUSD=0;
 const ABI_ERC20=["function transfer(address,uint256) returns (bool)"];
@@ -382,17 +461,7 @@ const ABI_ESCROW=[
   {anonymous:false,inputs:[{indexed:false,name:"paymentCount",type:"uint256"},{indexed:false,name:"totalTokenAmount",type:"uint256"},{indexed:false,name:"timestamp",type:"uint256"}],name:"BatchBurnExecuted",type:"event"}
 ];
 const ABI_POOL=["function slot0() view returns (uint160 sqrtPriceX96,int24,uint16,uint16,uint16,uint8,bool)","function token0() view returns (address)"];
-const MENU=[
-  {id:'s1',cat:'scoops',emoji:'🍦',name:'Kids Scoop',price:5.00},
-  {id:'s2',cat:'scoops',emoji:'🍧',name:'Small',price:7.00},
-  {id:'s3',cat:'scoops',emoji:'🍨',name:'Trio',price:9.00},
-  {id:'s4',cat:'scoops',emoji:'🫙',name:'Pint',price:12.00},
-  {id:'d1',cat:'drinks',emoji:'☕',name:'Latte',price:7.00},
-  {id:'d2',cat:'drinks',emoji:'💧',name:'Water',price:1.00},
-  {id:'e1',cat:'extras',emoji:'🍟',name:'Fries',price:8.00},
-  {id:'e2',cat:'extras',emoji:'🍦',name:'Cone',price:0.60},
-  {id:'cx',cat:'custom',emoji:'✏️',name:'Custom',price:0,custom:true},
-];
+const MENU=[...BRAND.menuItems];
 let provider=null,signer=null,signerAddr=null;
 let cart={},capturedReceipts=[];
 let rewardScannerActive=false,rewardScanner=null,scannedRewardAddr=null;
@@ -472,8 +541,11 @@ function renderMenu(){
   }
   grid.innerHTML=items.map(item=>{
     const qty=cart[item.id]||0;const inCart=qty>0;
+    const visual=item.img
+      ?`<img src="${item.img}" alt="${item.name}" class="mi-img" onerror="this.style.display='none';this.nextElementSibling.style.display='inline'"><span class="mi-emoji" style="display:none">${item.emoji}</span>`
+      :`<span class="mi-emoji">${item.emoji}</span>`;
     return `<div class="menu-item${inCart?' in-cart':''}" data-cat="${item.cat}" onclick="tileClick(event,'${item.id}')">
-      <div class="mi-top"><span class="mi-emoji">${item.emoji}</span><span class="mi-badge">${qty||''}</span></div>
+      <div class="mi-top">${visual}<span class="mi-badge">${qty||''}</span></div>
       <div class="mi-name">${item.name}</div>
       <div class="mi-bottom">
         <span class="mi-price">$${item.price.toFixed(2)}</span>
@@ -872,6 +944,26 @@ document.addEventListener('DOMContentLoaded',()=>{
     document.getElementById('reward-usd-hint').textContent=(amt>0&&skoopPriceUSD>0)?'≈ $'+(amt*skoopPriceUSD).toFixed(2)+' USD':'';
   });
 });
+function applyBrand(){
+  const r=document.documentElement.style;const c=BRAND.colors;
+  r.setProperty('--coral',c.primary);r.setProperty('--coral-mid',c.primaryMid);
+  r.setProperty('--coral-deep',c.primaryDeep);r.setProperty('--green',c.accent);
+  r.setProperty('--green-dk',c.accentDark);r.setProperty('--cream',c.bg);
+  r.setProperty('--apricot',c.surface);r.setProperty('--mint',c.mint);
+  r.setProperty('--mint-mid',c.mintMid);
+  const logoImg=document.getElementById('logo-img');
+  const logoText=document.getElementById('logo-text');
+  if(BRAND.logoUrl){logoImg.src=BRAND.logoUrl;logoImg.style.display='inline-block';logoText.style.display='none';}
+  else{logoImg.style.display='none';logoText.textContent=BRAND.storeName;logoText.style.display='inline';}
+  document.getElementById('logo-subtitle').textContent=BRAND.storeSubtitle;
+  document.title=BRAND.storeName+' — POS';
+  document.querySelector('meta[name="apple-mobile-web-app-title"]').content=BRAND.storeName;
+  const strip=document.querySelector('.cat-strip');
+  strip.innerHTML='<button class="cat-btn active" onclick="filterCat(\'all\',this)">All</button>'
+    +BRAND.categories.map(cat=>`<button class="cat-btn" onclick="filterCat('${cat.id}',this)">${cat.label}</button>`).join('')
+    +'<button class="cat-btn cat-custom" onclick="filterCat(\'custom\',this)">$ Custom</button>';
+}
+applyBrand();
 renderMenu();renderCart();updateDailyLimitDisplay();renderPendingRewards();
 fetchSkoopPrice();setInterval(fetchSkoopPrice,60000);
 if(window.ethereum){window.ethereum.request({method:'eth_accounts'}).then(accounts=>{if(accounts.length)connectWallet();}).catch(()=>{});}
