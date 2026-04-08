@@ -241,9 +241,12 @@ html,body{height:100%;overflow:hidden;font-family:'Instrument Sans',sans-serif;b
       <div class="mode-view active" id="rewards-mode">
         <div class="scan-wrap">
           <div id="reward-qr-reader"></div>
-          <button class="scan-btn" onclick="toggleRewardScan()">
-            <span id="scan-icon">📷</span><span id="scan-label">Scan Customer QR</span>
-          </button>
+          <div style="display:flex;border-bottom:1px solid var(--border);">
+            <button class="scan-btn" style="border-bottom:none;flex:1;" onclick="toggleRewardScan()">
+              <span id="scan-icon">📷</span><span id="scan-label">Scan Customer QR</span>
+            </button>
+            <button id="flip-camera-btn" onclick="flipCamera()" style="display:none;background:none;border:none;border-left:1px solid var(--border);padding:0.55rem 0.75rem;font-size:1rem;cursor:pointer;color:var(--ink-mid);" title="Flip camera">🔄</button>
+          </div>
           <div class="scan-inner">
             <div style="font-size:0.58rem;text-transform:uppercase;letter-spacing:0.06em;color:var(--ink-lt);margin-bottom:0.28rem;">Or paste address</div>
             <div style="display:flex;gap:0.35rem;">
@@ -852,14 +855,21 @@ async function pasteAddr(){
     else showToast('Not a valid address','error');
   }catch{showToast('Clipboard denied','error');}
 }
+let scanFacing='user';
 function toggleRewardScan(){rewardScannerActive?stopRewardScan():startRewardScan();}
+function flipCamera(){
+  if(!rewardScannerActive)return;
+  scanFacing=scanFacing==='environment'?'user':'environment';
+  stopRewardScan();startRewardScan();
+}
 function startRewardScan(){
   document.getElementById('reward-qr-reader').style.display='block';
   document.getElementById('scan-label').textContent='Stop Camera';
   document.getElementById('scan-icon').textContent='⏹';
+  document.getElementById('flip-camera-btn').style.display='flex';
   rewardScannerActive=true;
   rewardScanner=new Html5Qrcode('reward-qr-reader');
-  rewardScanner.start({facingMode:'environment'},{fps:10,qrbox:{width:150,height:150}},
+  rewardScanner.start({facingMode:scanFacing},{fps:10,qrbox:{width:150,height:150}},
     (decoded)=>{
       const addr=decoded.trim().replace(/^ethereum:/i,'');
       if(ethers.isAddress(addr)){setRewardAddr(addr);stopRewardScan();showToast('Wallet scanned ✓','success');}
@@ -873,6 +883,7 @@ function stopRewardScan(){
   document.getElementById('reward-qr-reader').style.display='none';
   document.getElementById('scan-label').textContent='Scan Customer QR';
   document.getElementById('scan-icon').textContent='📷';
+  document.getElementById('flip-camera-btn').style.display='none';
 }
 function resetRewards(){
   stopRewardScan();scannedRewardAddr=null;
