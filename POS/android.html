@@ -6,7 +6,7 @@
 <title>KOKOS POS</title>
 <link rel="icon" type="image/png" href="KOKOS.png">
 <link rel="apple-touch-icon" href="KOKOS.png">
-<link rel="manifest" href="manifest.json">
+<link rel="manifest" href="manifest-pos.json">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="KOKOS POS">
@@ -17,74 +17,7 @@
 <script src="https://cdn.jsdelivr.net/npm/ethers@6.13.4/dist/ethers.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
-<script type="module">
-  // WalletConnect Web3Modal — loads async, sets window.web3modal when ready
-  import { createWeb3Modal, defaultConfig } from 'https://esm.sh/@web3modal/ethers@4.2.3';
-  try {
-    const modal = createWeb3Modal({
-      ethersConfig: defaultConfig({
-        metadata: {
-          name: 'KOKOS POS',
-          description: 'KOKOS Shop Terminal',
-          url: window.location.origin,
-          icons: ['https://raw.githubusercontent.com/KOKOSICECREAM/website/main/Customer_dapp/KOKOS.png']
-        },
-        enableEIP6963: true,   // detects injected wallets (MetaMask, Coinbase etc)
-        enableInjected: true,
-        enableCoinbase: true,
-      }),
-      projectId: 'c5be163298ba25127afa6b7529e29059',
-      chains: [{
-        chainId: 8453,
-        name: 'Base',
-        currency: 'ETH',
-        explorerUrl: 'https://basescan.org',
-        rpcUrl: 'https://mainnet.base.org'
-      }],
-      featuredWalletIds: [
-        'c57ca95b47569778a828d19178114f4db188b89b763c899ba0be274e97267d96', // MetaMask
-        'fd20dc426fb37566d803205b19bbc1d4096b248ac04548e3cfb6b3a38bd033aa', // Coinbase
-      ],
-      themeMode: 'light',
-      themeVariables: {
-        '--w3m-accent': '#11483d',
-        '--w3m-border-radius-master': '12px',
-      }
-    });
-    window.web3modal = modal;
 
-    // Listen for wallet connection events
-    modal.subscribeProvider(async ({ provider: wcProvider, address, isConnected }) => {
-      if (isConnected && wcProvider && address) {
-        try {
-          const ethProvider = new ethers.BrowserProvider(wcProvider);
-          const net = await ethProvider.getNetwork();
-          if (Number(net.chainId) !== 8453) {
-            try { await wcProvider.request({ method:'wallet_switchEthereumChain', params:[{chainId:'0x2105'}] }); }
-            catch {
-              try {
-                await wcProvider.request({ method:'wallet_addEthereumChain', params:[{
-                  chainId:'0x2105', chainName:'Base',
-                  nativeCurrency:{name:'Ether',symbol:'ETH',decimals:18},
-                  rpcUrls:['https://mainnet.base.org'],
-                  blockExplorerUrls:['https://basescan.org'],
-                }]});
-              } catch { window.showToast('Switch to Base network','error'); return; }
-            }
-          }
-          window.signer = await ethProvider.getSigner();
-          window.signerAddr = address;
-          window.provider = ethProvider;
-          document.getElementById('wallet-btn').textContent = address.slice(0,6)+'…'+address.slice(-4);
-          window.showToast('Wallet connected ✓','success');
-          window.loadReceipts();
-        } catch(e) { window.showToast('Connection failed','error'); }
-      }
-    });
-  } catch(e) {
-    console.warn('WalletConnect failed to load, falling back to injected wallet only:', e);
-  }
-</script>
 <style>
 :root{
   --coral:#fdcec1;--coral-mid:#fdaf9a;--coral-deep:#f0876a;
@@ -584,18 +517,13 @@ async function fetchSkoopPrice(){
 }
 
 async function connectWallet(){
-  // If Web3Modal loaded — use it (handles MetaMask, Coinbase, WalletConnect QR, all wallets)
-  if(window.web3modal){
-    window.web3modal.open();
-    return;
-  }
-  // Web3Modal not loaded yet — fall back to injected wallet
+  // Already inside MetaMask/Coinbase browser — connect directly
   if(window.ethereum){
     await connectInjectedWallet();
     return;
   }
-  // Nothing available — show manual instructions
-  showNoWalletModal();
+  // Running as Chrome PWA — show wallet picker with deep links
+  showWalletPicker();
 }
 
 async function connectInjectedWallet(){
@@ -620,8 +548,8 @@ async function connectInjectedWallet(){
     signer=await provider.getSigner();
     signerAddr=await signer.getAddress();
     document.getElementById('wallet-btn').textContent=signerAddr.slice(0,6)+'…'+signerAddr.slice(-4);
-    const walletName=window.ethereum.isMetaMask?'MetaMask':window.ethereum.isCoinbaseWallet?'Coinbase Wallet':'Wallet';
-    showToast(walletName+' connected ✓','success');
+    const name=window.ethereum.isMetaMask?'MetaMask':window.ethereum.isCoinbaseWallet?'Coinbase':'Wallet';
+    showToast(name+' connected ✓','success');
     loadReceipts();
   }catch(e){
     if(e.code===4001)showToast('Connection rejected','error');
@@ -629,38 +557,54 @@ async function connectInjectedWallet(){
   }
 }
 
-function showNoWalletModal(){
-  let el=document.getElementById('no-wallet-modal');
+function showWalletPicker(){
+  // Deep links that open the POS URL directly inside the wallet's browser
+  // — no round-trip to Chrome, no QR needed
+  const posUrl=window.location.href;
+  const mmLink='https://metamask.app.link/dapp/'+posUrl.replace(/^https?:\/\//,'');
+  const cbLink='https://go.cb-wallet.com/dapp?url='+encodeURIComponent(posUrl);
+
+  let el=document.getElementById('wallet-picker');
   if(el){el.style.display='flex';return;}
   el=document.createElement('div');
-  el.id='no-wallet-modal';
+  el.id='wallet-picker';
   el.style.cssText='position:fixed;inset:0;background:rgba(42,31,26,0.65);z-index:999;display:flex;align-items:center;justify-content:center;padding:1.5rem;';
   el.innerHTML=`
     <div style="background:var(--cream);border-radius:20px;width:100%;max-width:320px;overflow:hidden;box-shadow:var(--shadow-lg);">
       <div style="background:var(--coral);padding:1rem 1.25rem;display:flex;align-items:center;justify-content:space-between;">
-        <span style="font-family:'Cormorant Garamond',serif;font-size:1.2rem;font-style:italic;">No Wallet Found</span>
-        <button onclick="document.getElementById('no-wallet-modal').style.display='none'" style="background:none;border:none;font-size:1.3rem;cursor:pointer;color:var(--ink-mid);">✕</button>
+        <span style="font-family:'Cormorant Garamond',serif;font-size:1.2rem;font-style:italic;color:var(--green);">Open in Wallet</span>
+        <button onclick="document.getElementById('wallet-picker').style.display='none'" style="background:none;border:none;font-size:1.3rem;cursor:pointer;color:var(--ink-mid);">✕</button>
       </div>
       <div style="padding:1.25rem;display:flex;flex-direction:column;gap:0.75rem;">
-        <div style="background:var(--mint);border-radius:10px;padding:0.75rem;font-size:0.72rem;color:var(--green);line-height:1.7;">
-          <strong>Recommended setup:</strong><br>
-          1. Install <strong>MetaMask</strong> or <strong>Coinbase Wallet</strong> from the Play Store<br>
-          2. Open Chrome → go to this POS URL<br>
-          3. Tap Connect Wallet — a QR code will appear<br>
-          4. Scan it with your wallet app
+        <p style="font-size:0.75rem;color:var(--ink-mid);text-align:center;line-height:1.5;">
+          Tap your wallet below to open the POS directly inside it — no QR needed.
+        </p>
+        <a href="${mmLink}" style="display:flex;align-items:center;gap:0.875rem;background:var(--white);border:1.5px solid var(--border);border-radius:14px;padding:1rem;text-decoration:none;color:var(--ink);active:opacity:0.8;">
+          <img src="https://upload.wikimedia.org/wikipedia/commons/3/36/MetaMask_Fox.svg" style="width:36px;height:36px;object-fit:contain;flex-shrink:0;">
+          <div>
+            <div style="font-size:0.88rem;font-weight:700;">MetaMask</div>
+            <div style="font-size:0.65rem;color:var(--ink-lt);">Opens POS in MetaMask browser</div>
+          </div>
+          <span style="margin-left:auto;font-size:1rem;color:var(--ink-lt);">→</span>
+        </a>
+        <a href="${cbLink}" style="display:flex;align-items:center;gap:0.875rem;background:var(--white);border:1.5px solid var(--border);border-radius:14px;padding:1rem;text-decoration:none;color:var(--ink);">
+          <img src="https://avatars.githubusercontent.com/u/18060234" style="width:36px;height:36px;object-fit:contain;border-radius:8px;flex-shrink:0;">
+          <div>
+            <div style="font-size:0.88rem;font-weight:700;">Coinbase Wallet</div>
+            <div style="font-size:0.65rem;color:var(--ink-lt);">Opens POS in Coinbase browser</div>
+          </div>
+          <span style="margin-left:auto;font-size:1rem;color:var(--ink-lt);">→</span>
+        </a>
+        <div style="background:var(--mint);border-radius:10px;padding:0.65rem 0.875rem;font-size:0.68rem;color:var(--green);line-height:1.6;">
+          <strong>First time?</strong> Install MetaMask or Coinbase Wallet from the Play Store, then come back and tap above.
         </div>
-        <a href="https://metamask.app.link/dapp/${window.location.host}${window.location.pathname}" style="display:flex;align-items:center;gap:0.75rem;background:var(--white);border:1.5px solid var(--border);border-radius:12px;padding:0.875rem 1rem;text-decoration:none;color:var(--ink);">
-          <img src="https://upload.wikimedia.org/wikipedia/commons/3/36/MetaMask_Fox.svg" style="width:32px;height:32px;object-fit:contain;">
-          <div><div style="font-size:0.82rem;font-weight:700;">Install MetaMask</div><div style="font-size:0.65rem;color:var(--ink-lt);">Play Store</div></div>
-        </a>
-        <a href="https://go.cb-wallet.com/dapp?url=${encodeURIComponent(window.location.href)}" style="display:flex;align-items:center;gap:0.75rem;background:var(--white);border:1.5px solid var(--border);border-radius:12px;padding:0.875rem 1rem;text-decoration:none;color:var(--ink);">
-          <img src="https://avatars.githubusercontent.com/u/18060234" style="width:32px;height:32px;object-fit:contain;border-radius:8px;">
-          <div><div style="font-size:0.82rem;font-weight:700;">Install Coinbase Wallet</div><div style="font-size:0.65rem;color:var(--ink-lt);">Play Store</div></div>
-        </a>
       </div>
     </div>`;
   document.body.appendChild(el);
 }
+
+function showNoWalletModal(){showWalletPicker();}
+
 
 
 
