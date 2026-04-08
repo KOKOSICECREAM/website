@@ -1,0 +1,620 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=800, initial-scale=1.0">
+  <title>PunchCard · punchcard.club</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Special+Elite&family=Zilla+Slab:ital,wght@0,400;0,600;0,700;1,400;1,600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    html, body {
+      width: 100%;
+      height: 100%;
+      background: #1A1714;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+    }
+
+    /* Scale the 800×1340 design to fit whatever screen it's on */
+    .scale-wrapper {
+      width: 800px;
+      height: 1340px;
+      transform-origin: top center;
+    }
+
+    .screen {
+      width: 800px;
+      height: 1340px;
+      background: #EDEAE0;
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      border-left: 8px solid #8B2A10;
+    }
+
+    .screen::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background-image: repeating-linear-gradient(
+        0deg,
+        transparent,
+        transparent 39px,
+        rgba(0,0,0,0.03) 40px
+      );
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .z { position: relative; z-index: 1; }
+
+    /* META BAR */
+    .meta-bar {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 14px;
+      padding: 16px 48px;
+      border-bottom: 1px solid rgba(0,0,0,0.1);
+      flex-shrink: 0;
+    }
+
+    .meta-bar span {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 11px;
+      color: #6B655C;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+    }
+
+    .meta-dot {
+      width: 4px; height: 4px;
+      border-radius: 50%;
+      background: #8B2A10;
+      flex-shrink: 0;
+    }
+
+    /* WORDMARK */
+    .wordmark-section {
+      padding: 52px 56px 40px;
+      border-bottom: 1px solid rgba(0,0,0,0.1);
+      flex-shrink: 0;
+    }
+
+    .wordmark-section h1 {
+      font-family: 'Special Elite', serif;
+      font-size: 110px;
+      line-height: 0.92;
+      color: #1A1714;
+      letter-spacing: -3px;
+    }
+
+    .wordmark-section h1 .red { color: #8B2A10; }
+
+    .dot-club {
+      font-family: 'Zilla Slab', serif;
+      font-style: italic;
+      font-size: 28px;
+      color: #9B9288;
+      display: block;
+      margin-top: 8px;
+    }
+
+    .tagline {
+      font-family: 'Zilla Slab', serif;
+      font-size: 20px;
+      color: #4A453F;
+      font-style: italic;
+      line-height: 1.55;
+      margin-top: 22px;
+    }
+
+    .tagline .red { color: #8B2A10; }
+
+    /* PUNCH CARD */
+    .card-section {
+      padding: 36px 56px;
+      border-bottom: 1px solid rgba(0,0,0,0.1);
+      flex-shrink: 0;
+    }
+
+    .section-label {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 10px;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: #9B9288;
+      margin-bottom: 16px;
+    }
+
+    .punches {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+    }
+
+    .punch {
+      width: 48px; height: 48px;
+      border-radius: 50%;
+      border: 1.5px solid #C0B8AE;
+      background: transparent;
+      position: relative;
+      flex-shrink: 0;
+      transition: border-color 0.25s, background 0.25s;
+    }
+
+    .punch.filled {
+      border-color: #8B2A10;
+      background: #8B2A10;
+    }
+
+    .punch.filled::after {
+      content: '';
+      position: absolute;
+      inset: 11px;
+      border-bottom: 2.5px solid #EDEAE0;
+      border-right: 2.5px solid #EDEAE0;
+      transform: rotate(45deg) translateY(-2px);
+    }
+
+    .punch-status {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 12px;
+      color: #8B2A10;
+      letter-spacing: 0.06em;
+      margin-top: 14px;
+      min-height: 18px;
+      transition: opacity 0.4s;
+    }
+
+    /* HOW IT WORKS */
+    .how-section {
+      padding: 36px 56px;
+      border-bottom: 1px solid rgba(0,0,0,0.1);
+      flex-shrink: 0;
+    }
+
+    .how-section h2 {
+      font-family: 'Special Elite', serif;
+      font-size: 38px;
+      color: #1A1714;
+      line-height: 1.1;
+      letter-spacing: -0.5px;
+      margin-bottom: 24px;
+    }
+
+    .how-section h2 .red { color: #8B2A10; }
+
+    .steps {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px 40px;
+    }
+
+    .step { display: flex; gap: 14px; align-items: flex-start; }
+
+    .step-num {
+      font-family: 'Special Elite', serif;
+      font-size: 14px;
+      color: #8B2A10;
+      flex-shrink: 0;
+      padding-top: 2px;
+      width: 24px;
+    }
+
+    .step-head {
+      font-family: 'Zilla Slab', serif;
+      font-size: 16px;
+      font-weight: 600;
+      color: #1A1714;
+      margin-bottom: 3px;
+    }
+
+    .step-sub {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 11px;
+      color: #6B655C;
+      letter-spacing: 0.03em;
+      line-height: 1.55;
+    }
+
+    /* QR + PILLARS */
+    .qr-pillars {
+      padding: 36px 56px;
+      border-bottom: 1px solid rgba(0,0,0,0.1);
+      display: flex;
+      gap: 48px;
+      align-items: center;
+      flex-shrink: 0;
+    }
+
+    .qr-block {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 12px;
+      flex-shrink: 0;
+    }
+
+    .qr-wrap {
+      background: #fff;
+      padding: 10px;
+      border: 1px solid rgba(0,0,0,0.12);
+      border-radius: 4px;
+    }
+
+    .qr-url {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 13px;
+      color: #8B2A10;
+      font-weight: 500;
+      letter-spacing: 0.06em;
+    }
+
+    .qr-right {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    .qr-cta {
+      font-family: 'Special Elite', serif;
+      font-size: 42px;
+      color: #1A1714;
+      line-height: 1.1;
+      letter-spacing: -0.5px;
+    }
+
+    .qr-cta .red { color: #8B2A10; }
+
+    .qr-sub {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 11px;
+      color: #9B9288;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      line-height: 1.6;
+    }
+
+    .pillars {
+      display: flex;
+      gap: 0;
+      border-top: 1px solid rgba(0,0,0,0.08);
+      padding-top: 18px;
+    }
+
+    .pillar {
+      flex: 1;
+      border-left: 2px solid rgba(0,0,0,0.08);
+      padding-left: 14px;
+    }
+
+    .pillar:first-child { border-left: none; padding-left: 0; }
+
+    .pillar-val {
+      font-family: 'Special Elite', serif;
+      font-size: 30px;
+      color: #8B2A10;
+      line-height: 1;
+    }
+
+    .pillar-label {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 9px;
+      color: #9B9288;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      margin-top: 3px;
+      line-height: 1.4;
+    }
+
+    /* TICKER */
+    .ticker-section {
+      padding: 16px 56px;
+      border-bottom: 1px solid rgba(0,0,0,0.1);
+      overflow: hidden;
+      flex-shrink: 0;
+    }
+
+    .ticker-label {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 9px;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: #9B9288;
+      margin-bottom: 8px;
+    }
+
+    .ticker-track {
+      display: flex;
+      gap: 28px;
+      animation: scrollTicker 24s linear infinite;
+      white-space: nowrap;
+    }
+
+    @keyframes scrollTicker {
+      0% { transform: translateX(0); }
+      100% { transform: translateX(-50%); }
+    }
+
+    .ticker-item {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 12px;
+      color: #4A453F;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-shrink: 0;
+    }
+
+    .ticker-item::before {
+      content: '';
+      display: inline-block;
+      width: 5px; height: 5px;
+      border-radius: 50%;
+      background: #8B2A10;
+    }
+
+    /* BOTTOM BAR */
+    .bottom-bar {
+      margin-top: auto;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 14px 56px;
+      border-top: 1px solid rgba(0,0,0,0.1);
+      flex-shrink: 0;
+    }
+
+    .bottom-bar span {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 10px;
+      color: #9B9288;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+    }
+
+    .base-badge {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+    }
+
+    .base-dot {
+      width: 10px; height: 10px;
+      border-radius: 50%;
+      background: #0052FF;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="scale-wrapper" id="scaler">
+    <div class="screen">
+
+      <div class="meta-bar z">
+        <span>Punchcard.club</span>
+        <div class="meta-dot"></div>
+        <span>Est. 2026</span>
+        <div class="meta-dot"></div>
+        <span>Base Mainnet</span>
+        <div class="meta-dot"></div>
+        <span>Nashville, TN</span>
+      </div>
+
+      <div class="wordmark-section z">
+        <h1>Punch<span class="red">Card</span></h1>
+        <span class="dot-club">.club</span>
+        <p class="tagline">
+          Built by businesses, earned by customers,<br>
+          <span class="red">owned by everyone, controlled by no one.</span>
+        </p>
+      </div>
+
+      <div class="card-section z">
+        <div class="section-label">Your rewards card — earned, yours to keep</div>
+        <div class="punches" id="punches">
+          <div class="punch filled"></div>
+          <div class="punch filled"></div>
+          <div class="punch filled"></div>
+          <div class="punch filled"></div>
+          <div class="punch filled"></div>
+          <div class="punch filled"></div>
+          <div class="punch"></div>
+          <div class="punch"></div>
+          <div class="punch"></div>
+          <div class="punch"></div>
+        </div>
+        <div class="punch-status" id="pstatus">4 visits away from a free reward</div>
+      </div>
+
+      <div class="how-section z">
+        <h2>Real loyalty<br>can't be <span class="red">rented.</span></h2>
+        <div class="steps">
+          <div class="step">
+            <div class="step-num">01</div>
+            <div>
+              <div class="step-head">Earn on every purchase</div>
+              <div class="step-sub">10% on crypto · 5% on card · automatic, every transaction</div>
+            </div>
+          </div>
+          <div class="step">
+            <div class="step-num">02</div>
+            <div>
+              <div class="step-head">Tokens are yours — not points</div>
+              <div class="step-sub">Real ERC-20 on Base · held in your wallet · never expire</div>
+            </div>
+          </div>
+          <div class="step">
+            <div class="step-num">03</div>
+            <div>
+              <div class="step-head">Swap across the network</div>
+              <div class="step-sub">Market-rate exchange · spend at any participating business</div>
+            </div>
+          </div>
+          <div class="step">
+            <div class="step-num">04</div>
+            <div>
+              <div class="step-head">Redeem for USDC or ETH</div>
+              <div class="step-sub">Exit anytime · no permission required · no middleman</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="qr-pillars z">
+        <div class="qr-block">
+          <div class="qr-wrap"><div id="qr"></div></div>
+          <div class="qr-url">↗ punchcard.club</div>
+        </div>
+        <div class="qr-right">
+          <div class="qr-cta">Scan to<br>join the<br><span class="red">network.</span></div>
+          <div class="qr-sub">No crypto experience required.<br>Feels as simple as Apple Pay.</div>
+          <div class="pillars">
+            <div class="pillar">
+              <div class="pillar-val">100M</div>
+              <div class="pillar-label">Fixed supply</div>
+            </div>
+            <div class="pillar">
+              <div class="pillar-val">0</div>
+              <div class="pillar-label">Admin keys</div>
+            </div>
+            <div class="pillar">
+              <div class="pillar-val">∞</div>
+              <div class="pillar-label">Lifespan</div>
+            </div>
+            <div class="pillar">
+              <div class="pillar-val">0.3%</div>
+              <div class="pillar-label">Swap fee</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="ticker-section z">
+        <div class="ticker-label">Network · Nashville · Live on Base Mainnet</div>
+        <div class="ticker-track">
+          <div class="ticker-item">KOKOS Ice Cream · First Deployment</div>
+          <div class="ticker-item">Immutable contracts · zero admin keys</div>
+          <div class="ticker-item">Deployed in days · running for decades</div>
+          <div class="ticker-item">No platform fees · no vendor lock-in</div>
+          <div class="ticker-item">Your token · your customers · your brand</div>
+          <div class="ticker-item">Swap across the network · redeem anywhere</div>
+          <div class="ticker-item">KOKOS Ice Cream · First Deployment</div>
+          <div class="ticker-item">Immutable contracts · zero admin keys</div>
+          <div class="ticker-item">Deployed in days · running for decades</div>
+          <div class="ticker-item">No platform fees · no vendor lock-in</div>
+          <div class="ticker-item">Your token · your customers · your brand</div>
+          <div class="ticker-item">Swap across the network · redeem anywhere</div>
+        </div>
+      </div>
+
+      <div class="bottom-bar z">
+        <span>Deploy your token · punchcard.club</span>
+        <div class="base-badge">
+          <div class="base-dot"></div>
+          <span>Built on Base</span>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <script>
+    // Generate QR code
+    new QRCode(document.getElementById("qr"), {
+      text: "https://punchcard.club",
+      width: 180,
+      height: 180,
+      colorDark: "#1A1714",
+      colorLight: "#ffffff",
+      correctLevel: QRCode.CorrectLevel.H
+    });
+
+    // Scale to fit any screen while preserving 800×1340 portrait ratio
+    function scaleToFit() {
+      const scaler = document.getElementById('scaler');
+      const scaleX = window.innerWidth / 800;
+      const scaleY = window.innerHeight / 1340;
+      const scale = Math.min(scaleX, scaleY);
+      scaler.style.transform = `scale(${scale})`;
+      // Center it
+      const offsetX = (window.innerWidth - 800 * scale) / 2;
+      const offsetY = (window.innerHeight - 1340 * scale) / 2;
+      scaler.style.marginLeft = offsetX + 'px';
+      scaler.style.marginTop = offsetY + 'px';
+    }
+
+    scaleToFit();
+    window.addEventListener('resize', scaleToFit);
+
+    // Punch card animation loop
+    const punches = document.querySelectorAll('.punch');
+    const status = document.getElementById('pstatus');
+    let filled = 6;
+
+    function stamp() {
+      setTimeout(() => {
+        if (filled < 10) {
+          punches[filled].classList.add('filled');
+          filled++;
+          const left = 10 - filled;
+          if (left > 0) {
+            status.textContent = left + ' visit' + (left === 1 ? '' : 's') + ' away from a free reward';
+          } else {
+            status.textContent = '✓ Free reward earned — redeem at the counter';
+          }
+          stamp();
+        } else {
+          setTimeout(() => {
+            punches.forEach(p => p.classList.remove('filled'));
+            filled = 0;
+            status.textContent = '';
+            setTimeout(() => {
+              let i = 0;
+              const ri = setInterval(() => {
+                punches[i].classList.add('filled');
+                i++;
+                if (i === 6) {
+                  clearInterval(ri);
+                  filled = 6;
+                  status.textContent = '4 visits away from a free reward';
+                  stamp();
+                }
+              }, 90);
+            }, 400);
+          }, 3000);
+        }
+      }, 1100);
+    }
+
+    stamp();
+
+    // Keep screen awake using Wake Lock API (supported on Chrome/Android)
+    async function keepAwake() {
+      try {
+        if ('wakeLock' in navigator) {
+          await navigator.wakeLock.request('screen');
+          // Re-acquire if tab becomes visible again
+          document.addEventListener('visibilitychange', async () => {
+            if (document.visibilityState === 'visible') {
+              await navigator.wakeLock.request('screen');
+            }
+          });
+        }
+      } catch (e) {
+        console.log('Wake lock not available:', e);
+      }
+    }
+
+    keepAwake();
+  </script>
+</body>
+</html>
