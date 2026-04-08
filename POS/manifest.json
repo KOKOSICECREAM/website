@@ -1,35 +1,28 @@
 {
-  "id": "kokos-pos-android",
   "name": "KOKOS POS",
   "short_name": "KOKOS POS",
   "description": "KOKOS Shop Terminal — accept SKOOP payments",
-  "start_url": "/POS/android.html",
-  "scope": "/POS/",
+  "start_url": "./android.html",
+  "scope": "./",
   "display": "standalone",
-  "orientation": "any",
+  "orientation": "landscape",
   "background_color": "#11483d",
   "theme_color": "#11483d",
   "icons": [
     {
-      "src": "https://raw.githubusercontent.com/KOKOSICECREAM/website/main/POS/KOKOS.png",
+      "src": "KOKOS.png",
       "sizes": "192x192",
       "type": "image/png",
       "purpose": "any"
     },
     {
-      "src": "https://raw.githubusercontent.com/KOKOSICECREAM/website/main/POS/KOKOS.png",
+      "src": "KOKOS.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any"
     },
     {
-      "src": "https://raw.githubusercontent.com/KOKOSICECREAM/website/main/POS/KOKOS.png",
-      "sizes": "192x192",
-      "type": "image/png",
-      "purpose": "maskable"
-    },
-    {
-      "src": "https://raw.githubusercontent.com/KOKOSICECREAM/website/main/POS/KOKOS.png",
+      "src": "KOKOS.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "maskable"
