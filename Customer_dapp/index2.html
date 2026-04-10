@@ -539,7 +539,7 @@ html,body{height:100%;overflow:hidden;background:var(--coral);font-family:'Instr
   <div class="screen" id="screen-qr">
     <div class="hdr" style="background:var(--sand);"><div class="hdr-logo"><img src="KOKOS_SKOOP.png" alt="KOKOS"></div><div class="hdr-right"><div class="pill pill-dark">Card &amp; cash QR</div></div></div>
     <div class="stripe stripe-thin"><div class="s5"></div><div class="s1"></div><div class="s4"></div><div class="s3"></div><div class="s2"></div><div class="s6"></div></div>
-    <div class="info-block" style="background:var(--apricot);margin:16px 20px 0;"><div class="ib-title">Show this to earn rewards</div><div class="ib-title">Card &amp; cash reward QR</div><div class="ib-text">Paid with Square or cash? Show this QR to the KOKOS team and they'll send SKOOP to your wallet. Paid with SKOOP? Your rewards were sent automatically — no QR needed.</div></div>
+    <div class="info-block" style="background:var(--apricot);margin:16px 20px 0;"><div class="ib-title">Card &amp; cash reward QR</div><div class="ib-text">Paid with Square or cash? Show this QR to the KOKOS team and they'll send SKOOP to your wallet. Paid with SKOOP? Your rewards were sent automatically — no QR needed.</div></div>
     <div class="qr-card">
       <div class="qr-eyebrow">Your wallet</div>
       <div class="qr-italic">Show to KOKOS to receive SKOOP</div>
@@ -978,7 +978,7 @@ async function loadActivityFeed(){
       toBlock:'0x'+currentBlock.toString(16)
     }]);
     if(!logs.length){
-      list.innerHTML='<div class="tx-row"><div class="tx-dot td-apricot">🍦</div><div class="tx-info"><div class="tx-name">No rewards yet today</div><div class="tx-date">Pay at the shop — show your QR to earn SKOOP</div></div></div>';
+      list.innerHTML='<div class="tx-row"><div class="tx-dot td-apricot">🍦</div><div class="tx-info"><div class="tx-name">No rewards yet today</div><div class="tx-date">Pay at the shop to earn SKOOP</div></div></div>';
       return;
     }
     const totalAmt=logs.reduce((sum,log)=>sum+parseFloat(ethers.formatUnits(BigInt(log.data),CFG.SKOOP_DEC)),0);
@@ -1417,7 +1417,7 @@ function closeSuccess(){
   document.getElementById("success-screen").classList.remove("show");
   document.getElementById("pay-confirm").classList.remove("active");
   document.getElementById("pay-scan").classList.add("active");
-  goTo("qr");
+  goTo("home");
 }
 
 function buildMyQR(){
