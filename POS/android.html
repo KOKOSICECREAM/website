@@ -32,7 +32,7 @@
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
 html,body{height:100%;overflow:hidden;font-family:'Instrument Sans',sans-serif;background:var(--green);color:var(--ink);-webkit-font-smoothing:antialiased;}
 
-/* SHELL: topbar / content / tabbar */
+/* SHELL */
 #shell{display:flex;flex-direction:column;height:100vh;width:100vw;}
 #topbar{height:var(--topbar-h);background:var(--green);display:flex;align-items:center;padding:0 1rem;gap:0.75rem;flex-shrink:0;}
 .logo-wrap{display:flex;align-items:center;gap:0.5rem;flex-shrink:0;}
@@ -43,7 +43,7 @@ html,body{height:100%;overflow:hidden;font-family:'Instrument Sans',sans-serif;b
 #price-pill-change{font-size:0.65rem;font-weight:600;white-space:nowrap;letter-spacing:0.02em;}
 #wallet-btn{background:var(--coral);color:var(--green);border:none;padding:0.38rem 0.9rem;border-radius:999px;font-family:inherit;font-size:0.68rem;font-weight:700;cursor:pointer;white-space:nowrap;flex-shrink:0;}
 
-/* CONTENT: two columns, fills remaining height */
+/* CONTENT */
 #content{flex:1;display:grid;grid-template-columns:1fr 288px;overflow:hidden;background:var(--cream);min-height:0;}
 
 /* LEFT PANEL */
@@ -140,6 +140,12 @@ html,body{height:100%;overflow:hidden;font-family:'Instrument Sans',sans-serif;b
 .scan-inner{padding:0.45rem 0.65rem;}
 .pending-item{background:var(--apricot);border:1px solid var(--coral-mid);border-radius:9px;padding:0.5rem 0.6rem;}
 
+/* AUTO-REWARD STATUS BANNER */
+.auto-reward-banner{border-radius:8px;padding:0.45rem 0.65rem;font-size:0.65rem;font-weight:600;display:flex;align-items:center;gap:0.4rem;}
+.auto-reward-banner.sending{background:var(--sand);color:var(--ink-mid);}
+.auto-reward-banner.success{background:var(--mint);color:var(--green);}
+.auto-reward-banner.failed{background:#fde8e8;color:#c0392b;}
+
 /* BOTTOM TAB BAR */
 #tab-bar{height:var(--tabbar-h);background:var(--white);border-top:1px solid var(--border);display:flex;flex-shrink:0;}
 .tab-btn{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:0.35rem 0.2rem;background:none;border:none;font-family:inherit;font-size:0.53rem;font-weight:600;color:var(--ink-lt);cursor:pointer;gap:0.12rem;letter-spacing:0.04em;text-transform:uppercase;border-top:2px solid transparent;}
@@ -150,14 +156,24 @@ html,body{height:100%;overflow:hidden;font-family:'Instrument Sans',sans-serif;b
 /* MODAL */
 #modal-overlay{display:none;position:fixed;inset:0;background:rgba(42,31,26,0.6);z-index:200;align-items:center;justify-content:center;padding:1rem;box-sizing:border-box;}
 #modal-overlay.open{display:flex;}
-#modal{background:var(--cream);border-radius:18px;width:100%;max-width:360px;overflow:hidden;box-shadow:var(--shadow-lg);margin:auto;}
+#modal{background:var(--cream);border-radius:18px;width:100%;max-width:380px;overflow:hidden;box-shadow:var(--shadow-lg);margin:auto;}
 .modal-header{background:var(--coral);padding:0.875rem 1.1rem;display:flex;align-items:center;justify-content:space-between;}
 .modal-header h2{font-family:'Cormorant Garamond',serif;font-size:1.2rem;font-style:italic;font-weight:400;}
 .modal-close{background:none;border:none;font-size:1.2rem;cursor:pointer;color:var(--ink-mid);line-height:1;}
-.modal-body{padding:1.1rem;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:0.75rem;width:100%;}
-/* QR: fixed size, no overflow clipping, centered */
-#qr-canvas-wrap{width:210px;height:210px;background:var(--white);border-radius:13px;border:3px solid var(--coral-mid);display:block;overflow:visible;margin:0 auto;padding:12px;box-sizing:border-box;}
-#qr-canvas-wrap canvas,#qr-canvas-wrap img,#qr-canvas-wrap table{display:block!important;width:186px!important;height:186px!important;margin:0 auto!important;}
+.modal-body{padding:1rem;display:flex;flex-direction:column;align-items:center;gap:0.65rem;width:100%;}
+/* QR: larger, pure white surround for max iPhone contrast */
+#qr-canvas-wrap{
+  width:260px;height:260px;
+  background:#ffffff;
+  border-radius:14px;
+  border:5px solid var(--coral-mid);
+  outline:3px solid var(--green);
+  display:flex;align-items:center;justify-content:center;
+  overflow:visible;margin:0 auto;padding:12px;box-sizing:border-box;
+}
+#qr-canvas-wrap canvas,#qr-canvas-wrap img,#qr-canvas-wrap table{
+  display:block!important;width:224px!important;height:224px!important;margin:0 auto!important;
+}
 .modal-summary{width:100%;background:var(--white);border-radius:9px;padding:0.65rem 0.875rem;border:1px solid var(--border);}
 .mos-row{display:flex;justify-content:space-between;font-size:0.7rem;padding:0.16rem 0;color:var(--ink-mid);}
 .mos-row.total{font-size:0.82rem;font-weight:700;color:var(--ink);border-top:1px solid var(--border);padding-top:0.4rem;margin-top:0.18rem;}
@@ -169,6 +185,7 @@ html,body{height:100%;overflow:hidden;font-family:'Instrument Sans',sans-serif;b
 #modal-success{display:none;}
 @keyframes successPop{from{transform:scale(0.4);opacity:0;}to{transform:scale(1);opacity:1;}}
 @keyframes pulse{0%,100%{opacity:1;transform:scale(1);}50%{opacity:0.5;transform:scale(1.3);}}
+@keyframes spin{to{transform:rotate(360deg);}}
 
 /* TOAST */
 #toast{position:fixed;bottom:calc(var(--tabbar-h) + 0.65rem);left:50%;transform:translateX(-50%) translateY(60px);background:var(--ink);color:var(--coral);padding:0.5rem 1rem;border-radius:999px;font-size:0.72rem;font-weight:600;z-index:300;transition:transform 0.2s ease;white-space:nowrap;pointer-events:none;}
@@ -239,6 +256,12 @@ html,body{height:100%;overflow:hidden;font-family:'Instrument Sans',sans-serif;b
 
       <!-- REWARDS -->
       <div class="mode-view active" id="rewards-mode">
+
+        <!-- Auto-reward info banner -->
+        <div style="background:color-mix(in srgb,var(--mint) 35%,white);border:1px solid var(--mint-mid);border-radius:9px;padding:0.5rem 0.65rem;font-size:0.62rem;color:var(--green);line-height:1.5;">
+          <strong>⚡ Auto-Reward ON</strong> — SKOOP payments trigger a 10% reward automatically to the payer's wallet. Use the form below for Square / Cash sales only.
+        </div>
+
         <div class="scan-wrap">
           <div id="reward-qr-reader"></div>
           <div style="display:flex;border-bottom:1px solid var(--border);">
@@ -276,7 +299,7 @@ html,body{height:100%;overflow:hidden;font-family:'Instrument Sans',sans-serif;b
 
         <div style="background:var(--mint);border-radius:7px;padding:0.35rem 0.6rem;font-size:0.6rem;color:var(--green);display:flex;justify-content:space-between;">
           <span>💳 Square/Cash: <strong>5%</strong></span>
-          <span>🍦 Paid in SKOOP: <strong>10%</strong></span>
+          <span>⚡ Paid in SKOOP: <strong>10% auto</strong></span>
         </div>
 
         <div>
@@ -314,7 +337,7 @@ html,body{height:100%;overflow:hidden;font-family:'Instrument Sans',sans-serif;b
     </div>
   </div><!-- /content -->
 
-  <!-- BOTTOM TAB BAR: only switches left panel -->
+  <!-- BOTTOM TAB BAR -->
   <nav id="tab-bar">
     <button class="tab-btn active" id="tab-menu-btn" onclick="switchTab('menu')">
       <span class="tab-icon">🍦</span>Menu
@@ -360,6 +383,8 @@ html,body{height:100%;overflow:hidden;font-family:'Instrument Sans',sans-serif;b
           <div style="font-size:0.72rem;color:var(--ink-mid);margin-top:0.25rem;" id="success-sub"></div>
         </div>
         <div id="success-details" style="width:100%;background:var(--apricot);border-radius:9px;padding:0.65rem 0.875rem;text-align:left;font-size:0.68rem;display:flex;flex-direction:column;gap:0.22rem;"></div>
+        <!-- Auto-reward status shown inline in success screen -->
+        <div id="success-reward-status" style="width:100%;display:none;"></div>
         <div style="font-size:0.62rem;color:var(--ink-lt);display:flex;align-items:center;gap:0.3rem;" id="success-countdown">
           <div style="width:6px;height:6px;border-radius:50%;background:var(--mint);animation:pulse 1s ease infinite;"></div>Closing in 4s…
         </div>
@@ -373,65 +398,38 @@ html,body{height:100%;overflow:hidden;font-family:'Instrument Sans',sans-serif;b
 
 <script>
 // ═══════════════════════════════════════════════════════════════
-//  FRANCHISEE CONFIG — edit this section only
-//  Everything below updates automatically from these values
+//  FRANCHISEE CONFIG
 // ═══════════════════════════════════════════════════════════════
 const BRAND = {
-  // ── Store identity ──────────────────────────────────────────
   storeName:    'KOKOS Ice Cream',
   storeSubtitle:'shop terminal',
-  storeId:      'KOKOS_NASHVILLE_01',   // unique per location
+  storeId:      'KOKOS_NASHVILLE_01',
   terminalId:   'POS_1',
-
-  // ── Logo ────────────────────────────────────────────────────
-  // Use a URL to your logo image. Set to '' to show storeName text instead.
   logoUrl: 'https://raw.githubusercontent.com/KOKOSICECREAM/website/main/Customer_dapp/KOKOS.png',
-
-  // ── Brand colors ────────────────────────────────────────────
-  // These override the CSS variables. Use any valid CSS color.
   colors: {
-    primary:    '#fdcec1',   // topbar background
-    primaryMid: '#fdaf9a',   // topbar border / QR box border
-    primaryDeep:'#f0876a',   // accents
-    accent:     '#11483d',   // buttons, active states (dark)
-    accentDark: '#0a2e27',   // button hover
-    bg:         '#fffaf7',   // page background
-    surface:    '#fae2d8',   // cart background / secondary surface
-    mint:       '#cde6d7',   // SKOOP equiv / success highlights
+    primary:    '#fdcec1',
+    primaryMid: '#fdaf9a',
+    primaryDeep:'#f0876a',
+    accent:     '#11483d',
+    accentDark: '#0a2e27',
+    bg:         '#fffaf7',
+    surface:    '#fae2d8',
+    mint:       '#cde6d7',
     mintMid:    '#a8d4bb',
   },
-
-  // ── Wallets & contracts ─────────────────────────────────────
-  // signerWallet: the wallet that signs payment intents (POS operator)
   signerWallet:   '0x4eCc3f03c018208Ae5932eAB91bbD82F37F56D9B',
-  // ownerWallet: the wallet allowed to burn captured receipts (settlement)
   ownerWallet:    '0x001b3fB36FE7E3a741A15Ed8bE68610442E3a50b',
-  // skoopToken: SKOOP ERC-20 contract address on Base
   skoopToken:     '0xfd3ce21c5acd8bbbe576d0e2336c210c3cebeb92',
-  // escrowContract: payment escrow contract address on Base
   escrowContract: '0x85e8cdedae8ecd23ee21cdc90d75cbaae9a54991',
-  // skoopPool: Uniswap v3 ETH/SKOOP pool used for live price
   skoopPool:      '0xc1d89ca13d5cbc24b92e9f40b36d43da347c5198',
-
-  // ── Reward limits ───────────────────────────────────────────
-  // Max SKOOP that can be sent as rewards per day from this terminal
   dailyRewardLimit: 888888,
-
-  // ── Tax rate ────────────────────────────────────────────────
-  taxRate: 0.0925,           // 9.25% — change for your jurisdiction
-
-  // ── Menu categories & items ─────────────────────────────────
-  // Each category: { id, label, emoji (optional) }
-  // Each item: { id, cat (matches category id), emoji, name, price }
-  // Always keep the last item as the 'custom' entry.
+  taxRate: 0.0925,
   categories: [
     { id:'scoops', label:'Scoops' },
     { id:'drinks', label:'Drinks' },
     { id:'extras', label:'Extras' },
   ],
   menuItems: [
-    // img is optional — use a URL to show a product photo instead of emoji
-    // Leave img out (or set to '') to use emoji fallback
     { id:'s1', cat:'scoops', emoji:'🍦', name:'Kids Scoop',  price:5.00,  img:'' },
     { id:'s2', cat:'scoops', emoji:'🍧', name:'Small',       price:7.00,  img:'' },
     { id:'s3', cat:'scoops', emoji:'🍨', name:'Trio',        price:9.00,  img:'' },
@@ -440,12 +438,12 @@ const BRAND = {
     { id:'d2', cat:'drinks', emoji:'💧', name:'Water',        price:1.00,  img:'' },
     { id:'e1', cat:'extras', emoji:'🍟', name:'Fries',        price:8.00,  img:'' },
     { id:'e2', cat:'extras', emoji:'🍦', name:'Cone',         price:0.60,  img:'' },
-    // custom entry — always keep this last
     { id:'cx', cat:'custom', emoji:'✏️', name:'Custom', price:0, custom:true },
   ],
 };
+
 // ═══════════════════════════════════════════════════════════════
-//  CHAIN CONFIG — do not edit unless you know what you're doing
+//  CHAIN CONFIG
 // ═══════════════════════════════════════════════════════════════
 const CFG={
   CHAIN_ID:8453,CHAIN_HEX:'0x2105',RPC:'https://mainnet.base.org',
@@ -459,7 +457,10 @@ const CFG={
   STORE_ID:BRAND.storeId,
   TERMINAL_ID:BRAND.terminalId,
   DAILY_REWARD_LIMIT:BRAND.dailyRewardLimit,
+  // Auto-reward rate for SKOOP payments (10%)
+  AUTO_REWARD_RATE: 0.10,
 };
+
 let skoopPriceUSD=0,ethPriceUSD=0;
 const ABI_ERC20=["function transfer(address,uint256) returns (bool)"];
 const ABI_ESCROW=[
@@ -476,6 +477,9 @@ let cart={},capturedReceipts=[];
 let rewardScannerActive=false,rewardScanner=null,scannedRewardAddr=null;
 let activeCat='all',toastTimer=null,calcSkoopAmount=0,successTimer=null;
 
+// ═══════════════════════════════════════════════════════════════
+//  PRICE FETCHING
+// ═══════════════════════════════════════════════════════════════
 async function fetchEthPriceOnChain(){
   const ABI=['function slot0() view returns (uint160 sqrtPriceX96,int24,uint16,uint16,uint16,uint8,bool)','function token0() view returns (address)'];
   const WETH='0x4200000000000000000000000000000000000006';
@@ -501,14 +505,12 @@ async function fetchSkoopPrice(){
     skoopPriceUSD=skoopPerEth>0?ethPriceUSD/skoopPerEth:0;
     if(skoopPriceUSD>0){
       document.getElementById('price-pill-main').textContent='1 USDC = '+Math.round(1/skoopPriceUSD).toLocaleString()+' SKOOP';
-      // Fetch 24h % change from DexScreener
       try{
         const ds=await fetch('https://api.dexscreener.com/latest/dex/pairs/base/'+CFG.POOL_ETH_SKOOP);
         const dj=await ds.json();
         const change=dj?.pair?.priceChange?.h24;
         if(change!==undefined&&change!==null){
-          const pct=parseFloat(change);
-          const up=pct>=0;
+          const pct=parseFloat(change);const up=pct>=0;
           const el=document.getElementById('price-pill-change');
           el.textContent=(up?'▲':'▼')+' '+Math.abs(pct).toFixed(2)+'% (24h)';
           el.style.color=up?'#6ee7b7':'#fca5a5';
@@ -519,33 +521,23 @@ async function fetchSkoopPrice(){
   }catch(e){document.getElementById('price-pill-main').textContent='Price unavailable';}
 }
 
+// ═══════════════════════════════════════════════════════════════
+//  WALLET CONNECTION
+// ═══════════════════════════════════════════════════════════════
 async function connectWallet(){
-  // Already inside MetaMask/Coinbase browser — connect directly
-  if(window.ethereum){
-    await connectInjectedWallet();
-    return;
-  }
-  // Running as Chrome PWA — show wallet picker with deep links
+  if(window.ethereum){await connectInjectedWallet();return;}
   showWalletPicker();
 }
-
 async function connectInjectedWallet(){
   try{
     provider=new ethers.BrowserProvider(window.ethereum);
     await provider.send('eth_requestAccounts',[]);
     const net=await provider.getNetwork();
     if(Number(net.chainId)!==CFG.CHAIN_ID){
-      try{
-        await provider.send('wallet_switchEthereumChain',[{chainId:CFG.CHAIN_HEX}]);
-      }catch{
-        try{
-          await provider.send('wallet_addEthereumChain',[{
-            chainId:CFG.CHAIN_HEX,chainName:'Base',
-            nativeCurrency:{name:'Ether',symbol:'ETH',decimals:18},
-            rpcUrls:['https://mainnet.base.org'],
-            blockExplorerUrls:['https://basescan.org'],
-          }]);
-        }catch{showToast('Switch to Base network','error');return;}
+      try{await provider.send('wallet_switchEthereumChain',[{chainId:CFG.CHAIN_HEX}]);}
+      catch{
+        try{await provider.send('wallet_addEthereumChain',[{chainId:CFG.CHAIN_HEX,chainName:'Base',nativeCurrency:{name:'Ether',symbol:'ETH',decimals:18},rpcUrls:['https://mainnet.base.org'],blockExplorerUrls:['https://basescan.org']}]);}
+        catch{showToast('Switch to Base network','error');return;}
       }
     }
     signer=await provider.getSigner();
@@ -559,58 +551,40 @@ async function connectInjectedWallet(){
     else showToast('Connection failed','error');
   }
 }
-
 function showWalletPicker(){
-  // Deep links that open the POS URL directly inside the wallet's browser
-  // — no round-trip to Chrome, no QR needed
   const posUrl=window.location.href;
   const mmLink='https://metamask.app.link/dapp/'+posUrl.replace(/^https?:\/\//,'');
   const cbLink='https://go.cb-wallet.com/dapp?url='+encodeURIComponent(posUrl);
-
   let el=document.getElementById('wallet-picker');
   if(el){el.style.display='flex';return;}
-  el=document.createElement('div');
-  el.id='wallet-picker';
+  el=document.createElement('div');el.id='wallet-picker';
   el.style.cssText='position:fixed;inset:0;background:rgba(42,31,26,0.65);z-index:999;display:flex;align-items:center;justify-content:center;padding:1.5rem;';
-  el.innerHTML=`
-    <div style="background:var(--cream);border-radius:20px;width:100%;max-width:320px;overflow:hidden;box-shadow:var(--shadow-lg);">
-      <div style="background:var(--coral);padding:1rem 1.25rem;display:flex;align-items:center;justify-content:space-between;">
-        <span style="font-family:'Cormorant Garamond',serif;font-size:1.2rem;font-style:italic;color:var(--green);">Open in Wallet</span>
-        <button onclick="document.getElementById('wallet-picker').style.display='none'" style="background:none;border:none;font-size:1.3rem;cursor:pointer;color:var(--ink-mid);">✕</button>
-      </div>
-      <div style="padding:1.25rem;display:flex;flex-direction:column;gap:0.75rem;">
-        <p style="font-size:0.75rem;color:var(--ink-mid);text-align:center;line-height:1.5;">
-          Tap your wallet below to open the POS directly inside it — no QR needed.
-        </p>
-        <a href="${mmLink}" style="display:flex;align-items:center;gap:0.875rem;background:var(--white);border:1.5px solid var(--border);border-radius:14px;padding:1rem;text-decoration:none;color:var(--ink);active:opacity:0.8;">
-          <img src="https://upload.wikimedia.org/wikipedia/commons/3/36/MetaMask_Fox.svg" style="width:36px;height:36px;object-fit:contain;flex-shrink:0;">
-          <div>
-            <div style="font-size:0.88rem;font-weight:700;">MetaMask</div>
-            <div style="font-size:0.65rem;color:var(--ink-lt);">Opens POS in MetaMask browser</div>
-          </div>
-          <span style="margin-left:auto;font-size:1rem;color:var(--ink-lt);">→</span>
-        </a>
-        <a href="${cbLink}" style="display:flex;align-items:center;gap:0.875rem;background:var(--white);border:1.5px solid var(--border);border-radius:14px;padding:1rem;text-decoration:none;color:var(--ink);">
-          <img src="https://avatars.githubusercontent.com/u/18060234" style="width:36px;height:36px;object-fit:contain;border-radius:8px;flex-shrink:0;">
-          <div>
-            <div style="font-size:0.88rem;font-weight:700;">Coinbase Wallet</div>
-            <div style="font-size:0.65rem;color:var(--ink-lt);">Opens POS in Coinbase browser</div>
-          </div>
-          <span style="margin-left:auto;font-size:1rem;color:var(--ink-lt);">→</span>
-        </a>
-        <div style="background:var(--mint);border-radius:10px;padding:0.65rem 0.875rem;font-size:0.68rem;color:var(--green);line-height:1.6;">
-          <strong>First time?</strong> Install MetaMask or Coinbase Wallet from the Play Store, then come back and tap above.
-        </div>
-      </div>
-    </div>`;
+  el.innerHTML=`<div style="background:var(--cream);border-radius:20px;width:100%;max-width:320px;overflow:hidden;box-shadow:var(--shadow-lg);">
+    <div style="background:var(--coral);padding:1rem 1.25rem;display:flex;align-items:center;justify-content:space-between;">
+      <span style="font-family:'Cormorant Garamond',serif;font-size:1.2rem;font-style:italic;color:var(--green);">Open in Wallet</span>
+      <button onclick="document.getElementById('wallet-picker').style.display='none'" style="background:none;border:none;font-size:1.3rem;cursor:pointer;color:var(--ink-mid);">✕</button>
+    </div>
+    <div style="padding:1.25rem;display:flex;flex-direction:column;gap:0.75rem;">
+      <p style="font-size:0.75rem;color:var(--ink-mid);text-align:center;line-height:1.5;">Tap your wallet below to open the POS directly inside it.</p>
+      <a href="${mmLink}" style="display:flex;align-items:center;gap:0.875rem;background:var(--white);border:1.5px solid var(--border);border-radius:14px;padding:1rem;text-decoration:none;color:var(--ink);">
+        <img src="https://upload.wikimedia.org/wikipedia/commons/3/36/MetaMask_Fox.svg" style="width:36px;height:36px;object-fit:contain;flex-shrink:0;">
+        <div><div style="font-size:0.88rem;font-weight:700;">MetaMask</div><div style="font-size:0.65rem;color:var(--ink-lt);">Opens POS in MetaMask browser</div></div>
+        <span style="margin-left:auto;font-size:1rem;color:var(--ink-lt);">→</span>
+      </a>
+      <a href="${cbLink}" style="display:flex;align-items:center;gap:0.875rem;background:var(--white);border:1.5px solid var(--border);border-radius:14px;padding:1rem;text-decoration:none;color:var(--ink);">
+        <img src="https://avatars.githubusercontent.com/u/18060234" style="width:36px;height:36px;object-fit:contain;border-radius:8px;flex-shrink:0;">
+        <div><div style="font-size:0.88rem;font-weight:700;">Coinbase Wallet</div><div style="font-size:0.65rem;color:var(--ink-lt);">Opens POS in Coinbase browser</div></div>
+        <span style="margin-left:auto;font-size:1rem;color:var(--ink-lt);">→</span>
+      </a>
+      <div style="background:var(--mint);border-radius:10px;padding:0.65rem 0.875rem;font-size:0.68rem;color:var(--green);line-height:1.6;"><strong>First time?</strong> Install MetaMask or Coinbase Wallet, then come back and tap above.</div>
+    </div>
+  </div>`;
   document.body.appendChild(el);
 }
 
-function showNoWalletModal(){showWalletPicker();}
-
-
-
-
+// ═══════════════════════════════════════════════════════════════
+//  NAV
+// ═══════════════════════════════════════════════════════════════
 function switchTab(tab){
   document.querySelectorAll('.left-view').forEach(v=>v.classList.remove('active'));
   document.getElementById(tab+'-view').classList.add('active');
@@ -624,6 +598,9 @@ function switchMode(mode,btn){
   btn.classList.add('active');
 }
 
+// ═══════════════════════════════════════════════════════════════
+//  MENU
+// ═══════════════════════════════════════════════════════════════
 function renderMenu(){
   const grid=document.getElementById('menu-grid');
   const items=(activeCat==='all'?MENU:MENU.filter(i=>i.cat===activeCat)).filter(i=>!i.custom||activeCat==='custom');
@@ -709,6 +686,9 @@ function updateBadge(){
   badge.textContent=count;badge.style.display=count>0?'inline':'none';
 }
 
+// ═══════════════════════════════════════════════════════════════
+//  CHECKOUT & QR
+// ═══════════════════════════════════════════════════════════════
 async function openCheckout(){
   if(!signer){showToast('Connect wallet first','error');return;}
   if(!Object.keys(cart).length)return;
@@ -718,7 +698,6 @@ async function openCheckout(){
   document.getElementById('modal-overlay').classList.add('open');
   await generateQR();
 }
-
 async function generateQR(){
   const subtotalCents=Math.round(Object.entries(cart).reduce((s,[id,qty])=>{const item=MENU.find(m=>m.id===id);return s+(item?item.price*qty:0);},0)*100);
   const taxCents=Math.round(subtotalCents*CFG.TAX_RATE);
@@ -748,22 +727,27 @@ async function generateQR(){
     dl:deadline.toString(),sig:signature,
   });
   const wrap=document.getElementById('qr-canvas-wrap');
-  wrap.innerHTML='<p style="color:#a08880;font-size:0.75rem;">Generating…</p>';
+  wrap.innerHTML='<p style="color:#a08880;font-size:0.75rem;text-align:center;">Generating…</p>';
   await new Promise(r=>setTimeout(r,80));
   wrap.innerHTML='';
+  const qrSize=224;
+
+  // Keep screen awake while QR is displayed
+  try{if(navigator.wakeLock)await navigator.wakeLock.request('screen');}catch{}
+
   try{
-    new QRCode(wrap,{text:qrPayload,width:186,height:186,colorDark:'#000000',colorLight:'#ffffff',correctLevel:QRCode.CorrectLevel.M});
-    await new Promise(r=>setTimeout(r,60));
+    new QRCode(wrap,{text:qrPayload,width:qrSize,height:qrSize,colorDark:'#000000',colorLight:'#ffffff',correctLevel:QRCode.CorrectLevel.H});
+    await new Promise(r=>setTimeout(r,80));
     wrap.querySelectorAll('table').forEach(t=>t.remove());
     const rendered=wrap.querySelector('img')||wrap.querySelector('canvas');
     if(!rendered)throw new Error('nothing rendered');
-    rendered.style.cssText='display:block!important;width:186px!important;height:186px!important;margin:0 auto!important;';
+    rendered.style.cssText=`display:block!important;width:${qrSize}px!important;height:${qrSize}px!important;margin:0 auto!important;`;
   }catch(err){
     const img=document.createElement('img');
-    img.style.cssText='display:block;width:186px;height:186px;border-radius:4px;';
+    img.style.cssText=`display:block;width:${qrSize}px;height:${qrSize}px;border-radius:4px;`;
     img.alt='Payment QR';
     img.onerror=()=>{wrap.innerHTML='<p style="color:red;font-size:0.75rem;">QR failed</p>';};
-    img.src='https://api.qrserver.com/v1/create-qr-code/?size=186x186&data='+encodeURIComponent(qrPayload);
+    img.src=`https://api.qrserver.com/v1/create-qr-code/?size=${qrSize}x${qrSize}&ecc=H&data=`+encodeURIComponent(qrPayload);
     wrap.appendChild(img);
   }
   const skoopDisplay=Number(tokenAmount/1000000n).toLocaleString();
@@ -780,6 +764,73 @@ async function regenerateQR(){
   await generateQR();wrap.style.opacity='1';
 }
 function closeModal(){document.getElementById('modal-overlay').classList.remove('open');}
+
+// ═══════════════════════════════════════════════════════════════
+//  AUTO-REWARD  ← new logic lives here
+// ═══════════════════════════════════════════════════════════════
+
+/**
+ * Attempt to auto-send a 10% SKOOP reward to the payer.
+ * Called immediately after PaymentCaptured is detected.
+ * @param {string} payerAddr  - address from on-chain event
+ * @param {number} rewardSkoop - integer SKOOP to send
+ * @param {number} paidCents   - total paid in cents (for pending record)
+ * @param {string} receiptId   - receipt ID (for pending record)
+ */
+async function autoSendReward(payerAddr, rewardSkoop, paidCents, receiptId){
+  // Show "sending" state in success screen
+  setSuccessRewardStatus('sending', rewardSkoop);
+
+  // Daily limit check
+  if(getDailyRewardState()+rewardSkoop>CFG.DAILY_REWARD_LIMIT){
+    const pendingId=savePendingReward(receiptId, rewardSkoop, paidCents);
+    setSuccessRewardStatus('failed', rewardSkoop, 'Daily limit reached');
+    showToast('Daily limit reached — reward saved to Pending','error');
+    renderPendingRewards();
+    return;
+  }
+
+  try{
+    const token=new ethers.Contract(CFG.SKOOP,ABI_ERC20,signer);
+    const tx=await token.transfer(payerAddr, ethers.parseUnits(rewardSkoop.toString(), CFG.SKOOP_DEC));
+    showToast('Auto-reward broadcasting…','');
+    await tx.wait();
+    addDailyRewardSent(rewardSkoop);
+    setSuccessRewardStatus('success', rewardSkoop);
+    showToast('⚡ '+rewardSkoop.toLocaleString()+' SKOOP reward auto-sent ✓','success');
+  }catch(e){
+    const pendingId=savePendingReward(receiptId, rewardSkoop, paidCents);
+    const reason=e?.code===4001?'Rejected by wallet':'Transaction failed';
+    setSuccessRewardStatus('failed', rewardSkoop, reason);
+    showToast('Auto-reward failed — saved to Pending','error');
+    renderPendingRewards();
+  }
+}
+
+/**
+ * Update the reward status banner inside the success modal.
+ */
+function setSuccessRewardStatus(state, skoopAmt, errorMsg=''){
+  const el=document.getElementById('success-reward-status');
+  if(!el)return;
+  el.style.display='block';
+  const amtStr=skoopAmt.toLocaleString();
+  if(state==='sending'){
+    el.innerHTML=`<div class="auto-reward-banner sending">
+      <span style="display:inline-block;width:12px;height:12px;border:2px solid var(--ink-mid);border-top-color:transparent;border-radius:50%;animation:spin 0.7s linear infinite;flex-shrink:0;"></span>
+      Sending ${amtStr} SKOOP reward…
+    </div>`;
+  }else if(state==='success'){
+    el.innerHTML=`<div class="auto-reward-banner success">
+      ⚡ ${amtStr} SKOOP reward sent automatically
+    </div>`;
+  }else{
+    el.innerHTML=`<div class="auto-reward-banner failed">
+      ⚠️ Auto-reward failed (${errorMsg}) — ${amtStr} SKOOP saved to Pending
+    </div>`;
+  }
+}
+
 function showPaymentSuccess(totalCents,skoopAmt,receiptId){
   document.getElementById('modal-qr').style.display='none';
   document.getElementById('modal-success').style.display='block';
@@ -788,6 +839,9 @@ function showPaymentSuccess(totalCents,skoopAmt,receiptId){
     `<div style="display:flex;justify-content:space-between;padding:0.12rem 0;border-bottom:1px solid rgba(42,31,26,0.08);"><span style="color:var(--ink-mid);">Total charged</span><span style="font-weight:700;">$${(totalCents/100).toFixed(2)}</span></div>`+
     `<div style="display:flex;justify-content:space-between;padding:0.12rem 0;border-bottom:1px solid rgba(42,31,26,0.08);"><span style="color:var(--ink-mid);">SKOOP captured</span><span style="font-weight:700;color:var(--green);">${skoopAmt.toLocaleString('en-US',{maximumFractionDigits:2})} SKOOP</span></div>`+
     `<div style="display:flex;justify-content:space-between;padding:0.12rem 0;"><span style="color:var(--ink-mid);">Receipt</span><span style="font-family:monospace;font-size:0.58rem;">${receiptId.slice(0,20)}…</span></div>`;
+  // Reset reward status for this new success
+  const rewardEl=document.getElementById('success-reward-status');
+  if(rewardEl){rewardEl.style.display='none';rewardEl.innerHTML='';}
   let secs=4;clearInterval(successTimer);
   successTimer=setInterval(()=>{
     secs--;
@@ -796,11 +850,13 @@ function showPaymentSuccess(totalCents,skoopAmt,receiptId){
     if(secs<=0){clearInterval(successTimer);closeSuccess();}
   },1000);
 }
+
 function closeSuccess(){
-  clearInterval(successTimer);closeModal();
-  showToast('Payment complete — send reward 🎁','success');
-  switchMode('rewards',document.getElementById('tab-rewards'));
+  clearInterval(successTimer);
+  closeModal();
+  // No longer nudge staff to rewards tab — reward is handled automatically
 }
+
 async function pollForPayment(receiptId){
   const pub=new ethers.JsonRpcProvider(CFG.RPC);
   const escrow=new ethers.Contract(CFG.ESCROW,ABI_ESCROW,pub);
@@ -815,27 +871,32 @@ async function pollForPayment(receiptId){
       if(events.length>0){
         clearInterval(poll);
         const ev=events[0];
+        const payerAddr=ev.args.payer;                  // ← customer's wallet from chain
         const paidCents=Number(ev.args.totalCents);
         const paidSkoop=parseFloat(ethers.formatUnits(BigInt(ev.args.tokenAmount),CFG.SKOOP_DEC));
+
+        // Show success screen first
         showPaymentSuccess(paidCents,paidSkoop,ev.args.receiptId);
-        if(skoopPriceUSD>0){
-          const rewardSkoop=Math.round((paidCents/100)*0.10/skoopPriceUSD);
+
+        // Calculate 10% reward and auto-send immediately
+        if(skoopPriceUSD>0&&signer){
+          const rewardSkoop=Math.round((paidCents/100)*CFG.AUTO_REWARD_RATE/skoopPriceUSD);
           if(rewardSkoop>0){
-            const pendingId=savePendingReward(ev.args.receiptId,rewardSkoop,paidCents);
-            setTimeout(()=>{
-              document.getElementById('reward-amount').value=rewardSkoop;
-              document.getElementById('reward-amount').dispatchEvent(new Event('input'));
-              document.getElementById('reward-usd-hint').textContent='10% SKOOP bonus — scan customer wallet';
-              renderPendingRewards();startRewardTimeout(pendingId,rewardSkoop);
-            },500);
+            // Small delay so success UI renders before wallet popup appears
+            setTimeout(()=>autoSendReward(payerAddr, rewardSkoop, paidCents, ev.args.receiptId), 600);
           }
         }
+
+        // Clear cart and refresh receipts
         cart={};renderCart();renderMenu();loadReceipts();
       }
     }catch(e){}
   },3000);
 }
 
+// ═══════════════════════════════════════════════════════════════
+//  REWARDS (manual — Square/Cash only)
+// ═══════════════════════════════════════════════════════════════
 function setRewardAddr(addr){
   scannedRewardAddr=addr;
   document.getElementById('reward-addr').textContent=addr;
@@ -910,10 +971,33 @@ function applyCalcReward(){
   input.value=calcSkoopAmount;input.dispatchEvent(new Event('input'));
   showToast(calcSkoopAmount.toLocaleString()+' SKOOP applied ✓','success');
 }
+async function sendReward(){
+  if(!signer){showToast('Connect wallet first','error');return;}
+  if(!scannedRewardAddr){showToast('No wallet address set','error');return;}
+  const amtStr=document.getElementById('reward-amount').value;
+  if(!amtStr||Number(amtStr)<=0){showToast('Enter SKOOP amount','error');return;}
+  const amtNum=parseFloat(amtStr);
+  if(getDailyRewardState()+amtNum>CFG.DAILY_REWARD_LIMIT){showToast('Daily limit reached','error');return;}
+  const btn=document.getElementById('reward-send-btn');btn.disabled=true;btn.textContent='Sending…';
+  try{
+    const token=new ethers.Contract(CFG.SKOOP,ABI_ERC20,signer);
+    const tx=await token.transfer(scannedRewardAddr,ethers.parseUnits(amtStr,CFG.SKOOP_DEC));
+    showToast('Broadcasting…','');await tx.wait();
+    addDailyRewardSent(amtNum);
+    const pendingId=document.getElementById('reward-amount').dataset.pendingId;
+    if(pendingId)removePendingReward(pendingId);
+    showToast('Reward sent ✓','success');resetRewards();
+  }catch(e){showToast('Transaction failed','error');}
+  btn.disabled=false;btn.textContent='Send SKOOP Reward';
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  PENDING REWARDS
+// ═══════════════════════════════════════════════════════════════
 let rewardTimeoutHandle=null;
 function savePendingReward(receiptId,skoopAmt,totalCents){
   const pending=getPendingRewards();const id='PR_'+Date.now();
-  pending.push({id,receiptId:receiptId.slice(0,14)+'…',skoopAmt,totalCents,ts:Date.now()});
+  pending.push({id,receiptId:typeof receiptId==='string'?receiptId.slice(0,14)+'…':String(receiptId),skoopAmt,totalCents,ts:Date.now()});
   localStorage.setItem('kokos_pending_rewards',JSON.stringify(pending));return id;
 }
 function getPendingRewards(){try{return JSON.parse(localStorage.getItem('kokos_pending_rewards')||'[]');}catch{return[];}}
@@ -943,20 +1027,13 @@ function loadPendingReward(id){
   const r=getPendingRewards().find(x=>x.id===id);if(!r)return;
   const input=document.getElementById('reward-amount');
   input.value=r.skoopAmt;input.dispatchEvent(new Event('input'));
-  document.getElementById('reward-usd-hint').textContent='Pending bonus — scan customer wallet';
+  document.getElementById('reward-usd-hint').textContent='Failed auto-reward — scan customer wallet to retry';
   input.dataset.pendingId=id;showToast('Loaded — scan customer wallet','success');
 }
-function startRewardTimeout(pendingId,skoopAmt){
-  if(rewardTimeoutHandle)clearTimeout(rewardTimeoutHandle);
-  rewardTimeoutHandle=setTimeout(()=>{
-    const input=document.getElementById('reward-amount');
-    if(parseInt(input.value)===skoopAmt&&!scannedRewardAddr){
-      input.value='';input.dispatchEvent(new Event('input'));
-      document.getElementById('reward-usd-hint').textContent='';
-      showToast('Reward saved to Pending','success');
-    }
-  },90000);
-}
+
+// ═══════════════════════════════════════════════════════════════
+//  DAILY LIMIT
+// ═══════════════════════════════════════════════════════════════
 function getDailyRewardState(){
   const today=new Date().toDateString();
   if(localStorage.getItem('kokos_reward_day')!==today){localStorage.setItem('kokos_reward_day',today);localStorage.setItem('kokos_reward_sent','0');return 0;}
@@ -972,25 +1049,10 @@ function updateDailyLimitDisplay(){
   const el=document.getElementById('daily-limit-display');
   if(el){el.textContent=`Daily: ${sent.toLocaleString()} / ${CFG.DAILY_REWARD_LIMIT.toLocaleString()} SKOOP`;el.style.color=remaining<CFG.DAILY_REWARD_LIMIT*0.2?'#c0392b':'var(--ink-lt)';}
 }
-async function sendReward(){
-  if(!signer){showToast('Connect wallet first','error');return;}
-  if(!scannedRewardAddr){showToast('No wallet address set','error');return;}
-  const amtStr=document.getElementById('reward-amount').value;
-  if(!amtStr||Number(amtStr)<=0){showToast('Enter SKOOP amount','error');return;}
-  const amtNum=parseFloat(amtStr);
-  if(getDailyRewardState()+amtNum>CFG.DAILY_REWARD_LIMIT){showToast('Daily limit reached','error');return;}
-  const btn=document.getElementById('reward-send-btn');btn.disabled=true;btn.textContent='Sending…';
-  try{
-    const token=new ethers.Contract(CFG.SKOOP,ABI_ERC20,signer);
-    const tx=await token.transfer(scannedRewardAddr,ethers.parseUnits(amtStr,CFG.SKOOP_DEC));
-    showToast('Broadcasting…','');await tx.wait();
-    addDailyRewardSent(amtNum);
-    const pendingId=document.getElementById('reward-amount').dataset.pendingId;
-    if(pendingId)removePendingReward(pendingId);
-    showToast('Reward sent ✓','success');resetRewards();
-  }catch(e){showToast('Transaction failed','error');}
-  btn.disabled=false;btn.textContent='Send SKOOP Reward';
-}
+
+// ═══════════════════════════════════════════════════════════════
+//  SETTLEMENT / BURN
+// ═══════════════════════════════════════════════════════════════
 async function loadReceipts(){
   try{
     const pub=new ethers.JsonRpcProvider(CFG.RPC);
@@ -1041,10 +1103,18 @@ async function burnSelected(){
   }catch(e){showToast('Burn failed','error');}
   btn.textContent='🔥 Burn Selected';
 }
+
+// ═══════════════════════════════════════════════════════════════
+//  UTILS
+// ═══════════════════════════════════════════════════════════════
 function showToast(msg,type=''){
   const t=document.getElementById('toast');t.textContent=msg;t.className='show '+(type||'');
   clearTimeout(toastTimer);toastTimer=setTimeout(()=>t.classList.remove('show'),3200);
 }
+
+// ═══════════════════════════════════════════════════════════════
+//  BRAND + INIT
+// ═══════════════════════════════════════════════════════════════
 document.addEventListener('DOMContentLoaded',()=>{
   document.getElementById('reward-amount').addEventListener('input',(e)=>{
     const amt=Number(e.target.value);
