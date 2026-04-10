@@ -286,8 +286,8 @@ html,body{height:100%;overflow:hidden;background:var(--coral);font-family:'Instr
     <div style="background:var(--mint);border-radius:var(--r-sm);padding:0.75rem 1rem;width:100%;display:flex;align-items:center;gap:0.75rem;">
       <span style="font-size:1.4rem;">🍦</span>
       <div style="text-align:left;">
-        <div style="font-size:0.78rem;font-weight:700;color:var(--green);">Enjoy your ice cream!</div>
-        <div style="font-size:0.68rem;color:var(--ink-mid);margin-top:2px;">Show your wallet QR to earn 10% back in SKOOP</div>
+        <div style="font-size:0.78rem;font-weight:700;color:var(--green);">Enjoy your ice cream! Rewards sent ✓</div>
+        <div style="font-size:0.68rem;color:var(--ink-mid);margin-top:2px;">SKOOP payments earn rewards automatically</div>
       </div>
     </div>
   </div>
@@ -371,7 +371,7 @@ html,body{height:100%;overflow:hidden;background:var(--coral);font-family:'Instr
           <strong>Contract:</strong> 0xfd3ce21c5Acd8BbbE576d0E2336C210C3cEBeb92<br>
           <strong>Buy with:</strong> USDC or ETH via Uniswap V3<br>
           <strong>Use it:</strong> Scan &amp; pay at the KOKOS register in Nashville<br>
-          <strong>Earn it:</strong> Show your wallet QR after any cash or card purchase
+          <strong>Earn it:</strong> Card &amp; cash purchases → show your QR; SKOOP payments → rewards auto-sent
         </p>
       </div>
       <div class="gate-divider"><span>How It Works</span></div>
@@ -379,11 +379,11 @@ html,body{height:100%;overflow:hidden;background:var(--coral);font-family:'Instr
       <div class="step-list">
         <div class="step"><div class="step-num">1</div><div class="step-content"><div class="step-title">Get SKOOP</div><div class="step-desc">Connect your wallet and tap Buy. Swap USDC or ETH for SKOOP directly through Uniswap V3 on Base — no account required, no KYC.</div></div></div>
         <div class="step"><div class="step-num">2</div><div class="step-content"><div class="step-title">Pay at the shop</div><div class="step-desc">The KOKOS team rings up your order and shows you a checkout QR. Open the Pay tab, scan it, review the total, and confirm — SKOOP goes to escrow instantly.</div></div></div>
-        <div class="step"><div class="step-num">3</div><div class="step-content"><div class="step-title">Earn rewards</div><div class="step-desc">Paying by card or cash? Show your My QR tab to the team after your purchase. They'll scan it and send SKOOP straight to your wallet as a reward.</div></div></div>
+        <div class="step"><div class="step-num">3</div><div class="step-content"><div class="step-title">Earn rewards</div><div class="step-desc">Paying with Square or cash? Show your wallet QR to the KOKOS team — they'll send SKOOP to your wallet. Paid with SKOOP? Rewards are sent to you automatically — no QR needed.</div></div></div>
         <div class="step"><div class="step-num">4</div><div class="step-content"><div class="step-title">Settlement &amp; burn</div><div class="step-desc">SKOOP captured in escrow settles on-chain and a portion burns — reducing supply over time. Every scoop you buy makes the token a little more scarce.</div></div></div>
       </div>
       <div class="earn-pay-grid">
-        <div class="ep-card"><div class="ep-icon">🎁</div><div class="ep-title">Earn SKOOP</div><div class="ep-body">Pay any way at KOKOS and show your QR. The team sends SKOOP to your wallet as a thank-you.</div></div>
+        <div class="ep-card"><div class="ep-icon">🎁</div><div class="ep-title">Earn SKOOP</div><div class="ep-body">Pay with Square or cash and show your QR. Paid with SKOOP? Rewards auto-send — no QR needed.</div></div>
         <div class="ep-card"><div class="ep-icon">📱</div><div class="ep-title">Pay with SKOOP</div><div class="ep-body">Scan the shop's checkout QR, confirm the total, and your SKOOP pays for your order on-chain.</div></div>
       </div>
       <div class="gate-footer-cta">
@@ -417,7 +417,7 @@ html,body{height:100%;overflow:hidden;background:var(--coral);font-family:'Instr
     <div class="action-grid">
       <button class="action-cell ac-mint" onclick="goTo('buy')"><div class="ac-icon">&#x1F4B1;</div><div><div class="ac-label">Buy SKOOP</div><div class="ac-sub">USDC or ETH</div></div></button>
       <button class="action-cell ac-lavender" onclick="goTo('pay')"><div class="ac-icon">&#128247;</div><div><div class="ac-label">Pay at shop</div><div class="ac-sub">Scan checkout QR</div></div></button>
-      <button class="action-cell ac-sand" onclick="goTo('qr')"><div class="ac-icon">&#11035;</div><div><div class="ac-label">My wallet QR</div><div class="ac-sub">Earn rewards</div></div></button>
+      <button class="action-cell ac-sand" onclick="goTo('qr')"><div class="ac-icon">&#11035;</div><div><div class="ac-label">My wallet QR</div><div class="ac-sub">Card &amp; cash purchases</div></div></button>
       <button class="action-cell ac-apricot" onclick="openPriceModal()"><div class="ac-icon">&#128200;</div><div><div class="ac-label">SKOOP price</div><div class="ac-sub" id="home-skoop-price">Live on Base</div></div></button>
     </div>
     <div class="stripe stripe-thin"><div class="s2"></div><div class="s4"></div><div class="s1"></div><div class="s5"></div><div class="s3"></div><div class="s6"></div></div>
@@ -537,9 +537,9 @@ html,body{height:100%;overflow:hidden;background:var(--coral);font-family:'Instr
 
   <!-- QR -->
   <div class="screen" id="screen-qr">
-    <div class="hdr" style="background:var(--sand);"><div class="hdr-logo"><img src="KOKOS_SKOOP.png" alt="KOKOS"></div><div class="hdr-right"><div class="pill pill-dark">Earn rewards</div></div></div>
+    <div class="hdr" style="background:var(--sand);"><div class="hdr-logo"><img src="KOKOS_SKOOP.png" alt="KOKOS"></div><div class="hdr-right"><div class="pill pill-dark">Card &amp; cash QR</div></div></div>
     <div class="stripe stripe-thin"><div class="s5"></div><div class="s1"></div><div class="s4"></div><div class="s3"></div><div class="s2"></div><div class="s6"></div></div>
-    <div class="info-block" style="background:var(--apricot);margin:16px 20px 0;"><div class="ib-title">Show this to earn rewards</div><div class="ib-text">After paying by card or cash, show this QR to the KOKOS team. They'll scan it and send SKOOP directly to your wallet.</div></div>
+    <div class="info-block" style="background:var(--apricot);margin:16px 20px 0;"><div class="ib-title">Card &amp; cash reward QR</div><div class="ib-text">Paid with Square or cash? Show this QR to the KOKOS team and they'll send SKOOP to your wallet. Paid with SKOOP? Your rewards were sent automatically — no QR needed.</div></div>
     <div class="qr-card">
       <div class="qr-eyebrow">Your wallet</div>
       <div class="qr-italic">Show to KOKOS to receive SKOOP</div>
@@ -978,7 +978,7 @@ async function loadActivityFeed(){
       toBlock:'0x'+currentBlock.toString(16)
     }]);
     if(!logs.length){
-      list.innerHTML='<div class="tx-row"><div class="tx-dot td-apricot">🍦</div><div class="tx-info"><div class="tx-name">No rewards yet today</div><div class="tx-date">Pay at the shop — show your QR to earn SKOOP</div></div></div>';
+      list.innerHTML='<div class="tx-row"><div class="tx-dot td-apricot">🍦</div><div class="tx-info"><div class="tx-name">No rewards yet today</div><div class="tx-date">Pay at the shop to earn SKOOP</div></div></div>';
       return;
     }
     const totalAmt=logs.reduce((sum,log)=>sum+parseFloat(ethers.formatUnits(BigInt(log.data),CFG.SKOOP_DEC)),0);
@@ -1225,16 +1225,44 @@ function startScan(){
 
 function parseQR(raw){
   try{
-    const d=JSON.parse(raw);
     let intent;
-    if(d.r!==undefined){
-      const receiptId=d.r;
-      const storeIdHash=ethers.id("KOKOS_NASHVILLE_01");
+
+    if(raw.startsWith('K1:')){
+      // Compact binary format (new POS)
+      const b64=raw.slice(3).replace(/-/g,'+').replace(/_/g,'/');
+      const bin=atob(b64);
+      const buf=new Uint8Array(bin.length);
+      for(let i=0;i<bin.length;i++)buf[i]=bin.charCodeAt(i);
+      function u8ToHex(arr){return '0x'+Array.from(arr).map(b=>b.toString(16).padStart(2,'0')).join('');}
+      function readBigInt(off,len){let v=0n;for(let i=0;i<len;i++)v=(v<<8n)|BigInt(buf[off+i]);return v;}
+      let off=0;
+      const receiptId    =u8ToHex(buf.slice(off,off+32));off+=32;
+      const orderId      =u8ToHex(buf.slice(off,off+32));off+=32;
+      const cartHash     =u8ToHex(buf.slice(off,off+32));off+=32;
+      const tokenAmount  =readBigInt(off,8).toString();off+=8;
+      const subtotalCents=Number(readBigInt(off,4));off+=4;
+      const taxCents     =Number(readBigInt(off,4));off+=4;
+      const totalCents   =Number(readBigInt(off,4));off+=4;
+      const itemCount    =buf[off];off+=1;
+      const deadline     =Number(readBigInt(off,4));off+=4;
+      const signature    =u8ToHex(buf.slice(off,off+65));
+      const storeIdHash   =ethers.id("KOKOS_NASHVILLE_01");
       const terminalIdHash=ethers.id("POS_1");
-      const orderId=d.o||ethers.id("ORD_"+receiptId);
-      const cartHash=d.ch||ethers.id(CFG.ESCROW+receiptId);
-      intent={receiptId,orderId,storeIdHash,terminalIdHash,tokenAmount:d.t,subtotalCents:d.sc,taxCents:d.tc,totalCents:d.xc,itemCount:d.ic,cartHash,deadline:d.dl,signature:d.sig};
-    }else{intent=d;}
+      intent={receiptId,orderId,storeIdHash,terminalIdHash,tokenAmount,subtotalCents,taxCents,totalCents,itemCount,cartHash,deadline,signature};
+
+    }else{
+      // Legacy JSON format (backward compat)
+      const d=JSON.parse(raw);
+      if(d.r!==undefined){
+        const receiptId=d.r;
+        const storeIdHash=ethers.id("KOKOS_NASHVILLE_01");
+        const terminalIdHash=ethers.id("POS_1");
+        const orderId=d.o||ethers.id("ORD_"+receiptId);
+        const cartHash=d.ch||ethers.id(CFG.ESCROW+receiptId);
+        intent={receiptId,orderId,storeIdHash,terminalIdHash,tokenAmount:d.t,subtotalCents:d.sc,taxCents:d.tc,totalCents:d.xc,itemCount:d.ic,cartHash,deadline:d.dl,signature:d.sig};
+      }else{intent=d;}
+    }
+
     const req=["receiptId","tokenAmount","subtotalCents","taxCents","totalCents","itemCount","deadline","signature"];
     for(const f of req){if(intent[f]===undefined||intent[f]===null){throw new Error("Missing: "+f);}}
     if(Date.now()/1000>Number(intent.deadline)){showToast("QR expired — ask shop to regenerate","err");return;}
@@ -1417,7 +1445,7 @@ function closeSuccess(){
   document.getElementById("success-screen").classList.remove("show");
   document.getElementById("pay-confirm").classList.remove("active");
   document.getElementById("pay-scan").classList.add("active");
-  goTo("qr");
+  goTo("home");
 }
 
 function buildMyQR(){
