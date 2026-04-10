@@ -180,7 +180,7 @@ html,body{height:100%;overflow:hidden;background:var(--coral);font-family:'Instr
 .tok-opt-bal{margin-left:auto;font-size:12px;font-weight:600;color:var(--ink-mid);}
 #screen-pay{background:var(--lavender);}
 .pay-state{display:none;flex-direction:column;flex:1;}.pay-state.active{display:flex;}
-.scan-box{margin:16px 20px;background:var(--ink);border-radius:var(--r);overflow:hidden;position:relative;min-height:300px;display:flex;align-items:center;justify-content:center;}
+.scan-box{margin:8px 10px;background:var(--ink);border-radius:var(--r);overflow:hidden;position:relative;min-height:300px;display:flex;align-items:center;justify-content:center;}
 #qr-reader{width:100%;}
 .scan-ui{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;pointer-events:none;}
 .scan-frame{width:220px;height:220px;border-radius:16px;position:relative;margin-bottom:16px;}
@@ -292,7 +292,7 @@ html,body{height:100%;overflow:hidden;background:var(--coral);font-family:'Instr
     </div>
   </div>
   <div style="padding:1rem 1.5rem;padding-bottom:calc(1rem + env(safe-area-inset-bottom,0px));background:var(--white);border-top:1px solid var(--border);flex-shrink:0;">
-    <button class="btn-done" onclick="closeSuccess()">Done — go earn your reward</button>
+    <button class="btn-done" onclick="closeSuccess()">Done — Enjoy your rewards</button>
   </div>
 </div>
 
@@ -968,37 +968,82 @@ async function loadActivityFeed(){
   try{
     const readProvider=new ethers.JsonRpcProvider(CFG.RPC);
     const currentBlock=await readProvider.getBlockNumber();
-    const fromBlock=currentBlock-10000;
+
+    // ~24h window for today detail; ~30 day window for lifetime total
+    const todayFrom = currentBlock - 43200;
+    const monthFrom = currentBlock - 2160000;
+
     const topic0=ethers.id('Transfer(address,address,uint256)');
-    const pad=a=>'0x'+ethers.getAddress(a).slice(2).toLowerCase().padStart(64,'0');
-    const logs=await readProvider.send('eth_getLogs',[{
-      address:CFG.SKOOP,
-      topics:[topic0,pad(CFG.POS_SIGNER),pad(userAddr)],
-      fromBlock:'0x'+fromBlock.toString(16),
-      toBlock:'0x'+currentBlock.toString(16)
-    }]);
-    if(!logs.length){
-      list.innerHTML='<div class="tx-row"><div class="tx-dot td-apricot">🍦</div><div class="tx-info"><div class="tx-name">No rewards yet today</div><div class="tx-date">Pay at the shop to earn SKOOP</div></div></div>';
+    const padAddr=a=>'0x'+ethers.getAddress(a).slice(2).toLowerCase().padStart(64,'0');
+    const toUser    = padAddr(userAddr);
+    const fromPOS   = padAddr(CFG.POS_SIGNER);
+    const fromEscrow= padAddr(CFG.ESCROW);
+
+    // Fetch logs for one sender over a block range
+    async function fetchLogs(fromAddr, fromBlock){
+      return readProvider.send('eth_getLogs',[{
+        address:CFG.SKOOP,
+        topics:[topic0, fromAddr, toUser],
+        fromBlock:'0x'+Math.max(0,fromBlock).toString(16),
+        toBlock:'0x'+currentBlock.toString(16)
+      }]);
+    }
+
+    // Today: both senders, full detail rows
+    const [todayPOS, todayEscrow] = await Promise.all([
+      fetchLogs(fromPOS,    todayFrom).catch(()=>[]),
+      fetchLogs(fromEscrow, todayFrom).catch(()=>[]),
+    ]);
+    const todayLogs = [...todayPOS, ...todayEscrow]
+      .sort((a,b)=>parseInt(b.blockNumber,16)-parseInt(a.blockNumber,16));
+    const todayAmt = todayLogs.reduce((sum,log)=>
+      sum+parseFloat(ethers.formatUnits(BigInt(log.data),CFG.SKOOP_DEC)),0);
+
+    // Lifetime (30d): both senders, sum only
+    const [monthPOS, monthEscrow] = await Promise.all([
+      fetchLogs(fromPOS,    monthFrom).catch(()=>[]),
+      fetchLogs(fromEscrow, monthFrom).catch(()=>[]),
+    ]);
+    const lifetimeAmt = [...monthPOS, ...monthEscrow]
+      .reduce((sum,log)=>sum+parseFloat(ethers.formatUnits(BigInt(log.data),CFG.SKOOP_DEC)),0);
+
+    const fmtAmt=n=>n.toLocaleString("en-US",{maximumFractionDigits:2});
+
+    if(!todayLogs.length && lifetimeAmt===0){
+      list.innerHTML='<div class="tx-row"><div class="tx-dot td-apricot">🍦</div><div class="tx-info"><div class="tx-name">No rewards yet</div><div class="tx-date">Pay at the shop to earn SKOOP</div></div></div>';
       return;
     }
-    const totalAmt=logs.reduce((sum,log)=>sum+parseFloat(ethers.formatUnits(BigInt(log.data),CFG.SKOOP_DEC)),0);
-    const totalFmt=totalAmt.toLocaleString("en-US",{maximumFractionDigits:2});
-    const summaryRow=`<div class="tx-row" style="background:var(--mint);">
-      <div class="tx-dot td-mint">🍦</div>
-      <div class="tx-info"><div class="tx-name" style="font-weight:700;">Total rewards today</div><div class="tx-date">${logs.length} visit${logs.length>1?'s':''}</div></div>
-      <div class="tx-val"><div class="amt amt-plus" style="font-size:20px;">+${totalFmt}</div></div>
+
+    // 30-day lifetime row
+    const lifetimeRow=`<div class="tx-row" style="background:var(--apricot);">
+      <div class="tx-dot td-apricot">⭐</div>
+      <div class="tx-info"><div class="tx-name" style="font-weight:700;">30-day total</div><div class="tx-date">All KOKOS rewards</div></div>
+      <div class="tx-val"><div class="amt amt-plus" style="font-size:20px;">+${fmtAmt(lifetimeAmt)}</div></div>
     </div>`;
-    list.innerHTML=summaryRow+logs.slice().reverse().map(log=>{
+
+    // Today summary row
+    const todaySummaryRow=todayLogs.length?`<div class="tx-row" style="background:var(--mint);">
+      <div class="tx-dot td-mint">🍦</div>
+      <div class="tx-info"><div class="tx-name" style="font-weight:700;">Earned today</div><div class="tx-date">${todayLogs.length} reward${todayLogs.length>1?'s':''}</div></div>
+      <div class="tx-val"><div class="amt amt-plus" style="font-size:20px;">+${fmtAmt(todayAmt)}</div></div>
+    </div>`:'';
+
+    // Individual today rows, labelled by source
+    const todayDetailRows=todayLogs.map(log=>{
       const amt=parseFloat(ethers.formatUnits(BigInt(log.data),CFG.SKOOP_DEC));
-      const fmtAmt=amt.toLocaleString("en-US",{maximumFractionDigits:2});
       const block=parseInt(log.blockNumber,16);
       const shortHash=log.transactionHash.slice(0,10)+'…';
+      const isEscrow=log.topics[1].toLowerCase().includes(CFG.ESCROW.slice(2).toLowerCase());
+      const label=isEscrow?'SKOOP payment reward':'Square / cash reward';
       return `<div class="tx-row" onclick="window.open('https://basescan.org/tx/${log.transactionHash}','_blank')" style="cursor:pointer;">
         <div class="tx-dot td-mint">🎁</div>
-        <div class="tx-info"><div class="tx-name">Reward earned</div><div class="tx-date">Block ${block} · ${shortHash}</div></div>
-        <div class="tx-val"><div class="amt amt-plus">+${fmtAmt}</div></div>
+        <div class="tx-info"><div class="tx-name">${label}</div><div class="tx-date">Block ${block} · ${shortHash}</div></div>
+        <div class="tx-val"><div class="amt amt-plus">+${fmtAmt(amt)}</div></div>
       </div>`;
     }).join('');
+
+    list.innerHTML=lifetimeRow+todaySummaryRow+todayDetailRows;
+
   }catch(e){
     list.innerHTML='<div class="tx-row"><div class="tx-dot td-apricot">⚠️</div><div class="tx-info"><div class="tx-name">Could not load activity</div><div class="tx-date">'+e.message.slice(0,60)+'</div></div></div>';
   }
@@ -1204,7 +1249,7 @@ function startScan(){
   }
   const scanner=new Html5Qrcode("qr-reader");
   setScanState('scanning');
-  scanner.start({facingMode:"environment"},{fps:15,qrbox:{width:260,height:260}},
+  scanner.start({facingMode:"environment"},{fps:10,qrbox:{width:250,height:250},aspectRatio:1.333},
     txt=>{
       scanner.stop().catch(()=>{});scannerRunning=false;
       setScanState('ready');
@@ -1225,16 +1270,44 @@ function startScan(){
 
 function parseQR(raw){
   try{
-    const d=JSON.parse(raw);
     let intent;
-    if(d.r!==undefined){
-      const receiptId=d.r;
-      const storeIdHash=ethers.id("KOKOS_NASHVILLE_01");
+
+    if(raw.startsWith('K1:')){
+      // Compact binary format (new POS)
+      const b64=raw.slice(3).replace(/-/g,'+').replace(/_/g,'/');
+      const bin=atob(b64);
+      const buf=new Uint8Array(bin.length);
+      for(let i=0;i<bin.length;i++)buf[i]=bin.charCodeAt(i);
+      function u8ToHex(arr){return '0x'+Array.from(arr).map(b=>b.toString(16).padStart(2,'0')).join('');}
+      function readBigInt(off,len){let v=0n;for(let i=0;i<len;i++)v=(v<<8n)|BigInt(buf[off+i]);return v;}
+      let off=0;
+      const receiptId    =u8ToHex(buf.slice(off,off+32));off+=32;
+      const orderId      =u8ToHex(buf.slice(off,off+32));off+=32;
+      const cartHash     =u8ToHex(buf.slice(off,off+32));off+=32;
+      const tokenAmount  =readBigInt(off,8).toString();off+=8;
+      const subtotalCents=Number(readBigInt(off,4));off+=4;
+      const taxCents     =Number(readBigInt(off,4));off+=4;
+      const totalCents   =Number(readBigInt(off,4));off+=4;
+      const itemCount    =buf[off];off+=1;
+      const deadline     =Number(readBigInt(off,4));off+=4;
+      const signature    =u8ToHex(buf.slice(off,off+65));
+      const storeIdHash   =ethers.id("KOKOS_NASHVILLE_01");
       const terminalIdHash=ethers.id("POS_1");
-      const orderId=d.o||ethers.id("ORD_"+receiptId);
-      const cartHash=d.ch||ethers.id(CFG.ESCROW+receiptId);
-      intent={receiptId,orderId,storeIdHash,terminalIdHash,tokenAmount:d.t,subtotalCents:d.sc,taxCents:d.tc,totalCents:d.xc,itemCount:d.ic,cartHash,deadline:d.dl,signature:d.sig};
-    }else{intent=d;}
+      intent={receiptId,orderId,storeIdHash,terminalIdHash,tokenAmount,subtotalCents,taxCents,totalCents,itemCount,cartHash,deadline,signature};
+
+    }else{
+      // Legacy JSON format (backward compat)
+      const d=JSON.parse(raw);
+      if(d.r!==undefined){
+        const receiptId=d.r;
+        const storeIdHash=ethers.id("KOKOS_NASHVILLE_01");
+        const terminalIdHash=ethers.id("POS_1");
+        const orderId=d.o||ethers.id("ORD_"+receiptId);
+        const cartHash=d.ch||ethers.id(CFG.ESCROW+receiptId);
+        intent={receiptId,orderId,storeIdHash,terminalIdHash,tokenAmount:d.t,subtotalCents:d.sc,taxCents:d.tc,totalCents:d.xc,itemCount:d.ic,cartHash,deadline:d.dl,signature:d.sig};
+      }else{intent=d;}
+    }
+
     const req=["receiptId","tokenAmount","subtotalCents","taxCents","totalCents","itemCount","deadline","signature"];
     for(const f of req){if(intent[f]===undefined||intent[f]===null){throw new Error("Missing: "+f);}}
     if(Date.now()/1000>Number(intent.deadline)){showToast("QR expired — ask shop to regenerate","err");return;}
