@@ -1724,3 +1724,833 @@ function showToast(msg,type=""){
 </script>
 </body>
 </html>
+
+<script>
+const CFG={
+  CHAIN_ID:8453,CHAIN_HEX:'0x2105',RPC:'https://mainnet.base.org',
+  SKOOP:'0xfd3ce21c5acd8bbbe576d0e2336c210c3cebeb92',
+  ESCROW:'0x85e8cdedae8ecd23ee21cdc90d75cbaae9a54991',
+  POS_SIGNER:'0xa22675c629743a126e136a80244ddd2c3b2a4b12',
+  ROUTER:'0x2626664c2603336e57b271c5c0b26f421741e481',
+  USDC:'0x833589fcd6edb6e08f4c7c32d4f71b54bda02913',
+  WETH:'0x4200000000000000000000000000000000000006',
+  FEE:3000,SKOOP_DEC:6,USDC_DEC:6,WETH_DEC:18,
+};
+const ABI_ERC20=["function balanceOf(address) view returns (uint256)","function allowance(address,address) view returns (uint256)","function approve(address,uint256) returns (bool)","event Transfer(address indexed from, address indexed to, uint256 value)"];
+const ABI_ROUTER=["function exactInputSingle((address tokenIn,address tokenOut,uint24 fee,address recipient,uint256 amountIn,uint256 amountOutMinimum,uint160 sqrtPriceLimitX96)) payable returns (uint256)"];
+const ABI_ESCROW=[{inputs:[{components:[{name:"receiptId",type:"bytes32"},{name:"orderId",type:"bytes32"},{name:"storeIdHash",type:"bytes32"},{name:"terminalIdHash",type:"bytes32"},{name:"tokenAmount",type:"uint256"},{name:"subtotalCents",type:"uint256"},{name:"taxCents",type:"uint256"},{name:"totalCents",type:"uint256"},{name:"itemCount",type:"uint256"},{name:"cartHash",type:"bytes32"},{name:"deadline",type:"uint256"}],internalType:"struct KOKOSPaymentEscrowPOS.PaymentIntent",name:"intent",type:"tuple"},{name:"signature",type:"bytes"}],name:"capturePayment",outputs:[],stateMutability:"nonpayable",type:"function"}];
+
+const POOL_ETH_SKOOP  = '0xc1d89ca13d5cbc24b92e9f40b36d43da347c5198';
+const POOL_USDC_SKOOP = '0x64ef20f32445eb0a86f4b97ca895fe508af253cd';
+const ABI_POOL_IMM=["function token0() view returns (address)","function token1() view returns (address)","function fee() view returns (uint24)"];
+const poolFees={};
+
+let provider,signer,userAddr,selToken="ETH",slip=0.5,quoteTimer,curQuote,pendingIntent,scannerRunning=false,ethPriceUSD=0,skoopPriceUSD=0;
+let _justDisconnected=false;
+
+// ── ETH PRICE ─────────────────────────────────────────────────────────────────
+async function fetchEthPrice(){
+  try{
+    const r=await fetch('https://api.coinbase.com/v2/exchange-rates?currency=ETH',{mode:'cors'});
+    if(r.ok){const d=await r.json();const p=parseFloat(d?.data?.rates?.USD||0);if(p>100&&p<1000000){ethPriceUSD=p;await fetchSkoopPrice();return;}}
+  }catch(e){}
+  try{
+    const ABI=['function slot0() view returns (uint160 sqrtPriceX96,int24,uint16,uint16,uint16,uint8,bool)','function token0() view returns (address)'];
+    const pub=new ethers.JsonRpcProvider(CFG.RPC);
+    const pool=new ethers.Contract('0xd0b53D9277642d899DF5C87A3966A349A798F224',ABI,pub);
+    const [s0,t0]=await Promise.all([pool.slot0(),pool.token0()]);
+    const sqrtPf=Number(s0.sqrtPriceX96)/Number(2n**96n);const raw=sqrtPf*sqrtPf;
+    const wethIsT0=t0.toLowerCase()===CFG.WETH.toLowerCase();
+    const p=wethIsT0?(1/raw)*1e12:raw*1e12;
+    if(p>100&&p<1000000){ethPriceUSD=p;await fetchSkoopPrice();}
+  }catch(e){}
+}
+
+async function fetchSkoopPrice(){
+  try{
+    const ABI=['function slot0() view returns (uint160 sqrtPriceX96,int24,uint16,uint16,uint16,uint8,bool)','function token0() view returns (address)'];
+    const pub=new ethers.JsonRpcProvider(CFG.RPC);
+    const pool=new ethers.Contract(POOL_ETH_SKOOP,ABI,pub);
+    const [s0,t0]=await Promise.all([pool.slot0(),pool.token0()]);
+    const sqrtPf=Number(s0.sqrtPriceX96)/Number(2n**96n);const priceRaw=sqrtPf*sqrtPf;
+    const skoopIsT0=t0.toLowerCase()===CFG.SKOOP.toLowerCase();
+    const skoopPerEth=skoopIsT0?(1/priceRaw)*1e12:priceRaw*1e12;
+    skoopPriceUSD=skoopPerEth>0?ethPriceUSD/skoopPerEth:0;
+    updateSkoopBalanceDisplay();
+  }catch(e){}
+}
+
+function updateSkoopBalanceDisplay(){
+  const valEl=document.getElementById("home-usd-val");
+  if(!valEl||!window._skoopBal||!skoopPriceUSD)return;
+  valEl.textContent=(window._skoopBal*skoopPriceUSD).toLocaleString("en-US",{style:"currency",currency:"USD",maximumFractionDigits:2});
+  const sub=document.getElementById('home-skoop-price');
+  if(sub&&skoopPriceUSD>0)sub.textContent='$'+skoopPriceUSD.toFixed(6);
+}
+
+// ── WALLET CONNECTION ─────────────────────────────────────────────────────────
+function showWalletOptions(){document.getElementById('wallet-choice-sheet').classList.add('open');document.getElementById('wallet-choice-back').classList.add('open');}
+function hideWalletOptions(){document.getElementById('wallet-choice-sheet').classList.remove('open');document.getElementById('wallet-choice-back').classList.remove('open');}
+
+async function connectCoinbaseWallet(){
+  hideWalletOptions();
+  const btn=document.getElementById('gate-connect-btn');
+  if(window.ethereum&&(window.ethereum.isCoinbaseWallet||window.ethereum.isCoinbaseBrowser)){await connectInjected();return;}
+  const isMobile=/iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+  if(isMobile){
+    if(btn){btn.textContent='Opening\u2026';btn.disabled=true;}
+    showToast('Opening Coinbase Wallet\u2026','');
+    const _dappUrl='https://kokosicecream.com/Customer_dapp/index.html';
+    window.location.href='cbwallet://dapp?url='+encodeURIComponent(_dappUrl);
+    setTimeout(()=>{window.location.href='https://go.cb-w.com/dapp?cb_url='+encodeURIComponent(_dappUrl);},1500);
+    setTimeout(()=>{if(btn){btn.textContent='Get Started';btn.disabled=false;}},5000);
+    return;
+  }
+  showToast('Scan QR with Coinbase Wallet','');
+  await connectWalletConnect();
+}
+
+async function connectMetaMask(){
+  hideWalletOptions();
+  const btn=document.getElementById('gate-connect-btn');
+  if(window.ethereum&&window.ethereum.isMetaMask){await connectInjected();return;}
+  const isMobile=/iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+  if(isMobile){
+    if(btn){btn.textContent='Opening\u2026';btn.disabled=true;}
+    showToast('Opening MetaMask\u2026','');
+    setTimeout(()=>{window.location.href='https://metamask.app.link/dapp/kokosicecream.com/Customer_dapp/index.html';},400);
+    setTimeout(()=>{if(btn){btn.textContent='Get Started';btn.disabled=false;}},4000);
+    return;
+  }
+  if(window.ethereum){await connectInjected();}
+  else{showToast('MetaMask not detected \u2014 install the extension first','err');window.open('https://metamask.io/download/','_blank');}
+}
+
+async function connectInjected(){
+  if(!window.ethereum){showToast('No wallet detected','err');return;}
+  const btn=document.getElementById('gate-connect-btn');
+  try{
+    if(btn){btn.textContent='Connecting\u2026';btn.disabled=true;}
+    await window.ethereum.request({method:'eth_requestAccounts'});
+    provider=new ethers.BrowserProvider(window.ethereum);
+    signer=await provider.getSigner();userAddr=await signer.getAddress();
+    await onConnected();
+    if(!window._ethListenersAdded){
+      window._ethListenersAdded=true;
+      window.ethereum.on('accountsChanged',a=>{if(a[0]){userAddr=a[0];updatePills();refreshBals();}else disconnectWallet();});
+      window.ethereum.on('chainChanged',()=>location.reload());
+    }
+  }catch(e){
+    if(btn){btn.textContent='Get Started';btn.disabled=false;}
+    if(e.code!==4001)showToast(e?.message?.slice(0,60)||'Connection failed','err');
+  }
+}
+
+async function connectViaWalletConnect(){hideWalletOptions();await connectWalletConnect();}
+
+async function openWalletModal(){
+  if(_justDisconnected)return;
+  if(window.ethereum){
+    if(window.ethereum.isCoinbaseWallet||window.ethereum.isCoinbaseBrowser||window.ethereum.isMetaMask){
+      try{const accounts=await window.ethereum.request({method:'eth_accounts'});if(accounts.length){await connectInjected();return;}await connectInjected();return;}catch(e){}
+    }
+    try{const accounts=await window.ethereum.request({method:'eth_accounts'});if(accounts.length){await connectInjected();return;}}catch(e){}
+  }
+  showWalletOptions();
+}
+
+async function connectWalletConnect(){
+  const WCEthProvider=window["@walletconnect/ethereum-provider"]?.EthereumProvider;
+  if(!WCEthProvider){showToast("WalletConnect not loaded \u2014 refresh","err");return;}
+  try{
+    showToast("Opening wallet...","");
+    const wcp=await WCEthProvider.init({
+      projectId:'c5be163298ba25127afa6b7529e29059',chains:[8453],showQrModal:true,
+      qrModalOptions:{themeMode:'light',themeVariables:{'--wcm-accent-color':'#e8876a','--wcm-background-color':'#fdcec1'}},
+      metadata:{name:'SKOOP by KOKOS',description:'KOKOS Ice Cream SKOOP DApp',url:'https://kokosicecream.com/Customer_dapp/',icons:['https://kokosicecream.github.io/website/Customer_dapp/KOKOS_SKOOP.png']}
+    });
+    window._wcp=wcp;await wcp.enable();
+    provider=new ethers.BrowserProvider(wcp);signer=await provider.getSigner();userAddr=await signer.getAddress();
+    await onConnected();
+    wcp.on('disconnect',()=>{window._wcp=null;disconnectWallet();});
+    wcp.on('accountsChanged',a=>{if(a[0]){userAddr=a[0];updatePills();refreshBals();}});
+  }catch(e){
+    const btn=document.getElementById('gate-connect-btn');if(btn){btn.textContent='Get Started';btn.disabled=false;}
+    const msg=e?.message||'';
+    if(!msg.includes('closed')&&!msg.includes('rejected')&&!msg.includes('Modal'))showToast(msg||"Connection failed","err");
+  }
+}
+
+async function disconnectWallet(){
+  try{if(window._wcp)await window._wcp.disconnect();}catch(e){}
+  try{if(window._cbProvider)await window._cbProvider.disconnect();}catch(e){}
+  if(window._balancePollTimer){clearInterval(window._balancePollTimer);window._balancePollTimer=null;}
+  window._wcp=null;window._cbProvider=null;provider=null;signer=null;userAddr=null;
+  document.getElementById("main-app").style.display="none";
+  document.getElementById("bottom-nav").style.display="none";
+  const gate=document.getElementById("connect-gate");
+  if(gate){gate.style.display="flex";gate.style.flexDirection="column";gate.style.flex="1";}
+  _justDisconnected=true;setTimeout(()=>{_justDisconnected=false;},1000);
+  const btn=document.getElementById('gate-connect-btn');if(btn){btn.textContent='Get Started';btn.disabled=false;}
+  const setT=(id,v)=>{const el=document.getElementById(id);if(el)el.textContent=v;};
+  const setH=(id,v)=>{const el=document.getElementById(id);if(el)el.innerHTML=v;};
+  setT("home-bal","\u2014");setT("home-usd","SKOOP");setT("home-usd-val","");
+  setT("wallet-pill","0x\u2026");setT("buy-pill","0x\u2026");
+  setT("qr-addr","Connect wallet to generate QR");setT("qr-bal","\u2014");setH("my-qr-div","");
+}
+
+async function onConnected(){
+  document.getElementById("connect-gate").style.display="none";
+  const m=document.getElementById("main-app");
+  m.style.display="flex";m.style.flexDirection="column";m.style.flex="1";m.style.overflow="hidden";
+  document.getElementById("bottom-nav").style.display="flex";
+  updatePills();await checkNet();await refreshBals();setTimeout(buildMyQR,200);setTimeout(loadActivityFeed,500);
+  loadPoolImmutables();fetchEthPrice();
+  if(window._balancePollTimer)clearInterval(window._balancePollTimer);
+  window._balancePollTimer=setInterval(()=>{if(userAddr){refreshBals().catch(()=>{});}else{clearInterval(window._balancePollTimer);}},30000);
+}
+
+function updatePills(){
+  const s=userAddr?userAddr.slice(0,6)+"\u2026"+userAddr.slice(-4):"";
+  document.getElementById("wallet-pill").textContent=s;
+  document.getElementById("buy-pill").textContent=s;
+}
+
+async function checkNet(){
+  try{
+    const net=await provider.getNetwork();
+    if(Number(net.chainId)!==CFG.CHAIN_ID){
+      try{
+        await provider.send("wallet_switchEthereumChain",[{chainId:CFG.CHAIN_HEX}]);
+        signer=await provider.getSigner();userAddr=await signer.getAddress();
+      }catch(e){
+        document.getElementById("net-banner").classList.add("show");
+        document.getElementById("net-label").textContent="Wrong";
+        document.getElementById("net-label").className="pill pill-danger";
+        return false;
+      }
+    }
+    document.getElementById("net-banner").classList.remove("show");
+    const l=document.getElementById("net-label");l.textContent="Base";l.className="pill pill-dark";
+    return true;
+  }catch(e){return false;}
+}
+
+async function switchToBase(){
+  if(!window.ethereum)return;
+  try{await window.ethereum.request({method:"wallet_switchEthereumChain",params:[{chainId:CFG.CHAIN_HEX}]});}
+  catch(e){if(e.code===4902)await window.ethereum.request({method:"wallet_addEthereumChain",params:[{chainId:CFG.CHAIN_HEX,chainName:"Base",rpcUrls:["https://mainnet.base.org"],nativeCurrency:{name:"ETH",symbol:"ETH",decimals:18},blockExplorerUrls:["https://basescan.org"]}]});}
+}
+
+async function refreshBals(){
+  if(!userAddr)return;
+  const readProvider=new ethers.JsonRpcProvider(CFG.RPC);
+  const balEl=document.getElementById("home-bal");
+  if(balEl)balEl.classList.add("bal-updating");
+  try{
+    const sk=new ethers.Contract(CFG.SKOOP,ABI_ERC20,readProvider);
+    const raw=await sk.balanceOf(userAddr);
+    const skoopBal=parseFloat(ethers.formatUnits(raw,CFG.SKOOP_DEC));
+    window._skoopBal=skoopBal;
+    const fmt=skoopBal.toLocaleString("en-US",{maximumFractionDigits:2});
+    if(balEl){balEl.textContent=fmt;balEl.classList.remove("bal-updating");}
+    document.getElementById("home-usd").textContent="SKOOP";
+    document.getElementById("qr-bal").textContent=fmt;
+    updateSkoopBalanceDisplay();
+  }catch(e){if(balEl){balEl.textContent="\u2014";balEl.classList.remove("bal-updating");}}
+  try{const eb=await readProvider.getBalance(userAddr);document.getElementById("bal-eth").textContent=parseFloat(ethers.formatEther(eb)).toFixed(4)+" ETH";}catch(e){}
+  try{const uc=new ethers.Contract(CFG.USDC,ABI_ERC20,readProvider);document.getElementById("bal-usdc").textContent=parseFloat(ethers.formatUnits(await uc.balanceOf(userAddr),6)).toFixed(2)+" USDC";}catch(e){}
+  await updateFromBal();
+  loadActivityFeed();
+}
+
+async function updateFromBal(){
+  if(!userAddr)return;
+  const readProvider=new ethers.JsonRpcProvider(CFG.RPC);
+  let b="\u2014";
+  try{
+    if(selToken==="ETH"){
+      const raw=await readProvider.getBalance(userAddr);
+      const eth=parseFloat(ethers.formatEther(raw));
+      const usd=ethPriceUSD>0?" (\u2248$"+(eth*ethPriceUSD).toLocaleString("en-US",{maximumFractionDigits:2})+")":"";
+      b=eth.toFixed(4)+" ETH"+usd;
+    }else{
+      const c=new ethers.Contract(CFG.USDC,ABI_ERC20,readProvider);
+      b=parseFloat(ethers.formatUnits(await c.balanceOf(userAddr),6)).toFixed(2)+" USDC";
+    }
+  }catch(e){}
+  document.getElementById("from-bal").textContent=b;
+}
+
+// ── ACTIVITY FEED ─────────────────────────────────────────────────────────────
+// Dual-source: POS_SIGNER (Square/cash rewards) + ESCROW (SKOOP auto-rewards)
+// Base's public RPC caps eth_getLogs at ~2000 blocks per call.
+// Strategy: page backward in 1800-block chunks, collect all logs up to limits.
+// Today: ~24h = 43200 blocks, fetched in pages. Lifetime: all pages summed.
+async function loadActivityFeed(){
+  if(!userAddr)return;
+  const list=document.querySelector('.tx-list');
+  if(!list)return;
+  list.innerHTML='<div class="tx-row"><div class="tx-dot td-mint" style="font-size:11px;">\u23f3</div><div class="tx-info"><div class="tx-name">Loading activity\u2026</div></div></div>';
+  try{
+    const readProvider=new ethers.JsonRpcProvider(CFG.RPC);
+    const currentBlock=await readProvider.getBlockNumber();
+
+    const PAGE=1800;          // safe page size under Base RPC cap
+    const TODAY_BLOCKS=43200; // ~24 hours on Base
+    const MAX_BLOCKS=432000;  // ~30 days — paginate back this far at most
+
+    const topic0=ethers.id('Transfer(address,address,uint256)');
+    const padAddr=a=>'0x'+ethers.getAddress(a).slice(2).toLowerCase().padStart(64,'0');
+    const toUser    =padAddr(userAddr);
+    const fromPOS   =padAddr(CFG.POS_SIGNER);
+    const fromEscrow=padAddr(CFG.ESCROW);
+
+    // Fetch one page of logs for a given sender address
+    async function fetchPage(fromAddr,fromBlock,toBlock){
+      try{
+        return await readProvider.send('eth_getLogs',[{
+          address:CFG.SKOOP,
+          topics:[topic0,fromAddr,toUser],
+          fromBlock:'0x'+fromBlock.toString(16),
+          toBlock:'0x'+toBlock.toString(16)
+        }]);
+      }catch(e){return [];}
+    }
+
+    // Paginate backward from currentBlock collecting all reward logs up to maxBlocks
+    async function fetchAllLogs(fromAddr){
+      const allLogs=[];
+      let toBlock=currentBlock;
+      const hardStop=currentBlock-MAX_BLOCKS;
+      while(toBlock>hardStop){
+        const fromBlock=Math.max(hardStop, toBlock-PAGE);
+        const page=await fetchPage(fromAddr,fromBlock,toBlock);
+        allLogs.push(...page);
+        toBlock=fromBlock-1;
+      }
+      return allLogs;
+    }
+
+    // Fetch all logs from both sources in parallel
+    const [posLogs, escrowLogs]=await Promise.all([
+      fetchAllLogs(fromPOS),
+      fetchAllLogs(fromEscrow),
+    ]);
+
+    const allLogs=[...posLogs,...escrowLogs]
+      .sort((a,b)=>parseInt(b.blockNumber,16)-parseInt(a.blockNumber,16));
+
+    if(!allLogs.length){
+      list.innerHTML='<div class="tx-row"><div class="tx-dot td-apricot">\ud83c\udf66</div><div class="tx-info"><div class="tx-name">No rewards yet</div><div class="tx-date">Pay at the shop to earn SKOOP</div></div></div>';
+      return;
+    }
+
+    const todayCutoff=currentBlock-TODAY_BLOCKS;
+    const todayLogs=allLogs.filter(l=>parseInt(l.blockNumber,16)>=todayCutoff);
+    const todayAmt=todayLogs.reduce((s,l)=>s+parseFloat(ethers.formatUnits(BigInt(l.data),CFG.SKOOP_DEC)),0);
+    const lifetimeAmt=allLogs.reduce((s,l)=>s+parseFloat(ethers.formatUnits(BigInt(l.data),CFG.SKOOP_DEC)),0);
+
+    const fmt=n=>n.toLocaleString("en-US",{maximumFractionDigits:2});
+
+    const lifetimeRow=`<div class="tx-row" style="background:var(--apricot);">
+      <div class="tx-dot td-apricot">\u2b50</div>
+      <div class="tx-info"><div class="tx-name" style="font-weight:700;">30-day total</div><div class="tx-date">All KOKOS rewards</div></div>
+      <div class="tx-val"><div class="amt amt-plus" style="font-size:20px;">+${fmt(lifetimeAmt)}</div></div>
+    </div>`;
+
+    const todaySummaryRow=todayLogs.length?`<div class="tx-row" style="background:var(--mint);">
+      <div class="tx-dot td-mint">\ud83c\udf66</div>
+      <div class="tx-info"><div class="tx-name" style="font-weight:700;">Earned today</div><div class="tx-date">${todayLogs.length} reward${todayLogs.length>1?'s':''}</div></div>
+      <div class="tx-val"><div class="amt amt-plus" style="font-size:20px;">+${fmt(todayAmt)}</div></div>
+    </div>`:'';
+
+    const detailRows=todayLogs.map(log=>{
+      const amt=parseFloat(ethers.formatUnits(BigInt(log.data),CFG.SKOOP_DEC));
+      const block=parseInt(log.blockNumber,16);
+      const shortHash=log.transactionHash.slice(0,10)+'\u2026';
+      const isEscrow=(log.topics[1]||'').toLowerCase().includes(CFG.ESCROW.slice(2).toLowerCase());
+      const label=isEscrow?'SKOOP payment reward':'Square / cash reward';
+      return `<div class="tx-row" onclick="window.open('https://basescan.org/tx/${log.transactionHash}','_blank')" style="cursor:pointer;">
+        <div class="tx-dot td-mint">\ud83c\udf81</div>
+        <div class="tx-info"><div class="tx-name">${label}</div><div class="tx-date">Block ${block} \u00b7 ${shortHash}</div></div>
+        <div class="tx-val"><div class="amt amt-plus">+${fmt(amt)}</div></div>
+      </div>`;
+    }).join('');
+
+    list.innerHTML=lifetimeRow+todaySummaryRow+detailRows;
+  }catch(e){
+    list.innerHTML='<div class="tx-row"><div class="tx-dot td-apricot">\u26a0\ufe0f</div><div class="tx-info"><div class="tx-name">Could not load activity</div><div class="tx-date">'+e.message.slice(0,60)+'</div></div></div>';
+  }
+}
+
+document.addEventListener('visibilitychange',async function(){
+  if(document.visibilityState!=='visible'||!window.ethereum)return;
+  if(provider&&userAddr){try{await refreshBals();}catch(e){}return;}
+  try{
+    const a=await window.ethereum.request({method:'eth_accounts'});
+    if(!a.length)return;
+    const gateVisible=document.getElementById('connect-gate').style.display!=='none';
+    provider=new ethers.BrowserProvider(window.ethereum);
+    signer=await provider.getSigner();userAddr=await signer.getAddress();
+    if(gateVisible){await onConnected();}
+    else{updatePills();try{await checkNet();}catch(e){}try{await refreshBals();}catch(e){}}
+  }catch(e){}
+});
+
+if(window.ethereum){
+  window.ethereum.request({method:'eth_accounts'}).then(async a=>{if(a.length)await connectInjected();}).catch(()=>{});
+}
+
+fetchEthPrice().catch(()=>{});
+
+// ── SWAP ──────────────────────────────────────────────────────────────────────
+function openTokSheet(){document.getElementById("tok-sheet").classList.add("open");document.getElementById("tok-back").classList.add("open");}
+function closeTokSheet(){document.getElementById("tok-sheet").classList.remove("open");document.getElementById("tok-back").classList.remove("open");}
+function selectToken(t){
+  selToken=t;closeTokSheet();
+  const icons={USDC:"USDC",ETH:"\u039e"};const cls={USDC:"ti-usdc",ETH:"ti-eth"};
+  const ic=document.getElementById("from-icon");ic.textContent=icons[t];ic.className="tok-ic "+cls[t];
+  document.getElementById("from-name").textContent=t;
+  updateFromBal();document.getElementById("from-amt").value="";resetOut();
+}
+function setSlip(v,btn){slip=v;document.querySelectorAll(".slip-btn").forEach(b=>b.classList.remove("sel"));btn.classList.add("sel");}
+async function setMax(){
+  if(!provider||!userAddr)return;
+  try{
+    let mx="0";
+    if(selToken==="ETH"){const b=await provider.getBalance(userAddr);const r=ethers.parseEther("0.005");mx=ethers.formatEther(b>r?b-r:0n);}
+    else{const c=new ethers.Contract(CFG.USDC,ABI_ERC20,provider);mx=ethers.formatUnits(await c.balanceOf(userAddr),6);}
+    document.getElementById("from-amt").value=parseFloat(mx).toFixed(6);onAmt();
+  }catch(e){showToast("Could not fetch balance","err");}
+}
+function resetOut(){
+  document.getElementById("out-amt").textContent="0";
+  document.getElementById("out-loading").classList.remove("show");
+  document.getElementById("swap-dets").classList.remove("show");
+  document.getElementById("btn-swap").disabled=true;
+  document.getElementById("btn-swap").textContent="Enter amount";
+  document.getElementById("from-usd").textContent="";curQuote=null;
+}
+function onAmt(){
+  clearTimeout(quoteTimer);
+  const v=parseFloat(document.getElementById("from-amt").value);
+  if(!v||v<=0){resetOut();return;}
+  if(selToken==="ETH"&&ethPriceUSD>0){document.getElementById("from-usd").textContent="\u2248 $"+(v*ethPriceUSD).toLocaleString("en-US",{maximumFractionDigits:2});}
+  else{document.getElementById("from-usd").textContent="";}
+  document.getElementById("out-loading").classList.add("show");
+  document.getElementById("out-loading").textContent="Getting quote\u2026";
+  document.getElementById("btn-swap").disabled=true;document.getElementById("btn-swap").textContent="Getting quote\u2026";
+  quoteTimer=setTimeout(()=>fetchQuote(v),600);
+}
+
+async function loadPoolFee(poolAddr){
+  if(poolFees[poolAddr]!=null)return poolFees[poolAddr];
+  try{const p=new ethers.Contract(poolAddr,ABI_POOL_IMM,provider);const fee=await p.fee();poolFees[poolAddr]=Number(fee);return poolFees[poolAddr];}catch(e){return CFG.FEE;}
+}
+async function loadPoolImmutables(){if(provider)await Promise.all([loadPoolFee(POOL_ETH_SKOOP),loadPoolFee(POOL_USDC_SKOOP)]);}
+
+async function fetchQuote(amt){
+  if(!provider)return;
+  try{
+    await loadPoolImmutables();
+    const isUSDC=selToken==="USDC";
+    const poolAddr=isUSDC?POOL_USDC_SKOOP:POOL_ETH_SKOOP;
+    const tokenIn=isUSDC?CFG.USDC:CFG.WETH;
+    const decIn=isUSDC?CFG.USDC_DEC:CFG.WETH_DEC;
+    const amtIn=ethers.parseUnits(amt.toString(),decIn);
+    const fee=await loadPoolFee(poolAddr);
+    let amtOut=null,isEstimate=false;
+    try{
+      const ABI_Q2=["function quoteExactInputSingle((address tokenIn,address tokenOut,uint256 amountIn,uint24 fee,uint160 sqrtPriceLimitX96)) returns (uint256 amountOut,uint160 sqrtPriceX96After,uint32 initializedTicksCrossed,uint256 gasEstimate)"];
+      const q=new ethers.Contract('0x3d4e44eb1374240ce5f1b136cf395a8eae25d0ae',ABI_Q2,provider);
+      const [out]=await q.quoteExactInputSingle.staticCall({tokenIn,tokenOut:CFG.SKOOP,amountIn:amtIn,fee,sqrtPriceLimitX96:0n});
+      amtOut=out;
+    }catch(e1){
+      try{
+        const ABI_Q1=["function quoteExactInputSingle(address,address,uint24,uint256,uint160) returns (uint256)"];
+        const q=new ethers.Contract('0xb27308f9f90d607463bb33ea1bebb41c27ce5ab6',ABI_Q1,provider);
+        amtOut=await q.quoteExactInputSingle.staticCall(tokenIn,CFG.SKOOP,fee,amtIn,0n);
+      }catch(e2){
+        try{
+          const ABI_P=["function slot0() view returns (uint160 sqrtPriceX96,int24,uint16,uint16,uint16,uint8,bool)","function token0() view returns (address)"];
+          const pool=new ethers.Contract(poolAddr,ABI_P,provider);
+          const [s0,t0]=await Promise.all([pool.slot0(),pool.token0()]);
+          const sqrtPf=Number(s0.sqrtPriceX96)/Number(2n**96n);const priceRaw=sqrtPf*sqrtPf;
+          const skoopIsT0=t0.toLowerCase()===CFG.SKOOP.toLowerCase();
+          const inAmt=parseFloat(ethers.formatUnits(amtIn,decIn));
+          const skoopPerIn=skoopIsT0?(isUSDC?1/priceRaw:(1/priceRaw)*1e12):(isUSDC?priceRaw:priceRaw*1e12);
+          amtOut=ethers.parseUnits((inAmt*skoopPerIn*(1-fee/1e6)).toFixed(6),CFG.SKOOP_DEC);
+          isEstimate=true;
+        }catch(e3){document.getElementById("out-loading").textContent="Quote unavailable \u2014 try again";document.getElementById("btn-swap").textContent="Retry";return;}
+      }
+    }
+    curQuote={amtOut,amtIn,tokenIn,fee};
+    const out=parseFloat(ethers.formatUnits(amtOut,CFG.SKOOP_DEC));
+    const min=out*(1-slip/100);
+    document.getElementById("out-amt").textContent=(isEstimate?"~":"")+out.toLocaleString("en-US",{maximumFractionDigits:2});
+    document.getElementById("out-loading").classList.remove("show");
+    document.getElementById("det-route").textContent=selToken+" \u2192 SKOOP ("+(fee/10000).toFixed(2)+"%)";
+    document.getElementById("det-impact").textContent=isEstimate?"~estimated":"< 1%";
+    document.getElementById("det-min").textContent=min.toLocaleString("en-US",{maximumFractionDigits:2})+" SKOOP";
+    document.getElementById("swap-dets").classList.add("show");
+    document.getElementById("btn-swap").disabled=false;
+    document.getElementById("btn-swap").textContent=isEstimate?"Swap (estimated)":"Swap for SKOOP";
+  }catch(e){document.getElementById("out-loading").textContent="Quote unavailable";document.getElementById("btn-swap").textContent="Pool unavailable";}
+}
+
+async function execSwap(){
+  if(!curQuote||!signer)return;
+  const btn=document.getElementById("btn-swap");
+  const MAX_USD=500;
+  if(ethPriceUSD>0){
+    const spendUSD=selToken==="ETH"?parseFloat(ethers.formatEther(curQuote.amtIn))*ethPriceUSD:parseFloat(ethers.formatUnits(curQuote.amtIn,CFG.USDC_DEC));
+    if(spendUSD>MAX_USD){showToast("Max swap is $"+MAX_USD+" \u2014 reduce your amount",'err');return;}
+  }
+  btn.disabled=true;btn.innerHTML='<span class="spinner"></span> Swapping...';
+  try{
+    const router=new ethers.Contract(CFG.ROUTER,ABI_ROUTER,signer);
+    const minOut=curQuote.amtOut*BigInt(Math.floor((1-slip/100)*10000))/10000n;
+    let tx;
+    if(selToken==="ETH"){
+      tx=await router.exactInputSingle({tokenIn:CFG.WETH,tokenOut:CFG.SKOOP,fee:curQuote.fee||CFG.FEE,recipient:userAddr,amountIn:curQuote.amtIn,amountOutMinimum:minOut,sqrtPriceLimitX96:0n},{value:curQuote.amtIn});
+    }else{
+      const tc=new ethers.Contract(curQuote.tokenIn,ABI_ERC20,signer);
+      const al=await tc.allowance(userAddr,CFG.ROUTER);
+      if(al<curQuote.amtIn){showToast("Approving\u2026","");await(await tc.approve(CFG.ROUTER,curQuote.amtIn)).wait();}
+      tx=await router.exactInputSingle({tokenIn:curQuote.tokenIn,tokenOut:CFG.SKOOP,fee:curQuote.fee||CFG.FEE,recipient:userAddr,amountIn:curQuote.amtIn,amountOutMinimum:minOut,sqrtPriceLimitX96:0n});
+    }
+    showToast("Submitted\u2026","");await tx.wait();
+    showToast("Swap complete!","ok");
+    document.getElementById("from-amt").value="";resetOut();await refreshBals();
+    setTimeout(()=>refreshBals().catch(()=>{}),4000);
+  }catch(e){showToast(e?.reason||e?.shortMessage||e?.message||"Swap failed","err");}
+  btn.disabled=false;btn.textContent="Swap for SKOOP";
+}
+
+// ── QR SCANNER ────────────────────────────────────────────────────────────────
+function setScanState(state){
+  const ui=document.getElementById("scan-ui");const btn=document.getElementById("btn-cam");const hint=document.querySelector(".scan-hint");
+  if(state==='scanning'){if(ui)ui.style.display="none";if(btn)btn.style.display="none";}
+  else if(state==='retry'){if(ui)ui.style.display="flex";if(hint)hint.textContent="Tap below to try again";if(btn){btn.style.display="flex";btn.innerHTML='&#128247; &nbsp;Retry Camera';}}
+  else{if(ui)ui.style.display="flex";if(hint)hint.textContent="Point at the shop checkout QR";if(btn){btn.style.display="flex";btn.innerHTML='&#128247; &nbsp;Start Camera';}}
+}
+
+// CHANGE 2: fps:10 + aspectRatio:1.333 for faster iPhone lock-on
+function startScan(){
+  if(scannerRunning)return;
+  if(typeof Html5Qrcode==="undefined"){showToast("Scanner loading \u2014 try again","err");setScanState('retry');return;}
+  const scanner=new Html5Qrcode("qr-reader");
+  setScanState('scanning');
+  scanner.start(
+    {facingMode:"environment"},
+    {fps:10,qrbox:{width:250,height:250},aspectRatio:1.333},
+    txt=>{scanner.stop().catch(()=>{});scannerRunning=false;setScanState('ready');parseQR(txt);},
+    ()=>{}
+  ).then(()=>scannerRunning=true)
+   .catch(e=>{
+     scannerRunning=false;
+     const msg=e?.toString()||'';
+     if(msg.toLowerCase().includes('permission')||msg.toLowerCase().includes('denied')){showToast("Camera permission denied \u2014 allow camera access in settings","err");}
+     else{showToast("Camera error \u2014 tap Retry","err");}
+     setScanState('retry');
+   });
+}
+
+function parseQR(raw){
+  try{
+    let intent;
+    if(raw.startsWith('K1:')){
+      const b64=raw.slice(3).replace(/-/g,'+').replace(/_/g,'/');
+      const bin=atob(b64);const buf=new Uint8Array(bin.length);
+      for(let i=0;i<bin.length;i++)buf[i]=bin.charCodeAt(i);
+      function u8ToHex(arr){return '0x'+Array.from(arr).map(b=>b.toString(16).padStart(2,'0')).join('');}
+      function readBigInt(off,len){let v=0n;for(let i=0;i<len;i++)v=(v<<8n)|BigInt(buf[off+i]);return v;}
+      let off=0;
+      const receiptId=u8ToHex(buf.slice(off,off+32));off+=32;
+      const orderId=u8ToHex(buf.slice(off,off+32));off+=32;
+      const cartHash=u8ToHex(buf.slice(off,off+32));off+=32;
+      const tokenAmount=readBigInt(off,8).toString();off+=8;
+      const subtotalCents=Number(readBigInt(off,4));off+=4;
+      const taxCents=Number(readBigInt(off,4));off+=4;
+      const totalCents=Number(readBigInt(off,4));off+=4;
+      const itemCount=buf[off];off+=1;
+      const deadline=Number(readBigInt(off,4));off+=4;
+      const signature=u8ToHex(buf.slice(off,off+65));
+      const storeIdHash=ethers.id("KOKOS_NASHVILLE_01");
+      const terminalIdHash=ethers.id("POS_1");
+      intent={receiptId,orderId,storeIdHash,terminalIdHash,tokenAmount,subtotalCents,taxCents,totalCents,itemCount,cartHash,deadline,signature};
+    }else{
+      const d=JSON.parse(raw);
+      if(d.r!==undefined){
+        const receiptId=d.r;const storeIdHash=ethers.id("KOKOS_NASHVILLE_01");const terminalIdHash=ethers.id("POS_1");
+        const orderId=d.o||ethers.id("ORD_"+receiptId);const cartHash=d.ch||ethers.id(CFG.ESCROW+receiptId);
+        intent={receiptId,orderId,storeIdHash,terminalIdHash,tokenAmount:d.t,subtotalCents:d.sc,taxCents:d.tc,totalCents:d.xc,itemCount:d.ic,cartHash,deadline:d.dl,signature:d.sig};
+      }else{intent=d;}
+    }
+    const req=["receiptId","tokenAmount","subtotalCents","taxCents","totalCents","itemCount","deadline","signature"];
+    for(const f of req){if(intent[f]===undefined||intent[f]===null){throw new Error("Missing: "+f);}}
+    if(Date.now()/1000>Number(intent.deadline)){showToast("QR expired \u2014 ask shop to regenerate","err");return;}
+    pendingIntent=intent;showConfirm(intent);
+  }catch(e){showToast("Scan error \u2014 point at the QR and try again","err");setScanState('retry');}
+}
+
+async function showConfirm(d){
+  const sk=parseFloat(ethers.formatUnits(BigInt(d.tokenAmount),CFG.SKOOP_DEC));
+  document.getElementById("cc-usd").textContent="$"+(Number(d.totalCents)/100).toFixed(2);
+  document.getElementById("cc-skoop").textContent=sk.toLocaleString("en-US",{maximumFractionDigits:2})+" SKOOP";
+  document.getElementById("cc-items").textContent=d.itemCount+" item"+(Number(d.itemCount)>1?"s":"");
+  document.getElementById("cc-sub").textContent="$"+(Number(d.subtotalCents)/100).toFixed(2);
+  document.getElementById("cc-exp").textContent="Expires "+new Date(Number(d.deadline)*1000).toLocaleTimeString();
+  document.getElementById("cc-receipt").textContent=d.receiptId.slice(0,20)+"\u2026";
+  document.getElementById("pay-scan").classList.remove("active");document.getElementById("pay-confirm").classList.add("active");
+  try{
+    if(signer&&userAddr){
+      const readProvider=new ethers.JsonRpcProvider(CFG.RPC);
+      const sk2=new ethers.Contract(CFG.SKOOP,ABI_ERC20,readProvider);
+      const [al,rawBal]=await Promise.all([sk2.allowance(userAddr,CFG.ESCROW),sk2.balanceOf(userAddr)]);
+      const balFloat=parseFloat(ethers.formatUnits(rawBal,CFG.SKOOP_DEC));
+      const tokFloat=parseFloat(ethers.formatUnits(BigInt(d.tokenAmount),CFG.SKOOP_DEC));
+      const balEl=document.getElementById('cc-balance');
+      if(balEl){
+        balEl.textContent=balFloat.toLocaleString('en-US',{maximumFractionDigits:2})+' SKOOP';
+        if(balFloat<tokFloat){balEl.style.color='#b91c1c';balEl.textContent+=' \u2014 insufficient';}else{balEl.style.color='';}
+      }
+      const firstTime=al<BigInt(d.tokenAmount);
+      const notice=document.getElementById('first-time-notice');const btn=document.getElementById('btn-confirm');
+      if(balFloat<tokFloat){if(btn){btn.textContent='Insufficient SKOOP balance';btn.disabled=true;}if(notice)notice.style.display='none';}
+      else if(firstTime){if(notice)notice.style.display='flex';if(btn){btn.textContent='Step 1 of 2 \u2014 Approve SKOOP';btn.disabled=false;}}
+      else{if(notice)notice.style.display='none';if(btn){btn.textContent='Confirm & Pay with SKOOP';btn.disabled=false;}}
+    }
+  }catch(e){}
+}
+
+function cancelPay(){
+  pendingIntent=null;hideApprovalProgress();
+  const btn=document.getElementById("btn-confirm");if(btn){btn.disabled=false;btn.textContent="Confirm & Pay with SKOOP";}
+  const notice=document.getElementById('first-time-notice');if(notice)notice.style.display='none';
+  document.getElementById("pay-confirm").classList.remove("active");document.getElementById("pay-scan").classList.add("active");
+}
+
+function showApprovalProgress(){
+  document.getElementById('approval-progress').classList.add('show');document.getElementById('btn-cancel').style.display='none';
+  setApStep(1,'active','Waiting for your wallet \u2014 tap Confirm to approve');
+  setApStep(2,'waiting','Confirm the payment transaction in your wallet');
+}
+function hideApprovalProgress(){document.getElementById('approval-progress').classList.remove('show');document.getElementById('btn-cancel').style.display='';}
+function setApStep(n,state,desc){
+  const dot=document.getElementById('ap-dot-'+n);const descEl=document.getElementById('ap-desc-'+n);
+  dot.className='ap-step-dot '+state;
+  if(state==='done')dot.innerHTML='\u2713';else if(state==='error')dot.innerHTML='\u2715';else dot.innerHTML=n;
+  if(desc)descEl.textContent=desc;
+}
+
+async function confirmPay(){
+  if(!pendingIntent||!signer)return;
+  const btn=document.getElementById("btn-confirm");btn.disabled=true;
+  try{
+    const d=pendingIntent;const tokAmt=BigInt(d.tokenAmount);
+    const sk=new ethers.Contract(CFG.SKOOP,ABI_ERC20,signer);
+    const readProvider2=new ethers.JsonRpcProvider(CFG.RPC);
+    const sk2=new ethers.Contract(CFG.SKOOP,ABI_ERC20,readProvider2);
+    const liveBal=await sk2.balanceOf(userAddr);
+    if(liveBal<tokAmt){showToast('Not enough SKOOP \u2014 buy more to pay','err');btn.disabled=false;btn.textContent='Confirm & Pay with SKOOP';return;}
+    const al=await sk.allowance(userAddr,CFG.ESCROW);
+    if(al<tokAmt){
+      showApprovalProgress();setApStep(1,'active','Waiting for your wallet \u2014 tap Confirm to approve');
+      btn.innerHTML='<span class="spinner"></span> Step 1 of 2 \u2014 Approving\u2026';
+      try{
+        const approveTx=await sk.approve(CFG.ESCROW,ethers.MaxUint256);
+        setApStep(1,'active','Approval submitted \u2014 confirming on chain\u2026');
+        btn.innerHTML='<span class="spinner"></span> Confirming approval\u2026';
+        await approveTx.wait();
+      }catch(e){setApStep(1,'error','Approval rejected \u2014 tap below to try again');btn.disabled=false;btn.textContent="Try Again";return;}
+      setApStep(1,'done','Approved \u2713 \u2014 SKOOP spending unlocked forever');
+      setApStep(2,'active','Waiting for your wallet \u2014 confirm the payment');
+      btn.innerHTML='<span class="spinner"></span> Step 2 of 2 \u2014 Sending payment\u2026';
+      await new Promise(r=>setTimeout(r,600));
+    }else{btn.innerHTML='<span class="spinner"></span> Processing\u2026';}
+    const intent={
+      receiptId:d.receiptId,orderId:d.orderId,storeIdHash:d.storeIdHash,terminalIdHash:d.terminalIdHash,
+      tokenAmount:BigInt(d.tokenAmount),subtotalCents:BigInt(d.subtotalCents),taxCents:BigInt(d.taxCents),
+      totalCents:BigInt(d.totalCents),itemCount:BigInt(d.itemCount),cartHash:d.cartHash,deadline:BigInt(d.deadline)
+    };
+    const escrow=new ethers.Contract(CFG.ESCROW,ABI_ESCROW,signer);let tx;
+    try{tx=await escrow.capturePayment(intent,d.signature);}
+    catch(e){
+      if(al<tokAmt)setApStep(2,'error','Payment rejected \u2014 tap below to try again');
+      showToast(e?.reason||e?.shortMessage||e?.data?.message||e?.message||"Payment rejected","err");
+      btn.disabled=false;btn.textContent="Try Again";return;
+    }
+    if(al<tokAmt)setApStep(2,'done','Payment sent \u2713');
+    const fmt=parseFloat(ethers.formatUnits(tokAmt,CFG.SKOOP_DEC));
+    const totalUSD='$'+(Number(d.totalCents)/100).toFixed(2);
+    document.getElementById('success-total-display').textContent=totalUSD+' \u00b7 '+fmt.toLocaleString('en-US',{maximumFractionDigits:2})+' SKOOP';
+    document.getElementById("success-detail").innerHTML=
+      `<div class="sc-row"><span class="sk">SKOOP paid</span><span class="sv" style="color:var(--coral-deep);">${fmt.toLocaleString("en-US",{maximumFractionDigits:2})} SKOOP</span></div>`+
+      `<div class="sc-row"><span class="sk">Total</span><span class="sv">${totalUSD}</span></div>`+
+      `<div class="sc-row"><span class="sk">Tx</span><span class="sv" style="font-family:monospace;font-size:0.62rem;">${tx.hash.slice(0,20)}\u2026</span></div>`+
+      `<div class="sc-row"><span class="sk">Block</span><span class="sv">confirming\u2026</span></div>`;
+    setTimeout(()=>{navigator.vibrate&&navigator.vibrate([100,50,100]);playChaChingSound();document.getElementById("success-screen").classList.add("show");},400);
+    pendingIntent=null;hideApprovalProgress();
+    tx.wait().then(rcpt=>{if(rcpt&&rcpt.blockNumber){const blockEl=document.querySelector('#success-detail .sc-row:last-child .sv');if(blockEl)blockEl.textContent=rcpt.blockNumber;}refreshBals();}).catch(()=>refreshBals());
+    setTimeout(()=>refreshBals().catch(()=>{}),4000);
+  }catch(e){
+    if(document.getElementById('approval-progress').classList.contains('show'))setApStep(2,'error','Payment rejected \u2014 tap below to try again');
+    btn.disabled=false;btn.textContent="Try Again";return;
+  }
+  btn.disabled=false;btn.textContent="Confirm & Pay with SKOOP";
+}
+
+function closeSuccess(){
+  document.getElementById("success-screen").classList.remove("show");
+  document.getElementById("pay-confirm").classList.remove("active");
+  document.getElementById("pay-scan").classList.add("active");
+  goTo("home");
+}
+
+function buildMyQR(){
+  if(!userAddr)return;
+  document.getElementById("qr-addr").textContent=userAddr;
+  const div=document.getElementById("my-qr-div");div.innerHTML="";
+  if(typeof QRCode==="undefined"){div.textContent="Show address below to shop";return;}
+  new QRCode(div,{text:userAddr,width:240,height:240,colorDark:"#2a1f1a",colorLight:"#fffaf7",correctLevel:QRCode.CorrectLevel.M});
+}
+
+function goTo(name){
+  document.querySelectorAll(".screen").forEach(s=>s.classList.remove("active"));
+  document.querySelectorAll(".nav-item").forEach(n=>n.classList.remove("active"));
+  document.getElementById("screen-"+name).classList.add("active");
+  document.getElementById("nav-"+name).classList.add("active");
+  if(name==="buy")updateFromBal();
+  if(name==="qr")setTimeout(buildMyQR,80);
+}
+
+// ── PRICE MODAL ───────────────────────────────────────────────────────────────
+async function openPriceModal(){document.getElementById('price-modal').style.display='flex';await renderPriceModal();}
+function closePriceModal(){document.getElementById('price-modal').style.display='none';}
+
+async function renderPriceModal(){
+  if(!skoopPriceUSD||!ethPriceUSD)await fetchEthPrice();
+  const price=skoopPriceUSD,ethP=ethPriceUSD;
+  const setEl=(id,val)=>{const el=document.getElementById(id);if(el)el.textContent=val;};
+  if(price>0){
+    setEl('pm-price','$'+price.toFixed(8));
+    setEl('pm-eth-price','ETH: $'+ethP.toLocaleString('en-US',{maximumFractionDigits:0}));
+    setEl('pm-per-eth',Math.round(ethP/price).toLocaleString('en-US'));
+    setEl('pm-per-usdc',Math.round(1/price).toLocaleString('en-US'));
+    const mcap=price*888888888;
+    setEl('pm-mcap','$'+(mcap>=1e6?(mcap/1e6).toFixed(2)+'M':mcap>=1e3?(mcap/1e3).toFixed(1)+'K':mcap.toFixed(0)));
+    const sub=document.getElementById('home-skoop-price');if(sub)sub.textContent='$'+price.toFixed(6);
+  }
+  await drawPriceChart();
+}
+
+function drawFlatLine(ctx,canvas,price){
+  const W=canvas.width,H=canvas.height;ctx.clearRect(0,0,W,H);
+  ['rgba(253,206,193,0.2)','rgba(205,230,215,0.2)','rgba(250,226,216,0.2)','rgba(255,221,173,0.2)'].forEach((c,i)=>{ctx.fillStyle=c;ctx.fillRect(W/4*i,0,W/4,H);});
+  ctx.strokeStyle='rgba(232,135,106,0.35)';ctx.setLineDash([5,5]);ctx.lineWidth=1.5;
+  ctx.beginPath();ctx.moveTo(20,H/2);ctx.lineTo(W-20,H/2);ctx.stroke();ctx.setLineDash([]);
+  if(price>0){ctx.font='600 11px "Instrument Sans",sans-serif';ctx.textAlign='center';ctx.fillStyle='rgba(107,79,71,0.5)';ctx.fillText('$'+price.toFixed(6),W/2,H/2-8);}
+  ctx.font='500 10px "Instrument Sans",sans-serif';ctx.fillStyle='rgba(107,79,71,0.35)';ctx.fillText('Accumulating price history\u2026',W/2,H/2+16);
+}
+
+function drawCandlestickChart(ctx,canvas,candles,isFallback=false){
+  const W=canvas.width,H=canvas.height;
+  const pad={top:18,right:16,bottom:28,left:62};
+  const chartW=W-pad.left-pad.right,chartH=H-pad.top-pad.bottom;
+  ctx.clearRect(0,0,W,H);
+  [{color:'rgba(253,206,193,0.18)',x:pad.left,w:chartW/4},{color:'rgba(205,230,215,0.18)',x:pad.left+chartW/4,w:chartW/4},{color:'rgba(250,226,216,0.18)',x:pad.left+chartW*2/4,w:chartW/4},{color:'rgba(255,221,173,0.18)',x:pad.left+chartW*3/4,w:chartW/4}]
+    .forEach(b=>{ctx.fillStyle=b.color;ctx.fillRect(b.x,pad.top,b.w,chartH);});
+  const allLows=candles.map(c=>c.l),allHighs=candles.map(c=>c.h);
+  const dataMin=Math.min(...allLows),dataMax=Math.max(...allHighs);
+  const mid=(dataMin+dataMax)/2;const naturalRange=dataMax-dataMin;const minRange=mid*0.08;
+  const pad2=Math.max(naturalRange*0.05,minRange*0.1);
+  const minP=Math.min(dataMin,mid-minRange/2)-pad2;const maxP=Math.max(dataMax,mid+minRange/2)+pad2;
+  const range=maxP-minP;const n=candles.length;
+  function pY(p){return pad.top+chartH*(1-(p-minP)/range);}
+  function pX(i){return pad.left+(i+0.5)/n*chartW;}
+  const candleW=Math.max(3,Math.floor(chartW/n*0.55));
+  for(let i=0;i<=4;i++){
+    const t=i/4,y=pad.top+chartH*(1-t);
+    ctx.strokeStyle='rgba(42,31,26,0.07)';ctx.lineWidth=1;ctx.setLineDash([3,4]);
+    ctx.beginPath();ctx.moveTo(pad.left,y);ctx.lineTo(W-pad.right,y);ctx.stroke();ctx.setLineDash([]);
+    ctx.fillStyle='rgba(107,79,71,0.5)';ctx.font='600 9px "Instrument Sans",sans-serif';ctx.textAlign='right';
+    ctx.fillText('$'+(minP+range*t).toFixed(6),pad.left-5,y+3);
+  }
+  ctx.fillStyle='rgba(107,79,71,0.45)';ctx.font='600 9px "Instrument Sans",sans-serif';ctx.textAlign='center';
+  const labelCount=Math.min(5,n);
+  for(let i=0;i<labelCount;i++){
+    const idx=Math.round(i/(labelCount-1)*(n-1));const daysAgo=Math.round((n-1-idx));
+    const lbl=daysAgo===0?'today':(isFallback?'~'+daysAgo+'d':daysAgo+'d ago');ctx.fillText(lbl,pX(idx),H-6);
+  }
+  candles.forEach((c,i)=>{
+    const x=pX(i);const isGreen=c.c>=c.o;
+    const bodyColor=isGreen?'#4a9e7a':'#e8876a';const wickColor=isGreen?'#2d7a5f':'#c0603d';
+    ctx.strokeStyle=wickColor;ctx.lineWidth=1.5;ctx.beginPath();ctx.moveTo(x,pY(c.h));ctx.lineTo(x,pY(c.l));ctx.stroke();
+    const bodyTop=pY(Math.max(c.o,c.c));const bodyBot=pY(Math.min(c.o,c.c));const bodyH=Math.max(4,bodyBot-bodyTop);
+    ctx.fillStyle=bodyColor;ctx.beginPath();ctx.roundRect(x-candleW/2,bodyTop,candleW,bodyH,2);ctx.fill();
+    if(bodyH<=1.5){ctx.strokeStyle=bodyColor;ctx.lineWidth=1.5;ctx.beginPath();ctx.moveTo(x-candleW/2,bodyTop);ctx.lineTo(x+candleW/2,bodyTop);ctx.stroke();}
+  });
+  const first=candles[0].o,last=candles[candles.length-1].c;
+  const delta=last-first,deltaPct=(delta/first*100).toFixed(2),sign=delta>=0?'+':'';
+  const lc=delta>=0?'#11483d':'#e8876a',lb=delta>=0?'rgba(205,230,215,0.85)':'rgba(253,206,193,0.85)';
+  const label=sign+deltaPct+'%'+(isFallback?' (est)':'');
+  ctx.font='700 10px "Instrument Sans",sans-serif';
+  const tw=ctx.measureText(label).width;const lbx=W-pad.right-tw-12,lby=pad.top+4;
+  ctx.fillStyle=lb;ctx.beginPath();ctx.roundRect(lbx-4,lby-1,tw+8,14,4);ctx.fill();
+  ctx.fillStyle=lc;ctx.textAlign='left';ctx.fillText(label,lbx,lby+10);
+}
+
+async function drawPriceChart(){
+  const canvas=document.getElementById('pm-chart');const ctx=canvas.getContext('2d');
+  const statusEl=document.getElementById('pm-chart-status');canvas.width=canvas.offsetWidth||390;
+  try{
+    const url=`https://api.geckoterminal.com/api/v2/networks/base/pools/${POOL_ETH_SKOOP}/ohlcv/day?aggregate=1&limit=30&currency=usd&token=base`;
+    const r=await fetch(url);if(!r.ok)throw new Error('GT status '+r.status);
+    const json=await r.json();const raw=json?.data?.attributes?.ohlcv_list;
+    if(!raw||raw.length<2)throw new Error('no data');
+    const candles=raw.slice().reverse().map(c=>({t:c[0],o:parseFloat(c[1]),h:parseFloat(c[2]),l:parseFloat(c[3]),c:parseFloat(c[4]),v:parseFloat(c[5])}));
+    statusEl.textContent=candles.length+'d \u00b7 30 day';drawCandlestickChart(ctx,canvas,candles);return;
+  }catch(e){}
+  try{
+    const pub=new ethers.JsonRpcProvider(CFG.RPC);
+    const ABI_SWAP=["event Swap(address indexed sender,address indexed recipient,int256 amount0,int256 amount1,uint160 sqrtPriceX96,uint128 liquidity,int24 tick)"];
+    const pool=new ethers.Contract(POOL_ETH_SKOOP,ABI_SWAP,pub);
+    const currentBlock=await pub.getBlockNumber();const fromBlock=currentBlock-9000;
+    const events=await pool.queryFilter(pool.filters.Swap(),fromBlock);
+    if(events.length<2){statusEl.textContent='not enough data yet';drawFlatLine(ctx,canvas,skoopPriceUSD);return;}
+    statusEl.textContent=events.length+' swaps \u00b7 ~6h';
+    const Q96f=Number(2n**96n);
+    const prices=events.map(e=>{const sqrtPf=Number(e.args.sqrtPriceX96)/Q96f;const raw=sqrtPf*sqrtPf;const skoopPerEth=raw*1e12;return skoopPerEth>0?ethPriceUSD/skoopPerEth:0;}).filter(p=>p>0);
+    if(!prices.length){drawFlatLine(ctx,canvas,skoopPriceUSD);return;}
+    const buckets=[];const bsize=Math.max(1,Math.floor(prices.length/24));
+    for(let i=0;i<prices.length;i+=bsize){const slice=prices.slice(i,i+bsize);buckets.push({o:slice[0],h:Math.max(...slice),l:Math.min(...slice),c:slice[slice.length-1],t:i});}
+    drawCandlestickChart(ctx,canvas,buckets,true);
+  }catch(e){statusEl.textContent='Chart unavailable';drawFlatLine(ctx,canvas,skoopPriceUSD);}
+}
+
+// ── SOUND ─────────────────────────────────────────────────────────────────────
+function playChaChingSound(){
+  try{
+    const ctx=new(window.AudioContext||window.webkitAudioContext)();const now=ctx.currentTime;
+    function bell(freq,start,decay,vol){const osc=ctx.createOscillator();const g=ctx.createGain();osc.connect(g);g.connect(ctx.destination);osc.type='sine';osc.frequency.setValueAtTime(freq,now+start);g.gain.setValueAtTime(vol,now+start);g.gain.exponentialRampToValueAtTime(0.0001,now+start+decay);osc.start(now+start);osc.stop(now+start+decay+0.05);}
+    function mclick(start,vol){const len=Math.floor(ctx.sampleRate*0.04);const buf=ctx.createBuffer(1,len,ctx.sampleRate);const d=buf.getChannelData(0);for(let i=0;i<len;i++)d[i]=(Math.random()*2-1)*(1-i/len);const src=ctx.createBufferSource();const hpf=ctx.createBiquadFilter();const g=ctx.createGain();hpf.type='highpass';hpf.frequency.value=2000;src.buffer=buf;src.connect(hpf);hpf.connect(g);g.connect(ctx.destination);g.gain.setValueAtTime(vol,now+start);g.gain.exponentialRampToValueAtTime(0.0001,now+start+0.04);src.start(now+start);src.stop(now+start+0.06);}
+    mclick(0,1.2);bell(220,0,0.06,0.4);bell(440,0,0.05,0.2);bell(880,0,0.04,0.1);
+    mclick(0.08,0.3);bell(2637,0.08,0.9,0.6);bell(3520,0.08,0.6,0.25);bell(5274,0.08,0.4,0.12);bell(1760,0.08,1.0,0.15);
+    setTimeout(()=>{try{ctx.close();}catch(e){}},1400);
+  }catch(e){}
+}
+
+// ── TOAST ─────────────────────────────────────────────────────────────────────
+let toastT;
+function showToast(msg,type=""){
+  const el=document.getElementById("toast");
+  el.className="show"+(type?" "+type:"");
+  el.innerHTML=(type==="ok"?"\u2713 ":type==="err"?"\u2715 ":"")+msg;
+  clearTimeout(toastT);toastT=setTimeout(()=>el.classList.remove("show"),4000);
+}
+if('serviceWorker' in navigator){navigator.serviceWorker.register('./sw.js').catch(()=>{});}
+</script>
+</body>
+</html>
