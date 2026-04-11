@@ -968,32 +968,20 @@ async function loadActivityFeed(){
   try{
     const readProvider=new ethers.JsonRpcProvider(CFG.RPC);
     const currentBlock=await readProvider.getBlockNumber();
-
-    // Base public RPC allows large getLogs ranges when filtered by address+topics.
-    // Use a single call per sender — 500000 blocks ≈ 12 days, safe and fast.
-    const LOOKBACK=500000;
-    const TODAY_BLOCKS=43200; // ~24h on Base
-
+    // 50000 blocks ≈ 28 hours on Base — small enough to always succeed, big enough to cover today
+    const fromBlock=currentBlock-50000;
     const topic0=ethers.id('Transfer(address,address,uint256)');
     const pad=a=>'0x'+ethers.getAddress(a).slice(2).toLowerCase().padStart(64,'0');
     const toUser    =pad(userAddr);
     const fromPOS   =pad(CFG.POS_SIGNER);
     const fromEscrow=pad(CFG.ESCROW);
-    const fromBlock =Math.max(0,currentBlock-LOOKBACK);
-    const toBlock   =currentBlock;
 
-    async function getLogs(fromTopic){
-      try{
-        return await readProvider.send('eth_getLogs',[{
-          address:CFG.SKOOP,
-          topics:[topic0,fromTopic,toUser],
-          fromBlock:'0x'+fromBlock.toString(16),
-          toBlock:'0x'+toBlock.toString(16)
-        }]);
-      }catch(e){return [];}
-    }
+    // Two calls: one per reward source. Both provably small ranges.
+    const [posLogs,escrowLogs]=await Promise.all([
+      readProvider.send('eth_getLogs',[{address:CFG.SKOOP,topics:[topic0,fromPOS,toUser],fromBlock:'0x'+fromBlock.toString(16),toBlock:'0x'+currentBlock.toString(16)}]).catch(()=>[]),
+      readProvider.send('eth_getLogs',[{address:CFG.SKOOP,topics:[topic0,fromEscrow,toUser],fromBlock:'0x'+fromBlock.toString(16),toBlock:'0x'+currentBlock.toString(16)}]).catch(()=>[]),
+    ]);
 
-    const [posLogs,escrowLogs]=await Promise.all([getLogs(fromPOS),getLogs(fromEscrow)]);
     const allLogs=[...posLogs,...escrowLogs]
       .sort((a,b)=>parseInt(b.blockNumber,16)-parseInt(a.blockNumber,16));
 
@@ -1002,26 +990,18 @@ async function loadActivityFeed(){
       return;
     }
 
-    const todayCutoff=currentBlock-TODAY_BLOCKS;
-    const todayLogs=allLogs.filter(l=>parseInt(l.blockNumber,16)>=todayCutoff);
     const fmt=n=>n.toLocaleString('en-US',{maximumFractionDigits:2});
-    const sum=logs=>logs.reduce((s,l)=>s+parseFloat(ethers.formatUnits(BigInt(l.data),CFG.SKOOP_DEC)),0);
-    const todayAmt=sum(todayLogs);
-    const totalAmt=sum(allLogs);
+    const totalAmt=allLogs.reduce((s,l)=>s+parseFloat(ethers.formatUnits(BigInt(l.data),CFG.SKOOP_DEC)),0);
 
-    const totalRow=`<div class="tx-row" style="background:var(--apricot);">
-      <div class="tx-dot td-apricot">⭐</div>
-      <div class="tx-info"><div class="tx-name" style="font-weight:700;">All-time rewards</div><div class="tx-date">${allLogs.length} reward${allLogs.length!==1?'s':''} total</div></div>
+    // Summary row — total across both sources
+    const summaryRow=`<div class="tx-row" style="background:var(--mint);">
+      <div class="tx-dot td-mint">🍦</div>
+      <div class="tx-info"><div class="tx-name" style="font-weight:700;">Total rewards</div><div class="tx-date">${allLogs.length} reward${allLogs.length!==1?'s':''} · last 28 hrs</div></div>
       <div class="tx-val"><div class="amt amt-plus" style="font-size:20px;">+${fmt(totalAmt)}</div></div>
     </div>`;
 
-    const todayRow=todayLogs.length?`<div class="tx-row" style="background:var(--mint);">
-      <div class="tx-dot td-mint">🍦</div>
-      <div class="tx-info"><div class="tx-name" style="font-weight:700;">Earned today</div><div class="tx-date">${todayLogs.length} reward${todayLogs.length!==1?'s':''}</div></div>
-      <div class="tx-val"><div class="amt amt-plus" style="font-size:20px;">+${fmt(todayAmt)}</div></div>
-    </div>`:'';
-
-    const detailRows=todayLogs.map(log=>{
+    // Individual rows, newest first, labelled by source
+    const detailRows=allLogs.map(log=>{
       const amt=parseFloat(ethers.formatUnits(BigInt(log.data),CFG.SKOOP_DEC));
       const block=parseInt(log.blockNumber,16);
       const shortHash=log.transactionHash.slice(0,10)+'…';
@@ -1034,7 +1014,7 @@ async function loadActivityFeed(){
       </div>`;
     }).join('');
 
-    list.innerHTML=totalRow+todayRow+detailRows;
+    list.innerHTML=summaryRow+detailRows;
 
   }catch(e){
     list.innerHTML='<div class="tx-row"><div class="tx-dot td-apricot">⚠️</div><div class="tx-info"><div class="tx-name">Could not load activity</div><div class="tx-date">'+e.message.slice(0,60)+'</div></div></div>';
