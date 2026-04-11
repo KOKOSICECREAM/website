@@ -858,7 +858,7 @@ async function loadActivityFeed(){
   try{
     const readProvider=new ethers.JsonRpcProvider(CFG.RPC);
     const currentBlock=await readProvider.getBlockNumber();
-    const ORIGIN_BLOCK=44542804;
+    const ORIGIN_BLOCK=44543736;
     const todayCutoff=currentBlock-43200;
     const topic0=ethers.id('Transfer(address,address,uint256)');
     const pad=a=>'0x'+ethers.getAddress(a).slice(2).toLowerCase().padStart(64,'0');
