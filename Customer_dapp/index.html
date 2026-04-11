@@ -968,24 +968,24 @@ async function loadActivityFeed(){
   try{
     const readProvider=new ethers.JsonRpcProvider(CFG.RPC);
     const currentBlock=await readProvider.getBlockNumber();
-    // 50000 blocks ≈ 28 hours on Base
-    const fromBlock=currentBlock-50000;
+
+    // Fixed origin block — all KOKOS rewards tracked from launch
+    const ORIGIN_BLOCK=44542804;
+    // Today window: ~24 hours on Base (~2s per block)
+    const todayCutoff=currentBlock-43200;
+
     const topic0=ethers.id('Transfer(address,address,uint256)');
     const pad=a=>'0x'+ethers.getAddress(a).slice(2).toLowerCase().padStart(64,'0');
 
-    // Watch ANY incoming SKOOP transfer to this wallet — no sender filter.
-    // Rewards can come from the owner wallet, POS signer, escrow, or any future address.
-    // null in topic[1] position = any sender.
+    // Any incoming SKOOP to this wallet from launch — no sender filter needed
     const logs=await readProvider.send('eth_getLogs',[{
       address:CFG.SKOOP,
       topics:[topic0, null, pad(userAddr)],
-      fromBlock:'0x'+fromBlock.toString(16),
+      fromBlock:'0x'+ORIGIN_BLOCK.toString(16),
       toBlock:'0x'+currentBlock.toString(16)
     }]).catch(()=>[]);
 
-    // Exclude outgoing swaps — filter out transfers where user is also the sender
-    // (e.g. buying SKOOP on Uniswap triggers a Transfer FROM user to router then back,
-    //  we only want net incoming from external sources)
+    // Exclude self-transfers (e.g. Uniswap routing)
     const inbound=logs.filter(l=>{
       const from=(l.topics[1]||'').slice(-40).toLowerCase();
       return from!==userAddr.slice(2).toLowerCase();
@@ -997,29 +997,25 @@ async function loadActivityFeed(){
     }
 
     const fmt=n=>n.toLocaleString('en-US',{maximumFractionDigits:2});
+    const todayLogs=inbound.filter(l=>parseInt(l.blockNumber,16)>=todayCutoff);
+    const todayAmt=todayLogs.reduce((s,l)=>s+parseFloat(ethers.formatUnits(BigInt(l.data),CFG.SKOOP_DEC)),0);
     const totalAmt=inbound.reduce((s,l)=>s+parseFloat(ethers.formatUnits(BigInt(l.data),CFG.SKOOP_DEC)),0);
 
-    const summaryRow=`<div class="tx-row" style="background:var(--mint);">
-      <div class="tx-dot td-mint">🍦</div>
-      <div class="tx-info"><div class="tx-name" style="font-weight:700;">Total rewards</div><div class="tx-date">${inbound.length} reward${inbound.length!==1?'s':''} · last 28 hrs</div></div>
+    // Total to date row
+    const totalRow=`<div class="tx-row" style="background:var(--apricot);">
+      <div class="tx-dot td-apricot">⭐</div>
+      <div class="tx-info"><div class="tx-name" style="font-weight:700;">Total to date</div><div class="tx-date">${inbound.length} reward${inbound.length!==1?'s':''} since launch</div></div>
       <div class="tx-val"><div class="amt amt-plus" style="font-size:20px;">+${fmt(totalAmt)}</div></div>
     </div>`;
 
-    const detailRows=inbound.map(log=>{
-      const amt=parseFloat(ethers.formatUnits(BigInt(log.data),CFG.SKOOP_DEC));
-      const block=parseInt(log.blockNumber,16);
-      const shortHash=log.transactionHash.slice(0,10)+'…';
-      const fromAddr='0x'+(log.topics[1]||'').slice(-40).toLowerCase();
-      // Label by known contract addresses; everything else is a KOKOS reward
-      const label=fromAddr===CFG.ESCROW.toLowerCase()?'SKOOP payment reward':'KOKOS reward';
-      return `<div class="tx-row" onclick="window.open('https://basescan.org/tx/${log.transactionHash}','_blank')" style="cursor:pointer;">
-        <div class="tx-dot td-mint">🎁</div>
-        <div class="tx-info"><div class="tx-name">${label}</div><div class="tx-date">Block ${block} · ${shortHash}</div></div>
-        <div class="tx-val"><div class="amt amt-plus">+${fmt(amt)}</div></div>
-      </div>`;
-    }).join('');
+    // Today summary row (only shown if there are rewards today)
+    const todayRow=todayLogs.length?`<div class="tx-row" style="background:var(--mint);">
+      <div class="tx-dot td-mint">🍦</div>
+      <div class="tx-info"><div class="tx-name" style="font-weight:700;">Earned today</div><div class="tx-date">${todayLogs.length} reward${todayLogs.length!==1?'s':''}</div></div>
+      <div class="tx-val"><div class="amt amt-plus" style="font-size:20px;">+${fmt(todayAmt)}</div></div>
+    </div>`:'';
 
-    list.innerHTML=summaryRow+detailRows;
+    list.innerHTML=totalRow+todayRow;
 
   }catch(e){
     list.innerHTML='<div class="tx-row"><div class="tx-dot td-apricot">⚠️</div><div class="tx-info"><div class="tx-name">Could not load activity</div><div class="tx-date">'+e.message.slice(0,60)+'</div></div></div>';
