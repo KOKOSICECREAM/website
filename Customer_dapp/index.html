@@ -849,7 +849,7 @@ async function updateFromBal(){
 
 // ── ACTIVITY FEED ─────────────────────────────────────────────────────────────
 // null sender topic catches ANY wallet — works for all current and future POS devices
-// Fixed ORIGIN_BLOCK means total-to-date is always accurate from day one
+// Fixed origin block — all-time rewards since launch
 async function loadActivityFeed(){
   if(!userAddr)return;
   const list=document.querySelector('.tx-list');
@@ -858,8 +858,8 @@ async function loadActivityFeed(){
   try{
     const readProvider=new ethers.JsonRpcProvider(CFG.RPC);
     const currentBlock=await readProvider.getBlockNumber();
-    const ORIGIN_BLOCK=44234561;
-    const todayCutoff=currentBlock-44709289;
+    const ORIGIN_BLOCK=44543736;           // first real reward block
+    const todayCutoff=currentBlock-86400;   // ~24 hours on Base (~2 blocks/sec actual)
     const topic0=ethers.id('Transfer(address,address,uint256)');
     const pad=a=>'0x'+ethers.getAddress(a).slice(2).toLowerCase().padStart(64,'0');
     const logs=await readProvider.send('eth_getLogs',[{
