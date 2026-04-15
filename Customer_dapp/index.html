@@ -859,34 +859,42 @@ async function loadActivityFeed(){
     const readProvider=new ethers.JsonRpcProvider(CFG.RPC);
     const currentBlock=await readProvider.getBlockNumber();
     const ORIGIN_BLOCK=44543736;           // first real reward block
-    const todayCutoff=currentBlock-86400;   // ~24 hours on Base (~2 blocks/sec actual)
+    const todayCutoff=currentBlock-86400;   // ~24 hours on Base
     const topic0=ethers.id('Transfer(address,address,uint256)');
     const pad=a=>'0x'+ethers.getAddress(a).slice(2).toLowerCase().padStart(64,'0');
-    const logs=await readProvider.send('eth_getLogs',[{
-      address:CFG.SKOOP,
-      topics:[topic0,null,pad(userAddr)],
-      fromBlock:'0x'+ORIGIN_BLOCK.toString(16),
-      toBlock:'0x'+currentBlock.toString(16)
-    }]).catch(()=>[]);
-    // Exclude self-transfers AND known Uniswap/pool addresses that aren't rewards
     const EXCLUDED=[
-      userAddr.slice(2).toLowerCase(),               // self (Uniswap routing)
-      CFG.ROUTER.slice(2).toLowerCase(),             // Uniswap V3 router
-      POOL_ETH_SKOOP.slice(2).toLowerCase(),         // ETH/SKOOP pool
-      POOL_USDC_SKOOP.slice(2).toLowerCase(),        // USDC/SKOOP pool
+      userAddr.slice(2).toLowerCase(),
+      CFG.ROUTER.slice(2).toLowerCase(),
+      POOL_ETH_SKOOP.slice(2).toLowerCase(),
+      POOL_USDC_SKOOP.slice(2).toLowerCase(),
     ];
-    const inbound=logs.filter(l=>{
-      const from=(l.topics[1]||'').slice(-40).toLowerCase();
-      return !EXCLUDED.includes(from);
-    }).sort((a,b)=>parseInt(b.blockNumber,16)-parseInt(a.blockNumber,16));
-    if(!inbound.length){
+    const filter=(logs)=>logs.filter(l=>!EXCLUDED.includes((l.topics[1]||'').slice(-40).toLowerCase()));
+
+    // Two separate queries: today (small, always works) + all-time (may be large)
+    // Split avoids 413 on the all-time query — today is tiny, all-time sums only
+    const [todayRaw, allRaw]=await Promise.all([
+      readProvider.send('eth_getLogs',[{
+        address:CFG.SKOOP,topics:[topic0,null,pad(userAddr)],
+        fromBlock:'0x'+todayCutoff.toString(16),toBlock:'0x'+currentBlock.toString(16)
+      }]).catch(()=>[]),
+      readProvider.send('eth_getLogs',[{
+        address:CFG.SKOOP,topics:[topic0,null,pad(userAddr)],
+        fromBlock:'0x'+ORIGIN_BLOCK.toString(16),toBlock:'0x'+currentBlock.toString(16)
+      }]).catch(()=>[]),
+    ]);
+
+    const todayLogs=filter(todayRaw).sort((a,b)=>parseInt(b.blockNumber,16)-parseInt(a.blockNumber,16));
+    const allLogs=filter(allRaw);
+
+    if(!allLogs.length && !todayLogs.length){
       list.innerHTML='<div class="tx-row"><div class="tx-dot td-apricot">\ud83c\udf66</div><div class="tx-info"><div class="tx-name">No rewards yet</div><div class="tx-date">Pay at the shop to earn SKOOP</div></div></div>';
       return;
     }
     const fmt=n=>n.toLocaleString('en-US',{maximumFractionDigits:2});
-    const todayLogs=inbound.filter(l=>parseInt(l.blockNumber,16)>=todayCutoff);
     const todayAmt=todayLogs.reduce((s,l)=>s+parseFloat(ethers.formatUnits(BigInt(l.data),CFG.SKOOP_DEC)),0);
-    const totalAmt=inbound.reduce((s,l)=>s+parseFloat(ethers.formatUnits(BigInt(l.data),CFG.SKOOP_DEC)),0);
+    // Use allLogs for total if it succeeded, fall back to todayLogs if 413'd
+    const totalLogs=allLogs.length?allLogs:todayLogs;
+    const totalAmt=totalLogs.reduce((s,l)=>s+parseFloat(ethers.formatUnits(BigInt(l.data),CFG.SKOOP_DEC)),0);
     const totalRow=`<div class="tx-row" style="background:var(--apricot);"><div class="tx-dot td-apricot">\u2b50</div><div class="tx-info"><div class="tx-name" style="font-weight:700;">Total to date</div><div class="tx-date">${inbound.length} reward${inbound.length!==1?'s':''} since launch</div></div><div class="tx-val"><div class="amt amt-plus" style="font-size:20px;">+${fmt(totalAmt)}</div></div></div>`;
     const todayRow=todayLogs.length?`<div class="tx-row" style="background:var(--mint);"><div class="tx-dot td-mint">\ud83c\udf66</div><div class="tx-info"><div class="tx-name" style="font-weight:700;">Earned today</div><div class="tx-date">${todayLogs.length} reward${todayLogs.length!==1?'s':''}</div></div><div class="tx-val"><div class="amt amt-plus" style="font-size:20px;">+${fmt(todayAmt)}</div></div></div>`:'';
     list.innerHTML=totalRow+todayRow;
