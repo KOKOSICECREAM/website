@@ -89,13 +89,20 @@ html,body{height:100%;overflow:hidden;font-family:'Instrument Sans',sans-serif;b
 .mi-q-btn{width:18px;height:18px;border-radius:50%;border:1.5px solid var(--coral-deep);background:var(--white);color:var(--coral-deep);font-size:0.7rem;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;font-family:inherit;}
 .mi-qty{font-size:0.65rem;font-weight:700;color:var(--ink);min-width:11px;text-align:center;}
 
-/* Custom tile — spans 2 cols, big input */
-.custom-tile{grid-column:span 2;background:var(--lavender);border:1.5px solid rgba(160,100,200,0.22);border-radius:13px;padding:0.8rem 1rem;display:flex;align-items:center;gap:0.75rem;}
-.custom-tile-dollar{font-family:'Cormorant Garamond',serif;font-size:2rem;font-weight:600;color:var(--lavender-dk);line-height:1;flex-shrink:0;}
-.custom-tile input{font-family:'Cormorant Garamond',serif;font-size:2rem;font-weight:600;color:var(--ink);background:none;border:none;outline:none;width:0;flex:1;min-width:0;}
-.custom-tile input::placeholder{color:rgba(58,32,16,0.22);}
-.custom-tile-hint{font-size:0.6rem;color:var(--lavender-dk);line-height:1.55;flex:1;}
-.custom-tile-btn{background:var(--lavender-dk);color:var(--white);border:none;padding:0.55rem 1rem;border-radius:9px;font-family:inherit;font-size:0.7rem;font-weight:700;cursor:pointer;white-space:nowrap;flex-shrink:0;}
+/* Custom amount input overlay */
+#custom-input-overlay{display:none;position:fixed;inset:0;background:rgba(58,32,16,0.45);z-index:150;align-items:center;justify-content:center;padding:1.5rem;}
+#custom-input-overlay.open{display:flex;}
+#custom-input-box{background:var(--cream);border-radius:18px;width:100%;max-width:300px;overflow:hidden;box-shadow:var(--shadow-lg);}
+#custom-input-box-header{background:var(--lavender);padding:0.875rem 1.1rem;display:flex;align-items:center;justify-content:space-between;}
+#custom-input-box-header span{font-family:'Cormorant Garamond',serif;font-size:1.1rem;font-style:italic;color:var(--lavender-dk);}
+#custom-input-box-body{padding:1rem;display:flex;flex-direction:column;gap:0.75rem;}
+.custom-amount-row{display:flex;align-items:center;gap:0.4rem;}
+.custom-amount-dollar{font-family:'Cormorant Garamond',serif;font-size:2rem;font-weight:600;color:var(--lavender-dk);line-height:1;}
+#custom-amt-input{font-family:'Cormorant Garamond',serif;font-size:2rem;font-weight:600;color:var(--ink);background:none;border:none;border-bottom:2px solid var(--lavender-mid);outline:none;width:100%;padding-bottom:0.1rem;}
+#custom-amt-input::placeholder{color:rgba(58,32,16,0.22);}
+#custom-preview{font-size:0.62rem;color:var(--lavender-dk);min-height:1rem;}
+.custom-input-actions{display:flex;gap:0.5rem;}
+.custom-tile-btn{background:var(--lavender-dk);color:var(--white);border:none;padding:0.6rem;border-radius:9px;font-family:inherit;font-size:0.72rem;font-weight:700;cursor:pointer;flex:1;}
 .custom-tile-btn:disabled{opacity:0.35;cursor:not-allowed;}
 
 /* RIGHT PANEL */
@@ -230,7 +237,7 @@ html,body{height:100%;overflow:hidden;font-family:'Instrument Sans',sans-serif;b
         <button class="cat-btn" onclick="filterCat('scoops',this)">Scoops</button>
         <button class="cat-btn" onclick="filterCat('drinks',this)">Drinks</button>
         <button class="cat-btn" onclick="filterCat('extras',this)">Extras</button>
-        <button class="cat-btn custom-cat" onclick="filterCat('custom',this)">$ Custom</button>
+
       </div>
       <div id="menu-grid"></div>
     </div>
@@ -384,6 +391,27 @@ html,body{height:100%;overflow:hidden;font-family:'Instrument Sans',sans-serif;b
           <div style="width:6px;height:6px;border-radius:50%;background:var(--mint);animation:pulse 1s ease infinite;"></div>Closing in 4s…
         </div>
         <button onclick="closeSuccess()" style="width:100%;padding:0.72rem;background:var(--coral-deep);color:#fff;border:none;border-radius:9px;font-family:inherit;font-size:0.78rem;font-weight:700;cursor:pointer;">Done</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- CUSTOM AMOUNT OVERLAY -->
+<div id="custom-input-overlay" onclick="closeCustomOverlay(event)">
+  <div id="custom-input-box">
+    <div id="custom-input-box-header">
+      <span>Custom Amount</span>
+      <button onclick="closeCustomOverlay()" style="background:none;border:none;font-size:1.2rem;cursor:pointer;color:var(--lavender-dk);line-height:1;">✕</button>
+    </div>
+    <div id="custom-input-box-body">
+      <div class="custom-amount-row">
+        <span class="custom-amount-dollar">$</span>
+        <input type="number" min="0.01" step="0.01" placeholder="0.00" id="custom-amt-input" oninput="updateCustomPreview(this.value)">
+      </div>
+      <div id="custom-preview"></div>
+      <div class="custom-input-actions">
+        <button class="action-btn secondary" onclick="closeCustomOverlay()" style="flex:1;">Cancel</button>
+        <button class="custom-tile-btn" id="custom-add-btn" onclick="addCustomToCart()" disabled>+ Add to Order</button>
       </div>
     </div>
   </div>
@@ -586,36 +614,32 @@ function closeModeSheet(e){
 // ═══════════════════════════════════════════════════════════════
 function renderMenu(){
   const grid=document.getElementById('menu-grid');
-  const isCustom=activeCat==='custom';
-  const items=isCustom?[]:(activeCat==='all'?MENU:MENU.filter(i=>i.cat===activeCat)).filter(i=>!i.custom);
-  let html='';
-  if(activeCat==='all'||isCustom){
-    html+=`<div class="custom-tile">
-      <span class="custom-tile-dollar">$</span>
-      <input type="number" min="0.01" step="0.01" placeholder="0.00" id="custom-amt-input" oninput="updateCustomPreview(this.value)">
-      <div class="custom-tile-hint" id="custom-preview">Custom amount</div>
-      <button class="custom-tile-btn" id="custom-add-btn" onclick="addCustomToCart()" disabled>+ Add</button>
-    </div>`;
-  }
-  if(!isCustom){
-    html+=items.map(item=>{
-      const qty=cart[item.id]||0;const inCart=qty>0;
-      const visual=item.img
-        ?`<img src="${item.img}" alt="${item.name}" class="mi-img" onerror="this.style.display='none';this.nextElementSibling.style.display='inline'"><span class="mi-emoji" style="display:none">${item.emoji}</span>`
-        :`<span class="mi-emoji">${item.emoji}</span>`;
-      return `<div class="menu-item${inCart?' in-cart':''}" data-cat="${item.cat}" onclick="tileClick(event,'${item.id}')">
-        <div class="mi-top">${visual}<span class="mi-badge">${qty||''}</span></div>
-        <div class="mi-name">${item.name}</div>
-        <div class="mi-bottom">
-          <span class="mi-price">$${item.price.toFixed(2)}</span>
-          <div class="mi-controls" onclick="event.stopPropagation()">
-            <button class="mi-q-btn" onclick="tileQty('${item.id}',-1)">−</button>
-            <span class="mi-qty">${qty}</span>
-            <button class="mi-q-btn" onclick="tileQty('${item.id}',1)">+</button>
-          </div>
+  const items=(activeCat==='all'?MENU:MENU.filter(i=>i.cat===activeCat)).filter(i=>!i.custom);
+  let html=items.map(item=>{
+    const qty=cart[item.id]||0;const inCart=qty>0;
+    const visual=item.img
+      ?`<img src="${item.img}" alt="${item.name}" class="mi-img" onerror="this.style.display='none';this.nextElementSibling.style.display='inline'"><span class="mi-emoji" style="display:none">${item.emoji}</span>`
+      :`<span class="mi-emoji">${item.emoji}</span>`;
+    return `<div class="menu-item${inCart?' in-cart':''}" data-cat="${item.cat}" onclick="tileClick(event,'${item.id}')">
+      <div class="mi-top">${visual}<span class="mi-badge">${qty||''}</span></div>
+      <div class="mi-name">${item.name}</div>
+      <div class="mi-bottom">
+        <span class="mi-price">$${item.price.toFixed(2)}</span>
+        <div class="mi-controls" onclick="event.stopPropagation()">
+          <button class="mi-q-btn" onclick="tileQty('${item.id}',-1)">−</button>
+          <span class="mi-qty">${qty}</span>
+          <button class="mi-q-btn" onclick="tileQty('${item.id}',1)">+</button>
         </div>
-      </div>`;
-    }).join('');
+      </div>
+    </div>`;
+  }).join('');
+  // Custom tile — same size as other tiles, always last
+  if(activeCat==='all'||activeCat==='custom'){
+    html+=`<div class="menu-item" data-cat="custom" onclick="openCustomOverlay()" style="cursor:pointer;">
+      <div class="mi-top"><span class="mi-emoji">✏️</span></div>
+      <div class="mi-name">Custom</div>
+      <div class="mi-bottom"><span class="mi-price" style="color:var(--lavender-dk);">$ amount</span></div>
+    </div>`;
   }
   grid.innerHTML=html;
 }
@@ -627,24 +651,36 @@ function filterCat(cat,btn){
   btn.classList.add('active');
   renderMenu();
 }
+function openCustomOverlay(){
+  document.getElementById('custom-amt-input').value='';
+  document.getElementById('custom-preview').textContent='';
+  document.getElementById('custom-add-btn').disabled=true;
+  document.getElementById('custom-input-overlay').classList.add('open');
+  setTimeout(()=>document.getElementById('custom-amt-input').focus(),80);
+}
+function closeCustomOverlay(e){
+  if(e&&e.target!==document.getElementById('custom-input-overlay'))return;
+  document.getElementById('custom-input-overlay').classList.remove('open');
+}
 function updateCustomPreview(val){
   const v=parseFloat(val);
   const btn=document.getElementById('custom-add-btn');
   const prev=document.getElementById('custom-preview');
-  if(!v||v<=0){prev.textContent='Custom amount';btn.disabled=true;return;}
+  if(!v||v<=0){prev.textContent='';btn.disabled=true;return;}
   btn.disabled=false;
   if(skoopPriceUSD>0){
     const tax=v*CFG.TAX_RATE;const total=v+tax;
     prev.textContent=`+tax $${tax.toFixed(2)} → $${total.toFixed(2)} ≈ ${Math.round(total/skoopPriceUSD).toLocaleString()} SKOOP`;
-  }else{prev.textContent='Custom amount';}
+  }
 }
 function addCustomToCart(){
   const input=document.getElementById('custom-amt-input');
   const v=parseFloat(input.value);if(!v||v<=0)return;
   const id='cx_'+Date.now();
   MENU.push({id,cat:'custom',emoji:'✏️',name:'Custom $'+v.toFixed(2),price:v,_temp:true});
-  cart[id]=1;input.value='';updateCustomPreview('');
-  renderCart();showToast('$'+v.toFixed(2)+' added ✓','success');
+  cart[id]=1;
+  document.getElementById('custom-input-overlay').classList.remove('open');
+  renderCart();renderMenu();showToast('$'+v.toFixed(2)+' added ✓','success');
 }
 function addToCart(id){cart[id]=(cart[id]||0)+1;renderCart();renderMenu();}
 function changeQty(id,delta){
@@ -1076,8 +1112,7 @@ function applyBrand(){
   document.querySelector('meta[name="apple-mobile-web-app-title"]').content=BRAND.storeName;
   const strip=document.querySelector('.cat-strip');
   strip.innerHTML='<button class="cat-btn active" onclick="filterCat(\'all\',this)">All</button>'
-    +BRAND.categories.map(cat=>`<button class="cat-btn" onclick="filterCat('${cat.id}',this)">${cat.label}</button>`).join('')
-    +'<button class="cat-btn custom-cat" onclick="filterCat(\'custom\',this)">$ Custom</button>';
+    +BRAND.categories.map(cat=>`<button class="cat-btn" onclick="filterCat('${cat.id}',this)">${cat.label}</button>`).join('');
 }
 applyBrand();
 renderMenu();renderCart();updateDailyLimitDisplay();renderPendingRewards();
