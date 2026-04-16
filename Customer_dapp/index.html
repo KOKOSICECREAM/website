@@ -848,8 +848,7 @@ async function updateFromBal(){
 }
 
 // ── ACTIVITY FEED ─────────────────────────────────────────────────────────────
-// null sender topic catches ANY wallet — works for all current and future POS devices
-// Fixed origin block — all-time rewards since launch
+// Single 9000-block call (~2.5 hrs) — fast, within Base RPC cap, shows today's rewards
 async function loadActivityFeed(){
   if(!userAddr)return;
   const list=document.querySelector('.tx-list');
@@ -858,8 +857,6 @@ async function loadActivityFeed(){
   try{
     const readProvider=new ethers.JsonRpcProvider(CFG.RPC);
     const currentBlock=await readProvider.getBlockNumber();
-    const ORIGIN_BLOCK=44543736;           // first real reward block
-    const todayCutoff=currentBlock-86400;   // ~24 hours on Base
     const topic0=ethers.id('Transfer(address,address,uint256)');
     const pad=a=>'0x'+ethers.getAddress(a).slice(2).toLowerCase().padStart(64,'0');
     const EXCLUDED=[
@@ -868,36 +865,21 @@ async function loadActivityFeed(){
       POOL_ETH_SKOOP.slice(2).toLowerCase(),
       POOL_USDC_SKOOP.slice(2).toLowerCase(),
     ];
-    const filter=(logs)=>logs.filter(l=>!EXCLUDED.includes((l.topics[1]||'').slice(-40).toLowerCase()));
-
-    // Two separate queries: today (small, always works) + all-time (may be large)
-    // Split avoids 413 on the all-time query — today is tiny, all-time sums only
-    const [todayRaw, allRaw]=await Promise.all([
-      readProvider.send('eth_getLogs',[{
-        address:CFG.SKOOP,topics:[topic0,null,pad(userAddr)],
-        fromBlock:'0x'+todayCutoff.toString(16),toBlock:'0x'+currentBlock.toString(16)
-      }]).catch(()=>[]),
-      readProvider.send('eth_getLogs',[{
-        address:CFG.SKOOP,topics:[topic0,null,pad(userAddr)],
-        fromBlock:'0x'+ORIGIN_BLOCK.toString(16),toBlock:'0x'+currentBlock.toString(16)
-      }]).catch(()=>[]),
-    ]);
-
-    const todayLogs=filter(todayRaw).sort((a,b)=>parseInt(b.blockNumber,16)-parseInt(a.blockNumber,16));
-    const allLogs=filter(allRaw);
-
-    if(!allLogs.length && !todayLogs.length){
-      list.innerHTML='<div class="tx-row"><div class="tx-dot td-apricot">\ud83c\udf66</div><div class="tx-info"><div class="tx-name">No rewards yet</div><div class="tx-date">Pay at the shop to earn SKOOP</div></div></div>';
+    const logs=await readProvider.send('eth_getLogs',[{
+      address:CFG.SKOOP,
+      topics:[topic0,null,pad(userAddr)],
+      fromBlock:'0x'+(currentBlock-9000).toString(16),
+      toBlock:'0x'+currentBlock.toString(16)
+    }]).catch(()=>[]);
+    const rewards=logs.filter(l=>!EXCLUDED.includes((l.topics[1]||'').slice(-40).toLowerCase()));
+    if(!rewards.length){
+      list.innerHTML='<div class="tx-row"><div class="tx-dot td-apricot">\ud83c\udf66</div><div class="tx-info"><div class="tx-name">No rewards today</div><div class="tx-date">Your total balance is shown above</div></div></div>';
       return;
     }
     const fmt=n=>n.toLocaleString('en-US',{maximumFractionDigits:2});
-    const todayAmt=todayLogs.reduce((s,l)=>s+parseFloat(ethers.formatUnits(BigInt(l.data),CFG.SKOOP_DEC)),0);
-    // Use allLogs for total if it succeeded, fall back to todayLogs if 413'd
-    const totalLogs=allLogs.length?allLogs:todayLogs;
-    const totalAmt=totalLogs.reduce((s,l)=>s+parseFloat(ethers.formatUnits(BigInt(l.data),CFG.SKOOP_DEC)),0);
-    const totalRow=`<div class="tx-row" style="background:var(--apricot);"><div class="tx-dot td-apricot">\u2b50</div><div class="tx-info"><div class="tx-name" style="font-weight:700;">Total to date</div><div class="tx-date">${totalLogs.length} reward${totalLogs.length!==1?'s':''} since launch</div></div><div class="tx-val"><div class="amt amt-plus" style="font-size:20px;">+${fmt(totalAmt)}</div></div></div>`;
-    const todayRow=todayLogs.length?`<div class="tx-row" style="background:var(--mint);"><div class="tx-dot td-mint">\ud83c\udf66</div><div class="tx-info"><div class="tx-name" style="font-weight:700;">Earned today</div><div class="tx-date">${todayLogs.length} reward${todayLogs.length!==1?'s':''}</div></div><div class="tx-val"><div class="amt amt-plus" style="font-size:20px;">+${fmt(todayAmt)}</div></div></div>`:'';
-    list.innerHTML=totalRow+todayRow;
+    const amt=rewards.reduce((s,l)=>s+parseFloat(ethers.formatUnits(BigInt(l.data),CFG.SKOOP_DEC)),0);
+    const todayRow=`<div class="tx-row" style="background:var(--mint);"><div class="tx-dot td-mint">\ud83c\udf66</div><div class="tx-info"><div class="tx-name" style="font-weight:700;">Earned today</div><div class="tx-date">${rewards.length} reward${rewards.length!==1?'s':''}</div></div><div class="tx-val"><div class="amt amt-plus" style="font-size:20px;">+${fmt(amt)}</div></div></div>`;
+    list.innerHTML=todayRow;
   }catch(e){
     list.innerHTML='<div class="tx-row"><div class="tx-dot td-apricot">\u26a0\ufe0f</div><div class="tx-info"><div class="tx-name">Could not load activity</div><div class="tx-date">'+e.message.slice(0,60)+'</div></div></div>';
   }
