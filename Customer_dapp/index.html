@@ -895,7 +895,7 @@ async function loadActivityFeed(){
     // Use allLogs for total if it succeeded, fall back to todayLogs if 413'd
     const totalLogs=allLogs.length?allLogs:todayLogs;
     const totalAmt=totalLogs.reduce((s,l)=>s+parseFloat(ethers.formatUnits(BigInt(l.data),CFG.SKOOP_DEC)),0);
-    const totalRow=`<div class="tx-row" style="background:var(--apricot);"><div class="tx-dot td-apricot">\u2b50</div><div class="tx-info"><div class="tx-name" style="font-weight:700;">Total to date</div><div class="tx-date">${inbound.length} reward${inbound.length!==1?'s':''} since launch</div></div><div class="tx-val"><div class="amt amt-plus" style="font-size:20px;">+${fmt(totalAmt)}</div></div></div>`;
+    const totalRow=`<div class="tx-row" style="background:var(--apricot);"><div class="tx-dot td-apricot">\u2b50</div><div class="tx-info"><div class="tx-name" style="font-weight:700;">Total to date</div><div class="tx-date">${totalLogs.length} reward${totalLogs.length!==1?'s':''} since launch</div></div><div class="tx-val"><div class="amt amt-plus" style="font-size:20px;">+${fmt(totalAmt)}</div></div></div>`;
     const todayRow=todayLogs.length?`<div class="tx-row" style="background:var(--mint);"><div class="tx-dot td-mint">\ud83c\udf66</div><div class="tx-info"><div class="tx-name" style="font-weight:700;">Earned today</div><div class="tx-date">${todayLogs.length} reward${todayLogs.length!==1?'s':''}</div></div><div class="tx-val"><div class="amt amt-plus" style="font-size:20px;">+${fmt(todayAmt)}</div></div></div>`:'';
     list.innerHTML=totalRow+todayRow;
   }catch(e){
