@@ -544,7 +544,7 @@ footer{background:var(--green-dk);padding:4rem 2rem 2rem;}
         <div class="cf-item"><div class="cf-label">Per ETH</div><div class="cf-val" id="cf-per-eth">—</div></div>
         <div class="cf-item"><div class="cf-label">Per USDC</div><div class="cf-val" id="cf-per-usdc">—</div></div>
         <div class="cf-item"><div class="cf-label">Market Cap</div><div class="cf-val" id="cf-mcap">—</div></div>
-        <div class="cf-item"><div class="cf-label">Source</div><div class="cf-val" style="font-size:0.82rem;">DexScreener · 30D</div></div>
+        <div class="cf-item"><div class="cf-label">Source</div><div class="cf-val" style="font-size:0.82rem;">GeckoTerminal · 30D</div></div>
       </div>
     </div>
   </div>
@@ -832,61 +832,54 @@ async function fetchBurnTotal(){
   }
 }
 
-// ── PRICE CHART — 30-day via DexScreener OHLCV ────────────────────────────────
+// ── PRICE CHART — 30-day via GeckoTerminal OHLCV (free, no key) ───────────────
 async function drawChart(){
   const canvas=document.getElementById('price-chart-canvas');
   if(!canvas)return;
   canvas.width=canvas.offsetWidth||900;
   const ctx=canvas.getContext('2d');
 
-  // Try DexScreener daily candles (30D), fall back to hourly (7D), then flat
-  const now=Math.floor(Date.now()/1000);
-  const day=86400;
+  const GT='https://api.geckoterminal.com/api/v2';
+  const pool=CFG.POOL_ETH_SKOOP;
 
-  let candles=null,resolution='1D',windowLabel='30D';
-
-  // Helper: fetch candles from DexScreener
-  async function fetchCandles(res,daysBack){
-    const from=now-daysBack*day;
-    const url=`https://api.dexscreener.com/latest/dex/candles/base/${CFG.POOL_ETH_SKOOP}?from=${from}&to=${now}&res=${res}`;
-    const r=await fetch(url);
+  // Fetch OHLCV — try both token directions and pick whichever yields a
+  // plausible SKOOP price (much less than $1). ohlcv_list is newest-first.
+  async function fetchOHLCV(timeframe,limit,aggregate,token){
+    const url=`${GT}/networks/base/pools/${pool}/ohlcv/${timeframe}?aggregate=${aggregate}&limit=${limit}&currency=usd&token=${token}`;
+    const r=await fetch(url,{headers:{'Accept':'application/json;version=20230302'}});
     if(!r.ok)throw new Error('HTTP '+r.status);
     const d=await r.json();
-    // DexScreener returns { candles: [{t,o,h,l,c,v},...] } — c is close price in USD
-    return d?.candles||[];
+    const raw=d?.data?.attributes?.ohlcv_list||[];
+    return raw.slice().reverse().map(c=>({ts:c[0],price:parseFloat(c[4])})).filter(p=>p.price>0&&isFinite(p.price));
   }
 
-  try{
-    // 1. Try 30 daily candles
-    let raw=await fetchCandles('1D',30);
-    if(raw.length>=3){
-      candles=raw;resolution='1D';windowLabel='30D';
-    } else {
-      // 2. Fall back: 7 days of hourly candles, sample every 4h for readability
-      raw=await fetchCandles('1H',7);
-      if(raw.length>=3){
-        // Downsample: keep every 4th candle so the line stays smooth
-        candles=raw.filter((_,i)=>i%4===0);
-        resolution='1H';windowLabel='7D';
-      }
+  function looksLikeSkoop(pts){
+    // SKOOP price is a tiny fraction of a cent → well under $0.01
+    return pts.length>=3 && pts[pts.length-1].price < 0.01;
+  }
+
+  let pts=null,windowLabel='30D';
+
+  // 1. Try 30 daily candles — check base first, then quote
+  for(const tok of ['base','quote']){
+    try{
+      const p=await fetchOHLCV('day',30,1,tok);
+      if(looksLikeSkoop(p)){pts=p;windowLabel='30D';break;}
+    }catch(e){}
+  }
+
+  // 2. Fallback: 7 days hourly (4h aggregate → ~42 pts)
+  if(!pts){
+    for(const tok of ['base','quote']){
+      try{
+        const p=await fetchOHLCV('hour',42,4,tok);
+        if(looksLikeSkoop(p)){pts=p;windowLabel='7D';break;}
+      }catch(e){}
     }
-  }catch(e){}
-
-  if(!candles||candles.length<2){
-    drawFlat(ctx,canvas);
-    return;
   }
 
-  // Build time-stamped price points from close prices
-  // DexScreener candle: { t: unix_ms_or_s, c: closePrice }
-  const pts=candles.map(c=>{
-    const ts=(c.t>1e10?c.t/1000:c.t); // normalise ms → s
-    return {ts, price:parseFloat(c.c)};
-  }).filter(p=>p.price>0&&isFinite(p.price));
+  if(!pts||pts.length<2){drawFlat(ctx,canvas);return;}
 
-  if(pts.length<2){drawFlat(ctx,canvas);return;}
-
-  // Update the chart header subtitle live
   const nameEl=canvas.closest('.chart-wrap')?.querySelector('.chart-name');
   if(nameEl)nameEl.textContent=`SKOOP / USD · Base Network · ${windowLabel}`;
 
