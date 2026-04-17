@@ -437,11 +437,7 @@ footer{background:var(--green-dk);padding:4rem 2rem 2rem;}
         <div class="sb-val loading" id="s-eth">—</div>
         <div class="sb-sub">Ethereum · USD</div>
       </div>
-      <div class="stat-block">
-        <div class="sb-label">Payments Captured</div>
-        <div class="sb-val loading" id="s-payments">—</div>
-        <div class="sb-sub">On-chain since launch</div>
-      </div>
+
     </div>
   </div>
 </section>
@@ -803,17 +799,6 @@ async function fetchAllPrices(){
 
 function set(id,val){const el=document.getElementById(id);if(el){el.textContent=val;el.classList.remove('loading');}}
 
-// ── PAYMENT COUNT ─────────────────────────────────────────────────────────────
-async function fetchPaymentCount(){
-  try{
-    const pub=new ethers.JsonRpcProvider(CFG.RPC);
-    const latest=await pub.getBlockNumber();
-    const escrow=new ethers.Contract(CFG.ESCROW,ABI_ESCROW_EVENTS,pub);
-    const events=await escrow.queryFilter(escrow.filters.PaymentCaptured(),CFG.DEPLOY_BLOCK,latest);
-    set('s-payments',events.length.toString());
-  }catch{}
-}
-
 // ── BURN TOTAL ────────────────────────────────────────────────────────────────
 async function fetchBurnTotal(){
   try{
@@ -825,7 +810,8 @@ async function fetchBurnTotal(){
     const burned = ORIGINAL - supply;
     const fmt = parseFloat(ethers.formatUnits(burned, CFG.DEC))
       .toLocaleString('en-US', {maximumFractionDigits: 2});
-    set('burn-total', burned > 0n ? fmt : '0');
+    const display = burned > 0n ? fmt : '0';
+    set('burn-total', display);  // burn section
   }catch(e){
     console.error('fetchBurnTotal:', e);
     set('burn-total', '0');
@@ -1010,7 +996,6 @@ function showToast(msg){
 
 // ── INIT ──────────────────────────────────────────────────────────────────────
 fetchAllPrices().then(()=>drawChart());
-fetchPaymentCount();
 fetchBurnTotal();
 setInterval(()=>{fetchAllPrices().then(()=>drawChart());},60000);
 </script>
