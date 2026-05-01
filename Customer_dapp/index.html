@@ -587,6 +587,20 @@ html,body{height:100%;overflow:hidden;background:var(--coral);font-family:'Instr
       Tap <strong style="color:var(--ink);margin:0 3px;">Add</strong> — done!
     </div>
   </div>
+  <div id="pwa-ios-notsafari" style="display:none;background:var(--apricot);border-top:1px solid var(--border);padding:12px 16px;flex-direction:column;gap:8px;">
+    <div style="display:flex;align-items:center;gap:10px;font-size:12px;color:var(--ink-mid);">
+      <div style="width:20px;height:20px;border-radius:50%;background:var(--coral);color:var(--ink);font-size:10px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;">1</div>
+      Tap the <strong style="color:var(--ink);margin:0 3px;">⋯</strong> menu in the top right corner
+    </div>
+    <div style="display:flex;align-items:center;gap:10px;font-size:12px;color:var(--ink-mid);">
+      <div style="width:20px;height:20px;border-radius:50%;background:var(--coral);color:var(--ink);font-size:10px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;">2</div>
+      Tap <strong style="color:var(--ink);margin:0 3px;">Add to Home Screen</strong>
+    </div>
+    <div style="display:flex;align-items:center;gap:10px;font-size:12px;color:var(--ink-mid);">
+      <div style="width:20px;height:20px;border-radius:50%;background:var(--coral);color:var(--ink);font-size:10px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;">3</div>
+      Tap <strong style="color:var(--ink);margin:0 3px;">Add</strong> — done!
+    </div>
+  </div>
 </div>
 
 <!-- PRICE MODAL -->
@@ -1389,6 +1403,8 @@ window.addEventListener('beforeinstallprompt',e=>{
 function showPWABanner(type){
   if(localStorage.getItem('pwaBannerDismissed'))return;
   if(window.matchMedia('(display-mode: standalone)').matches)return;
+  if(window.navigator.standalone)return;
+  if(window.ethereum&&(window.ethereum.isCoinbaseWallet||window.ethereum.isCoinbaseBrowser||window.ethereum.isMetaMask))return;
   const banner=document.getElementById('pwa-banner');if(!banner)return;
   if(type==='android'){
     const btn=document.getElementById('pwa-action-btn');btn.style.display='block';
@@ -1398,8 +1414,10 @@ function showPWABanner(type){
       const{outcome}=await _deferredInstallPrompt.userChoice;
       _deferredInstallPrompt=null;if(outcome==='accepted')dismissPWABanner();
     };
-  }else{
+  }else if(type==='ios'){
     const steps=document.getElementById('pwa-ios-steps');if(steps)steps.style.display='flex';
+  }else if(type==='ios-notsafari'){
+    const sub=banner.querySelector('#pwa-ios-notsafari');if(sub)sub.style.display='flex';
   }
   banner.style.display='block';
 }
@@ -1409,7 +1427,9 @@ function dismissPWABanner(){
 }
 const _isIOS=/iPad|iPhone|iPod/.test(navigator.userAgent)&&!window.MSStream;
 const _isStandalone=window.matchMedia('(display-mode: standalone)').matches||window.navigator.standalone;
-if(_isIOS&&!_isStandalone){setTimeout(()=>showPWABanner('ios'),3000);}
+const _isWeb3Browser=!!(window.ethereum&&(window.ethereum.isCoinbaseWallet||window.ethereum.isCoinbaseBrowser||window.ethereum.isMetaMask))||/CoinbaseBrowser|MetaMaskMobile|DappBrowser/i.test(navigator.userAgent);
+const _isIOSSafari=_isIOS&&/Safari/i.test(navigator.userAgent)&&!/CriOS|FxiOS|OPiOS|EdgiOS/i.test(navigator.userAgent);
+if(_isIOS&&!_isStandalone&&!_isWeb3Browser){setTimeout(()=>showPWABanner(_isIOSSafari?'ios':'ios-notsafari'),3000);}
 if('serviceWorker' in navigator){navigator.serviceWorker.register('./sw.js').catch(()=>{});}
 </script>
 </body>
