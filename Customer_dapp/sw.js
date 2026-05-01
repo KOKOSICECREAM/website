@@ -1,4 +1,4 @@
-const CACHE='skoop-v2';
+const CACHE='skoop-v3';
 const ASSETS=[
   './',
   './index.html',
