@@ -562,6 +562,33 @@ html,body{height:100%;overflow:hidden;background:var(--coral);font-family:'Instr
 </div>
 </div>
 
+<!-- PWA INSTALL BANNER -->
+<div id="pwa-banner" style="display:none;position:absolute;bottom:calc(var(--nav-h) + env(safe-area-inset-bottom,0px) + 8px);left:12px;right:12px;z-index:100;border-radius:16px;overflow:hidden;box-shadow:0 4px 24px rgba(42,31,26,0.15);background:var(--white);border:1px solid var(--border);">
+  <div style="display:flex;align-items:center;gap:12px;padding:14px 16px;">
+    <img src="KOKOS_SKOOP.png" style="width:44px;height:44px;border-radius:10px;flex-shrink:0;">
+    <div style="flex:1;">
+      <div style="font-size:13px;font-weight:700;color:var(--ink);margin-bottom:2px;">Add SKOOP to your home screen</div>
+      <div style="font-size:11px;color:var(--ink-mid);line-height:1.4;">Fast access to buy, pay &amp; earn rewards</div>
+    </div>
+    <button id="pwa-action-btn" style="display:none;background:var(--coral-deep);color:white;border:none;border-radius:999px;padding:8px 16px;font-size:12px;font-weight:600;cursor:pointer;white-space:nowrap;flex-shrink:0;font-family:'Instrument Sans',sans-serif;">Install</button>
+    <button onclick="dismissPWABanner()" style="background:none;border:none;color:var(--ink-light);font-size:16px;cursor:pointer;padding:4px;flex-shrink:0;line-height:1;">&#10005;</button>
+  </div>
+  <div id="pwa-ios-steps" style="display:none;background:var(--apricot);border-top:1px solid var(--border);padding:12px 16px;flex-direction:column;gap:8px;">
+    <div style="display:flex;align-items:center;gap:10px;font-size:12px;color:var(--ink-mid);">
+      <div style="width:20px;height:20px;border-radius:50%;background:var(--coral);color:var(--ink);font-size:10px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;">1</div>
+      Tap the <strong style="color:var(--ink);margin:0 3px;">Share</strong> button at the bottom of Safari ⎋
+    </div>
+    <div style="display:flex;align-items:center;gap:10px;font-size:12px;color:var(--ink-mid);">
+      <div style="width:20px;height:20px;border-radius:50%;background:var(--coral);color:var(--ink);font-size:10px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;">2</div>
+      Scroll and tap <strong style="color:var(--ink);margin:0 3px;">Add to Home Screen</strong>
+    </div>
+    <div style="display:flex;align-items:center;gap:10px;font-size:12px;color:var(--ink-mid);">
+      <div style="width:20px;height:20px;border-radius:50%;background:var(--coral);color:var(--ink);font-size:10px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;">3</div>
+      Tap <strong style="color:var(--ink);margin:0 3px;">Add</strong> — done!
+    </div>
+  </div>
+</div>
+
 <!-- PRICE MODAL -->
 <div id="price-modal" style="display:none;position:absolute;inset:0;z-index:400;background:rgba(42,31,26,0.5);backdrop-filter:blur(6px);align-items:flex-end;justify-content:center;" onclick="if(event.target===this)closePriceModal()">
   <div style="background:var(--cream);border-top-left-radius:28px;border-top-right-radius:28px;width:100%;max-width:430px;overflow:hidden;box-shadow:0 -8px 48px rgba(42,31,26,0.22);animation:sheetUp 0.28s cubic-bezier(0.34,1.56,0.64,1);" onclick="event.stopPropagation()">
@@ -1354,6 +1381,35 @@ function showToast(msg,type=""){
   el.innerHTML=(type==="ok"?"\u2713 ":type==="err"?"\u2715 ":"")+msg;
   clearTimeout(toastT);toastT=setTimeout(()=>el.classList.remove("show"),4000);
 }
+// ── PWA INSTALL BANNER ────────────────────────────────────────────────────────
+let _deferredInstallPrompt=null;
+window.addEventListener('beforeinstallprompt',e=>{
+  e.preventDefault();_deferredInstallPrompt=e;showPWABanner('android');
+});
+function showPWABanner(type){
+  if(localStorage.getItem('pwaBannerDismissed'))return;
+  if(window.matchMedia('(display-mode: standalone)').matches)return;
+  const banner=document.getElementById('pwa-banner');if(!banner)return;
+  if(type==='android'){
+    const btn=document.getElementById('pwa-action-btn');btn.style.display='block';
+    btn.onclick=async()=>{
+      if(!_deferredInstallPrompt)return;
+      _deferredInstallPrompt.prompt();
+      const{outcome}=await _deferredInstallPrompt.userChoice;
+      _deferredInstallPrompt=null;if(outcome==='accepted')dismissPWABanner();
+    };
+  }else{
+    const steps=document.getElementById('pwa-ios-steps');if(steps)steps.style.display='flex';
+  }
+  banner.style.display='block';
+}
+function dismissPWABanner(){
+  const banner=document.getElementById('pwa-banner');if(banner)banner.style.display='none';
+  localStorage.setItem('pwaBannerDismissed','1');
+}
+const _isIOS=/iPad|iPhone|iPod/.test(navigator.userAgent)&&!window.MSStream;
+const _isStandalone=window.matchMedia('(display-mode: standalone)').matches||window.navigator.standalone;
+if(_isIOS&&!_isStandalone){setTimeout(()=>showPWABanner('ios'),3000);}
 if('serviceWorker' in navigator){navigator.serviceWorker.register('./sw.js').catch(()=>{});}
 </script>
 </body>
