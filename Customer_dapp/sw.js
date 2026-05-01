@@ -11,11 +11,13 @@ const ASSETS=[
   'https://cdn.jsdelivr.net/npm/@walletconnect/modal@2.6.2/dist/index.umd.js',
   'https://cdn.jsdelivr.net/npm/@walletconnect/ethereum-provider@2.10.0/dist/index.umd.js',
 ];
+
 self.addEventListener('install',e=>{
   e.waitUntil(
     caches.open(CACHE).then(c=>c.addAll(ASSETS)).then(()=>self.skipWaiting())
   );
 });
+
 self.addEventListener('activate',e=>{
   e.waitUntil(
     caches.keys().then(keys=>Promise.all(
@@ -23,6 +25,7 @@ self.addEventListener('activate',e=>{
     )).then(()=>self.clients.claim())
   );
 });
+
 self.addEventListener('fetch',e=>{
   const url=e.request.url;
   if(url.includes('mainnet.base.org')||
