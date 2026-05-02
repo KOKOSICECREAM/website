@@ -437,11 +437,7 @@ footer{background:var(--green-dk);padding:4rem 2rem 2rem;}
         <div class="sb-val loading" id="s-eth">—</div>
         <div class="sb-sub">Ethereum · USD</div>
       </div>
-      <div class="stat-block">
-        <div class="sb-label">Payments Captured</div>
-        <div class="sb-val loading" id="s-payments">—</div>
-        <div class="sb-sub">On-chain since launch</div>
-      </div>
+
     </div>
   </div>
 </section>
@@ -531,7 +527,7 @@ footer{background:var(--green-dk);padding:4rem 2rem 2rem;}
     <div class="chart-wrap reveal reveal-delay-2">
       <div class="chart-header">
         <div class="chart-title-block">
-          <div class="chart-name">SKOOP / USD · Base Network · Uniswap V3</div>
+          <div class="chart-name">SKOOP / USD · Base Network · 30-Day</div>
           <div class="chart-price" id="chart-price-display">Loading…</div>
         </div>
         <div class="chart-badge">
@@ -544,7 +540,7 @@ footer{background:var(--green-dk);padding:4rem 2rem 2rem;}
         <div class="cf-item"><div class="cf-label">Per ETH</div><div class="cf-val" id="cf-per-eth">—</div></div>
         <div class="cf-item"><div class="cf-label">Per USDC</div><div class="cf-val" id="cf-per-usdc">—</div></div>
         <div class="cf-item"><div class="cf-label">Market Cap</div><div class="cf-val" id="cf-mcap">—</div></div>
-        <div class="cf-item"><div class="cf-label">Source</div><div class="cf-val" style="font-size:0.82rem;">Uniswap V3 on-chain</div></div>
+        <div class="cf-item"><div class="cf-label">Source</div><div class="cf-val" style="font-size:0.82rem;">GeckoTerminal · 30D</div></div>
       </div>
     </div>
   </div>
@@ -615,6 +611,7 @@ footer{background:var(--green-dk);padding:4rem 2rem 2rem;}
           <div class="burn-stat">
             <div class="bs-val loading" id="burn-total" style="font-size:1.5rem;">—</div>
             <div class="bs-label">SKOOP burned</div>
+            <div id="burn-usd" style="font-size:0.68rem;font-weight:600;color:var(--coral-deep);margin-top:0.3rem;min-height:1em;">—</div>
           </div>
         </div>
       </div>
@@ -803,18 +800,23 @@ async function fetchAllPrices(){
 
 function set(id,val){const el=document.getElementById(id);if(el){el.textContent=val;el.classList.remove('loading');}}
 
-// ── PAYMENT COUNT ─────────────────────────────────────────────────────────────
-async function fetchPaymentCount(){
-  try{
-    const pub=new ethers.JsonRpcProvider(CFG.RPC);
-    const latest=await pub.getBlockNumber();
-    const escrow=new ethers.Contract(CFG.ESCROW,ABI_ESCROW_EVENTS,pub);
-    const events=await escrow.queryFilter(escrow.filters.PaymentCaptured(),CFG.DEPLOY_BLOCK,latest);
-    set('s-payments',events.length.toString());
-  }catch{}
+// ── BURN TOTAL ────────────────────────────────────────────────────────────────
+let burnedSkoopAmount = 0; // store for USD update after price loads
+
+function updateBurnUsd(){
+  const el = document.getElementById('burn-usd');
+  if(!el) return;
+  if(burnedSkoopAmount > 0 && skoopPriceUSD > 0){
+    const usd = burnedSkoopAmount * skoopPriceUSD;
+    const fmt = usd >= 1
+      ? '$' + usd.toLocaleString('en-US', {minimumFractionDigits:2, maximumFractionDigits:2})
+      : '$' + usd.toFixed(4);
+    el.textContent = '≈ ' + fmt + ' USD';
+  } else {
+    el.textContent = '';
+  }
 }
 
-// ── BURN TOTAL ────────────────────────────────────────────────────────────────
 async function fetchBurnTotal(){
   try{
     const pub = new ethers.JsonRpcProvider(CFG.RPC);
@@ -823,51 +825,88 @@ async function fetchBurnTotal(){
     const supply = await token.totalSupply();
     const ORIGINAL = ethers.parseUnits('888888888', CFG.DEC);
     const burned = ORIGINAL - supply;
-    const fmt = parseFloat(ethers.formatUnits(burned, CFG.DEC))
-      .toLocaleString('en-US', {maximumFractionDigits: 2});
-    set('burn-total', burned > 0n ? fmt : '0');
+    burnedSkoopAmount = parseFloat(ethers.formatUnits(burned, CFG.DEC));
+    const fmt = burnedSkoopAmount.toLocaleString('en-US', {maximumFractionDigits: 2});
+    const display = burned > 0n ? fmt : '0';
+    set('burn-total', display);
+    updateBurnUsd();
   }catch(e){
     console.error('fetchBurnTotal:', e);
     set('burn-total', '0');
   }
 }
 
-// ── PRICE CHART ───────────────────────────────────────────────────────────────
+// ── PRICE CHART — 30-day via GeckoTerminal OHLCV (free, no key) ───────────────
 async function drawChart(){
   const canvas=document.getElementById('price-chart-canvas');
   if(!canvas)return;
   canvas.width=canvas.offsetWidth||900;
   const ctx=canvas.getContext('2d');
-  try{
-    const pub=new ethers.JsonRpcProvider(CFG.RPC);
-    const ABI_SWAP=["event Swap(address indexed sender,address indexed recipient,int256 amount0,int256 amount1,uint160 sqrtPriceX96,uint128 liquidity,int24 tick)"];
-    const pool=new ethers.Contract(CFG.POOL_ETH_SKOOP,ABI_SWAP,pub);
-    const latest=await pub.getBlockNumber();
-    const events=await pool.queryFilter(pool.filters.Swap(),latest-9000,latest);
-    if(events.length<2){drawFlat(ctx,canvas);return;}
-    const Q96=Number(2n**96n);
-    const prices=events.map(e=>{
-      const sq=Number(e.args.sqrtPriceX96)/Q96;
-      const raw=sq*sq;const skoopPerEth=raw*1e12;
-      return skoopPerEth>0?ethPriceUSD/skoopPerEth:0;
-    }).filter(p=>p>0);
-    if(prices.length<2){drawFlat(ctx,canvas);return;}
-    drawLine(ctx,canvas,prices);
-  }catch{drawFlat(ctx,canvas);}
+
+  const GT='https://api.geckoterminal.com/api/v2';
+  const pool=CFG.POOL_ETH_SKOOP;
+
+  // Fetch OHLCV — try both token directions and pick whichever yields a
+  // plausible SKOOP price (much less than $1). ohlcv_list is newest-first.
+  async function fetchOHLCV(timeframe,limit,aggregate,token){
+    const url=`${GT}/networks/base/pools/${pool}/ohlcv/${timeframe}?aggregate=${aggregate}&limit=${limit}&currency=usd&token=${token}`;
+    const r=await fetch(url,{headers:{'Accept':'application/json;version=20230302'}});
+    if(!r.ok)throw new Error('HTTP '+r.status);
+    const d=await r.json();
+    const raw=d?.data?.attributes?.ohlcv_list||[];
+    return raw.slice().reverse().map(c=>({ts:c[0],price:parseFloat(c[4])})).filter(p=>p.price>0&&isFinite(p.price));
+  }
+
+  function looksLikeSkoop(pts){
+    // SKOOP price is a tiny fraction of a cent → well under $0.01
+    return pts.length>=3 && pts[pts.length-1].price < 0.01;
+  }
+
+  let pts=null,windowLabel='30D';
+
+  // 1. Try 30 daily candles — check base first, then quote
+  for(const tok of ['base','quote']){
+    try{
+      const p=await fetchOHLCV('day',30,1,tok);
+      if(looksLikeSkoop(p)){pts=p;windowLabel='30D';break;}
+    }catch(e){}
+  }
+
+  // 2. Fallback: 7 days hourly (4h aggregate → ~42 pts)
+  if(!pts){
+    for(const tok of ['base','quote']){
+      try{
+        const p=await fetchOHLCV('hour',42,4,tok);
+        if(looksLikeSkoop(p)){pts=p;windowLabel='7D';break;}
+      }catch(e){}
+    }
+  }
+
+  if(!pts||pts.length<2){drawFlat(ctx,canvas);return;}
+
+  const nameEl=canvas.closest('.chart-wrap')?.querySelector('.chart-name');
+  if(nameEl)nameEl.textContent=`SKOOP / USD · Base Network · ${windowLabel}`;
+
+  drawLine(ctx,canvas,pts,windowLabel);
 }
 
-function drawLine(ctx,canvas,prices){
+function drawLine(ctx,canvas,pts,windowLabel='30D'){
   const W=canvas.width,H=canvas.height;
-  const pad={top:20,right:20,bottom:40,left:72};
+  const pad={top:20,right:24,bottom:40,left:80};
   const cW=W-pad.left-pad.right,cH=H-pad.top-pad.bottom;
+
+  const prices=pts.map(p=>p.price);
   const minP=Math.min(...prices)*0.993,maxP=Math.max(...prices)*1.007;
   const range=maxP-minP||maxP*0.01;
-  const n=prices.length;
+  const n=pts.length;
+
   ctx.clearRect(0,0,W,H);
-  // Background bands
-  const bands=[{c:'rgba(253,206,193,0.12)'},{c:'rgba(205,230,215,0.12)'},{c:'rgba(250,226,216,0.12)'},{c:'rgba(255,221,173,0.12)'}];
-  bands.forEach((b,i)=>{ctx.fillStyle=b.c;ctx.fillRect(pad.left+cW/4*i,pad.top,cW/4,cH);});
-  // Grid lines
+
+  // Background colour bands
+  const bands=['rgba(253,206,193,0.12)','rgba(205,230,215,0.12)','rgba(250,226,216,0.12)','rgba(255,221,173,0.12)'];
+  bands.forEach((c,i)=>{ctx.fillStyle=c;ctx.fillRect(pad.left+cW/4*i,pad.top,cW/4,cH);});
+
+  // Horizontal grid + price labels
   for(let i=0;i<=4;i++){
     const t=i/4,y=pad.top+cH*(1-t);
     ctx.strokeStyle='rgba(42,31,26,0.06)';ctx.lineWidth=1;ctx.setLineDash([3,5]);
@@ -875,34 +914,66 @@ function drawLine(ctx,canvas,prices){
     ctx.fillStyle='rgba(42,31,26,0.35)';ctx.font='500 10px "Instrument Sans",sans-serif';ctx.textAlign='right';
     ctx.fillText('$'+(minP+range*t).toFixed(6),pad.left-6,y+3);
   }
-  // Time labels
-  ctx.fillStyle='rgba(42,31,26,0.3)';ctx.font='500 10px "Instrument Sans",sans-serif';ctx.textAlign='center';
-  [['6h ago',pad.left],['3h ago',pad.left+cW/2],['now',pad.left+cW]].forEach(([l,x])=>ctx.fillText(l,x,H-8));
+
+  // Time axis labels — derive from actual timestamps
+  const tsFirst=pts[0].ts,tsLast=pts[n-1].ts;
+  const tsDelta=tsLast-tsFirst||1;
+  const fmtDate=ts=>{const d=new Date(ts*1000);return(d.getMonth()+1)+'/'+(d.getDate());};
+
+  // Pick 5 evenly-spaced label positions
+  const labelCount=5;
+  ctx.fillStyle='rgba(42,31,26,0.3)';ctx.font='500 10px "Instrument Sans",sans-serif';
+  for(let i=0;i<labelCount;i++){
+    const frac=i/(labelCount-1);
+    const x=pad.left+frac*cW;
+    const ts=tsFirst+frac*tsDelta;
+    ctx.textAlign=i===0?'left':i===labelCount-1?'right':'center';
+    ctx.fillText(fmtDate(ts),x,H-8);
+  }
+
+  // Coordinate helpers
   const ptX=i=>pad.left+(i/(n-1))*cW;
   const ptY=p=>pad.top+cH*(1-(p-minP)/range);
-  // Gradient fill
+
+  // Gradient area fill
   const grad=ctx.createLinearGradient(0,pad.top,0,pad.top+cH);
-  grad.addColorStop(0,'rgba(232,135,106,0.22)');grad.addColorStop(0.5,'rgba(253,175,154,0.08)');grad.addColorStop(1,'rgba(253,206,193,0.01)');
+  grad.addColorStop(0,'rgba(232,135,106,0.22)');
+  grad.addColorStop(0.5,'rgba(253,175,154,0.08)');
+  grad.addColorStop(1,'rgba(253,206,193,0.01)');
   ctx.beginPath();ctx.moveTo(ptX(0),ptY(prices[0]));
-  for(let i=1;i<n-1;i++){const mx=(ptX(i)+ptX(i+1))/2,my=(ptY(prices[i])+ptY(prices[i+1]))/2;ctx.quadraticCurveTo(ptX(i),ptY(prices[i]),mx,my);}
-  ctx.lineTo(ptX(n-1),ptY(prices[n-1]));ctx.lineTo(ptX(n-1),pad.top+cH);ctx.lineTo(ptX(0),pad.top+cH);ctx.closePath();ctx.fillStyle=grad;ctx.fill();
-  // Line
+  for(let i=1;i<n-1;i++){
+    const mx=(ptX(i)+ptX(i+1))/2,my=(ptY(prices[i])+ptY(prices[i+1]))/2;
+    ctx.quadraticCurveTo(ptX(i),ptY(prices[i]),mx,my);
+  }
+  ctx.lineTo(ptX(n-1),ptY(prices[n-1]));
+  ctx.lineTo(ptX(n-1),pad.top+cH);ctx.lineTo(ptX(0),pad.top+cH);
+  ctx.closePath();ctx.fillStyle=grad;ctx.fill();
+
+  // Price line
   ctx.beginPath();ctx.moveTo(ptX(0),ptY(prices[0]));
-  for(let i=1;i<n-1;i++){const mx=(ptX(i)+ptX(i+1))/2,my=(ptY(prices[i])+ptY(prices[i+1]))/2;ctx.quadraticCurveTo(ptX(i),ptY(prices[i]),mx,my);}
+  for(let i=1;i<n-1;i++){
+    const mx=(ptX(i)+ptX(i+1))/2,my=(ptY(prices[i])+ptY(prices[i+1]))/2;
+    ctx.quadraticCurveTo(ptX(i),ptY(prices[i]),mx,my);
+  }
   ctx.lineTo(ptX(n-1),ptY(prices[n-1]));
   ctx.strokeStyle='#e8876a';ctx.lineWidth=2.5;ctx.lineJoin='round';ctx.lineCap='round';ctx.stroke();
-  // Dot at latest price
+
+  // Live dot at latest price
   const lx=ptX(n-1),ly=ptY(prices[n-1]);
   ctx.beginPath();ctx.arc(lx,ly,8,0,Math.PI*2);ctx.fillStyle='rgba(232,135,106,0.18)';ctx.fill();
   ctx.beginPath();ctx.arc(lx,ly,4.5,0,Math.PI*2);ctx.fillStyle='#e8876a';ctx.fill();
   ctx.beginPath();ctx.arc(lx,ly,2,0,Math.PI*2);ctx.fillStyle='#fffaf7';ctx.fill();
-  // Delta badge
-  const delta=prices[n-1]-prices[0],pct=(delta/prices[0]*100).toFixed(2),sign=delta>=0?'+':'';
-  const lc=delta>=0?'#11483d':'#b91c1c',lb=delta>=0?'rgba(205,230,215,0.85)':'rgba(253,206,193,0.85)';
-  const label=sign+pct+'%';
+
+  // Change badge (top-right corner)
+  const delta=prices[n-1]-prices[0];
+  const pct=(prices[0]>0?(delta/prices[0]*100):0).toFixed(2);
+  const sign=delta>=0?'+':'';
+  const lc=delta>=0?'#11483d':'#b91c1c';
+  const lb=delta>=0?'rgba(205,230,215,0.9)':'rgba(253,193,193,0.9)';
+  const label=sign+pct+'% ('+windowLabel+')';
   ctx.font='700 11px "Instrument Sans",sans-serif';
   const tw=ctx.measureText(label).width;
-  const bx=W-pad.right-tw-14,by=pad.top+6;
+  const bx=W-pad.right-tw-18,by=pad.top+6;
   ctx.fillStyle=lb;
   ctx.beginPath();ctx.roundRect(bx-4,by-1,tw+10,16,5);ctx.fill();
   ctx.fillStyle=lc;ctx.textAlign='left';ctx.fillText(label,bx,by+11);
@@ -914,8 +985,8 @@ function drawFlat(ctx,canvas){
   ctx.strokeStyle='rgba(232,135,106,0.3)';ctx.setLineDash([6,6]);ctx.lineWidth=1.5;
   ctx.beginPath();ctx.moveTo(20,H/2);ctx.lineTo(W-20,H/2);ctx.stroke();ctx.setLineDash([]);
   ctx.font='500 12px "Instrument Sans",sans-serif';ctx.textAlign='center';ctx.fillStyle='rgba(42,31,26,0.3)';
-  ctx.fillText('Accumulating price history…',W/2,H/2+18);
-  if(skoopPriceUSD>0){ctx.font='600 13px "Instrument Sans",sans-serif';ctx.fillStyle='rgba(42,31,26,0.45)';ctx.fillText('$'+skoopPriceUSD.toFixed(8),W/2,H/2-8);}
+  ctx.fillText('No chart data available — check back soon',W/2,H/2+18);
+  if(skoopPriceUSD>0){ctx.font='600 13px "Instrument Sans",sans-serif';ctx.fillStyle='rgba(42,31,26,0.45)';ctx.fillText('Current: $'+skoopPriceUSD.toFixed(8),W/2,H/2-8);}
 }
 
 // ── NAV SCROLL ────────────────────────────────────────────────────────────────
@@ -942,10 +1013,9 @@ function showToast(msg){
 }
 
 // ── INIT ──────────────────────────────────────────────────────────────────────
-fetchAllPrices().then(()=>drawChart());
-fetchPaymentCount();
+fetchAllPrices().then(()=>{drawChart();updateBurnUsd();});
 fetchBurnTotal();
-setInterval(()=>{fetchAllPrices().then(()=>drawChart());},60000);
+setInterval(()=>{fetchAllPrices().then(()=>{drawChart();updateBurnUsd();});},60000);
 </script>
 </body>
 </html>
