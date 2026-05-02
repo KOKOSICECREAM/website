@@ -48,6 +48,15 @@ html,body{height:100%;overflow:hidden;font-family:'Instrument Sans',sans-serif;b
 #price-pill-change{font-size:0.72rem;font-weight:600;white-space:nowrap;color:rgba(58,32,16,0.5);}
 #wallet-btn{background:var(--white);color:var(--ink);border:none;padding:0.42rem 1rem;border-radius:999px;font-family:inherit;font-size:0.78rem;font-weight:700;cursor:pointer;white-space:nowrap;flex-shrink:0;}
 
+/* WALLET BALANCE PILL */
+#wallet-balance-wrap{display:none;flex-direction:column;align-items:flex-end;gap:1px;cursor:pointer;flex-shrink:0;}
+#wallet-balance-wrap.visible{display:flex;}
+#wallet-balance-skoop{font-size:0.78rem;font-weight:700;color:var(--ink);white-space:nowrap;line-height:1.1;}
+#wallet-balance-usd{font-size:0.62rem;color:var(--ink-mid);white-space:nowrap;line-height:1.1;}
+#wallet-balance-dot{display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--mint-dk);margin-right:3px;vertical-align:middle;}
+#wallet-balance-dot.loading{background:var(--sand-dk);animation:pulse 1s ease infinite;}
+#wallet-balance-dot.error{background:#c0392b;}
+
 /* CONTENT */
 #content{flex:1;display:grid;grid-template-columns:1fr 320px;overflow:hidden;background:var(--cream);min-height:0;}
 
@@ -224,6 +233,10 @@ html,body{height:100%;overflow:hidden;font-family:'Instrument Sans',sans-serif;b
     <div id="price-pill">
       <span id="price-pill-main">SKOOP: loading…</span>
       <span id="price-pill-change">24h: —</span>
+    </div>
+    <div id="wallet-balance-wrap" title="Your SKOOP balance" onclick="refreshWalletBalance()">
+      <span id="wallet-balance-skoop"><span id="wallet-balance-dot" class="loading"></span>—</span>
+      <span id="wallet-balance-usd">wallet balance</span>
     </div>
     <button id="wallet-btn" onclick="connectWallet()">Connect Wallet</button>
   </header>
@@ -524,6 +537,17 @@ async function fetchSkoopPrice(){
       }catch{}
     }
     updateTotals();
+    // Refresh USD value on balance pill now that we have a fresh price
+    if(skoopPriceUSD>0&&signerAddr){
+      try{
+        const skText=document.getElementById('wallet-balance-skoop').textContent.replace(/[^0-9.,]/g,'').replace(/,/g,'');
+        const bal=parseFloat(skText);
+        if(!isNaN(bal)&&bal>=0){
+          const usd=bal*skoopPriceUSD;
+          document.getElementById('wallet-balance-usd').textContent='≈ $'+usd.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
+        }
+      }catch{}
+    }
   }catch(e){document.getElementById('price-pill-main').textContent='Price unavailable';}
 }
 
@@ -551,6 +575,8 @@ async function connectInjectedWallet(){
     document.getElementById('wallet-btn').textContent=signerAddr.slice(0,6)+'…'+signerAddr.slice(-4);
     const name=window.ethereum.isMetaMask?'MetaMask':window.ethereum.isCoinbaseWallet?'Coinbase':'Wallet';
     showToast(name+' connected ✓','success');
+    showWalletBalancePill();
+    fetchWalletBalance();
     loadReceipts();
   }catch(e){
     if(e.code===4001)showToast('Connection rejected','error');
@@ -813,6 +839,7 @@ async function autoSendReward(payerAddr,rewardSkoop,paidCents,receiptId){
     addDailyRewardSent(rewardSkoop);
     setSuccessRewardStatus('success',rewardSkoop);
     showToast('⚡ '+rewardSkoop.toLocaleString()+' SKOOP reward auto-sent ✓','success');
+    refreshWalletBalance();
   }catch(e){
     savePendingReward(receiptId,rewardSkoop,paidCents);
     const reason=e?.code===4001?'Rejected by wallet':'Transaction failed';
@@ -968,6 +995,7 @@ async function sendReward(){
     const pendingId=document.getElementById('reward-amount').dataset.pendingId;
     if(pendingId)removePendingReward(pendingId);
     showToast('Reward sent ✓','success');resetRewards();
+    refreshWalletBalance();
   }catch(e){showToast('Transaction failed','error');}
   btn.disabled=false;btn.textContent='Send SKOOP Reward';
 }
@@ -1082,6 +1110,49 @@ async function burnSelected(){
     showToast('🔥 Burn complete','success');capturedReceipts=[];
   }catch(e){showToast('Burn failed','error');}
   btn.textContent='🔥 Burn Selected';
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  WALLET BALANCE
+// ═══════════════════════════════════════════════════════════════
+let walletBalanceTimer=null;
+function showWalletBalancePill(){
+  document.getElementById('wallet-balance-wrap').classList.add('visible');
+}
+async function fetchWalletBalance(){
+  if(!signerAddr)return;
+  const dot=document.getElementById('wallet-balance-dot');
+  const skEl=document.getElementById('wallet-balance-skoop');
+  const usdEl=document.getElementById('wallet-balance-usd');
+  dot.className='loading';
+  skEl.innerHTML='<span id="wallet-balance-dot" class="loading"></span>…';
+  usdEl.textContent='loading…';
+  try{
+    const pub=new ethers.JsonRpcProvider(CFG.RPC);
+    const ABI_BAL=["function balanceOf(address) view returns (uint256)"];
+    const token=new ethers.Contract(CFG.SKOOP,ABI_BAL,pub);
+    const raw=await token.balanceOf(signerAddr);
+    const balance=parseFloat(ethers.formatUnits(raw,CFG.SKOOP_DEC));
+    const dotEl=document.getElementById('wallet-balance-dot');
+    if(dotEl){dotEl.className='';dotEl.style.background='var(--mint-dk)';}
+    skEl.innerHTML='<span id="wallet-balance-dot" style="display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--mint-dk);margin-right:3px;vertical-align:middle;"></span>'+balance.toLocaleString('en-US',{maximumFractionDigits:0})+' SKOOP';
+    if(skoopPriceUSD>0){
+      const usd=balance*skoopPriceUSD;
+      usdEl.textContent='≈ $'+usd.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
+    } else {
+      usdEl.textContent='wallet balance';
+    }
+    clearTimeout(walletBalanceTimer);
+    walletBalanceTimer=setTimeout(fetchWalletBalance,30000);
+  }catch(e){
+    const dotEl=document.getElementById('wallet-balance-dot');
+    if(dotEl){dotEl.className='error';}
+    document.getElementById('wallet-balance-usd').textContent='tap to retry';
+  }
+}
+function refreshWalletBalance(){
+  clearTimeout(walletBalanceTimer);
+  if(signerAddr)fetchWalletBalance();
 }
 
 // ═══════════════════════════════════════════════════════════════
