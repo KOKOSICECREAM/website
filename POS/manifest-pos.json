@@ -2,27 +2,27 @@
   "name": "KOKOS POS",
   "short_name": "KOKOS POS",
   "description": "KOKOS Shop Terminal — accept SKOOP payments",
-  "start_url": "./index.html",
-  "scope": "./",
+  "start_url": "/POS/index.html",
+  "scope": "/POS/",
   "display": "standalone",
-  "orientation": "landscape",
-  "background_color": "#11483d",
-  "theme_color": "#11483d",
+  "orientation": "landscape-primary",
+  "background_color": "#fdcec1",
+  "theme_color": "#fdcec1",
   "icons": [
     {
-      "src": "KOKOS.png",
+      "src": "/POS/KOKOS.png",
       "sizes": "192x192",
       "type": "image/png",
       "purpose": "any"
     },
     {
-      "src": "KOKOS.png",
+      "src": "/POS/KOKOS.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any"
     },
     {
-      "src": "KOKOS.png",
+      "src": "/POS/KOKOS.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "maskable"
