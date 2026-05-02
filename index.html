@@ -828,6 +828,119 @@ footer { background: var(--coral); border-top: var(--border); }
   .plant-band-left, .plant-band-right { padding: 3rem 1.5rem; }
   .footer-bottom { flex-direction: column; gap: 0.4rem; text-align: center; }
 }
+
+/* ============================================================
+   NEW FLAVOR STICKER
+============================================================ */
+@keyframes nf-wobble {
+  0%   { transform: rotate(-8deg) scale(1); }
+  25%  { transform: rotate(-6deg) scale(1.04); }
+  50%  { transform: rotate(-9deg) scale(1); }
+  75%  { transform: rotate(-7deg) scale(1.03); }
+  100% { transform: rotate(-8deg) scale(1); }
+}
+@keyframes nf-pop-in {
+  0%   { opacity: 0; transform: rotate(-8deg) scale(0.5); }
+  70%  { transform: rotate(-8deg) scale(1.08); }
+  100% { opacity: 1; transform: rotate(-8deg) scale(1); }
+}
+@keyframes nf-spin-text {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+
+.nf-sticker-wrap {
+  position: absolute;
+  top: 2.2rem;
+  right: 3.5rem;
+  width: 148px;
+  height: 148px;
+  z-index: 10;
+  pointer-events: auto;
+  animation: nf-pop-in 0.6s cubic-bezier(0.34,1.56,0.64,1) 0.3s both;
+}
+.nf-sticker-wrap:hover { animation: none; transform: rotate(-8deg) scale(1.08); transition: transform 0.2s; }
+
+.nf-sticker {
+  width: 100%; height: 100%;
+  border-radius: 50%;
+  background: var(--sand);
+  border: 3px solid var(--ink);
+  box-shadow: 3px 4px 0px var(--ink);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  animation: nf-wobble 4s ease-in-out infinite;
+  cursor: pointer;
+  text-decoration: none;
+}
+
+/* circular spinning text path */
+.nf-circle-text {
+  position: absolute;
+  inset: 0;
+  animation: nf-spin-text 10s linear infinite;
+}
+
+/* center content */
+.nf-sticker-inner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  text-align: center;
+  padding: 2rem;
+  z-index: 1;
+}
+.nf-sticker-eyebrow {
+  font-size: 0.52rem;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--green);
+}
+.nf-sticker-is-in {
+  font-family: 'DM Serif Display', serif;
+  font-size: 0.9rem;
+  font-weight: 400;
+  color: var(--ink);
+  line-height: 1.1;
+}
+.nf-sticker-name {
+  font-family: 'DM Serif Display', serif;
+  font-style: italic;
+  font-size: 1.05rem;
+  color: var(--ink);
+  line-height: 1.15;
+  word-break: break-word;
+  hyphens: auto;
+}
+
+@media (max-width: 960px) {
+  .nf-sticker-wrap {
+    top: auto;
+    bottom: -1.2rem;
+    right: 1.2rem;
+    width: 120px;
+    height: 120px;
+  }
+  .nf-sticker-name { font-size: 0.9rem; }
+  .nf-sticker-is-in { font-size: 0.78rem; }
+}
+@media (max-width: 600px) {
+  .nf-sticker-wrap {
+    bottom: -1rem;
+    right: 0.8rem;
+    width: 100px;
+    height: 100px;
+  }
+  .nf-sticker-inner { padding: 1.5rem; }
+  .nf-sticker-name { font-size: 0.78rem; }
+  .nf-sticker-is-in { font-size: 0.68rem; }
+  .nf-sticker-eyebrow { font-size: 0.44rem; }
+}
 </style>
 </head>
 <body>
@@ -874,8 +987,34 @@ footer { background: var(--coral); border-top: var(--border); }
   </div>
 </div>
 
+<!-- ============================================================
+  NEW FLAVOR ANNOUNCEMENT — UPDATE THE NAME BELOW
+  Change NEW_FLAVOR_NAME to whatever the new flavor is called.
+  To hide the sticker entirely, add:  style="display:none;"  to .nf-sticker-wrap
+============================================================ -->
+<script>var NEW_FLAVOR_NAME = "Bantha Mylk";</script>
+
 <!-- HERO -->
-<section class="hero" id="hero">
+<section class="hero" id="hero" style="position:relative;">
+
+  <!-- STICKER — floats over the hero image corner -->
+  <a href="#flavors" class="nf-sticker-wrap" id="nf-sticker-wrap" aria-label="New flavor">
+    <div class="nf-sticker">
+      <!-- spinning circular text via SVG -->
+      <svg class="nf-circle-text" viewBox="0 0 148 148" aria-hidden="true">
+        <defs>
+          <path id="nf-arc" d="M 74,74 m -54,0 a 54,54 0 1,1 108,0 a 54,54 0 1,1 -108,0"/>
+        </defs>
+        <text font-family="Instrument Sans, sans-serif" font-size="9.5" font-weight="700" fill="#11483d" letter-spacing="3.5" text-transform="uppercase">
+          <textPath href="#nf-arc">✦ NEW FLAVOR ✦ NEW FLAVOR ✦ NEW FLAVOR &nbsp;</textPath>
+        </text>
+      </svg>
+      <div class="nf-sticker-inner">
+        <span class="nf-sticker-eyebrow">just dropped</span>
+        <span class="nf-sticker-name" id="nf-name"></span>
+      </div>
+    </div>
+  </a>
   <div class="hero-left">
     <span class="hero-tag">Nashville · Plant Based · Since 2017</span>
     <h1>Better<br>than<br><em>ice cream.</em></h1>
@@ -892,6 +1031,7 @@ footer { background: var(--coral); border-top: var(--border); }
     <img src="cone.jpg" alt="KOKOS Ice Cream" />
   </div>
 </section>
+<script>document.getElementById('nf-name').textContent = NEW_FLAVOR_NAME;</script>
 
 <!-- HEADLINE BAND -->
 <div class="headline-band" style="background:var(--sand);">
