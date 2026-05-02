@@ -43,19 +43,27 @@ html,body{height:100%;overflow:hidden;font-family:'Instrument Sans',sans-serif;b
 .logo-wrap img{height:34px;width:auto;object-fit:contain;}
 #logo-text{font-family:'Cormorant Garamond',serif;font-size:1.2rem;font-weight:600;letter-spacing:0.1em;color:var(--ink);}
 #logo-subtitle{font-style:italic;font-size:0.82rem;color:rgba(58,32,16,0.5);margin-left:0.4rem;}
-#price-pill{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;min-width:0;gap:1px;}
-#price-pill-main{font-size:0.95rem;font-weight:700;color:var(--ink);white-space:nowrap;}
+#price-pill{flex:1;min-width:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;overflow:hidden;}
+#price-pill-main{font-size:0.95rem;font-weight:700;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%;}
 #price-pill-change{font-size:0.72rem;font-weight:600;white-space:nowrap;color:rgba(58,32,16,0.5);}
 #wallet-btn{background:var(--white);color:var(--ink);border:none;padding:0.42rem 1rem;border-radius:999px;font-family:inherit;font-size:0.78rem;font-weight:700;cursor:pointer;white-space:nowrap;flex-shrink:0;}
 
 /* WALLET BALANCE PILL */
-#wallet-balance-wrap{display:none;flex-direction:column;align-items:flex-end;gap:1px;cursor:pointer;flex-shrink:0;}
+#wallet-balance-wrap{display:none;flex-direction:column;align-items:flex-end;gap:1px;cursor:pointer;flex-shrink:0;min-width:0;}
 #wallet-balance-wrap.visible{display:flex;}
 #wallet-balance-skoop{font-size:0.78rem;font-weight:700;color:var(--ink);white-space:nowrap;line-height:1.1;}
 #wallet-balance-usd{font-size:0.62rem;color:var(--ink-mid);white-space:nowrap;line-height:1.1;}
 #wallet-balance-dot{display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--mint-dk);margin-right:3px;vertical-align:middle;}
 #wallet-balance-dot.loading{background:var(--sand-dk);animation:pulse 1s ease infinite;}
 #wallet-balance-dot.error{background:#c0392b;}
+@media(max-width:680px){
+  #price-pill{flex:0 1 auto;}
+  #price-pill-main{font-size:0.78rem;}
+  #price-pill-change{font-size:0.62rem;}
+  #wallet-balance-skoop{font-size:0.7rem;}
+  #wallet-balance-usd{font-size:0.58rem;}
+  #wallet-btn{padding:0.42rem 0.65rem;font-size:0.72rem;}
+}
 
 /* CONTENT */
 #content{flex:1;display:grid;grid-template-columns:1fr 320px;overflow:hidden;background:var(--cream);min-height:0;}
