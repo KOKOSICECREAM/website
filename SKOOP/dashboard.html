@@ -611,6 +611,7 @@ footer{background:var(--green-dk);padding:4rem 2rem 2rem;}
           <div class="burn-stat">
             <div class="bs-val loading" id="burn-total" style="font-size:1.5rem;">—</div>
             <div class="bs-label">SKOOP burned</div>
+            <div id="burn-usd" style="font-size:0.68rem;font-weight:600;color:var(--coral-deep);margin-top:0.3rem;min-height:1em;">—</div>
           </div>
         </div>
       </div>
@@ -800,6 +801,22 @@ async function fetchAllPrices(){
 function set(id,val){const el=document.getElementById(id);if(el){el.textContent=val;el.classList.remove('loading');}}
 
 // ── BURN TOTAL ────────────────────────────────────────────────────────────────
+let burnedSkoopAmount = 0; // store for USD update after price loads
+
+function updateBurnUsd(){
+  const el = document.getElementById('burn-usd');
+  if(!el) return;
+  if(burnedSkoopAmount > 0 && skoopPriceUSD > 0){
+    const usd = burnedSkoopAmount * skoopPriceUSD;
+    const fmt = usd >= 1
+      ? '$' + usd.toLocaleString('en-US', {minimumFractionDigits:2, maximumFractionDigits:2})
+      : '$' + usd.toFixed(4);
+    el.textContent = '≈ ' + fmt + ' USD';
+  } else {
+    el.textContent = '';
+  }
+}
+
 async function fetchBurnTotal(){
   try{
     const pub = new ethers.JsonRpcProvider(CFG.RPC);
@@ -808,10 +825,11 @@ async function fetchBurnTotal(){
     const supply = await token.totalSupply();
     const ORIGINAL = ethers.parseUnits('888888888', CFG.DEC);
     const burned = ORIGINAL - supply;
-    const fmt = parseFloat(ethers.formatUnits(burned, CFG.DEC))
-      .toLocaleString('en-US', {maximumFractionDigits: 2});
+    burnedSkoopAmount = parseFloat(ethers.formatUnits(burned, CFG.DEC));
+    const fmt = burnedSkoopAmount.toLocaleString('en-US', {maximumFractionDigits: 2});
     const display = burned > 0n ? fmt : '0';
-    set('burn-total', display);  // burn section
+    set('burn-total', display);
+    updateBurnUsd();
   }catch(e){
     console.error('fetchBurnTotal:', e);
     set('burn-total', '0');
@@ -995,9 +1013,9 @@ function showToast(msg){
 }
 
 // ── INIT ──────────────────────────────────────────────────────────────────────
-fetchAllPrices().then(()=>drawChart());
+fetchAllPrices().then(()=>{drawChart();updateBurnUsd();});
 fetchBurnTotal();
-setInterval(()=>{fetchAllPrices().then(()=>drawChart());},60000);
+setInterval(()=>{fetchAllPrices().then(()=>{drawChart();updateBurnUsd();});},60000);
 </script>
 </body>
 </html>
