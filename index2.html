@@ -774,7 +774,7 @@ footer { background: var(--coral); border-top: var(--border); }
 .mobile-menu a.mob-cta { background: var(--coral-mid); }
 
 /* SCROLL OFFSET — compensates for sticky 84px nav */
-#flavors, #reviews, #about, #press, #contact {
+#flavors, #reviews, #about, #press, #events, #contact {
   scroll-margin-top: 100px;
 }
 
@@ -848,7 +848,6 @@ footer { background: var(--coral); border-top: var(--border); }
   from { transform: rotate(0deg); }
   to   { transform: rotate(360deg); }
 }
-
 .nf-sticker-wrap {
   position: absolute;
   top: 2.2rem;
@@ -860,7 +859,6 @@ footer { background: var(--coral); border-top: var(--border); }
   animation: nf-pop-in 0.6s cubic-bezier(0.34,1.56,0.64,1) 0.3s both;
 }
 .nf-sticker-wrap:hover { animation: none; transform: rotate(-8deg) scale(1.08); transition: transform 0.2s; }
-
 .nf-sticker {
   width: 100%; height: 100%;
   border-radius: 50%;
@@ -875,15 +873,11 @@ footer { background: var(--coral); border-top: var(--border); }
   cursor: pointer;
   text-decoration: none;
 }
-
-/* circular spinning text path */
 .nf-circle-text {
   position: absolute;
   inset: 0;
   animation: nf-spin-text 10s linear infinite;
 }
-
-/* center content */
 .nf-sticker-inner {
   display: flex;
   flex-direction: column;
@@ -904,7 +898,6 @@ footer { background: var(--coral); border-top: var(--border); }
 .nf-sticker-is-in {
   font-family: 'DM Serif Display', serif;
   font-size: 0.9rem;
-  font-weight: 400;
   color: var(--ink);
   line-height: 1.1;
 }
@@ -917,29 +910,150 @@ footer { background: var(--coral); border-top: var(--border); }
   word-break: break-word;
   hyphens: auto;
 }
-
+/* Mobile: hero stacks to single col, sticker sits in the open pink space right of the headline */
 @media (max-width: 960px) {
   .nf-sticker-wrap {
-    top: auto;
-    bottom: -1.2rem;
-    right: 1.2rem;
-    width: 120px;
-    height: 120px;
+    top: 6rem;
+    right: 1.5rem;
+    width: 110px;
+    height: 110px;
   }
-  .nf-sticker-name { font-size: 0.9rem; }
-  .nf-sticker-is-in { font-size: 0.78rem; }
+  .nf-sticker-name { font-size: 0.85rem; }
+  .nf-sticker-is-in { font-size: 0.75rem; }
 }
 @media (max-width: 600px) {
   .nf-sticker-wrap {
-    bottom: -1rem;
-    right: 0.8rem;
-    width: 100px;
-    height: 100px;
+    top: 5rem;
+    right: 1rem;
+    width: 96px;
+    height: 96px;
   }
-  .nf-sticker-inner { padding: 1.5rem; }
-  .nf-sticker-name { font-size: 0.78rem; }
-  .nf-sticker-is-in { font-size: 0.68rem; }
-  .nf-sticker-eyebrow { font-size: 0.44rem; }
+  .nf-sticker-inner { padding: 1.4rem; }
+  .nf-sticker-name { font-size: 0.72rem; }
+  .nf-sticker-is-in { font-size: 0.65rem; }
+  .nf-sticker-eyebrow { font-size: 0.42rem; }
+}
+
+/* ============================================================
+   EVENTS SECTION
+============================================================ */
+.events-section { border-bottom: var(--border); }
+.events-header {
+  padding: 2.5rem 3rem 2rem;
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  border-bottom: var(--border);
+}
+.events-cards { display: grid; grid-template-columns: repeat(3, 1fr); border-bottom: var(--border); }
+.event-card {
+  padding: 3rem 2.5rem;
+  border-right: var(--border);
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+.event-card:last-child { border-right: none; }
+.event-icon { margin-bottom: 0.8rem; }
+.event-card-title {
+  font-family: 'DM Serif Display', serif;
+  font-size: clamp(1.4rem, 2vw, 1.9rem);
+  font-weight: 400;
+  color: var(--ink);
+  line-height: 1.1;
+}
+.event-card-title em { font-style: italic; color: var(--green); }
+.event-card-desc {
+  font-size: 0.88rem;
+  font-weight: 300;
+  color: var(--ink);
+  opacity: 0.75;
+  line-height: 1.75;
+  flex: 1;
+}
+.event-detail-list { list-style: none; display: flex; flex-direction: column; gap: 0.4rem; margin-top: 0.5rem; }
+.event-detail-list li {
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: var(--ink);
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+.event-detail-list li::before { content: '✦'; font-size: 0.5rem; color: var(--green); flex-shrink: 0; }
+.events-booking { display: grid; grid-template-columns: 1fr 1.6fr; }
+.events-booking-left {
+  background: var(--apricot);
+  padding: 4rem 3rem;
+  border-right: var(--border);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 1.4rem;
+}
+.events-booking-left h3 {
+  font-family: 'DM Serif Display', serif;
+  font-size: clamp(2rem, 3vw, 3rem);
+  font-weight: 400;
+  line-height: 1.05;
+  color: var(--ink);
+  text-transform: uppercase;
+  letter-spacing: -0.01em;
+}
+.events-booking-left h3 em { font-style: italic; color: var(--green); text-transform: none; }
+.events-booking-left p { font-size: 0.9rem; font-weight: 300; color: var(--ink); opacity: 0.75; line-height: 1.8; }
+.events-perks { display: flex; flex-direction: column; gap: 0.6rem; margin-top: 0.5rem; }
+.events-perk {
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ink);
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+.events-perk::before { content: ''; display: block; width: 18px; height: 2px; background: var(--green); flex-shrink: 0; }
+.events-booking-right { background: var(--cream); padding: 4rem 3rem; }
+.event-type-selector { display: flex; gap: 0; margin-bottom: 1.2rem; flex-wrap: wrap; }
+.event-type-btn {
+  flex: 1;
+  min-width: 0;
+  padding: 0.7rem 0.5rem;
+  font-family: 'Instrument Sans', sans-serif;
+  font-size: 0.65rem;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ink);
+  background: rgba(255,255,255,0.6);
+  border: var(--border);
+  border-right: none;
+  cursor: pointer;
+  transition: background 0.15s;
+  text-align: center;
+}
+.event-type-btn:last-child { border-right: var(--border); }
+.event-type-btn:hover { background: var(--coral); }
+.event-type-btn.active { background: var(--coral-mid); }
+@media (max-width: 960px) {
+  .events-cards { grid-template-columns: 1fr; }
+  .event-card { border-right: none; border-bottom: var(--border); }
+  .event-card:last-child { border-bottom: none; }
+  .events-booking { grid-template-columns: 1fr; }
+  .events-booking-left { border-right: none; border-bottom: var(--border); }
+  .events-header { flex-direction: column; align-items: flex-start; gap: 1rem; }
+  #contact [style*="grid-template-columns:repeat(4"] { grid-template-columns: 1fr 1fr !important; }
+  #contact [style*="grid-template-columns:repeat(4"] > div { border-bottom: var(--border); }
+  #contact [style*="grid-template-columns:repeat(4"] > div:nth-child(odd) { border-right: var(--border); }
+  #contact [style*="grid-template-columns:repeat(4"] > div:nth-child(even) { border-right: none; }
+}
+@media (max-width: 600px) {
+  .events-booking-left, .events-booking-right { padding: 3rem 1.5rem; }
+  .event-card { padding: 2.5rem 1.5rem; }
+  .event-type-btn { font-size: 0.58rem; padding: 0.65rem 0.3rem; }
+  #contact [style*="grid-template-columns:repeat(4"] { grid-template-columns: 1fr !important; }
+  #contact [style*="grid-template-columns:repeat(4"] > div { border-right: none !important; }
 }
 </style>
 </head>
@@ -961,9 +1075,10 @@ footer { background: var(--coral); border-top: var(--border); }
     <li><a href="#reviews">Reviews</a></li>
     <li><a href="#about">Our Story</a></li>
     <li><a href="#press">Press</a></li>
+    <li><a href="#events">Events</a></li>
     <li><a href="#contact">Visit Us</a></li>
     <li><a href="https://kokosicecream.com/SKOOP/dashboard.html" target="_blank">$SKOOP</a></li>
-    <li><a href="#contact" class="nav-cta">Order</a></li>
+    <li><a href="#events-form" class="nav-cta">Order</a></li>
   </ul>
   <button class="hamburger" id="hamburger" onclick="toggleMenu()" aria-label="Open menu">MENU</button>
 </nav>
@@ -974,6 +1089,7 @@ footer { background: var(--coral); border-top: var(--border); }
   <a href="#reviews">Reviews</a>
   <a href="#about">Our Story</a>
   <a href="#press">Press</a>
+  <a href="#events">Events</a>
   <a href="#contact">Visit Us</a>
   <a href="https://kokosicecream.com/SKOOP/dashboard.html" target="_blank" class="mob-skoop">$SKOOP Token</a>
   <a href="#contact" class="mob-cta">Order</a>
@@ -988,29 +1104,23 @@ footer { background: var(--coral); border-top: var(--border); }
 </div>
 
 <!-- ============================================================
-  NEW FLAVOR ANNOUNCEMENT — UPDATE THE NAME BELOW
-  Change NEW_FLAVOR_NAME to whatever the new flavor is called.
-  To hide the sticker entirely, add:  style="display:none;"  to .nf-sticker-wrap
+  NEW FLAVOR — UPDATE THE NAME HERE
 ============================================================ -->
 <script>var NEW_FLAVOR_NAME = "Bantha Mylk";</script>
 
 <!-- HERO -->
 <section class="hero" id="hero" style="position:relative;">
 
-  <!-- STICKER — floats over the hero image corner -->
-  <a href="#flavors" class="nf-sticker-wrap" id="nf-sticker-wrap" aria-label="New flavor">
+  <a href="#flavors" class="nf-sticker-wrap" aria-label="New flavor: Bantha Mylk">
     <div class="nf-sticker">
-      <!-- spinning circular text via SVG -->
       <svg class="nf-circle-text" viewBox="0 0 148 148" aria-hidden="true">
-        <defs>
-          <path id="nf-arc" d="M 74,74 m -54,0 a 54,54 0 1,1 108,0 a 54,54 0 1,1 -108,0"/>
-        </defs>
-        <text font-family="Instrument Sans, sans-serif" font-size="9.5" font-weight="700" fill="#11483d" letter-spacing="3.5" text-transform="uppercase">
+        <defs><path id="nf-arc" d="M 74,74 m -54,0 a 54,54 0 1,1 108,0 a 54,54 0 1,1 -108,0"/></defs>
+        <text font-family="Instrument Sans, sans-serif" font-size="9.5" font-weight="700" fill="#11483d" letter-spacing="3.5">
           <textPath href="#nf-arc">✦ NEW FLAVOR ✦ NEW FLAVOR ✦ NEW FLAVOR &nbsp;</textPath>
         </text>
       </svg>
       <div class="nf-sticker-inner">
-        <span class="nf-sticker-eyebrow">just dropped</span>
+        <span class="nf-sticker-is-in">NOW SKOOPING</span>
         <span class="nf-sticker-name" id="nf-name"></span>
       </div>
     </div>
@@ -1306,52 +1416,128 @@ const FLAVORS = [
   </div>
 </div>
 
-<!-- CONTACT -->
-<section class="contact-grid" id="contact">
-  <div class="contact-left">
-    <div class="kicker">Find Us</div>
-    <h2 class="contact-title">Come<br><em>visit</em><br>the shop</h2>
-    <div class="contact-details">
-      <div>
-        <div class="c-label">Address</div>
-        <div class="c-value">3 City Ave, Suite 700<br>Nashville, TN 37209<br><span style="font-size:0.8rem;opacity:0.6;">OneC1TY Development</span></div>
-      </div>
-      <div>
-        <div class="c-label">Hours</div>
-        <div class="hours-grid">
-          <span class="h-day">Tue – Thu</span><span class="h-time">5pm – 8pm</span>
-          <span class="h-day">Friday</span><span class="h-time">3pm – 8pm</span>
-          <span class="h-day">Sat – Sun</span><span class="h-time">12pm – 8pm</span>
-          <span class="h-day" style="opacity:0.45;">Monday</span><span class="h-time" style="opacity:0.45;">Closed</span>
-        </div>
-      </div>
-      <div>
-        <div class="c-label">Phone</div>
-        <div class="c-value"><a href="tel:6158814082">615.881.4082</a></div>
-      </div>
-      <div>
-        <div class="c-label">Email</div>
-        <div class="c-value"><a href="/cdn-cgi/l/email-protection#31585f575e715a5e5a5e42585254524354505c1f525e5c"><span class="__cf_email__" data-cfemail="442d2a222b042f2b2f2b372d272127362125296a272b29">[email&#160;protected]</span></a></div>
-      </div>
-      <div>
-        <div class="c-label">Web</div>
-        <div class="c-value"><a href="https://kokosicecream.com/" target="_blank">www.kokosicecream.com</a></div>
-      </div>
-      <div>
-        <div class="c-label">Follow Along</div>
-        <div class="c-value"><a href="https://www.instagram.com/kokosicecream" target="_blank">@kokosicecream</a></div>
-      </div>
+<!-- EVENTS -->
+<section class="events-section" id="events">
+
+  <div class="events-header">
+    <div>
+      <div class="section-label-tag">Private Bookings</div>
+      <h2 class="section-heading">Make It a <em>Moment</em></h2>
+    </div>
+    <a href="#events-form" class="see-all-link">Book Your Event ↗</a>
+  </div>
+
+  <div class="events-cards">
+    <div class="event-card" style="background:var(--coral);">
+      <div class="event-icon"><div class="flavor-dot" style="background:#fdaf9a;width:48px;height:48px;"></div></div>
+      <h3 class="event-card-title">Birthday<br><em>Parties</em></h3>
+      <p class="event-card-desc">Celebrate your special day surrounded by the best plant-based scoops in Nashville. We'll make it unforgettable — custom flavors, the full shop to yourselves, and all the ice cream joy you can handle.</p>
+      <ul class="event-detail-list">
+        <li>Private shop buyout available</li>
+        <li>Custom flavor requests welcome</li>
+        <li>Up to 40 guests</li>
+        <li>2-hour minimum booking</li>
+      </ul>
+    </div>
+    <div class="event-card" style="background:var(--mint);">
+      <div class="event-icon"><div class="flavor-dot" style="background:#7dc4a2;width:48px;height:48px;"></div></div>
+      <h3 class="event-card-title">Group<br><em>Meet-ups</em></h3>
+      <p class="event-card-desc">The perfect venue for team outings, club gatherings, or just getting your crew together somewhere that doesn't feel like every other spot in Nashville. Good vibes guaranteed.</p>
+      <ul class="event-detail-list">
+        <li>Corporate &amp; social groups</li>
+        <li>Flexible food &amp; drink packages</li>
+        <li>AV setup available</li>
+        <li>Weekday &amp; evening slots</li>
+      </ul>
+    </div>
+    <div class="event-card" style="background:var(--lavender);">
+      <div class="event-icon"><div class="flavor-dot" style="background:#c9a8d4;width:48px;height:48px;"></div></div>
+      <h3 class="event-card-title">Ice Cream<br><em>Making Classes</em></h3>
+      <p class="event-card-desc">Get behind the counter and learn the craft from Sam &amp; Jerusa themselves. You'll go home knowing exactly how to make dairy-free ice cream that tastes better than the real thing.</p>
+      <ul class="event-detail-list">
+        <li>Hands-on with the founders</li>
+        <li>Take home your creations</li>
+        <li>Groups of 6–16 people</li>
+        <li>~2 hours, all skill levels</li>
+      </ul>
     </div>
   </div>
-  <div class="contact-right">
-    <div class="kicker">Say Hello</div>
-    <h2 class="contact-title" style="font-size:clamp(1.8rem,3vw,2.8rem);">Events,<br>catering<br><em>or just a note</em></h2>
-    <form action="https://formspree.io/f/xjgaakkn" method="POST" style="margin-top:2rem;">
-      <input class="form-field" type="text" name="name" placeholder="Your name" required />
-      <input class="form-field" type="email" name="email" placeholder="Email address" required />
-      <textarea class="form-field form-ta" name="message" placeholder="Your message…" required></textarea>
-      <button type="submit" class="form-submit">Send Message</button>
-    </form>
+
+  <div class="events-booking" id="events-form">
+    <div class="events-booking-left">
+      <div class="kicker">Reserve Your Date</div>
+      <h3>Let's plan<br>your <em>event</em></h3>
+      <p>Fill out the form and we'll get back to you within 48 hours to talk details, dates, and make sure your event is everything you're imagining.</p>
+      <div class="events-perks">
+        <span class="events-perk">Flexible scheduling</span>
+        <span class="events-perk">Custom menus available</span>
+        <span class="events-perk">Dairy-free &amp; allergen friendly</span>
+        <span class="events-perk">Nashville's happiest venue</span>
+      </div>
+    </div>
+    <div class="events-booking-right">
+      <div class="kicker">Booking Inquiry</div>
+      <form action="https://formspree.io/f/xjgaakkn" method="POST" style="margin-top:1rem;">
+        <input type="hidden" name="form_type" value="Event Booking" />
+        <div class="event-type-selector">
+          <button type="button" class="event-type-btn active" onclick="selectEventType(this, 'Birthday Party')"><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#fdaf9a;margin-right:0.4rem;vertical-align:middle;"></span>Birthday</button>
+          <button type="button" class="event-type-btn" onclick="selectEventType(this, 'Group Meet-up')"><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#7dc4a2;margin-right:0.4rem;vertical-align:middle;"></span>Meet-up</button>
+          <button type="button" class="event-type-btn" onclick="selectEventType(this, 'Ice Cream Making Class')"><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#c9a8d4;margin-right:0.4rem;vertical-align:middle;"></span>Class</button>
+        </div>
+        <input type="hidden" name="event_type" id="event_type_input" value="Birthday Party" />
+        <input class="form-field" type="text" name="name" placeholder="Your name" required />
+        <input class="form-field" type="email" name="email" placeholder="Email address" required />
+        <input class="form-field" type="tel" name="phone" placeholder="Phone number" />
+        <input class="form-field" type="text" name="date" placeholder="Preferred date (e.g. June 14, 2025)" />
+        <input class="form-field" type="text" name="guests" placeholder="Estimated number of guests" />
+        <textarea class="form-field form-ta" name="message" placeholder="Tell us a bit about your event…"></textarea>
+        <button type="submit" class="form-submit">Send Booking Request</button>
+      </form>
+    </div>
+  </div>
+
+</section>
+
+<script>
+function selectEventType(btn, type) {
+  document.querySelectorAll('.event-type-btn').forEach(function(b) { b.classList.remove('active'); });
+  btn.classList.add('active');
+  document.getElementById('event_type_input').value = type;
+}
+</script>
+
+<!-- CONTACT -->
+<section id="contact" style="border-bottom:var(--border);">
+  <div style="padding:2.5rem 3rem 2rem; border-bottom:var(--border);">
+    <div class="section-label-tag">Find Us</div>
+    <h2 class="section-heading">Come <em>visit</em> the shop</h2>
+  </div>
+  <div style="display:grid; grid-template-columns:repeat(4,1fr); border-bottom:var(--border);">
+    <div style="padding:2.5rem 2.5rem; border-right:var(--border); background:var(--mint);">
+      <div class="c-label">Address</div>
+      <div class="c-value" style="margin-top:0.5rem;">3 City Ave, Suite 700<br>Nashville, TN 37209<br><span style="font-size:0.8rem;opacity:0.6;">OneC1TY Development</span></div>
+    </div>
+    <div style="padding:2.5rem 2.5rem; border-right:var(--border); background:var(--sand);">
+      <div class="c-label">Hours</div>
+      <div class="hours-grid" style="margin-top:0.5rem;">
+        <span class="h-day">Tue – Thu</span><span class="h-time">5pm – 8pm</span>
+        <span class="h-day">Friday</span><span class="h-time">3pm – 8pm</span>
+        <span class="h-day">Sat – Sun</span><span class="h-time">12pm – 8pm</span>
+        <span class="h-day" style="opacity:0.45;">Monday</span><span class="h-time" style="opacity:0.45;">Closed</span>
+      </div>
+    </div>
+    <div style="padding:2.5rem 2.5rem; border-right:var(--border); background:var(--apricot);">
+      <div class="c-label">Phone</div>
+      <div class="c-value" style="margin-top:0.5rem;"><a href="tel:6158814082">615.881.4082</a></div>
+      <div class="c-label" style="margin-top:1.5rem;">Email</div>
+      <div class="c-value" style="margin-top:0.5rem;"><a href="/cdn-cgi/l/email-protection#31585f575e715a5e5a5e42585254524354505c1f525e5c"><span class="__cf_email__" data-cfemail="442d2a222b042f2b2f2b372d272127362125296a272b29">[email&#160;protected]</span></a></div>
+    </div>
+    <div style="padding:2.5rem 2.5rem; background:var(--lavender);">
+      <div class="c-label">Follow Along</div>
+      <div class="c-value" style="margin-top:0.5rem;"><a href="https://www.instagram.com/kokosicecream" target="_blank">@kokosicecream</a></div>
+      <div class="c-label" style="margin-top:1.5rem;">Web</div>
+      <div class="c-value" style="margin-top:0.5rem;"><a href="https://kokosicecream.com/" target="_blank">kokosicecream.com</a></div>
+    </div>
   </div>
 </section>
 
