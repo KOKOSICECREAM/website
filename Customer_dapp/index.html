@@ -1136,6 +1136,16 @@ function parseQR(raw){
     const req=["receiptId","tokenAmount","subtotalCents","taxCents","totalCents","itemCount","deadline","signature"];
     for(const f of req){if(intent[f]===undefined||intent[f]===null){throw new Error("Missing: "+f);}}
     if(Date.now()/1000>Number(intent.deadline)){showToast("QR expired \u2014 ask shop to regenerate","err");return;}
+    try{
+      const _digest=ethers.keccak256(ethers.AbiCoder.defaultAbiCoder().encode(
+        ['bytes32','bytes32','bytes32','bytes32','uint256','uint256','uint256','uint256','uint256','bytes32','uint256'],
+        [intent.receiptId,intent.orderId,intent.storeIdHash,intent.terminalIdHash,
+         BigInt(intent.tokenAmount),BigInt(intent.subtotalCents),BigInt(intent.taxCents),
+         BigInt(intent.totalCents),BigInt(intent.itemCount),intent.cartHash,BigInt(intent.deadline)]
+      ));
+      const _recovered=ethers.verifyMessage(ethers.getBytes(_digest),intent.signature);
+      if(_recovered.toLowerCase()!==CFG.POS_SIGNER.toLowerCase()){showToast("Invalid QR \u2014 not a KOKOS payment","err");setScanState('retry');return;}
+    }catch(e){showToast("Invalid QR \u2014 could not verify signature","err");setScanState('retry');return;}
     pendingIntent=intent;showConfirm(intent);
   }catch(e){showToast("Scan error \u2014 point at the QR and try again","err");setScanState('retry');}
 }
