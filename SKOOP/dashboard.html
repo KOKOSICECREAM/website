@@ -11,7 +11,7 @@
 <link rel="icon" type="image/png" href="https://raw.githubusercontent.com/KOKOSICECREAM/website/main/Customer_dapp/KOKOS_SKOOP.png">
 <link rel="apple-touch-icon" href="https://raw.githubusercontent.com/KOKOSICECREAM/website/main/Customer_dapp/KOKOS_SKOOP.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,opsz,wght@0,6..36,300;0,6..36,400;0,6..36,600;1,6..36,300;1,6..36,400;1,6..36,600&family=Instrument+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=Instrument+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/ethers@6.13.4/dist/ethers.umd.min.js"></script>
 <style>
 :root{
@@ -31,7 +31,7 @@ body{font-family:'Instrument Sans',sans-serif;background:var(--cream);color:var(
 #nav.scrolled{background:rgba(255,250,247,0.92);backdrop-filter:blur(12px);border-bottom:1px solid var(--border);}
 .nav-logo{display:flex;align-items:center;gap:0.75rem;text-decoration:none;}
 .nav-logo img{height:34px;width:34px;border-radius:50%;object-fit:cover;}
-.nav-logo-text{font-family:'Cormorant Garamond',serif;font-size:1.3rem;font-weight:600;color:var(--ink);letter-spacing:0.08em;}
+.nav-logo-text{font-family:'DM Serif Display',serif;font-size:1.15rem;font-weight:400;color:var(--ink);letter-spacing:0.04em;}
 .nav-logo-text span{font-style:italic;font-weight:300;color:var(--ink-mid);font-size:1rem;}
 .nav-links{display:flex;align-items:center;gap:2rem;}
 .nav-links a{font-size:0.8rem;font-weight:500;color:var(--ink-mid);text-decoration:none;letter-spacing:0.04em;transition:color 0.15s;}
@@ -54,7 +54,7 @@ body{font-family:'Instrument Sans',sans-serif;background:var(--cream);color:var(
 .hero-kicker{display:inline-flex;align-items:center;gap:0.5rem;background:rgba(255,255,255,0.45);border:1px solid var(--border-mid);border-radius:999px;padding:0.3rem 1rem;font-size:0.72rem;font-weight:600;letter-spacing:0.12em;text-transform:uppercase;color:var(--green);margin-bottom:1.5rem;}
 .hero-kicker-dot{width:6px;height:6px;border-radius:50%;background:var(--green);animation:livePulse 2s ease infinite;}
 @keyframes livePulse{0%,100%{opacity:1;transform:scale(1);}50%{opacity:0.4;transform:scale(1.4);}}
-h1.hero-title{font-family:'Cormorant Garamond',serif;font-size:clamp(3.5rem,8vw,7rem);font-weight:600;line-height:0.95;letter-spacing:-2px;color:var(--ink);margin-bottom:1.25rem;}
+h1.hero-title{font-family:'DM Serif Display',serif;font-size:clamp(2.6rem,5.5vw,5rem);font-weight:400;line-height:1.02;letter-spacing:-1px;color:var(--ink);margin-bottom:1.25rem;}
 h1.hero-title em{font-style:italic;color:var(--coral-deep);}
 h1.hero-title .outline{-webkit-text-stroke:2px var(--ink);color:transparent;}
 .hero-sub{font-size:1.05rem;color:var(--ink-mid);font-weight:400;max-width:480px;line-height:1.7;margin-bottom:2rem;}
@@ -66,7 +66,7 @@ h1.hero-title .outline{-webkit-text-stroke:2px var(--ink);color:transparent;}
 .hero-ticker{background:rgba(42,31,26,0.06);border-top:1px solid var(--border);padding:1rem 2rem;display:flex;align-items:center;gap:2rem;overflow:hidden;position:relative;z-index:2;}
 .ticker-item{display:flex;flex-direction:column;flex-shrink:0;}
 .ticker-label{font-size:0.6rem;font-weight:700;text-transform:uppercase;letter-spacing:0.1em;color:var(--ink-light);margin-bottom:2px;}
-.ticker-val{font-family:'Cormorant Garamond',serif;font-size:1.4rem;font-weight:600;color:var(--ink);letter-spacing:-0.5px;line-height:1;}
+.ticker-val{font-family:'DM Serif Display',serif;font-size:1.15rem;font-weight:400;color:var(--ink);letter-spacing:0;line-height:1;}
 .ticker-val.loading{color:var(--ink-light);animation:shimmer 1.5s ease infinite;}
 @keyframes shimmer{0%,100%{opacity:0.4;}50%{opacity:1;}}
 .ticker-div{width:1px;height:32px;background:var(--border-mid);flex-shrink:0;}
@@ -76,7 +76,7 @@ section{padding:6rem 2rem;}
 .section-inner{max-width:1100px;margin:0 auto;}
 .section-kicker{font-size:0.68rem;font-weight:700;text-transform:uppercase;letter-spacing:0.14em;color:var(--green);margin-bottom:0.75rem;display:flex;align-items:center;gap:0.5rem;}
 .section-kicker::before{content:'';width:20px;height:2px;background:var(--green);}
-h2.section-title{font-family:'Cormorant Garamond',serif;font-size:clamp(2.2rem,5vw,3.8rem);font-weight:600;line-height:1.05;letter-spacing:-1px;color:var(--ink);margin-bottom:1.25rem;}
+h2.section-title{font-family:'DM Serif Display',serif;font-size:clamp(1.9rem,4vw,3.2rem);font-weight:400;line-height:1.1;letter-spacing:0;color:var(--ink);margin-bottom:1.25rem;}
 h2.section-title em{font-style:italic;color:var(--coral-deep);}
 
 /* ── LIVE STATS ── */
@@ -85,7 +85,7 @@ h2.section-title em{font-style:italic;color:var(--coral-deep);}
 #stats .section-kicker::before{background:var(--coral-mid);}
 #stats h2.section-title{color:var(--coral);}
 #stats h2.section-title em{color:var(--coral-mid);}
-.stats-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:1px;background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.08);border-radius:16px;overflow:hidden;margin-top:3rem;}
+.stats-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.08);border-radius:16px;overflow:hidden;margin-top:3rem;}
 .stat-block{background:var(--ink);padding:2rem 1.75rem;position:relative;overflow:hidden;transition:background 0.2s;}
 .stat-block:hover{background:rgba(255,255,255,0.04);}
 .stat-block::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;}
@@ -96,7 +96,7 @@ h2.section-title em{font-style:italic;color:var(--coral-deep);}
 .stat-block:nth-child(5)::before{background:var(--coral-mid);}
 .stat-block:nth-child(6)::before{background:var(--mint);}
 .sb-label{font-size:0.62rem;font-weight:600;text-transform:uppercase;letter-spacing:0.1em;color:rgba(255,255,255,0.4);margin-bottom:0.5rem;}
-.sb-val{font-family:'Cormorant Garamond',serif;font-size:2.4rem;font-weight:600;color:var(--coral);letter-spacing:-1px;line-height:1;margin-bottom:0.3rem;}
+.sb-val{font-family:'DM Serif Display',serif;font-size:2rem;font-weight:400;color:var(--coral);letter-spacing:0;line-height:1;margin-bottom:0.3rem;}
 .sb-val.loading{color:rgba(253,206,193,0.3);animation:shimmer 1.5s ease infinite;}
 .sb-sub{font-size:0.7rem;color:rgba(255,255,255,0.35);font-weight:500;}
 
@@ -128,13 +128,13 @@ h2.section-title em{font-style:italic;color:var(--coral-deep);}
 .defi-step{display:flex;gap:1.25rem;position:relative;padding-bottom:2rem;}
 .defi-step:last-child{padding-bottom:0;}
 .defi-step-left{display:flex;flex-direction:column;align-items:center;gap:0;}
-.defi-step-num{width:36px;height:36px;border-radius:50%;background:var(--ink);color:var(--coral);display:flex;align-items:center;justify-content:center;font-family:'Cormorant Garamond',serif;font-size:1.1rem;font-weight:600;flex-shrink:0;}
+.defi-step-num{width:36px;height:36px;border-radius:50%;background:var(--ink);color:var(--coral);display:flex;align-items:center;justify-content:center;font-family:'DM Serif Display',serif;font-size:0.95rem;font-weight:400;flex-shrink:0;}
 .defi-step-line{flex:1;width:2px;background:rgba(42,31,26,0.12);margin-top:6px;}
 .defi-step:last-child .defi-step-line{display:none;}
 .defi-step-title{font-size:0.92rem;font-weight:600;color:var(--ink);margin-bottom:0.35rem;padding-top:0.35rem;}
 .defi-step-desc{font-size:0.82rem;color:var(--ink-mid);line-height:1.65;}
 .defi-quote{background:rgba(255,255,255,0.45);border:1.5px solid var(--border-mid);border-radius:16px;padding:2rem;margin-top:2rem;}
-.dq-text{font-family:'Cormorant Garamond',serif;font-size:1.4rem;font-style:italic;font-weight:400;color:var(--ink);line-height:1.5;margin-bottom:1rem;}
+.dq-text{font-family:'DM Serif Display',serif;font-size:1.15rem;font-style:italic;font-weight:400;color:var(--ink);line-height:1.6;margin-bottom:1rem;}
 .dq-attr{font-size:0.72rem;font-weight:600;color:var(--ink-mid);letter-spacing:0.06em;text-transform:uppercase;}
 @media(max-width:768px){.defi-cols{grid-template-columns:1fr;gap:2.5rem;}}
 
@@ -142,14 +142,14 @@ h2.section-title em{font-style:italic;color:var(--coral-deep);}
 #price{background:var(--white);}
 .chart-wrap{background:var(--cream);border:1px solid var(--border);border-radius:20px;overflow:hidden;margin-top:2.5rem;}
 .chart-header{display:flex;align-items:center;justify-content:space-between;padding:1.25rem 1.5rem;border-bottom:1px solid var(--border);}
-.chart-title-block .chart-name{font-family:'Cormorant Garamond',serif;font-size:1.3rem;font-weight:600;color:var(--ink);}
-.chart-title-block .chart-price{font-family:'Cormorant Garamond',serif;font-size:2.2rem;font-weight:600;color:var(--ink);letter-spacing:-1px;line-height:1;margin-top:2px;}
+.chart-title-block .chart-name{font-family:'DM Serif Display',serif;font-size:1.05rem;font-weight:400;color:var(--ink);}
+.chart-title-block .chart-price{font-family:'DM Serif Display',serif;font-size:1.9rem;font-weight:400;color:var(--ink);letter-spacing:0;line-height:1;margin-top:4px;}
 .chart-badge{display:flex;align-items:center;gap:0.4rem;background:var(--mint);color:var(--green);padding:0.3rem 0.875rem;border-radius:999px;font-size:0.72rem;font-weight:700;}
 #price-chart-canvas{width:100%;display:block;}
 .chart-footer{display:flex;gap:2rem;padding:1rem 1.5rem;border-top:1px solid var(--border);flex-wrap:wrap;}
 .cf-item{display:flex;flex-direction:column;}
 .cf-label{font-size:0.6rem;font-weight:700;text-transform:uppercase;letter-spacing:0.1em;color:var(--ink-light);margin-bottom:2px;}
-.cf-val{font-family:'Cormorant Garamond',serif;font-size:1.1rem;font-weight:600;color:var(--ink);}
+.cf-val{font-family:'DM Serif Display',serif;font-size:0.95rem;font-weight:400;color:var(--ink);}
 
 /* ── HOW IT WORKS ── */
 #how{background:var(--mint);}
@@ -157,7 +157,7 @@ h2.section-title em{font-style:italic;color:var(--coral-deep);}
 .how-card{background:var(--white);border-radius:20px;overflow:hidden;transition:transform 0.2s,box-shadow 0.2s;}
 .how-card:hover{transform:translateY(-4px);box-shadow:0 16px 48px rgba(42,31,26,0.10);}
 .hc-top{padding:2rem 1.75rem 1.5rem;position:relative;}
-.hc-num{position:absolute;top:1.5rem;right:1.5rem;font-family:'Cormorant Garamond',serif;font-size:4rem;font-weight:600;color:rgba(42,31,26,0.06);line-height:1;}
+.hc-num{position:absolute;top:1.5rem;right:1.5rem;font-family:'DM Serif Display',serif;font-size:3.5rem;font-weight:400;color:rgba(42,31,26,0.06);line-height:1;}
 .hc-icon{width:48px;height:48px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:1.6rem;margin-bottom:1rem;}
 .hci-coral{background:var(--coral);}
 .hci-sand{background:var(--sand);}
@@ -182,7 +182,7 @@ h2.section-title em{font-style:italic;color:var(--coral-deep);}
 .tdc-val{color:var(--coral);font-weight:600;font-family:monospace;font-size:0.75rem;word-break:break-all;text-align:right;max-width:60%;}
 .tdc-val.plain{font-family:'Instrument Sans',sans-serif;font-size:0.82rem;}
 .token-cta{background:rgba(253,206,193,0.08);border:1.5px solid rgba(253,206,193,0.2);border-radius:16px;padding:2.5rem;text-align:center;margin-top:2rem;}
-.token-cta-title{font-family:'Cormorant Garamond',serif;font-size:2rem;font-style:italic;color:var(--coral);margin-bottom:0.75rem;}
+.token-cta-title{font-family:'DM Serif Display',serif;font-size:1.7rem;font-style:italic;color:var(--coral);margin-bottom:0.75rem;}
 .token-cta-desc{font-size:0.88rem;color:rgba(255,255,255,0.45);margin-bottom:1.75rem;line-height:1.7;}
 .btn-token-cta{display:inline-flex;align-items:center;gap:0.5rem;background:var(--coral-deep);color:var(--white);border:none;padding:1rem 2.5rem;border-radius:999px;font-family:inherit;font-size:0.92rem;font-weight:600;cursor:pointer;text-decoration:none;transition:all 0.2s;letter-spacing:0.03em;}
 .btn-token-cta:hover{background:var(--coral-burn);transform:translateY(-2px);}
@@ -202,7 +202,7 @@ h2.section-title em{font-style:italic;color:var(--coral-deep);}
 .burn-text p strong{color:var(--ink);}
 .burn-stat-row{display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-top:1.5rem;}
 .burn-stat{background:var(--white);border-radius:12px;padding:1.25rem;border:1px solid var(--border);text-align:center;}
-.bs-val{font-family:'Cormorant Garamond',serif;font-size:2rem;font-weight:600;color:var(--coral-deep);line-height:1;}
+.bs-val{font-family:'DM Serif Display',serif;font-size:1.7rem;font-weight:400;color:var(--coral-deep);line-height:1;}
 .bs-label{font-size:0.65rem;font-weight:600;text-transform:uppercase;letter-spacing:0.08em;color:var(--ink-light);margin-top:0.25rem;}
 @media(max-width:768px){.burn-visual{grid-template-columns:1fr;}}
 
@@ -212,7 +212,7 @@ h2.section-title em{font-style:italic;color:var(--coral-deep);}
 .press-card{background:var(--white);border:1px solid var(--border);border-radius:16px;padding:1.75rem;transition:transform 0.2s,box-shadow 0.2s;}
 .press-card:hover{transform:translateY(-3px);box-shadow:0 12px 40px rgba(42,31,26,0.09);}
 .press-source{font-size:0.65rem;font-weight:700;text-transform:uppercase;letter-spacing:0.12em;color:var(--green);margin-bottom:0.75rem;}
-.press-quote{font-family:'Cormorant Garamond',serif;font-size:1.1rem;font-style:italic;font-weight:400;color:var(--ink);line-height:1.55;margin-bottom:0.75rem;}
+.press-quote{font-family:'DM Serif Display',serif;font-size:1rem;font-style:italic;font-weight:400;color:var(--ink);line-height:1.6;margin-bottom:0.75rem;}
 .press-link{font-size:0.72rem;color:var(--ink-light);text-decoration:none;font-weight:500;}
 .press-link:hover{color:var(--green);}
 @media(max-width:640px){.press-grid{grid-template-columns:1fr;}}
@@ -224,7 +224,7 @@ footer{background:var(--green-dk);padding:4rem 2rem 2rem;}
 .footer-brand{display:flex;flex-direction:column;gap:1rem;}
 .footer-logo{display:flex;align-items:center;gap:0.75rem;}
 .footer-logo img{height:36px;width:36px;border-radius:50%;}
-.footer-logo-text{font-family:'Cormorant Garamond',serif;font-size:1.4rem;font-weight:600;color:var(--coral);letter-spacing:0.08em;}
+.footer-logo-text{font-family:'DM Serif Display',serif;font-size:1.2rem;font-weight:400;color:var(--coral);letter-spacing:0.04em;}
 .footer-tagline{font-size:0.82rem;color:rgba(255,255,255,0.4);line-height:1.7;max-width:280px;}
 .footer-col-title{font-size:0.62rem;font-weight:700;text-transform:uppercase;letter-spacing:0.12em;color:rgba(255,255,255,0.3);margin-bottom:1rem;}
 .footer-col a{display:block;font-size:0.82rem;color:rgba(255,255,255,0.55);text-decoration:none;margin-bottom:0.6rem;transition:color 0.15s;}
@@ -260,7 +260,7 @@ footer{background:var(--green-dk);padding:4rem 2rem 2rem;}
   #hero .hero-content{padding:5.5rem 1.1rem 0;}
   #hero .hero-ticker{padding:0.875rem 1.1rem;gap:1rem;overflow-x:auto;-webkit-overflow-scrolling:touch;}
   .ticker-val{font-size:1.1rem;}
-  h1.hero-title{font-size:2.8rem;letter-spacing:-1px;}
+  h1.hero-title{font-size:2.2rem;letter-spacing:-0.5px;}
   h1.hero-title .outline{-webkit-text-stroke:1.5px var(--ink);}
   .hero-sub{font-size:0.92rem;}
   .hero-actions{flex-direction:column;align-items:stretch;}
@@ -268,10 +268,10 @@ footer{background:var(--green-dk);padding:4rem 2rem 2rem;}
 
   /* Stats grid — 1 col so numbers never clip */
   .stats-grid{grid-template-columns:1fr;}
-  .sb-val{font-size:2rem;}
+  .sb-val{font-size:1.7rem;}
 
   /* Section headings */
-  h2.section-title{font-size:2.1rem;letter-spacing:-0.5px;}
+  h2.section-title{font-size:1.8rem;letter-spacing:0;}
 
   /* Why grid */
   .why-grid{grid-template-columns:1fr;gap:2rem;}
@@ -282,7 +282,7 @@ footer{background:var(--green-dk);padding:4rem 2rem 2rem;}
   /* Chart */
   #price-chart-canvas{width:100%!important;}
   .chart-header{flex-direction:column;align-items:flex-start;gap:0.75rem;}
-  .chart-title-block .chart-price{font-size:1.6rem;}
+  .chart-title-block .chart-price{font-size:1.4rem;}
   .chart-footer{gap:1rem;}
   .cf-val{font-size:0.92rem;}
 
@@ -310,13 +310,13 @@ footer{background:var(--green-dk);padding:4rem 2rem 2rem;}
 /* Mid breakpoint — tablet */
 @media(min-width:641px) and (max-width:899px){
   .stats-grid{grid-template-columns:1fr 1fr 1fr;}
-  .sb-val{font-size:1.9rem;}
+  .sb-val{font-size:1.65rem;}
   .why-grid{grid-template-columns:1fr;}
   .defi-cols{grid-template-columns:1fr;}
   .burn-visual{grid-template-columns:1fr;}
   .press-grid{grid-template-columns:1fr 1fr;}
   .token-grid{grid-template-columns:1fr;}
-  h2.section-title{font-size:2.6rem;}
+  h2.section-title{font-size:2.2rem;}
 }
 </style>
 </head>
@@ -356,7 +356,7 @@ footer{background:var(--green-dk);padding:4rem 2rem 2rem;}
       <img src="https://raw.githubusercontent.com/KOKOSICECREAM/website/main/Customer_dapp/KOKOS_SKOOP.png" alt="SKOOP Token" style="width:72px;height:72px;border-radius:50%;object-fit:cover;box-shadow:0 8px 32px rgba(42,31,26,0.18);border:3px solid rgba(255,255,255,0.6);">
       <div>
         <div style="font-size:0.65rem;font-weight:700;letter-spacing:0.14em;text-transform:uppercase;color:var(--green);margin-bottom:2px;">The KOKOS Token</div>
-        <div style="font-family:'Cormorant Garamond',serif;font-size:1.6rem;font-weight:600;color:var(--ink);letter-spacing:-0.5px;line-height:1;">$SKOOP <span style="font-weight:300;font-style:italic;color:var(--ink-mid);font-size:1.2rem;">· Base Network</span></div>
+        <div style="font-family:'DM Serif Display',serif;font-size:1.35rem;font-weight:400;color:var(--ink);letter-spacing:0;line-height:1;">$SKOOP <span style="font-weight:400;font-style:italic;color:var(--ink-mid);font-size:1rem;">· Base Network</span></div>
       </div>
     </div>
     <div class="hero-kicker">
@@ -437,6 +437,11 @@ footer{background:var(--green-dk);padding:4rem 2rem 2rem;}
         <div class="sb-val loading" id="s-eth">—</div>
         <div class="sb-sub">Ethereum · USD</div>
       </div>
+      <div class="stat-block">
+        <div class="sb-label">Total Burned</div>
+        <div class="sb-val loading" id="s-burned">—</div>
+        <div class="sb-sub">SKOOP removed forever</div>
+      </div>
 
     </div>
   </div>
@@ -451,7 +456,7 @@ footer{background:var(--green-dk);padding:4rem 2rem 2rem;}
       <div class="why-text reveal reveal-delay-2">
         <p>Crypto is the future of finance and busineses need <strong>a better loyalty system.</strong> One that the customer actually owns. One that isn't locked inside an app that disappears when the business pivots. One that works even if KOKOS isn't here tomorrow.</p>
         <p>SKOOP is built on Base — an Ethereum Layer 2 with near-zero fees and two-second finality. Every payment, every reward, every settlement is a public transaction anyone can verify. <strong>No middleware. No middlemen. No black box.</strong></p>
-        <p>This is what DeFi actually means in practice: a micro-economy between a local business and its community, running on open infrastructure, owned by neither party and beholden to neither..</p>
+        <p>This is what DeFi actually means in practice: a micro-economy between a local business and its community, running on open infrastructure, owned by neither party and beholden to neither.</p>
         <p>The escrow contract is <strong>immutable and ownerless</strong> — not even KOKOS can change the rules after deployment. When you pay in SKOOP, the logic is fixed in code. That's the promise of trustless finance applied to a $9 ice cream.</p>
       </div>
       <div class="why-cards reveal reveal-delay-3">
@@ -692,7 +697,7 @@ footer{background:var(--green-dk);padding:4rem 2rem 2rem;}
         <a href="https://kokosicecream.com" class="press-link">kokosicecream.com →</a>
       </div>
       <div class="press-card">
-        <div class="press-source">Google Reviews · 4.8 ★ · 304 reviews</div>
+        <div class="press-source">Google Reviews · 4.8 ★ · 315 reviews</div>
         <div class="press-quote">"Best ice cream ever. Really incredible whether you have dietary restrictions or not. Definitely worth a visit."</div>
         <a href="https://share.google/wI2Nh04iu6H5Gw7Ld" target="_blank" rel="noopener" class="press-link">See all reviews →</a>
       </div>
@@ -829,6 +834,7 @@ async function fetchBurnTotal(){
     const fmt = burnedSkoopAmount.toLocaleString('en-US', {maximumFractionDigits: 2});
     const display = burned > 0n ? fmt : '0';
     set('burn-total', display);
+    set('s-burned', display);
     updateBurnUsd();
   }catch(e){
     console.error('fetchBurnTotal:', e);
