@@ -223,9 +223,6 @@ html,body{height:100%;overflow:hidden;background:var(--coral);font-family:'Instr
 .ap-steps{padding:14px 16px;display:flex;flex-direction:column;gap:10px;}
 .ap-step{display:flex;align-items:center;gap:12px;}
 .ap-step-dot{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:12px;font-weight:700;transition:all 0.3s;}
-.setup-dot{width:32px;height:32px;border-radius:50%;background:var(--border);color:var(--ink-mid);font-size:13px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all 0.3s;}
-.setup-dot.active{background:var(--sand);color:var(--ink);animation:apPulse 1.2s ease infinite;}
-.setup-dot.done{background:var(--mint);color:var(--mint-dk);}
 .ap-step-dot.waiting{background:var(--border);color:var(--ink-light);}
 .ap-step-dot.active{background:var(--sand);color:var(--ink);animation:apPulse 1.2s ease infinite;}
 .ap-step-dot.done{background:var(--mint);color:var(--green);}
@@ -607,35 +604,6 @@ html,body{height:100%;overflow:hidden;background:var(--coral);font-family:'Instr
 </div>
 
 <!-- WALLET SETUP MODAL -->
-<div id="setup-modal" style="display:none;position:absolute;inset:0;z-index:500;background:rgba(42,31,26,0.5);backdrop-filter:blur(4px);align-items:flex-end;justify-content:center;">
-  <div style="background:var(--white);width:100%;max-width:480px;border-top-left-radius:28px;border-top-right-radius:28px;padding:24px 20px calc(env(safe-area-inset-bottom,0px) + 24px);animation:sheetUp 0.3s cubic-bezier(0.34,1.56,0.64,1);" onclick="event.stopPropagation()">
-    <div id="setup-main">
-      <div style="text-align:center;margin-bottom:20px;">
-        <div style="font-size:36px;margin-bottom:8px;">🍦</div>
-        <div style="font-size:17px;font-weight:700;color:var(--ink);margin-bottom:4px;">One-time wallet setup</div>
-        <div style="font-size:13px;color:var(--ink-mid);line-height:1.5;">Approve once — every future KOKOS payment is a single tap.</div>
-      </div>
-      <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:20px;">
-        <div style="display:flex;align-items:center;gap:12px;padding:12px 14px;background:var(--cream);border-radius:12px;">
-          <div class="setup-dot" id="setup-dot-1">1</div>
-          <div><div style="font-size:14px;font-weight:600;color:var(--ink);">Approve SKOOP</div><div style="font-size:12px;color:var(--ink-mid);">One-time permission to pay with SKOOP</div></div>
-        </div>
-        <div style="display:flex;align-items:center;gap:12px;padding:12px 14px;background:var(--cream);border-radius:12px;">
-          <div class="setup-dot" id="setup-dot-2">2</div>
-          <div><div style="font-size:14px;font-weight:600;color:var(--ink);">Approve USDC</div><div style="font-size:12px;color:var(--ink-mid);">One-time permission to pay with USDC</div></div>
-        </div>
-      </div>
-      <button id="setup-btn" class="btn-confirm" onclick="doSetup()">Set up payments</button>
-      <div onclick="dismissSetup()" style="text-align:center;padding:14px 0 0;font-size:13px;color:var(--ink-mid);cursor:pointer;">Skip for now</div>
-    </div>
-    <div id="setup-success" style="display:none;text-align:center;padding:20px 0;">
-      <div style="width:56px;height:56px;border-radius:50%;background:var(--mint);display:flex;align-items:center;justify-content:center;margin:0 auto 12px;font-size:24px;">✓</div>
-      <div style="font-size:17px;font-weight:700;color:var(--ink);margin-bottom:4px;">All set!</div>
-      <div style="font-size:13px;color:var(--ink-mid);">Every future payment is one tap.</div>
-    </div>
-  </div>
-</div>
-
 <!-- PRICE MODAL -->
 <div id="price-modal" style="display:none;position:absolute;inset:0;z-index:400;background:rgba(42,31,26,0.5);backdrop-filter:blur(6px);align-items:flex-end;justify-content:center;" onclick="if(event.target===this)closePriceModal()">
   <div style="background:var(--cream);border-top-left-radius:28px;border-top-right-radius:28px;width:100%;max-width:430px;overflow:hidden;box-shadow:0 -8px 48px rgba(42,31,26,0.22);animation:sheetUp 0.28s cubic-bezier(0.34,1.56,0.64,1);" onclick="event.stopPropagation()">
@@ -859,80 +827,6 @@ async function onConnected(){
   if(window._balancePollTimer)clearInterval(window._balancePollTimer);
   window._balancePollTimer=setInterval(()=>{if(userAddr){refreshBals().catch(()=>{});}else{clearInterval(window._balancePollTimer);}},30000);
   // Show one-time setup prompt after app is visible — skip if URL has payment param
-  if(!new URLSearchParams(window.location.search).get('d'))setTimeout(checkAndPromptSetup,900);
-}
-
-function setSetupDot(n,state){
-  const dot=document.getElementById('setup-dot-'+n);if(!dot)return;
-  dot.className='setup-dot '+state;
-  dot.innerHTML=state==='done'?'✓':state==='active'?'<span class="spinner" style="width:14px;height:14px;border-width:2px;"></span>':n;
-}
-
-async function checkAndPromptSetup(){
-  if(!signer||!userAddr)return;
-  try{
-    const net=await provider.getNetwork();
-    if(Number(net.chainId)!==CFG.CHAIN_ID)return; // wrong network — don't show yet
-  }catch(e){return;}
-  try{
-    const rpc=new ethers.JsonRpcProvider(CFG.RPC);
-    const threshold=BigInt(1e6); // 1 token — if approved at all, consider done
-    const [skoopAl,usdcAl]=await Promise.all([
-      new ethers.Contract(CFG.SKOOP,ABI_ERC20,rpc).allowance(userAddr,CFG.ESCROW),
-      new ethers.Contract(CFG.USDC,ABI_ERC20,rpc).allowance(userAddr,CFG.ESCROW),
-    ]);
-    const skoopDone=skoopAl>=threshold;
-    const usdcDone=usdcAl>=threshold;
-    if(skoopDone&&usdcDone)return; // already fully set up
-    setSetupDot(1,skoopDone?'done':'waiting');
-    setSetupDot(2,usdcDone?'done':'waiting');
-    document.getElementById('setup-main').style.display='';
-    document.getElementById('setup-success').style.display='none';
-    document.getElementById('setup-modal').style.display='flex';
-  }catch(e){} // silently skip if RPC fails
-}
-
-async function doSetup(){
-  if(!signer)return;
-  const btn=document.getElementById('setup-btn');btn.disabled=true;
-  const rpc=new ethers.JsonRpcProvider(CFG.RPC);
-  const threshold=BigInt(1e6);
-  // Approve SKOOP if needed
-  try{
-    const al=await new ethers.Contract(CFG.SKOOP,ABI_ERC20,rpc).allowance(userAddr,CFG.ESCROW);
-    if(al<threshold){
-      setSetupDot(1,'active');
-      const tx=await new ethers.Contract(CFG.SKOOP,ABI_ERC20,signer).approve(CFG.ESCROW,ethers.MaxUint256);
-      await tx.wait();
-    }
-    setSetupDot(1,'done');
-  }catch(e){
-    setSetupDot(1,'waiting');
-    if(e?.code!==4001)showToast('SKOOP approval failed','err');
-    btn.disabled=false;return;
-  }
-  // Approve USDC if needed
-  try{
-    const al=await new ethers.Contract(CFG.USDC,ABI_ERC20,rpc).allowance(userAddr,CFG.ESCROW);
-    if(al<threshold){
-      setSetupDot(2,'active');
-      const tx=await new ethers.Contract(CFG.USDC,ABI_ERC20,signer).approve(CFG.ESCROW,ethers.MaxUint256);
-      await tx.wait();
-    }
-    setSetupDot(2,'done');
-  }catch(e){
-    setSetupDot(2,'waiting');
-    if(e?.code!==4001)showToast('USDC approval failed','err');
-    btn.disabled=false;return;
-  }
-  // Both done
-  document.getElementById('setup-main').style.display='none';
-  document.getElementById('setup-success').style.display='';
-  setTimeout(dismissSetup,2200);
-}
-
-function dismissSetup(){
-  document.getElementById('setup-modal').style.display='none';
 }
 
 function updatePills(){
@@ -1407,12 +1301,12 @@ async function confirmPay(){
       showApprovalProgress();setApStep(1,'active','Waiting for your wallet \u2014 tap Confirm to approve');
       btn.innerHTML='<span class="spinner"></span> Step 1 of 2 \u2014 Approving\u2026';
       try{
-        const approveTx=await tok.approve(CFG.ESCROW,ethers.MaxUint256);
+        const approveTx=await tok.approve(CFG.ESCROW,tokAmt);
         setApStep(1,'active','Approval submitted \u2014 confirming on chain\u2026');
         btn.innerHTML='<span class="spinner"></span> Confirming approval\u2026';
         await approveTx.wait();
       }catch(e){setApStep(1,'error','Approval rejected \u2014 tap below to try again');btn.disabled=false;btn.textContent="Try Again";return;}
-      setApStep(1,'done','Approved \u2713 \u2014 '+tokenLabel+' spending unlocked');
+      setApStep(1,'done','Approved \u2713 \u2014 exact amount approved for this payment');
       setApStep(2,'active','Waiting for your wallet \u2014 confirm the payment');
       btn.innerHTML='<span class="spinner"></span> Step 2 of 2 \u2014 Sending payment\u2026';
       await new Promise(r=>setTimeout(r,600));
