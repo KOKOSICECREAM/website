@@ -524,7 +524,7 @@ const ABI_ESCROW=[
   {inputs:[{name:"receiptIds",type:"bytes32[]"}],name:"burnPayments",outputs:[],stateMutability:"nonpayable",type:"function"},
   {inputs:[{name:"receiptIds",type:"bytes32[]"}],name:"settleUSDCPayments",outputs:[],stateMutability:"nonpayable",type:"function"},
   {inputs:[{name:"receiptId",type:"bytes32"}],name:"voidPayment",outputs:[],stateMutability:"nonpayable",type:"function"},
-  {anonymous:false,inputs:[{indexed:true,name:"receiptId",type:"bytes32"},{indexed:true,name:"payer",type:"address"},{indexed:false,name:"timestamp",type:"uint256"}],name:"PaymentVoided",type:"event"},
+  {anonymous:false,inputs:[{indexed:true,name:"receiptId",type:"bytes32"},{indexed:true,name:"orderId",type:"bytes32"},{indexed:true,name:"payer",type:"address"},{indexed:false,name:"paymentToken",type:"address"},{indexed:false,name:"tokenAmount",type:"uint256"},{indexed:false,name:"timestamp",type:"uint256"}],name:"PaymentVoided",type:"event"},
   {anonymous:false,inputs:[
     {indexed:true,name:"receiptId",type:"bytes32"},{indexed:true,name:"orderId",type:"bytes32"},
     {indexed:true,name:"payer",type:"address"},{indexed:false,name:"paymentToken",type:"address"},
