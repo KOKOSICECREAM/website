@@ -223,6 +223,9 @@ html,body{height:100%;overflow:hidden;background:var(--coral);font-family:'Instr
 .ap-steps{padding:14px 16px;display:flex;flex-direction:column;gap:10px;}
 .ap-step{display:flex;align-items:center;gap:12px;}
 .ap-step-dot{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:12px;font-weight:700;transition:all 0.3s;}
+.setup-dot{width:32px;height:32px;border-radius:50%;background:var(--border);color:var(--ink-mid);font-size:13px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all 0.3s;}
+.setup-dot.active{background:var(--sand);color:var(--ink);animation:apPulse 1.2s ease infinite;}
+.setup-dot.done{background:var(--mint);color:var(--mint-dk);}
 .ap-step-dot.waiting{background:var(--border);color:var(--ink-light);}
 .ap-step-dot.active{background:var(--sand);color:var(--ink);animation:apPulse 1.2s ease infinite;}
 .ap-step-dot.done{background:var(--mint);color:var(--green);}
@@ -491,7 +494,7 @@ html,body{height:100%;overflow:hidden;background:var(--coral);font-family:'Instr
         <div class="confirm-card">
           <div class="cc-head"><div style="font-size:28px">&#127978;</div><div class="cc-head-text"><div class="store">KOKOS Ice Cream &middot; Nashville</div><div class="total" id="cc-usd">$0.00</div></div></div>
           <div class="cc-body">
-            <div class="cc-row"><span class="ck">SKOOP amount</span><span class="cv big" id="cc-skoop">0</span></div>
+            <div class="cc-row"><span class="ck" id="cc-token-label">SKOOP amount</span><span class="cv big" id="cc-skoop">0</span></div>
             <div class="cc-row"><span class="ck">Your balance</span><span class="cv" id="cc-balance" style="font-size:13px;">—</span></div>
             <div class="cc-row"><span class="ck">Items</span><span class="cv" id="cc-items">&#8212;</span></div>
             <div class="cc-row"><span class="ck">Subtotal</span><span class="cv" id="cc-sub">&#8212;</span></div>
@@ -504,7 +507,7 @@ html,body{height:100%;overflow:hidden;background:var(--coral);font-family:'Instr
           <span style="font-size:18px;flex-shrink:0;">🔐</span>
           <div>
             <div style="font-size:12px;font-weight:700;color:var(--ink);margin-bottom:3px;">First-time setup — 2 quick steps</div>
-            <div style="font-size:11px;color:var(--ink-mid);line-height:1.6;">Your wallet will ask to <strong>approve SKOOP</strong> first — this is a one-time permission. Your payment follows automatically. No second scan needed.</div>
+            <div style="font-size:11px;color:var(--ink-mid);line-height:1.6;">Your wallet will ask to <strong>approve the token</strong> first — this is a one-time permission. Your payment follows automatically. No second scan needed.</div>
           </div>
         </div>
         <div id="approval-progress">
@@ -519,8 +522,8 @@ html,body{height:100%;overflow:hidden;background:var(--coral);font-family:'Instr
             <div class="ap-step">
               <div class="ap-step-dot waiting" id="ap-dot-1">1</div>
               <div class="ap-step-info">
-                <div class="ap-step-label">Approve SKOOP</div>
-                <div class="ap-step-desc" id="ap-desc-1">Allow the KOKOS escrow to accept your SKOOP — tap Confirm in your wallet</div>
+                <div class="ap-step-label" id="ap-label-1">Approve token</div>
+                <div class="ap-step-desc" id="ap-desc-1">Allow the KOKOS escrow to accept your payment — tap Confirm in your wallet</div>
               </div>
             </div>
             <div class="ap-connector"></div>
@@ -603,6 +606,36 @@ html,body{height:100%;overflow:hidden;background:var(--coral);font-family:'Instr
   </div>
 </div>
 
+<!-- WALLET SETUP MODAL -->
+<div id="setup-modal" style="display:none;position:absolute;inset:0;z-index:500;background:rgba(42,31,26,0.5);backdrop-filter:blur(4px);align-items:flex-end;justify-content:center;">
+  <div style="background:var(--white);width:100%;max-width:480px;border-top-left-radius:28px;border-top-right-radius:28px;padding:24px 20px calc(env(safe-area-inset-bottom,0px) + 24px);animation:sheetUp 0.3s cubic-bezier(0.34,1.56,0.64,1);" onclick="event.stopPropagation()">
+    <div id="setup-main">
+      <div style="text-align:center;margin-bottom:20px;">
+        <div style="font-size:36px;margin-bottom:8px;">🍦</div>
+        <div style="font-size:17px;font-weight:700;color:var(--ink);margin-bottom:4px;">One-time wallet setup</div>
+        <div style="font-size:13px;color:var(--ink-mid);line-height:1.5;">Approve once — every future KOKOS payment is a single tap.</div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:20px;">
+        <div style="display:flex;align-items:center;gap:12px;padding:12px 14px;background:var(--cream);border-radius:12px;">
+          <div class="setup-dot" id="setup-dot-1">1</div>
+          <div><div style="font-size:14px;font-weight:600;color:var(--ink);">Approve SKOOP</div><div style="font-size:12px;color:var(--ink-mid);">One-time permission to pay with SKOOP</div></div>
+        </div>
+        <div style="display:flex;align-items:center;gap:12px;padding:12px 14px;background:var(--cream);border-radius:12px;">
+          <div class="setup-dot" id="setup-dot-2">2</div>
+          <div><div style="font-size:14px;font-weight:600;color:var(--ink);">Approve USDC</div><div style="font-size:12px;color:var(--ink-mid);">One-time permission to pay with USDC</div></div>
+        </div>
+      </div>
+      <button id="setup-btn" class="btn-confirm" onclick="doSetup()">Set up payments</button>
+      <div onclick="dismissSetup()" style="text-align:center;padding:14px 0 0;font-size:13px;color:var(--ink-mid);cursor:pointer;">Skip for now</div>
+    </div>
+    <div id="setup-success" style="display:none;text-align:center;padding:20px 0;">
+      <div style="width:56px;height:56px;border-radius:50%;background:var(--mint);display:flex;align-items:center;justify-content:center;margin:0 auto 12px;font-size:24px;">✓</div>
+      <div style="font-size:17px;font-weight:700;color:var(--ink);margin-bottom:4px;">All set!</div>
+      <div style="font-size:13px;color:var(--ink-mid);">Every future payment is one tap.</div>
+    </div>
+  </div>
+</div>
+
 <!-- PRICE MODAL -->
 <div id="price-modal" style="display:none;position:absolute;inset:0;z-index:400;background:rgba(42,31,26,0.5);backdrop-filter:blur(6px);align-items:flex-end;justify-content:center;" onclick="if(event.target===this)closePriceModal()">
   <div style="background:var(--cream);border-top-left-radius:28px;border-top-right-radius:28px;width:100%;max-width:430px;overflow:hidden;box-shadow:0 -8px 48px rgba(42,31,26,0.22);animation:sheetUp 0.28s cubic-bezier(0.34,1.56,0.64,1);" onclick="event.stopPropagation()">
@@ -639,8 +672,8 @@ html,body{height:100%;overflow:hidden;background:var(--coral);font-family:'Instr
 const CFG={
   CHAIN_ID:8453,CHAIN_HEX:'0x2105',RPC:'https://mainnet.base.org',
   SKOOP:'0xfd3ce21c5acd8bbbe576d0e2336c210c3cebeb92',
-  ESCROW:'0x85e8cdedae8ecd23ee21cdc90d75cbaae9a54991',
-  POS_SIGNER:'0xa22675c629743a126e136a80244ddd2c3b2a4b12',
+  ESCROW:'0x7e24b5dda962a5aca1c16d8f7860b0d7f7dbc8e8',
+  POS_SIGNER:'0x4eCc3f03c018208Ae5932eAB91bbD82F37F56D9B',
   ROUTER:'0x2626664c2603336e57b271c5c0b26f421741e481',
   USDC:'0x833589fcd6edb6e08f4c7c32d4f71b54bda02913',
   WETH:'0x4200000000000000000000000000000000000006',
@@ -648,7 +681,14 @@ const CFG={
 };
 const ABI_ERC20=["function balanceOf(address) view returns (uint256)","function allowance(address,address) view returns (uint256)","function approve(address,uint256) returns (bool)","event Transfer(address indexed from, address indexed to, uint256 value)"];
 const ABI_ROUTER=["function exactInputSingle((address tokenIn,address tokenOut,uint24 fee,address recipient,uint256 amountIn,uint256 amountOutMinimum,uint160 sqrtPriceLimitX96)) payable returns (uint256)"];
-const ABI_ESCROW=[{inputs:[{components:[{name:"receiptId",type:"bytes32"},{name:"orderId",type:"bytes32"},{name:"storeIdHash",type:"bytes32"},{name:"terminalIdHash",type:"bytes32"},{name:"tokenAmount",type:"uint256"},{name:"subtotalCents",type:"uint256"},{name:"taxCents",type:"uint256"},{name:"totalCents",type:"uint256"},{name:"itemCount",type:"uint256"},{name:"cartHash",type:"bytes32"},{name:"deadline",type:"uint256"}],internalType:"struct KOKOSPaymentEscrowPOS.PaymentIntent",name:"intent",type:"tuple"},{name:"signature",type:"bytes"}],name:"capturePayment",outputs:[],stateMutability:"nonpayable",type:"function"}];
+const ABI_ESCROW=[{inputs:[{components:[
+  {name:"receiptId",type:"bytes32"},{name:"orderId",type:"bytes32"},
+  {name:"storeIdHash",type:"bytes32"},{name:"terminalIdHash",type:"bytes32"},
+  {name:"paymentToken",type:"address"},
+  {name:"tokenAmount",type:"uint256"},{name:"subtotalCents",type:"uint256"},
+  {name:"taxCents",type:"uint256"},{name:"totalCents",type:"uint256"},
+  {name:"itemCount",type:"uint256"},{name:"cartHash",type:"bytes32"},{name:"deadline",type:"uint256"}
+],name:"intent",type:"tuple"},{name:"signature",type:"bytes"}],name:"capturePayment",outputs:[],stateMutability:"nonpayable",type:"function"}];
 
 const POOL_ETH_SKOOP  = '0xc1d89ca13d5cbc24b92e9f40b36d43da347c5198';
 const POOL_USDC_SKOOP = '0x64ef20f32445eb0a86f4b97ca895fe508af253cd';
@@ -818,6 +858,81 @@ async function onConnected(){
   loadPoolImmutables();fetchEthPrice();
   if(window._balancePollTimer)clearInterval(window._balancePollTimer);
   window._balancePollTimer=setInterval(()=>{if(userAddr){refreshBals().catch(()=>{});}else{clearInterval(window._balancePollTimer);}},30000);
+  // Show one-time setup prompt after app is visible — skip if URL has payment param
+  if(!new URLSearchParams(window.location.search).get('d'))setTimeout(checkAndPromptSetup,900);
+}
+
+function setSetupDot(n,state){
+  const dot=document.getElementById('setup-dot-'+n);if(!dot)return;
+  dot.className='setup-dot '+state;
+  dot.innerHTML=state==='done'?'✓':state==='active'?'<span class="spinner" style="width:14px;height:14px;border-width:2px;"></span>':n;
+}
+
+async function checkAndPromptSetup(){
+  if(!signer||!userAddr)return;
+  try{
+    const net=await provider.getNetwork();
+    if(Number(net.chainId)!==CFG.CHAIN_ID)return; // wrong network — don't show yet
+  }catch(e){return;}
+  try{
+    const rpc=new ethers.JsonRpcProvider(CFG.RPC);
+    const threshold=BigInt(1e6); // 1 token — if approved at all, consider done
+    const [skoopAl,usdcAl]=await Promise.all([
+      new ethers.Contract(CFG.SKOOP,ABI_ERC20,rpc).allowance(userAddr,CFG.ESCROW),
+      new ethers.Contract(CFG.USDC,ABI_ERC20,rpc).allowance(userAddr,CFG.ESCROW),
+    ]);
+    const skoopDone=skoopAl>=threshold;
+    const usdcDone=usdcAl>=threshold;
+    if(skoopDone&&usdcDone)return; // already fully set up
+    setSetupDot(1,skoopDone?'done':'waiting');
+    setSetupDot(2,usdcDone?'done':'waiting');
+    document.getElementById('setup-main').style.display='';
+    document.getElementById('setup-success').style.display='none';
+    document.getElementById('setup-modal').style.display='flex';
+  }catch(e){} // silently skip if RPC fails
+}
+
+async function doSetup(){
+  if(!signer)return;
+  const btn=document.getElementById('setup-btn');btn.disabled=true;
+  const rpc=new ethers.JsonRpcProvider(CFG.RPC);
+  const threshold=BigInt(1e6);
+  // Approve SKOOP if needed
+  try{
+    const al=await new ethers.Contract(CFG.SKOOP,ABI_ERC20,rpc).allowance(userAddr,CFG.ESCROW);
+    if(al<threshold){
+      setSetupDot(1,'active');
+      const tx=await new ethers.Contract(CFG.SKOOP,ABI_ERC20,signer).approve(CFG.ESCROW,ethers.MaxUint256);
+      await tx.wait();
+    }
+    setSetupDot(1,'done');
+  }catch(e){
+    setSetupDot(1,'waiting');
+    if(e?.code!==4001)showToast('SKOOP approval failed','err');
+    btn.disabled=false;return;
+  }
+  // Approve USDC if needed
+  try{
+    const al=await new ethers.Contract(CFG.USDC,ABI_ERC20,rpc).allowance(userAddr,CFG.ESCROW);
+    if(al<threshold){
+      setSetupDot(2,'active');
+      const tx=await new ethers.Contract(CFG.USDC,ABI_ERC20,signer).approve(CFG.ESCROW,ethers.MaxUint256);
+      await tx.wait();
+    }
+    setSetupDot(2,'done');
+  }catch(e){
+    setSetupDot(2,'waiting');
+    if(e?.code!==4001)showToast('USDC approval failed','err');
+    btn.disabled=false;return;
+  }
+  // Both done
+  document.getElementById('setup-main').style.display='none';
+  document.getElementById('setup-success').style.display='';
+  setTimeout(dismissSetup,2200);
+}
+
+function dismissSetup(){
+  document.getElementById('setup-modal').style.display='none';
 }
 
 function updatePills(){
@@ -949,6 +1064,14 @@ if(window.ethereum){
 }
 
 fetchEthPrice().catch(()=>{});
+
+// Auto-launch payment if URL contains ?d= (from scanned QR URL)
+(function(){
+  const d=new URLSearchParams(window.location.search).get('d');
+  if(!d)return;
+  // Navigate to Pay screen and parse the K2 payload
+  setTimeout(()=>{goTo('pay');setTimeout(()=>parseQR('K2:'+d),200);},100);
+})();
 
 // ── SWAP ──────────────────────────────────────────────────────────────────────
 function openTokSheet(){document.getElementById("tok-sheet").classList.add("open");document.getElementById("tok-back").classList.add("open");}
@@ -1102,15 +1225,63 @@ function startScan(){
    });
 }
 
+function decodeK2(b64url){
+  // Decode K2 binary payload (206 bytes)
+  const b64=b64url.replace(/-/g,'+').replace(/_/g,'/');
+  const bin=atob(b64);const buf=new Uint8Array(bin.length);
+  for(let i=0;i<bin.length;i++)buf[i]=bin.charCodeAt(i);
+  function u8ToHex(arr){return '0x'+Array.from(arr).map(b=>b.toString(16).padStart(2,'0')).join('');}
+  function readBigInt(o,l){let v=0n;for(let i=0;i<l;i++)v=(v<<8n)|BigInt(buf[o+i]);return v;}
+  let off=0;
+  const receiptId=u8ToHex(buf.slice(off,off+32));off+=32;
+  const orderId=u8ToHex(buf.slice(off,off+32));off+=32;
+  const cartHash=u8ToHex(buf.slice(off,off+32));off+=32;
+  const paymentToken=u8ToHex(buf.slice(off,off+20));off+=20;  // 20-byte address
+  const tokenAmount=readBigInt(off,8).toString();off+=8;
+  const subtotalCents=Number(readBigInt(off,4));off+=4;
+  const taxCents=Number(readBigInt(off,4));off+=4;
+  const totalCents=Number(readBigInt(off,4));off+=4;
+  const itemCount=buf[off];off+=1;
+  const deadline=Number(readBigInt(off,4));off+=4;
+  const signature=u8ToHex(buf.slice(off,off+65));
+  const storeIdHash=ethers.id("KOKOS_NASHVILLE_01");
+  const terminalIdHash=ethers.id("POS_1");
+  return {receiptId,orderId,storeIdHash,terminalIdHash,paymentToken,tokenAmount,subtotalCents,taxCents,totalCents,itemCount,cartHash,deadline,signature};
+}
+
+function verifyIntent(intent){
+  // Two-block digest \u2014 must match _paymentDigest() in KOKOSPaymentEscrowV2
+  const enc=ethers.AbiCoder.defaultAbiCoder();
+  const blockA=ethers.keccak256(enc.encode(
+    ['bytes32','bytes32','bytes32','bytes32','address','uint256'],
+    [intent.receiptId,intent.orderId,intent.storeIdHash,intent.terminalIdHash,intent.paymentToken,BigInt(intent.tokenAmount)]
+  ));
+  const blockB=ethers.keccak256(enc.encode(
+    ['uint256','uint256','uint256','uint256','bytes32','uint256'],
+    [BigInt(intent.subtotalCents),BigInt(intent.taxCents),BigInt(intent.totalCents),BigInt(intent.itemCount),intent.cartHash,BigInt(intent.deadline)]
+  ));
+  const digest=ethers.keccak256(enc.encode(['bytes32','bytes32'],[blockA,blockB]));
+  const recovered=ethers.verifyMessage(ethers.getBytes(digest),intent.signature);
+  return recovered.toLowerCase()===CFG.POS_SIGNER.toLowerCase();
+}
+
 function parseQR(raw){
   try{
     let intent;
-    if(raw.startsWith('K1:')){
+    // URL QR: https://kokosicecream.com/Customer_dapp/?d=<k2data>
+    if(raw.startsWith('http')){
+      const url=new URL(raw);const d=url.searchParams.get('d');
+      if(!d){showToast("Invalid payment link","err");setScanState('retry');return;}
+      intent=decodeK2(d);
+    }else if(raw.startsWith('K2:')){
+      intent=decodeK2(raw.slice(3));
+    }else if(raw.startsWith('K1:')){
+      // V1 legacy \u2014 SKOOP only, single-block digest
       const b64=raw.slice(3).replace(/-/g,'+').replace(/_/g,'/');
       const bin=atob(b64);const buf=new Uint8Array(bin.length);
       for(let i=0;i<bin.length;i++)buf[i]=bin.charCodeAt(i);
       function u8ToHex(arr){return '0x'+Array.from(arr).map(b=>b.toString(16).padStart(2,'0')).join('');}
-      function readBigInt(off,len){let v=0n;for(let i=0;i<len;i++)v=(v<<8n)|BigInt(buf[off+i]);return v;}
+      function readBigInt(o,l){let v=0n;for(let i=0;i<l;i++)v=(v<<8n)|BigInt(buf[o+i]);return v;}
       let off=0;
       const receiptId=u8ToHex(buf.slice(off,off+32));off+=32;
       const orderId=u8ToHex(buf.slice(off,off+32));off+=32;
@@ -1122,57 +1293,74 @@ function parseQR(raw){
       const itemCount=buf[off];off+=1;
       const deadline=Number(readBigInt(off,4));off+=4;
       const signature=u8ToHex(buf.slice(off,off+65));
-      const storeIdHash=ethers.id("KOKOS_NASHVILLE_01");
-      const terminalIdHash=ethers.id("POS_1");
-      intent={receiptId,orderId,storeIdHash,terminalIdHash,tokenAmount,subtotalCents,taxCents,totalCents,itemCount,cartHash,deadline,signature};
+      intent={receiptId,orderId,storeIdHash:ethers.id("KOKOS_NASHVILLE_01"),terminalIdHash:ethers.id("POS_1"),
+        paymentToken:CFG.SKOOP,tokenAmount,subtotalCents,taxCents,totalCents,itemCount,cartHash,deadline,signature};
     }else{
-      const d=JSON.parse(raw);
-      if(d.r!==undefined){
-        const receiptId=d.r;const storeIdHash=ethers.id("KOKOS_NASHVILLE_01");const terminalIdHash=ethers.id("POS_1");
-        const orderId=d.o||ethers.id("ORD_"+receiptId);const cartHash=d.ch||ethers.id(CFG.ESCROW+receiptId);
-        intent={receiptId,orderId,storeIdHash,terminalIdHash,tokenAmount:d.t,subtotalCents:d.sc,taxCents:d.tc,totalCents:d.xc,itemCount:d.ic,cartHash,deadline:d.dl,signature:d.sig};
-      }else{intent=d;}
+      showToast("Not a KOKOS payment QR","err");setScanState('retry');return;
     }
-    const req=["receiptId","tokenAmount","subtotalCents","taxCents","totalCents","itemCount","deadline","signature"];
-    for(const f of req){if(intent[f]===undefined||intent[f]===null){throw new Error("Missing: "+f);}}
-    if(Date.now()/1000>Number(intent.deadline)){showToast("QR expired \u2014 ask shop to regenerate","err");return;}
+    if(Date.now()/1000>Number(intent.deadline)){showToast("QR expired \u2014 ask shop to regenerate","err");setScanState('retry');return;}
+    try{
+      if(!verifyIntent(intent)){showToast("Invalid QR \u2014 not a KOKOS payment","err");setScanState('retry');return;}
+    }catch(e){showToast("Invalid QR \u2014 could not verify signature","err");setScanState('retry');return;}
     pendingIntent=intent;showConfirm(intent);
   }catch(e){showToast("Scan error \u2014 point at the QR and try again","err");setScanState('retry');}
 }
 
 async function showConfirm(d){
-  const sk=parseFloat(ethers.formatUnits(BigInt(d.tokenAmount),CFG.SKOOP_DEC));
+  const isUsdc=d.paymentToken?.toLowerCase()===CFG.USDC.toLowerCase();
+  const tokenDec=isUsdc?CFG.USDC_DEC:CFG.SKOOP_DEC;
+  const tokenLabel=isUsdc?'USDC':'SKOOP';
+  const tokFloat=parseFloat(ethers.formatUnits(BigInt(d.tokenAmount),tokenDec));
   document.getElementById("cc-usd").textContent="$"+(Number(d.totalCents)/100).toFixed(2);
-  document.getElementById("cc-skoop").textContent=sk.toLocaleString("en-US",{maximumFractionDigits:2})+" SKOOP";
+  const lbl=document.getElementById("cc-token-label");if(lbl)lbl.textContent=tokenLabel+" amount";
+  document.getElementById("cc-skoop").textContent=tokFloat.toLocaleString("en-US",{maximumFractionDigits:isUsdc?2:0})+" "+tokenLabel;
   document.getElementById("cc-items").textContent=d.itemCount+" item"+(Number(d.itemCount)>1?"s":"");
   document.getElementById("cc-sub").textContent="$"+(Number(d.subtotalCents)/100).toFixed(2);
   document.getElementById("cc-exp").textContent="Expires "+new Date(Number(d.deadline)*1000).toLocaleTimeString();
   document.getElementById("cc-receipt").textContent=d.receiptId.slice(0,20)+"\u2026";
   document.getElementById("pay-scan").classList.remove("active");document.getElementById("pay-confirm").classList.add("active");
+  const notice=document.getElementById('first-time-notice');
+  const btn=document.getElementById('btn-confirm');
+  if(!signer||!userAddr){
+    // Wallet not connected \u2014 show connect prompt
+    if(btn){btn.textContent='Connect wallet to pay';btn.disabled=false;btn.onclick=async()=>{await openWalletModal();if(signer)showConfirm(d);};}
+    if(notice)notice.style.display='none';
+    return;
+  }
+  // Restore default onclick in case it was overwritten above
+  if(btn)btn.onclick=confirmPay;
   try{
-    if(signer&&userAddr){
-      const readProvider=new ethers.JsonRpcProvider(CFG.RPC);
-      const sk2=new ethers.Contract(CFG.SKOOP,ABI_ERC20,readProvider);
-      const [al,rawBal]=await Promise.all([sk2.allowance(userAddr,CFG.ESCROW),sk2.balanceOf(userAddr)]);
-      const balFloat=parseFloat(ethers.formatUnits(rawBal,CFG.SKOOP_DEC));
-      const tokFloat=parseFloat(ethers.formatUnits(BigInt(d.tokenAmount),CFG.SKOOP_DEC));
-      const balEl=document.getElementById('cc-balance');
-      if(balEl){
-        balEl.textContent=balFloat.toLocaleString('en-US',{maximumFractionDigits:2})+' SKOOP';
-        if(balFloat<tokFloat){balEl.style.color='#b91c1c';balEl.textContent+=' \u2014 insufficient';}else{balEl.style.color='';}
+    const readProvider=new ethers.JsonRpcProvider(CFG.RPC);
+    const tok=new ethers.Contract(isUsdc?CFG.USDC:CFG.SKOOP,ABI_ERC20,readProvider);
+    const [al,rawBal]=await Promise.all([tok.allowance(userAddr,CFG.ESCROW),tok.balanceOf(userAddr)]);
+    const balFloat=parseFloat(ethers.formatUnits(rawBal,tokenDec));
+    const balEl=document.getElementById('cc-balance');
+    if(balEl){
+      balEl.textContent=balFloat.toLocaleString('en-US',{maximumFractionDigits:isUsdc?2:0})+' '+tokenLabel;
+      if(balFloat<tokFloat){balEl.style.color='#b91c1c';balEl.textContent+=' \u2014 insufficient';}else{balEl.style.color='';}
+    }
+    const firstTime=al<BigInt(d.tokenAmount);
+    if(balFloat<tokFloat){
+      if(btn){btn.disabled=true;}
+      if(notice)notice.style.display='none';
+      // For USDC: show a path to get some
+      if(isUsdc&&balEl){
+        balEl.innerHTML=balEl.textContent+' \u2014 <span onclick="goTo(\'buy\')" style="color:var(--coral-deep);cursor:pointer;text-decoration:underline;">Get USDC on Base</span>';
       }
-      const firstTime=al<BigInt(d.tokenAmount);
-      const notice=document.getElementById('first-time-notice');const btn=document.getElementById('btn-confirm');
-      if(balFloat<tokFloat){if(btn){btn.textContent='Insufficient SKOOP balance';btn.disabled=true;}if(notice)notice.style.display='none';}
-      else if(firstTime){if(notice)notice.style.display='flex';if(btn){btn.textContent='Step 1 of 2 \u2014 Approve SKOOP';btn.disabled=false;}}
-      else{if(notice)notice.style.display='none';if(btn){btn.textContent='Confirm & Pay with SKOOP';btn.disabled=false;}}
+    }else if(firstTime){
+      if(notice)notice.style.display='flex';
+      if(btn){btn.textContent='Step 1 of 2 \u2014 Approve '+tokenLabel;btn.disabled=false;}
+      const lbl=document.getElementById('ap-label-1');if(lbl)lbl.textContent='Approve '+tokenLabel;
+    }else{
+      if(notice)notice.style.display='none';
+      if(btn){btn.textContent='Confirm & Pay with '+tokenLabel;btn.disabled=false;}
     }
   }catch(e){}
 }
 
 function cancelPay(){
   pendingIntent=null;hideApprovalProgress();
-  const btn=document.getElementById("btn-confirm");if(btn){btn.disabled=false;btn.textContent="Confirm & Pay with SKOOP";}
+  const btn=document.getElementById("btn-confirm");if(btn){btn.disabled=false;btn.textContent="Confirm & Pay";}
   const notice=document.getElementById('first-time-notice');if(notice)notice.style.display='none';
   document.getElementById("pay-confirm").classList.remove("active");document.getElementById("pay-scan").classList.add("active");
 }
@@ -1193,30 +1381,45 @@ function setApStep(n,state,desc){
 async function confirmPay(){
   if(!pendingIntent||!signer)return;
   const btn=document.getElementById("btn-confirm");btn.disabled=true;
+  // Network guard — must be on Base before touching contracts
+  try{
+    const net=await provider.getNetwork();
+    if(Number(net.chainId)!==CFG.CHAIN_ID){
+      showToast('Switch to Base network to pay','err');
+      btn.disabled=false;
+      await switchToBase();
+      return;
+    }
+  }catch(e){btn.disabled=false;return;}
   try{
     const d=pendingIntent;const tokAmt=BigInt(d.tokenAmount);
-    const sk=new ethers.Contract(CFG.SKOOP,ABI_ERC20,signer);
+    const isUsdc=d.paymentToken?.toLowerCase()===CFG.USDC.toLowerCase();
+    const tokenAddr=isUsdc?CFG.USDC:CFG.SKOOP;
+    const tokenDec=isUsdc?CFG.USDC_DEC:CFG.SKOOP_DEC;
+    const tokenLabel=isUsdc?'USDC':'SKOOP';
+    const tok=new ethers.Contract(tokenAddr,ABI_ERC20,signer);
     const readProvider2=new ethers.JsonRpcProvider(CFG.RPC);
-    const sk2=new ethers.Contract(CFG.SKOOP,ABI_ERC20,readProvider2);
-    const liveBal=await sk2.balanceOf(userAddr);
-    if(liveBal<tokAmt){showToast('Not enough SKOOP \u2014 buy more to pay','err');btn.disabled=false;btn.textContent='Confirm & Pay with SKOOP';return;}
-    const al=await sk.allowance(userAddr,CFG.ESCROW);
+    const tok2=new ethers.Contract(tokenAddr,ABI_ERC20,readProvider2);
+    const liveBal=await tok2.balanceOf(userAddr);
+    if(liveBal<tokAmt){showToast('Not enough '+tokenLabel+' \u2014 get some to pay','err');btn.disabled=false;btn.textContent='Confirm & Pay with '+tokenLabel;return;}
+    const al=await tok.allowance(userAddr,CFG.ESCROW);
     if(al<tokAmt){
       showApprovalProgress();setApStep(1,'active','Waiting for your wallet \u2014 tap Confirm to approve');
       btn.innerHTML='<span class="spinner"></span> Step 1 of 2 \u2014 Approving\u2026';
       try{
-        const approveTx=await sk.approve(CFG.ESCROW,ethers.MaxUint256);
+        const approveTx=await tok.approve(CFG.ESCROW,ethers.MaxUint256);
         setApStep(1,'active','Approval submitted \u2014 confirming on chain\u2026');
         btn.innerHTML='<span class="spinner"></span> Confirming approval\u2026';
         await approveTx.wait();
       }catch(e){setApStep(1,'error','Approval rejected \u2014 tap below to try again');btn.disabled=false;btn.textContent="Try Again";return;}
-      setApStep(1,'done','Approved \u2713 \u2014 SKOOP spending unlocked forever');
+      setApStep(1,'done','Approved \u2713 \u2014 '+tokenLabel+' spending unlocked');
       setApStep(2,'active','Waiting for your wallet \u2014 confirm the payment');
       btn.innerHTML='<span class="spinner"></span> Step 2 of 2 \u2014 Sending payment\u2026';
       await new Promise(r=>setTimeout(r,600));
     }else{btn.innerHTML='<span class="spinner"></span> Processing\u2026';}
     const intent={
       receiptId:d.receiptId,orderId:d.orderId,storeIdHash:d.storeIdHash,terminalIdHash:d.terminalIdHash,
+      paymentToken:d.paymentToken,
       tokenAmount:BigInt(d.tokenAmount),subtotalCents:BigInt(d.subtotalCents),taxCents:BigInt(d.taxCents),
       totalCents:BigInt(d.totalCents),itemCount:BigInt(d.itemCount),cartHash:d.cartHash,deadline:BigInt(d.deadline)
     };
@@ -1228,11 +1431,11 @@ async function confirmPay(){
       btn.disabled=false;btn.textContent="Try Again";return;
     }
     if(al<tokAmt)setApStep(2,'done','Payment sent \u2713');
-    const fmt=parseFloat(ethers.formatUnits(tokAmt,CFG.SKOOP_DEC));
+    const fmt=parseFloat(ethers.formatUnits(tokAmt,tokenDec));
     const totalUSD='$'+(Number(d.totalCents)/100).toFixed(2);
-    document.getElementById('success-total-display').textContent=totalUSD+' \u00b7 '+fmt.toLocaleString('en-US',{maximumFractionDigits:2})+' SKOOP';
+    document.getElementById('success-total-display').textContent=totalUSD+' \u00b7 '+fmt.toLocaleString('en-US',{maximumFractionDigits:isUsdc?2:0})+' '+tokenLabel;
     document.getElementById("success-detail").innerHTML=
-      `<div class="sc-row"><span class="sk">SKOOP paid</span><span class="sv" style="color:var(--coral-deep);">${fmt.toLocaleString("en-US",{maximumFractionDigits:2})} SKOOP</span></div>`+
+      `<div class="sc-row"><span class="sk">${tokenLabel} paid</span><span class="sv" style="color:var(--coral-deep);">${fmt.toLocaleString("en-US",{maximumFractionDigits:isUsdc?2:0})} ${tokenLabel}</span></div>`+
       `<div class="sc-row"><span class="sk">Total</span><span class="sv">${totalUSD}</span></div>`+
       `<div class="sc-row"><span class="sk">Tx</span><span class="sv" style="font-family:monospace;font-size:0.62rem;">${tx.hash.slice(0,20)}\u2026</span></div>`+
       `<div class="sc-row"><span class="sk">Block</span><span class="sv">confirming\u2026</span></div>`;
@@ -1244,7 +1447,7 @@ async function confirmPay(){
     if(document.getElementById('approval-progress').classList.contains('show'))setApStep(2,'error','Payment rejected \u2014 tap below to try again');
     btn.disabled=false;btn.textContent="Try Again";return;
   }
-  btn.disabled=false;btn.textContent="Confirm & Pay with SKOOP";
+  btn.disabled=false;btn.textContent="Confirm & Pay";
 }
 
 function closeSuccess(){
