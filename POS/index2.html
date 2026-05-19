@@ -43,19 +43,27 @@ html,body{height:100%;overflow:hidden;font-family:'Instrument Sans',sans-serif;b
 .logo-wrap img{height:34px;width:auto;object-fit:contain;}
 #logo-text{font-family:'Cormorant Garamond',serif;font-size:1.2rem;font-weight:600;letter-spacing:0.1em;color:var(--ink);}
 #logo-subtitle{font-style:italic;font-size:0.82rem;color:rgba(58,32,16,0.5);margin-left:0.4rem;}
-#price-pill{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;min-width:0;gap:1px;}
-#price-pill-main{font-size:0.95rem;font-weight:700;color:var(--ink);white-space:nowrap;}
+#price-pill{flex:1;min-width:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;overflow:hidden;}
+#price-pill-main{font-size:0.95rem;font-weight:700;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%;}
 #price-pill-change{font-size:0.72rem;font-weight:600;white-space:nowrap;color:rgba(58,32,16,0.5);}
 #wallet-btn{background:var(--white);color:var(--ink);border:none;padding:0.42rem 1rem;border-radius:999px;font-family:inherit;font-size:0.78rem;font-weight:700;cursor:pointer;white-space:nowrap;flex-shrink:0;}
 
 /* WALLET BALANCE PILL */
-#wallet-balance-wrap{display:none;flex-direction:column;align-items:flex-end;gap:1px;cursor:pointer;flex-shrink:0;}
+#wallet-balance-wrap{display:none;flex-direction:column;align-items:flex-end;gap:1px;cursor:pointer;flex-shrink:0;min-width:0;}
 #wallet-balance-wrap.visible{display:flex;}
 #wallet-balance-skoop{font-size:0.78rem;font-weight:700;color:var(--ink);white-space:nowrap;line-height:1.1;}
 #wallet-balance-usd{font-size:0.62rem;color:var(--ink-mid);white-space:nowrap;line-height:1.1;}
 #wallet-balance-dot{display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--mint-dk);margin-right:3px;vertical-align:middle;}
 #wallet-balance-dot.loading{background:var(--sand-dk);animation:pulse 1s ease infinite;}
 #wallet-balance-dot.error{background:#c0392b;}
+@media(max-width:680px){
+  #price-pill{flex:0 1 auto;}
+  #price-pill-main{font-size:0.78rem;}
+  #price-pill-change{font-size:0.62rem;}
+  #wallet-balance-skoop{font-size:0.7rem;}
+  #wallet-balance-usd{font-size:0.58rem;}
+  #wallet-btn{padding:0.42rem 0.65rem;font-size:0.72rem;}
+}
 
 /* CONTENT */
 #content{flex:1;display:grid;grid-template-columns:1fr 320px;overflow:hidden;background:var(--cream);min-height:0;}
@@ -353,13 +361,14 @@ html,body{height:100%;overflow:hidden;font-family:'Instrument Sans',sans-serif;b
       </div>
       <div class="stat-grid">
         <div class="stat-card"><div class="stat-label">Captured</div><div class="stat-val" id="stat-captured">0</div></div>
-        <div class="stat-card"><div class="stat-label">Total SKOOP</div><div class="stat-val" id="stat-skoop">0</div></div>
+        <div class="stat-card"><div class="stat-label">SKOOP Pending</div><div class="stat-val" id="stat-skoop">0</div></div>
+        <div class="stat-card"><div class="stat-label">USDC Pending</div><div class="stat-val" id="stat-usdc">$0</div></div>
       </div>
       <div id="receipt-list" style="display:flex;flex-direction:column;gap:0.35rem;flex:1;">
         <p style="font-size:0.68rem;color:var(--ink-lt);text-align:center;padding:0.875rem 0;">No captured receipts yet</p>
       </div>
       <button class="action-btn secondary" onclick="loadReceipts()" style="font-size:0.65rem;margin-top:auto;">Refresh Receipts</button>
-      <button class="action-btn danger" id="burn-btn" onclick="burnSelected()" disabled>🔥 Burn Selected</button>
+      <button class="action-btn danger" id="burn-btn" onclick="burnSelected()" disabled>Settle Selected</button>
     </div>
   </div>
 </div>
@@ -372,10 +381,15 @@ html,body{height:100%;overflow:hidden;font-family:'Instrument Sans',sans-serif;b
         <h2>Payment QR</h2>
         <button class="modal-close" onclick="closeModal()">✕</button>
       </div>
+      <div style="display:flex;gap:0.4rem;padding:0 0.875rem 0.5rem;">
+        <button id="tok-skoop" onclick="selectPaymentToken('skoop')" style="flex:1;padding:0.35rem;border-radius:999px;border:2px solid var(--coral-deep);background:var(--coral-deep);color:var(--white);font-family:inherit;font-size:0.75rem;font-weight:700;cursor:pointer;">SKOOP</button>
+        <button id="tok-usdc" onclick="selectPaymentToken('usdc')" style="flex:1;padding:0.35rem;border-radius:999px;border:2px solid var(--border);background:var(--white);color:var(--ink-mid);font-family:inherit;font-size:0.75rem;font-weight:700;cursor:pointer;">USDC</button>
+      </div>
       <div class="modal-body">
         <div id="qr-canvas-wrap"></div>
         <div class="modal-summary" id="modal-summary"></div>
         <div class="modal-status" id="modal-status">Waiting for customer to scan…</div>
+        <div id="qr-countdown" style="font-size:0.62rem;color:var(--ink-lt);text-align:center;margin-top:-0.25rem;"></div>
         <div class="modal-actions">
           <button class="action-btn secondary" style="flex:1" onclick="closeModal()">Cancel</button>
           <button class="action-btn primary" style="flex:1" onclick="regenerateQR()">Regenerate</button>
@@ -446,7 +460,8 @@ const BRAND = {
   signerWallet:   '0x4eCc3f03c018208Ae5932eAB91bbD82F37F56D9B',
   ownerWallet:    '0x001b3fB36FE7E3a741A15Ed8bE68610442E3a50b',
   skoopToken:     '0xfd3ce21c5acd8bbbe576d0e2336c210c3cebeb92',
-  escrowContract: '0x85e8cdedae8ecd23ee21cdc90d75cbaae9a54991',
+  usdcToken:      '0x833589fcd6edb6e08f4c7c32d4f71b54bda02913',
+  escrowContract: '0x7e24b5dda962a5aca1c16d8f7860b0d7f7dbc8e8',
   skoopPool:      '0xc1d89ca13d5cbc24b92e9f40b36d43da347c5198',
   dailyRewardLimit: 888888,
   taxRate: 0.0925,
@@ -473,21 +488,47 @@ const BRAND = {
 // ═══════════════════════════════════════════════════════════════
 const CFG={
   CHAIN_ID:8453,CHAIN_HEX:'0x2105',RPC:'https://mainnet.base.org',
-  SKOOP:BRAND.skoopToken,ESCROW:BRAND.escrowContract,
+  SKOOP:BRAND.skoopToken,USDC:BRAND.usdcToken,ESCROW:BRAND.escrowContract,
   SIGNER:BRAND.signerWallet,OWNER:BRAND.ownerWallet,
-  POOL_ETH_SKOOP:BRAND.skoopPool,SKOOP_DEC:6,
+  POOL_ETH_SKOOP:BRAND.skoopPool,SKOOP_DEC:6,USDC_DEC:6,
   TAX_RATE:BRAND.taxRate,STORE_ID:BRAND.storeId,TERMINAL_ID:BRAND.terminalId,
   DAILY_REWARD_LIMIT:BRAND.dailyRewardLimit,AUTO_REWARD_RATE:0.10,
 };
 
 let skoopPriceUSD=0,ethPriceUSD=0;
-const ABI_ERC20=["function transfer(address,uint256) returns (bool)"];
+let currentPaymentToken=null; // set to CFG.SKOOP or CFG.USDC at checkout open
+const ABI_ERC20=["function transfer(address,uint256) returns (bool)","function approve(address,uint256) returns (bool)"];
 const ABI_ESCROW=[
-  {inputs:[{components:[{name:"receiptId",type:"bytes32"},{name:"orderId",type:"bytes32"},{name:"storeIdHash",type:"bytes32"},{name:"terminalIdHash",type:"bytes32"},{name:"tokenAmount",type:"uint256"},{name:"subtotalCents",type:"uint256"},{name:"taxCents",type:"uint256"},{name:"totalCents",type:"uint256"},{name:"itemCount",type:"uint256"},{name:"cartHash",type:"bytes32"},{name:"deadline",type:"uint256"}],internalType:"struct KOKOSPaymentEscrowPOS.PaymentIntent",name:"intent",type:"tuple"},{name:"signature",type:"bytes"}],name:"capturePayment",outputs:[],stateMutability:"nonpayable",type:"function"},
+  {inputs:[{components:[
+    {name:"receiptId",type:"bytes32"},{name:"orderId",type:"bytes32"},
+    {name:"storeIdHash",type:"bytes32"},{name:"terminalIdHash",type:"bytes32"},
+    {name:"paymentToken",type:"address"},
+    {name:"tokenAmount",type:"uint256"},{name:"subtotalCents",type:"uint256"},
+    {name:"taxCents",type:"uint256"},{name:"totalCents",type:"uint256"},
+    {name:"itemCount",type:"uint256"},{name:"cartHash",type:"bytes32"},{name:"deadline",type:"uint256"}
+  ],name:"intent",type:"tuple"},{name:"signature",type:"bytes"}],name:"capturePayment",outputs:[],stateMutability:"nonpayable",type:"function"},
   {inputs:[{name:"receiptIds",type:"bytes32[]"}],name:"burnPayments",outputs:[],stateMutability:"nonpayable",type:"function"},
-  {anonymous:false,inputs:[{indexed:true,name:"receiptId",type:"bytes32"},{indexed:true,name:"orderId",type:"bytes32"},{indexed:true,name:"payer",type:"address"},{indexed:false,name:"tokenAmount",type:"uint256"},{indexed:false,name:"totalCents",type:"uint256"},{indexed:false,name:"itemCount",type:"uint256"},{indexed:false,name:"storeIdHash",type:"bytes32"},{indexed:false,name:"terminalIdHash",type:"bytes32"},{indexed:false,name:"cartHash",type:"bytes32"},{indexed:false,name:"timestamp",type:"uint256"}],name:"PaymentCaptured",type:"event"},
-  {anonymous:false,inputs:[{indexed:true,name:"receiptId",type:"bytes32"},{indexed:true,name:"orderId",type:"bytes32"},{indexed:true,name:"payer",type:"address"},{indexed:false,name:"tokenAmount",type:"uint256"},{indexed:false,name:"timestamp",type:"uint256"}],name:"PaymentBurned",type:"event"},
-  {anonymous:false,inputs:[{indexed:false,name:"paymentCount",type:"uint256"},{indexed:false,name:"totalTokenAmount",type:"uint256"},{indexed:false,name:"timestamp",type:"uint256"}],name:"BatchBurnExecuted",type:"event"}
+  {inputs:[{name:"receiptIds",type:"bytes32[]"}],name:"settleUSDCPayments",outputs:[],stateMutability:"nonpayable",type:"function"},
+  {anonymous:false,inputs:[
+    {indexed:true,name:"receiptId",type:"bytes32"},{indexed:true,name:"orderId",type:"bytes32"},
+    {indexed:true,name:"payer",type:"address"},{indexed:false,name:"paymentToken",type:"address"},
+    {indexed:false,name:"tokenAmount",type:"uint256"},{indexed:false,name:"totalCents",type:"uint256"},
+    {indexed:false,name:"itemCount",type:"uint256"},{indexed:false,name:"storeIdHash",type:"bytes32"},
+    {indexed:false,name:"terminalIdHash",type:"bytes32"},{indexed:false,name:"cartHash",type:"bytes32"},
+    {indexed:false,name:"timestamp",type:"uint256"}
+  ],name:"PaymentCaptured",type:"event"},
+  {anonymous:false,inputs:[
+    {indexed:true,name:"receiptId",type:"bytes32"},{indexed:true,name:"orderId",type:"bytes32"},
+    {indexed:true,name:"payer",type:"address"},{indexed:false,name:"tokenAmount",type:"uint256"},
+    {indexed:false,name:"timestamp",type:"uint256"}
+  ],name:"PaymentBurned",type:"event"},
+  {anonymous:false,inputs:[
+    {indexed:true,name:"receiptId",type:"bytes32"},{indexed:true,name:"orderId",type:"bytes32"},
+    {indexed:true,name:"payer",type:"address"},{indexed:false,name:"usdcAmount",type:"uint256"},
+    {indexed:false,name:"timestamp",type:"uint256"}
+  ],name:"PaymentSettled",type:"event"},
+  {anonymous:false,inputs:[{name:"paymentCount",type:"uint256"},{name:"totalTokenAmount",type:"uint256"},{name:"timestamp",type:"uint256"}],name:"BatchBurnExecuted",type:"event"},
+  {anonymous:false,inputs:[{name:"paymentCount",type:"uint256"},{name:"totalUSDCAmount",type:"uint256"},{indexed:true,name:"treasury",type:"address"},{name:"timestamp",type:"uint256"}],name:"BatchUSDCSettled",type:"event"}
 ];
 const ABI_POOL=["function slot0() view returns (uint160 sqrtPriceX96,int24,uint16,uint16,uint16,uint8,bool)","function token0() view returns (address)"];
 const MENU=[...BRAND.menuItems];
@@ -743,20 +784,47 @@ function updateTotals(){
 // ═══════════════════════════════════════════════════════════════
 //  CHECKOUT & QR
 // ═══════════════════════════════════════════════════════════════
+function selectPaymentToken(tok, skipRegen=false){
+  currentPaymentToken = tok==='usdc' ? CFG.USDC : CFG.SKOOP;
+  document.getElementById('tok-skoop').style.cssText='flex:1;padding:0.35rem;border-radius:999px;font-family:inherit;font-size:0.75rem;font-weight:700;cursor:pointer;border:2px solid '+(tok==='skoop'?'var(--coral-deep);background:var(--coral-deep);color:var(--white)':'var(--border);background:var(--white);color:var(--ink-mid)');
+  document.getElementById('tok-usdc').style.cssText='flex:1;padding:0.35rem;border-radius:999px;font-family:inherit;font-size:0.75rem;font-weight:700;cursor:pointer;border:2px solid '+(tok==='usdc'?'var(--coral-deep);background:var(--coral-deep);color:var(--white)':'var(--border);background:var(--white);color:var(--ink-mid)');
+  if(!skipRegen) generateQR();
+}
 async function openCheckout(){
   if(!signer){showToast('Connect wallet first','error');return;}
   if(!Object.keys(cart).length)return;
-  if(!skoopPriceUSD){showToast('Waiting for SKOOP price…','error');return;}
+  currentPaymentToken = CFG.SKOOP;
+  selectPaymentToken('skoop', true); // visual only — generateQR called below after modal is open
   document.getElementById('modal-qr').style.display='';
   document.getElementById('modal-success').style.display='none';
   document.getElementById('modal-overlay').classList.add('open');
   await generateQR();
 }
+let qrDeadlineSec=0,qrCountdownTimer=null;
+function startQRCountdown(){
+  clearInterval(qrCountdownTimer);
+  qrCountdownTimer=setInterval(()=>{
+    const rem=qrDeadlineSec-Math.floor(Date.now()/1000);
+    const el=document.getElementById('qr-countdown');
+    if(!el){clearInterval(qrCountdownTimer);return;}
+    if(rem<=0){el.textContent='QR expired — tap Regenerate';el.style.color='#c0392b';clearInterval(qrCountdownTimer);return;}
+    const m=Math.floor(rem/60),s=rem%60;
+    el.textContent='Expires in '+m+':'+(s<10?'0':'')+s;
+    el.style.color=rem<60?'#c0392b':'var(--ink-lt)';
+  },1000);
+}
 async function generateQR(){
+  clearInterval(qrCountdownTimer);
+  const payToken = currentPaymentToken || CFG.SKOOP;
+  const isUSDC = payToken.toLowerCase() === CFG.USDC.toLowerCase();
+  if(!isUSDC && !skoopPriceUSD){showToast('Waiting for SKOOP price…','error');return;}
   const subtotalCents=Math.round(Object.entries(cart).reduce((s,[id,qty])=>{const item=MENU.find(m=>m.id===id);return s+(item?item.price*qty:0);},0)*100);
   const taxCents=Math.round(subtotalCents*CFG.TAX_RATE);
   const totalCents=subtotalCents+taxCents;
-  const tokenAmount=BigInt(Math.round(totalCents/100/skoopPriceUSD*1e6));
+  // SKOOP: convert USD → SKOOP at spot price. USDC: cents → base units (÷100 × 1e6)
+  const tokenAmount=isUSDC
+    ? BigInt(totalCents * 10000)
+    : BigInt(Math.round(totalCents/100/skoopPriceUSD*1e6));
   const receiptId=ethers.id('RCPT_'+Date.now()+'_'+Math.random());
   const orderId=ethers.id('ORD_'+Date.now());
   const storeIdHash=ethers.id(CFG.STORE_ID);
@@ -765,24 +833,43 @@ async function generateQR(){
   const cartHash=ethers.id(cartItems);
   const deadline=BigInt(Math.floor(Date.now()/1000)+600);
   const itemCount=BigInt(Object.values(cart).reduce((a,b)=>a+b,0));
-  const digest=ethers.keccak256(ethers.AbiCoder.defaultAbiCoder().encode(
-    ['bytes32','bytes32','bytes32','bytes32','uint256','uint256','uint256','uint256','uint256','bytes32','uint256'],
-    [receiptId,orderId,storeIdHash,terminalHash,tokenAmount,BigInt(subtotalCents),BigInt(taxCents),BigInt(totalCents),itemCount,cartHash,deadline]
+
+  // Two-block digest — must match _paymentDigest() in KOKOSPaymentEscrowV2
+  const enc=ethers.AbiCoder.defaultAbiCoder();
+  const blockA=ethers.keccak256(enc.encode(
+    ['bytes32','bytes32','bytes32','bytes32','address','uint256'],
+    [receiptId,orderId,storeIdHash,terminalHash,payToken,tokenAmount]
   ));
+  const blockB=ethers.keccak256(enc.encode(
+    ['uint256','uint256','uint256','uint256','bytes32','uint256'],
+    [BigInt(subtotalCents),BigInt(taxCents),BigInt(totalCents),itemCount,cartHash,deadline]
+  ));
+  const digest=ethers.keccak256(enc.encode(['bytes32','bytes32'],[blockA,blockB]));
+
   let signature;
   try{signature=await signer.signMessage(ethers.getBytes(digest));}
   catch(e){showToast('Signature rejected','error');closeModal();return;}
   const recovered=ethers.verifyMessage(ethers.getBytes(digest),signature);
   if(recovered.toLowerCase()!==CFG.SIGNER.toLowerCase()){showToast('Wrong signer wallet','error');closeModal();return;}
+
+  // QR payload — K2 format: 206 bytes
+  // [receiptId:32][orderId:32][cartHash:32][paymentToken:20][tokenAmount:8]
+  // [subtotalCents:4][taxCents:4][totalCents:4][itemCount:1][deadline:4][sig:65]
   function hexToU8(hex){const h=hex.replace(/^0x/,'');const b=new Uint8Array(h.length/2);for(let i=0;i<b.length;i++)b[i]=parseInt(h.substr(i*2,2),16);return b;}
   function numToU8(n,bytes){const b=new Uint8Array(bytes);let v=BigInt(n);for(let i=bytes-1;i>=0;i--){b[i]=Number(v&0xffn);v>>=8n;}return b;}
-  const buf=new Uint8Array(186);let off=0;
+  const buf=new Uint8Array(206);let off=0;
   const copy=(src)=>{buf.set(src,off);off+=src.length;};
   copy(hexToU8(receiptId));copy(hexToU8(orderId));copy(hexToU8(cartHash));
+  copy(hexToU8(payToken));  // 20 bytes
   copy(numToU8(tokenAmount,8));copy(numToU8(subtotalCents,4));copy(numToU8(taxCents,4));
   copy(numToU8(totalCents,4));copy(numToU8(Object.values(cart).reduce((a,b)=>a+b,0),1));
   copy(numToU8(deadline,4));copy(hexToU8(signature));
-  const qrPayload='K1:'+btoa(String.fromCharCode(...buf)).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');
+  // Use TextDecoder-safe base64url — avoids btoa() failure on bytes > 127
+  const k2data=btoa(Array.from(buf,b=>String.fromCharCode(b)).join('')).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');
+  // URL-based QR: any web3 wallet opens the customer dapp in a browser
+  // Works from MetaMask, Coinbase Wallet, Rainbow, or any browser — no app install needed
+  const qrPayload='https://kokosicecream.com/Customer_dapp/?d='+k2data;
+
   const wrap=document.getElementById('qr-canvas-wrap');
   wrap.innerHTML='<p style="color:var(--ink-lt);font-size:0.75rem;text-align:center;">Generating…</p>';
   await new Promise(r=>setTimeout(r,80));
@@ -805,20 +892,25 @@ async function generateQR(){
     img.src=`https://api.qrserver.com/v1/create-qr-code/?size=${qrSize}x${qrSize}&ecc=L&margin=0&data=`+encodeURIComponent(qrPayload);
     wrap.appendChild(img);
   }
-  const skoopDisplay=Number(tokenAmount/1000000n).toLocaleString();
+  const tokenDisplay=isUSDC
+    ? '$'+(totalCents/100).toFixed(2)+' USDC'
+    : Number(tokenAmount/1000000n).toLocaleString()+' SKOOP';
   document.getElementById('modal-summary').innerHTML=
     Object.entries(cart).map(([id,q])=>{const it=MENU.find(m=>m.id===id);return`<div class="mos-row"><span>${it.emoji} ${it.name} ×${q}</span><span>$${(it.price*q).toFixed(2)}</span></div>`;}).join('')+
     `<div class="mos-row"><span>Tax</span><span>$${(taxCents/100).toFixed(2)}</span></div>`+
     `<div class="mos-row total"><span>Total</span><span>$${(totalCents/100).toFixed(2)}</span></div>`+
-    `<div class="mos-row skoop"><span>≈ SKOOP</span><span>${skoopDisplay} SKOOP</span></div>`;
+    `<div class="mos-row skoop"><span>Pay with</span><span>${tokenDisplay}</span></div>`;
   document.getElementById('modal-status').textContent='Waiting for customer to scan…';
+  qrDeadlineSec=Number(deadline);
+  startQRCountdown();
   pollForPayment(receiptId);
 }
 async function regenerateQR(){
+  clearInterval(qrCountdownTimer);
   const wrap=document.getElementById('qr-canvas-wrap');wrap.style.opacity='0.4';
   await generateQR();wrap.style.opacity='1';
 }
-function closeModal(){document.getElementById('modal-overlay').classList.remove('open');}
+function closeModal(){clearInterval(qrCountdownTimer);document.getElementById('modal-overlay').classList.remove('open');}
 
 // ═══════════════════════════════════════════════════════════════
 //  AUTO-REWARD
@@ -859,13 +951,13 @@ function setSuccessRewardStatus(state,skoopAmt,errorMsg=''){
     el.innerHTML=`<div class="auto-reward-banner failed">⚠️ Auto-reward failed (${errorMsg}) — ${amtStr} SKOOP saved to Pending</div>`;
   }
 }
-function showPaymentSuccess(totalCents,skoopAmt,receiptId){
+function showPaymentSuccess(totalCents,tokenAmt,receiptId,tokenLabel='SKOOP'){
   document.getElementById('modal-qr').style.display='none';
   document.getElementById('modal-success').style.display='block';
-  document.getElementById('success-sub').textContent='$'+(totalCents/100).toFixed(2)+' · '+skoopAmt.toLocaleString('en-US',{maximumFractionDigits:2})+' SKOOP';
+  document.getElementById('success-sub').textContent='$'+(totalCents/100).toFixed(2)+' · '+tokenAmt.toLocaleString('en-US',{maximumFractionDigits:2})+' '+tokenLabel;
   document.getElementById('success-details').innerHTML=
     `<div style="display:flex;justify-content:space-between;padding:0.12rem 0;border-bottom:1px solid rgba(58,32,16,0.08);"><span style="color:var(--ink-mid);">Total charged</span><span style="font-weight:700;">$${(totalCents/100).toFixed(2)}</span></div>`+
-    `<div style="display:flex;justify-content:space-between;padding:0.12rem 0;border-bottom:1px solid rgba(58,32,16,0.08);"><span style="color:var(--ink-mid);">SKOOP captured</span><span style="font-weight:700;color:var(--coral-deep);">${skoopAmt.toLocaleString('en-US',{maximumFractionDigits:2})} SKOOP</span></div>`+
+    `<div style="display:flex;justify-content:space-between;padding:0.12rem 0;border-bottom:1px solid rgba(58,32,16,0.08);"><span style="color:var(--ink-mid);">${tokenLabel} captured</span><span style="font-weight:700;color:var(--coral-deep);">${tokenAmt.toLocaleString('en-US',{maximumFractionDigits:2})} ${tokenLabel}</span></div>`+
     `<div style="display:flex;justify-content:space-between;padding:0.12rem 0;"><span style="color:var(--ink-mid);">Receipt</span><span style="font-family:monospace;font-size:0.58rem;">${receiptId.slice(0,20)}…</span></div>`;
   const rewardEl=document.getElementById('success-reward-status');
   if(rewardEl){rewardEl.style.display='none';rewardEl.innerHTML='';}
@@ -894,8 +986,10 @@ async function pollForPayment(receiptId){
         const ev=events[0];
         const payerAddr=ev.args.payer;
         const paidCents=Number(ev.args.totalCents);
-        const paidSkoop=parseFloat(ethers.formatUnits(BigInt(ev.args.tokenAmount),CFG.SKOOP_DEC));
-        showPaymentSuccess(paidCents,paidSkoop,ev.args.receiptId);
+        const isUsdcPay=ev.args.paymentToken?.toLowerCase()===CFG.USDC.toLowerCase();
+        const paidTokenAmt=parseFloat(ethers.formatUnits(BigInt(ev.args.tokenAmount),isUsdcPay?CFG.USDC_DEC:CFG.SKOOP_DEC));
+        const paidLabel=isUsdcPay?'USDC':'SKOOP';
+        showPaymentSuccess(paidCents,paidTokenAmt,ev.args.receiptId,paidLabel);
         if(skoopPriceUSD>0&&signer){
           const rewardSkoop=Math.round((paidCents/100)*CFG.AUTO_REWARD_RATE/skoopPriceUSD);
           if(rewardSkoop>0)setTimeout(()=>autoSendReward(payerAddr,rewardSkoop,paidCents,ev.args.receiptId),600);
@@ -1067,49 +1161,72 @@ async function loadReceipts(){
     const escrow=new ethers.Contract(CFG.ESCROW,ABI_ESCROW,pub);
     const latest=await pub.getBlockNumber();
     const CHUNK=9000,LOOKBACK=45000,fromBlock=Math.max(0,latest-LOOKBACK);
-    let captured=[],burned=[];
+    let captured=[],burned=[],settled=[];
     for(let start=fromBlock;start<latest;start+=CHUNK){
       const end=Math.min(start+CHUNK-1,latest);
-      const[cc,bb]=await Promise.all([escrow.queryFilter(escrow.filters.PaymentCaptured(),start,end),escrow.queryFilter(escrow.filters.PaymentBurned(),start,end)]);
-      captured=captured.concat(cc);burned=burned.concat(bb);
+      const[cc,bb,ss]=await Promise.all([
+        escrow.queryFilter(escrow.filters.PaymentCaptured(),start,end),
+        escrow.queryFilter(escrow.filters.PaymentBurned(),start,end),
+        escrow.queryFilter(escrow.filters.PaymentSettled(),start,end),
+      ]);
+      captured=captured.concat(cc);burned=burned.concat(bb);settled=settled.concat(ss);
     }
-    const burnedIds=new Set(burned.map(e=>e.args.receiptId.toLowerCase()));
-    capturedReceipts=captured.filter(e=>!burnedIds.has(e.args.receiptId.toLowerCase())).map(e=>({receiptId:e.args.receiptId,amount:e.args.tokenAmount}));
+    const doneIds=new Set([
+      ...burned.map(e=>e.args.receiptId.toLowerCase()),
+      ...settled.map(e=>e.args.receiptId.toLowerCase()),
+    ]);
+    capturedReceipts=captured
+      .filter(e=>!doneIds.has(e.args.receiptId.toLowerCase()))
+      .map(e=>({receiptId:e.args.receiptId,amount:e.args.tokenAmount,paymentToken:e.args.paymentToken}));
     renderReceipts();
-    if(!capturedReceipts.length)showToast('No unburned receipts','');
+    if(!capturedReceipts.length)showToast('No pending receipts','');
   }catch(e){showToast('Receipt load error','error');}
 }
 function renderReceipts(){
   const list=document.getElementById('receipt-list');
   document.getElementById('stat-captured').textContent=capturedReceipts.length;
-  const totalSkoop=capturedReceipts.reduce((s,r)=>s+Number(ethers.formatUnits(r.amount,CFG.SKOOP_DEC)),0);
+  const totalSkoop=capturedReceipts.filter(r=>r.paymentToken?.toLowerCase()===CFG.SKOOP.toLowerCase()).reduce((s,r)=>s+Number(ethers.formatUnits(r.amount,CFG.SKOOP_DEC)),0);
+  const totalUsdc=capturedReceipts.filter(r=>r.paymentToken?.toLowerCase()===CFG.USDC.toLowerCase()).reduce((s,r)=>s+Number(ethers.formatUnits(r.amount,CFG.USDC_DEC)),0);
   document.getElementById('stat-skoop').textContent=totalSkoop.toLocaleString('en-US',{maximumFractionDigits:0});
+  document.getElementById('stat-usdc').textContent='$'+totalUsdc.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
   if(!capturedReceipts.length){list.innerHTML='<p style="font-size:0.65rem;color:var(--ink-lt);text-align:center;padding:0.875rem 0;">No captured receipts yet</p>';document.getElementById('burn-btn').disabled=true;return;}
-  list.innerHTML=capturedReceipts.map((r,i)=>`<div class="receipt-card"><input type="checkbox" id="rc-${i}" value="${r.receiptId}" onchange="updateBurnBtn()"><div style="flex:1;"><div class="rc-id">${r.receiptId.slice(0,18)}…</div><div class="rc-amt">${parseFloat(ethers.formatUnits(r.amount,CFG.SKOOP_DEC)).toLocaleString()} SKOOP</div></div></div>`).join('');
+  list.innerHTML=capturedReceipts.map((r,i)=>{
+    const isUsdc=r.paymentToken?.toLowerCase()===CFG.USDC.toLowerCase();
+    const amtStr=isUsdc
+      ?'$'+(Number(ethers.formatUnits(r.amount,CFG.USDC_DEC))).toFixed(2)+' USDC'
+      :parseFloat(ethers.formatUnits(r.amount,CFG.SKOOP_DEC)).toLocaleString()+' SKOOP';
+    const badge=isUsdc
+      ?'<span style="font-size:0.55rem;background:var(--mint);color:var(--mint-dk);border-radius:4px;padding:1px 4px;margin-left:4px;">USDC</span>'
+      :'<span style="font-size:0.55rem;background:var(--coral);color:var(--ink);border-radius:4px;padding:1px 4px;margin-left:4px;">SKOOP</span>';
+    return`<div class="receipt-card"><input type="checkbox" id="rc-${i}" value="${r.receiptId}" onchange="updateBurnBtn()"><div style="flex:1;"><div class="rc-id">${r.receiptId.slice(0,18)}…${badge}</div><div class="rc-amt">${amtStr}</div></div></div>`;
+  }).join('');
 }
 function updateBurnBtn(){document.getElementById('burn-btn').disabled=document.querySelectorAll('#receipt-list input:checked').length===0;}
 async function burnSelected(){
   if(!signer){showToast('Connect wallet first','error');return;}
-  if(signerAddr&&signerAddr.toLowerCase()!==CFG.OWNER.toLowerCase()){showToast('Need owner wallet to burn','error');return;}
+  if(signerAddr&&signerAddr.toLowerCase()!==CFG.OWNER.toLowerCase()){showToast('Need owner wallet to settle','error');return;}
   const checked=[...document.querySelectorAll('#receipt-list input:checked')].map(c=>c.value);
   if(!checked.length)return;
-  const btn=document.getElementById('burn-btn');btn.disabled=true;btn.textContent='Burning…';
+  const btn=document.getElementById('burn-btn');btn.disabled=true;btn.textContent='Settling…';
   try{
     const escrow=new ethers.Contract(CFG.ESCROW,ABI_ESCROW,signer);
-    const tx=await escrow.burnPayments(checked);
-    showToast('Broadcasting burn…','');const rcpt=await tx.wait();
-    let burnCount=checked.length,burnSkoop=0;
-    try{
-      const iface=new ethers.Interface([{anonymous:false,inputs:[{name:'paymentCount',type:'uint256'},{name:'totalTokenAmount',type:'uint256'},{name:'timestamp',type:'uint256'}],name:'BatchBurnExecuted',type:'event'}]);
-      for(const log of rcpt.logs){try{const p=iface.parseLog(log);if(p&&p.name==='BatchBurnExecuted'){burnCount=Number(p.args.paymentCount);burnSkoop=parseFloat(ethers.formatUnits(p.args.totalTokenAmount,CFG.SKOOP_DEC));break;}}catch{}}
-    }catch{}
-    const skoopStr=burnSkoop>0?burnSkoop.toLocaleString('en-US',{maximumFractionDigits:2})+' SKOOP':'';
-    document.getElementById('receipt-list').innerHTML=`<div style="background:var(--mint);border-radius:9px;padding:0.75rem;text-align:center;display:flex;flex-direction:column;align-items:center;gap:0.35rem;"><div style="font-size:1.4rem;">🔥</div><div style="font-weight:700;color:var(--mint-dk);font-size:0.82rem;">${skoopStr||burnCount+' receipts'} burned</div><div style="font-size:0.58rem;font-family:monospace;color:var(--ink-lt);">${rcpt.hash.slice(0,20)}…</div></div>`;
+    const skoopIds=checked.filter(id=>{const r=capturedReceipts.find(x=>x.receiptId===id);return r&&r.paymentToken?.toLowerCase()===CFG.SKOOP.toLowerCase();});
+    const usdcIds=checked.filter(id=>{const r=capturedReceipts.find(x=>x.receiptId===id);return r&&r.paymentToken?.toLowerCase()===CFG.USDC.toLowerCase();});
+    const txs=[];
+    if(skoopIds.length)txs.push(escrow.burnPayments(skoopIds));
+    if(usdcIds.length)txs.push(escrow.settleUSDCPayments(usdcIds));
+    const results=await Promise.all(txs);
+    showToast('Broadcasting…','');
+    await Promise.all(results.map(tx=>tx.wait()));
+    const summary=[];
+    if(skoopIds.length)summary.push(skoopIds.length+' SKOOP burned');
+    if(usdcIds.length)summary.push(usdcIds.length+' USDC → treasury');
+    document.getElementById('receipt-list').innerHTML=`<div style="background:var(--mint);border-radius:9px;padding:0.75rem;text-align:center;display:flex;flex-direction:column;align-items:center;gap:0.35rem;"><div style="font-size:1.4rem;">✓</div><div style="font-weight:700;color:var(--mint-dk);font-size:0.82rem;">${summary.join(' · ')}</div></div>`;
     document.getElementById('stat-captured').textContent='0';document.getElementById('stat-skoop').textContent='0';
     document.getElementById('burn-btn').disabled=true;
-    showToast('🔥 Burn complete','success');capturedReceipts=[];
-  }catch(e){showToast('Burn failed','error');}
-  btn.textContent='🔥 Burn Selected';
+    showToast('Settlement complete','success');capturedReceipts=[];
+  }catch(e){showToast('Settlement failed','error');}
+  btn.textContent='🔥 Burn / Settle Selected';
 }
 
 // ═══════════════════════════════════════════════════════════════
