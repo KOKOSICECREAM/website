@@ -939,9 +939,20 @@ async function loadActivityFeed(){
   }
 }
 
+async function maybeRestorePendingIntent(){
+  if(pendingIntent)return;
+  let saved;try{saved=sessionStorage.getItem('pendingIntent');}catch(e){return;}
+  if(!saved)return;
+  try{
+    const intent=JSON.parse(saved);
+    if(Date.now()/1000>Number(intent.deadline)){try{sessionStorage.removeItem('pendingIntent');}catch(e){}return;}
+    pendingIntent=intent;
+    await showConfirm(intent);
+  }catch(e){try{sessionStorage.removeItem('pendingIntent');}catch(e2){}}
+}
 document.addEventListener('visibilitychange',async function(){
   if(document.visibilityState!=='visible'||!window.ethereum)return;
-  if(provider&&userAddr){try{await refreshBals();}catch(e){}return;}
+  if(provider&&userAddr){try{await refreshBals();}catch(e){}await maybeRestorePendingIntent();return;}
   try{
     const a=await window.ethereum.request({method:'eth_accounts'});
     if(!a.length)return;
@@ -950,6 +961,7 @@ document.addEventListener('visibilitychange',async function(){
     signer=await provider.getSigner();userAddr=await signer.getAddress();
     if(gateVisible){await onConnected();}
     else{updatePills();try{await checkNet();}catch(e){}try{await refreshBals();}catch(e){}}
+    await maybeRestorePendingIntent();
   }catch(e){}
 });
 
@@ -1196,7 +1208,7 @@ function parseQR(raw){
     try{
       if(!verifyIntent(intent)){showToast("Invalid QR \u2014 not a KOKOS payment","err");setScanState('retry');return;}
     }catch(e){showToast("Invalid QR \u2014 could not verify signature","err");setScanState('retry');return;}
-    pendingIntent=intent;showConfirm(intent);
+    pendingIntent=intent;try{sessionStorage.setItem('pendingIntent',JSON.stringify(intent));}catch(e){}showConfirm(intent);
   }catch(e){showToast("Scan error \u2014 point at the QR and try again","err");setScanState('retry');}
 }
 
@@ -1253,7 +1265,7 @@ async function showConfirm(d){
 }
 
 function cancelPay(){
-  pendingIntent=null;hideApprovalProgress();
+  pendingIntent=null;try{sessionStorage.removeItem('pendingIntent');}catch(e){}hideApprovalProgress();
   const btn=document.getElementById("btn-confirm");if(btn){btn.disabled=false;btn.textContent="Confirm & Pay";}
   const notice=document.getElementById('first-time-notice');if(notice)notice.style.display='none';
   document.getElementById("pay-confirm").classList.remove("active");document.getElementById("pay-scan").classList.add("active");
@@ -1334,7 +1346,7 @@ async function confirmPay(){
       `<div class="sc-row"><span class="sk">Tx</span><span class="sv" style="font-family:monospace;font-size:0.62rem;">${tx.hash.slice(0,20)}\u2026</span></div>`+
       `<div class="sc-row"><span class="sk">Block</span><span class="sv">confirming\u2026</span></div>`;
     setTimeout(()=>{navigator.vibrate&&navigator.vibrate([100,50,100]);playChaChingSound();document.getElementById("success-screen").classList.add("show");},400);
-    pendingIntent=null;hideApprovalProgress();
+    pendingIntent=null;try{sessionStorage.removeItem('pendingIntent');}catch(e){}hideApprovalProgress();
     tx.wait().then(rcpt=>{if(rcpt&&rcpt.blockNumber){const blockEl=document.querySelector('#success-detail .sc-row:last-child .sv');if(blockEl)blockEl.textContent=rcpt.blockNumber;}refreshBals();}).catch(()=>refreshBals());
     setTimeout(()=>refreshBals().catch(()=>{}),4000);
   }catch(e){
