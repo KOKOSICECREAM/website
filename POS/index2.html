@@ -386,6 +386,10 @@ html,body{height:100%;overflow:hidden;font-family:'Instrument Sans',sans-serif;b
         <button id="tok-usdc" onclick="selectPaymentToken('usdc')" style="flex:1;padding:0.35rem;border-radius:999px;border:2px solid var(--border);background:var(--white);color:var(--ink-mid);font-family:inherit;font-size:0.75rem;font-weight:700;cursor:pointer;">USDC</button>
       </div>
       <div class="modal-body">
+        <div id="qr-mode-bar" style="display:none;width:100%;display:none;gap:0.3rem;">
+          <button id="mode-btn-dapp" onclick="setQRMode('dapp')" style="flex:1;padding:0.3rem;border-radius:999px;border:2px solid var(--coral-deep);background:var(--coral-deep);color:var(--white);font-family:inherit;font-size:0.68rem;font-weight:700;cursor:pointer;">Pay with App</button>
+          <button id="mode-btn-direct" onclick="setQRMode('direct')" style="flex:1;padding:0.3rem;border-radius:999px;border:2px solid var(--border);background:var(--white);color:var(--ink-mid);font-family:inherit;font-size:0.68rem;font-weight:700;cursor:pointer;">Pay with Wallet</button>
+        </div>
         <div id="qr-canvas-wrap"></div>
         <div class="modal-summary" id="modal-summary"></div>
         <div class="modal-status" id="modal-status">Waiting for customer to scan…</div>
@@ -534,7 +538,7 @@ const ABI_ESCROW=[
 const ABI_POOL=["function slot0() view returns (uint160 sqrtPriceX96,int24,uint16,uint16,uint16,uint8,bool)","function token0() view returns (address)"];
 const MENU=[...BRAND.menuItems];
 let provider=null,signer=null,signerAddr=null;
-let cart={},capturedReceipts=[],activePollToken=null;
+let cart={},capturedReceipts=[],activePollToken=null,qrModePayloads=null;
 let rewardScannerActive=false,rewardScanner=null,scannedRewardAddr=null;
 let activeCat='all',toastTimer=null,calcSkoopAmount=0,successTimer=null;
 
@@ -814,6 +818,20 @@ function startQRCountdown(){
     el.style.color=rem<60?'#c0392b':'var(--ink-lt)';
   },1000);
 }
+function setQRModeButtons(mode){
+  const activeStyle='flex:1;padding:0.3rem;border-radius:999px;border:2px solid var(--coral-deep);background:var(--coral-deep);color:var(--white);font-family:inherit;font-size:0.68rem;font-weight:700;cursor:pointer;';
+  const inactiveStyle='flex:1;padding:0.3rem;border-radius:999px;border:2px solid var(--border);background:var(--white);color:var(--ink-mid);font-family:inherit;font-size:0.68rem;font-weight:700;cursor:pointer;';
+  document.getElementById('mode-btn-dapp').style.cssText=mode==='dapp'?activeStyle:inactiveStyle;
+  document.getElementById('mode-btn-direct').style.cssText=mode==='direct'?activeStyle:inactiveStyle;
+}
+async function setQRMode(mode){
+  if(!qrModePayloads)return;
+  const wrap=document.getElementById('qr-canvas-wrap');
+  const wrapRect=wrap.getBoundingClientRect();
+  const qrSize=Math.round((wrapRect.width||280)-28);
+  await renderQRInto(wrap,qrModePayloads[mode],qrSize);
+  setQRModeButtons(mode);
+}
 async function renderQRInto(container,text,size){
   container.innerHTML='';
   try{
@@ -895,22 +913,16 @@ async function generateQR(){
   const wrapRect=wrap.getBoundingClientRect();
 
   if(isUSDC){
-    wrap.style.aspectRatio='auto';
-    const qsz=Math.round((wrapRect.width||280)/2-20);
-    wrap.innerHTML=
-      '<div style="display:flex;gap:8px;width:100%;align-items:flex-start;">'+
-        '<div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;">'+
-          '<div id="qr-dapp" style="background:#fff;border-radius:6px;padding:6px;overflow:hidden;"></div>'+
-          '<div style="font-size:0.58rem;font-weight:700;color:var(--ink-mid);text-align:center;text-transform:uppercase;letter-spacing:0.5px;">KOKOS App</div>'+
-        '</div>'+
-        '<div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;">'+
-          '<div id="qr-direct" style="background:#fff;border-radius:6px;padding:6px;overflow:hidden;"></div>'+
-          '<div style="font-size:0.58rem;font-weight:700;color:var(--ink-mid);text-align:center;text-transform:uppercase;letter-spacing:0.5px;">Any Wallet</div>'+
-        '</div>'+
-      '</div>';
-    await renderQRInto(document.getElementById('qr-dapp'),k2url,qsz);
-    await renderQRInto(document.getElementById('qr-direct'),eip681,qsz);
+    qrModePayloads={dapp:k2url,direct:eip681};
+    const modeBar=document.getElementById('qr-mode-bar');
+    modeBar.style.display='flex';
+    wrap.style.aspectRatio='';
+    wrap.innerHTML='';
+    await renderQRInto(wrap,k2url,Math.round((wrapRect.width||280)-28));
+    setQRModeButtons('dapp');
   }else{
+    qrModePayloads=null;
+    document.getElementById('qr-mode-bar').style.display='none';
     wrap.style.aspectRatio='';
     wrap.innerHTML='';
     await renderQRInto(wrap,k2url,Math.round((wrapRect.width||280)-28));
@@ -922,7 +934,7 @@ async function generateQR(){
     `<div class="mos-row"><span>Tax</span><span>$${(taxCents/100).toFixed(2)}</span></div>`+
     `<div class="mos-row total"><span>Total</span><span>$${(totalCents/100).toFixed(2)}</span></div>`+
     `<div class="mos-row skoop"><span>Pay with</span><span>${tokenDisplay}</span></div>`;
-  document.getElementById('modal-status').textContent=isUSDC?'KOKOS App (left) · Any wallet (right)':'Waiting for customer to scan…';
+  document.getElementById('modal-status').textContent='Waiting for customer to scan…';
   qrDeadlineSec=Number(deadline);
   startQRCountdown();
   const pollToken=Symbol();activePollToken=pollToken;
@@ -934,7 +946,7 @@ async function regenerateQR(){
   const wrap=document.getElementById('qr-canvas-wrap');wrap.style.opacity='0.4';
   await generateQR();wrap.style.opacity='1';
 }
-function closeModal(){clearInterval(qrCountdownTimer);activePollToken=null;document.getElementById('modal-overlay').classList.remove('open');}
+function closeModal(){clearInterval(qrCountdownTimer);activePollToken=null;qrModePayloads=null;document.getElementById('qr-mode-bar').style.display='none';document.getElementById('modal-overlay').classList.remove('open');}
 
 // ═══════════════════════════════════════════════════════════════
 //  AUTO-REWARD
