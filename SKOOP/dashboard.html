@@ -555,7 +555,7 @@ footer{background:var(--green-dk);padding:4rem 2rem 2rem;}
 <section id="how">
   <div class="section-inner">
     <div class="section-kicker reveal">Get started</div>
-    <h2 class="section-title reveal reveal-delay-1">Three ways to<br><em>use SKOOP.</em></h2>
+    <h2 class="section-title reveal reveal-delay-1">Four ways to<br><em>use SKOOP.</em></h2>
     <div class="how-grid">
       <div class="how-card reveal reveal-delay-1">
         <div class="hc-top">
@@ -571,9 +571,9 @@ footer{background:var(--green-dk);padding:4rem 2rem 2rem;}
           <div class="hc-num">02</div>
           <div class="hc-icon hci-sand">📱</div>
           <div class="hc-title">Pay at the shop</div>
-          <div class="hc-desc">The KOKOS team rings up your order and shows you a signed checkout QR. Scan it in the dapp, review the total, confirm — SKOOP goes to escrow in seconds.</div>
+          <div class="hc-desc">The KOKOS team rings up your order and shows you a signed checkout QR. Scan it in the dapp, review the total, confirm — pay with SKOOP or USDC, both settle to the escrow contract in seconds.</div>
         </div>
-        <div class="hc-bottom">On-chain escrow · Immutable · Instant</div>
+        <div class="hc-bottom">On-chain escrow · SKOOP or USDC · Instant</div>
       </div>
       <div class="how-card reveal reveal-delay-3">
         <div class="hc-top">
@@ -589,9 +589,9 @@ footer{background:var(--green-dk);padding:4rem 2rem 2rem;}
           <div class="hc-num">04</div>
           <div class="hc-icon hci-apricot">🔥</div>
           <div class="hc-title">Settlement & burn</div>
-          <div class="hc-desc">SKOOP captured in escrow is periodically settled on-chain. A portion burns to the zero address permanently — reducing total supply with every transaction batch.</div>
+          <div class="hc-desc">SKOOP payments burn directly to the zero address — gone forever. USDC payments route to the treasury: 60% buys SKOOP on Uniswap and burns it, 40% deepens the liquidity pool. Both paths reduce circulating supply.</div>
         </div>
-        <div class="hc-bottom">Deflationary · BatchBurnExecuted event</div>
+        <div class="hc-bottom">Deflationary · Dual-path settlement</div>
       </div>
     </div>
 
@@ -606,7 +606,7 @@ footer{background:var(--green-dk);padding:4rem 2rem 2rem;}
     <div class="burn-visual">
       <div class="burn-text reveal reveal-delay-2">
         <p>Traditional loyalty points are worthless. Airlines print them out of thin air. Coffee shops expire them. The house always wins.</p>
-        <p>SKOOP is different. <strong>Total supply is fixed at 888,888,888.</strong> Every time the shop settles captured payments, a batch of SKOOP is sent to the zero address — <code style="font-size:0.78rem;background:rgba(42,31,26,0.06);padding:2px 6px;border-radius:4px;">0x000…000</code> — and is gone forever.</p>
+        <p>SKOOP is different. <strong>Total supply is fixed at 888,888,888.</strong> When SKOOP payments settle, tokens are burned directly to the zero address — <code style="font-size:0.78rem;background:rgba(42,31,26,0.06);padding:2px 6px;border-radius:4px;">0x000…000</code> — gone forever. When USDC is paid, it routes to the treasury: 60% buys SKOOP on Uniswap and burns it, 40% deepens the liquidity pool. Both paths reduce circulating supply.</p>
         <p>The more KOKOS grows, the more SKOOP burns, the scarcer the remaining supply. <strong>Community members who hold SKOOP early benefit from the scarcity created by the shop's own success.</strong></p>
         <div class="burn-stat-row">
           <div class="burn-stat">
@@ -621,11 +621,15 @@ footer{background:var(--green-dk);padding:4rem 2rem 2rem;}
         </div>
       </div>
       <div class="burn-diagram reveal reveal-delay-3">
-        <div style="font-size:0.65rem;font-weight:700;text-transform:uppercase;letter-spacing:0.1em;color:var(--ink-light);margin-bottom:1.25rem;">Settlement flow</div>
+        <div style="font-size:0.62rem;font-weight:700;text-transform:uppercase;letter-spacing:0.1em;color:var(--green);margin-bottom:0.75rem;">SKOOP payment path</div>
         <div class="bd-row"><div class="bd-icon" style="background:var(--lavender);">💳</div><div class="bd-label">Customer pays SKOOP</div><div class="bd-arrow">→</div><div class="bd-result">Escrow</div></div>
-        <div class="bd-row"><div class="bd-icon" style="background:var(--coral);">🏪</div><div class="bd-label">Shop triggers settlement</div><div class="bd-arrow">→</div><div class="bd-result">burnPayments()</div></div>
-        <div class="bd-row"><div class="bd-icon" style="background:var(--mint);">🔥</div><div class="bd-label">Tokens sent to 0x000</div><div class="bd-arrow">→</div><div class="bd-result">Gone forever</div></div>
-        <div class="bd-row"><div class="bd-icon" style="background:var(--sand);">📉</div><div class="bd-label">Supply decreases</div><div class="bd-arrow">→</div><div class="bd-result">Scarcity ↑</div></div>
+        <div class="bd-row"><div class="bd-icon" style="background:var(--mint);">🔥</div><div class="bd-label">Batch burn to 0x000</div><div class="bd-arrow">→</div><div class="bd-result">Gone forever</div></div>
+        <div class="bd-row" style="border-bottom:none;"><div class="bd-icon" style="background:var(--sand);">📉</div><div class="bd-label">Supply decreases</div><div class="bd-arrow">→</div><div class="bd-result">Scarcity ↑</div></div>
+        <div style="font-size:0.62rem;font-weight:700;text-transform:uppercase;letter-spacing:0.1em;color:var(--green);margin:1.25rem 0 0.75rem;padding-top:1.25rem;border-top:1px solid var(--border);">USDC payment path</div>
+        <div class="bd-row"><div class="bd-icon" style="background:var(--coral);">💵</div><div class="bd-label">Customer pays USDC</div><div class="bd-arrow">→</div><div class="bd-result">Escrow</div></div>
+        <div class="bd-row"><div class="bd-icon" style="background:var(--mint);">🏦</div><div class="bd-label">Treasury collects USDC</div><div class="bd-arrow">→</div><div class="bd-result">collectFees()</div></div>
+        <div class="bd-row"><div class="bd-icon" style="background:var(--lavender);">🔄</div><div class="bd-label">60% buys SKOOP → burned</div><div class="bd-arrow">→</div><div class="bd-result">Supply ↓</div></div>
+        <div class="bd-row" style="border-bottom:none;"><div class="bd-icon" style="background:var(--sand);">💧</div><div class="bd-label">40% deepens SKOOP/USDC LP</div><div class="bd-arrow">→</div><div class="bd-result">Liquidity ↑</div></div>
         <div style="margin-top:1.5rem;background:var(--apricot);border-radius:10px;padding:0.875rem;font-size:0.75rem;color:var(--ink-mid);line-height:1.6;">
           <strong style="color:var(--ink);">On-chain verifiable.</strong> Every burn emits a <code style="font-size:0.72rem;">BatchBurnExecuted</code> event with the exact token count and timestamp — visible on Basescan.
         </div>
@@ -653,16 +657,32 @@ footer{background:var(--green-dk);padding:4rem 2rem 2rem;}
       </div>
       <div class="token-detail-card">
         <div class="tdc-title">Infrastructure</div>
-        <div class="tdc-row"><span class="tdc-key">Escrow</span>
-          <span class="tdc-val copy-addr" onclick="copyAddr('0x85e8cdedae8ecd23ee21cdc90d75cbaae9a54991')" title="Click to copy">0x85e8…4991</span>
+        <div class="tdc-row"><span class="tdc-key">Escrow V2</span>
+          <span class="tdc-val copy-addr" onclick="copyAddr('0xf60a50bc78292b8577C7093D2284B689612425E8')" title="Click to copy">0xf60a…25E8</span>
+        </div>
+        <div class="tdc-row"><span class="tdc-key">Treasury</span>
+          <span class="tdc-val copy-addr" onclick="copyAddr('0xc6dD35ed9e3C83dbd028d67854d30e73467BD192')" title="Click to copy">0xc6dD…D192</span>
         </div>
         <div class="tdc-row"><span class="tdc-key">DEX</span><span class="tdc-val plain">Uniswap V3 · Base</span></div>
-        <div class="tdc-row"><span class="tdc-key">Pool (ETH)</span><span class="tdc-val copy-addr" onclick="copyAddr('0xc1d89ca13d5cbc24b92e9f40b36d43da347c5198')" title="Click to copy">0xc1d8…5198</span></div>
+        <div class="tdc-row"><span class="tdc-key">Pool (ETH/SKOOP)</span>
+          <span class="tdc-val copy-addr" onclick="copyAddr('0xc1d89ca13d5cbc24b92e9f40b36d43da347c5198')" title="Click to copy">0xc1d8…5198</span>
+        </div>
+        <div class="tdc-row"><span class="tdc-key">Pool (USDC/SKOOP)</span>
+          <span class="tdc-val copy-addr" onclick="copyAddr('0x64Ef20F32445EB0A86f4b97CA895fE508AF253CD')" title="Click to copy">0x64Ef…53CD</span>
+        </div>
         <div class="tdc-row"><span class="tdc-key">Admin keys</span><span class="tdc-val plain" style="color:#a8d4bb;">None</span></div>
         <div class="tdc-row"><span class="tdc-key">Upgradeable</span><span class="tdc-val plain" style="color:#a8d4bb;">No</span></div>
         <div class="tdc-row"><span class="tdc-key">Explorer</span>
           <a href="https://basescan.org/token/0xfd3ce21c5acd8bbbe576d0e2336c210c3cebeb92" target="_blank" rel="noopener" style="color:var(--coral-mid);font-size:0.75rem;font-weight:600;text-decoration:none;">Basescan ↗</a>
         </div>
+      </div>
+      <div class="token-detail-card" style="grid-column:1/-1;">
+        <div class="tdc-title">Token Allocation · 888,888,888 SKOOP</div>
+        <div class="tdc-row"><span class="tdc-key">Rewards Treasury</span><span class="tdc-val plain">311,111,111 SKOOP <span style="color:rgba(255,255,255,0.3);font-weight:400;">· 35%</span></span></div>
+        <div class="tdc-row"><span class="tdc-key">Liquidity</span><span class="tdc-val plain">177,777,777 SKOOP <span style="color:rgba(255,255,255,0.3);font-weight:400;">· 20%</span></span></div>
+        <div class="tdc-row"><span class="tdc-key">Treasury Reserve</span><span class="tdc-val plain">177,777,777 SKOOP <span style="color:rgba(255,255,255,0.3);font-weight:400;">· 20%</span></span></div>
+        <div class="tdc-row"><span class="tdc-key">Team (2yr vesting)</span><span class="tdc-val plain">133,333,333 SKOOP <span style="color:rgba(255,255,255,0.3);font-weight:400;">· 15%</span></span></div>
+        <div class="tdc-row"><span class="tdc-key">Marketing / Community</span><span class="tdc-val plain">88,888,890 SKOOP <span style="color:rgba(255,255,255,0.3);font-weight:400;">· 10%</span></span></div>
       </div>
     </div>
     <div class="token-cta reveal reveal-delay-3">
@@ -740,7 +760,7 @@ footer{background:var(--green-dk);padding:4rem 2rem 2rem;}
 const CFG={
   RPC:'https://mainnet.base.org',
   SKOOP:'0xfd3ce21c5acd8bbbe576d0e2336c210c3cebeb92',
-  ESCROW:'0x85e8cdedae8ecd23ee21cdc90d75cbaae9a54991',
+  ESCROW:'0xf60a50bc78292b8577c7093d2284b689612425e8',
   POOL_ETH_SKOOP:'0xc1d89ca13d5cbc24b92e9f40b36d43da347c5198',
   WETH_USDC_POOL:'0xd0b53D9277642d899DF5C87A3966A349A798F224',
   WETH:'0x4200000000000000000000000000000000000006',
