@@ -1039,7 +1039,8 @@ async function pollForPayment(receiptId,pollToken){
         const paidLabel=isUsdcPay?'USDC':'SKOOP';
         showPaymentSuccess(paidCents,paidTokenAmt,ev.args.receiptId,paidLabel);
         if(skoopPriceUSD>0&&signer){
-          const rewardSkoop=Math.round((paidCents/100)*CFG.AUTO_REWARD_RATE/skoopPriceUSD);
+          const rewardRate=isUsdcPay?CFG.AUTO_REWARD_RATE_USDC:CFG.AUTO_REWARD_RATE;
+          const rewardSkoop=Math.round((paidCents/100)*rewardRate/skoopPriceUSD);
           if(rewardSkoop>0)setTimeout(()=>autoSendReward(payerAddr,rewardSkoop,paidCents,ev.args.receiptId),600);
         }
         cart={};renderCart();renderMenu();loadReceipts();
