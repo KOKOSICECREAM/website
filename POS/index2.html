@@ -490,9 +490,10 @@ const CFG={
   CHAIN_ID:8453,CHAIN_HEX:'0x2105',RPC:'https://mainnet.base.org',
   SKOOP:BRAND.skoopToken,USDC:BRAND.usdcToken,ESCROW:BRAND.escrowContract,
   SIGNER:BRAND.signerWallet,OWNER:BRAND.ownerWallet,
+  TREASURY:'0xc109242EAA9ce5A22e7aa6C24F509a34E00b54b8',
   POOL_ETH_SKOOP:BRAND.skoopPool,SKOOP_DEC:6,USDC_DEC:6,
   TAX_RATE:BRAND.taxRate,STORE_ID:BRAND.storeId,TERMINAL_ID:BRAND.terminalId,
-  DAILY_REWARD_LIMIT:BRAND.dailyRewardLimit,AUTO_REWARD_RATE:0.10,
+  DAILY_REWARD_LIMIT:BRAND.dailyRewardLimit,AUTO_REWARD_RATE:0.10,AUTO_REWARD_RATE_USDC:0.05,
 };
 
 let skoopPriceUSD=0,ethPriceUSD=0;
@@ -825,6 +826,42 @@ async function generateQR(){
   const tokenAmount=isUSDC
     ? BigInt(totalCents * 10000)
     : BigInt(Math.round(totalCents/100/skoopPriceUSD*1e6));
+
+  // ── USDC path: EIP-681 direct transfer to treasury (no escrow, any wallet) ──
+  if(isUSDC){
+    const qrPayload='ethereum:'+CFG.USDC+'/transfer?address='+CFG.TREASURY+'&uint256='+tokenAmount.toString()+'&chainId=8453';
+    const wrap=document.getElementById('qr-canvas-wrap');
+    wrap.innerHTML='<p style="color:var(--ink-lt);font-size:0.75rem;text-align:center;">Generating…</p>';
+    await new Promise(r=>setTimeout(r,80));wrap.innerHTML='';
+    try{if(navigator.wakeLock)await navigator.wakeLock.request('screen');}catch{}
+    const wrapRect=wrap.getBoundingClientRect();const qrSize=Math.round((wrapRect.width||280)-28);
+    try{
+      new QRCode(wrap,{text:qrPayload,width:qrSize,height:qrSize,colorDark:'#000000',colorLight:'#ffffff',correctLevel:QRCode.CorrectLevel.L});
+      await new Promise(r=>setTimeout(r,80));
+      wrap.querySelectorAll('table').forEach(t=>t.remove());
+      const rendered=wrap.querySelector('img')||wrap.querySelector('canvas');
+      if(!rendered)throw new Error('nothing rendered');
+      rendered.style.cssText=`display:block!important;width:${qrSize}px!important;height:${qrSize}px!important;margin:0 auto!important;image-rendering:pixelated;`;
+    }catch(err){
+      const img=document.createElement('img');
+      img.style.cssText=`display:block;width:${qrSize}px;height:${qrSize}px;image-rendering:pixelated;`;
+      img.alt='Payment QR';img.onerror=()=>{wrap.innerHTML='<p style="color:red;font-size:0.75rem;">QR failed — check connection</p>';};
+      img.src=`https://api.qrserver.com/v1/create-qr-code/?size=${qrSize}x${qrSize}&ecc=L&margin=0&data=`+encodeURIComponent(qrPayload);
+      wrap.appendChild(img);
+    }
+    document.getElementById('modal-summary').innerHTML=
+      Object.entries(cart).map(([id,q])=>{const it=MENU.find(m=>m.id===id);return`<div class="mos-row"><span>${it.emoji} ${it.name} ×${q}</span><span>$${(it.price*q).toFixed(2)}</span></div>`;}).join('')+
+      `<div class="mos-row"><span>Tax</span><span>$${(taxCents/100).toFixed(2)}</span></div>`+
+      `<div class="mos-row total"><span>Total</span><span>$${(totalCents/100).toFixed(2)}</span></div>`+
+      `<div class="mos-row skoop"><span>Pay with</span><span>$${(totalCents/100).toFixed(2)} USDC</span></div>`;
+    document.getElementById('modal-status').textContent='Scan with any wallet — native USDC';
+    qrDeadlineSec=Math.floor(Date.now()/1000)+600;
+    startQRCountdown();
+    pollForDirectUSDC(tokenAmount,totalCents);
+    return;
+  }
+
+  // ── SKOOP path: K2 escrow flow ──
   const receiptId=ethers.id('RCPT_'+Date.now()+'_'+Math.random());
   const orderId=ethers.id('ORD_'+Date.now());
   const storeIdHash=ethers.id(CFG.STORE_ID);
@@ -995,6 +1032,32 @@ async function pollForPayment(receiptId){
           if(rewardSkoop>0)setTimeout(()=>autoSendReward(payerAddr,rewardSkoop,paidCents,ev.args.receiptId),600);
         }
         cart={};renderCart();renderMenu();loadReceipts();
+      }
+    }catch(e){}
+  },3000);
+}
+
+async function pollForDirectUSDC(usdcAmount,totalCents){
+  const pub=new ethers.JsonRpcProvider(CFG.RPC);
+  const usdc=new ethers.Contract(CFG.USDC,['event Transfer(address indexed from,address indexed to,uint256 value)'],pub);
+  let startBlock;try{startBlock=await pub.getBlockNumber()-5;}catch(e){startBlock=0;}
+  let attempts=0;
+  const poll=setInterval(async()=>{
+    attempts++;
+    if(attempts>200){clearInterval(poll);document.getElementById('modal-status').textContent='Timed out — regenerate QR if unpaid';return;}
+    document.getElementById('modal-status').textContent=`Waiting for USDC… (${attempts*3}s)`;
+    try{
+      const events=await usdc.queryFilter(usdc.filters.Transfer(null,CFG.TREASURY,usdcAmount),startBlock);
+      if(events.length>0){
+        clearInterval(poll);
+        const ev=events[0];
+        const paidAmt=parseFloat(ethers.formatUnits(ev.args.value,CFG.USDC_DEC));
+        showPaymentSuccess(totalCents,paidAmt,ev.transactionHash,'USDC');
+        if(skoopPriceUSD>0&&signer){
+          const rewardSkoop=Math.round((totalCents/100)*CFG.AUTO_REWARD_RATE_USDC/skoopPriceUSD);
+          if(rewardSkoop>0)setTimeout(()=>autoSendReward(ev.args.from,rewardSkoop,totalCents,ev.transactionHash),600);
+        }
+        cart={};renderCart();renderMenu();
       }
     }catch(e){}
   },3000);
