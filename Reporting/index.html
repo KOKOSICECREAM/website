@@ -219,7 +219,7 @@ tfoot td{background:var(--green-lt);font-weight:700;color:var(--green);border-to
 
   <div id="kpi-grid">
     <div class="kpi"><div class="kl">Net Sales</div><div class="kv" id="k-gross">—</div><div class="ks" id="k-gross-sub">Excl. voided</div></div>
-    <div class="kpi"><div class="kl">Tax Collected</div><div class="kv" id="k-tax">—</div><div class="ks">9.25% Nashville</div></div>
+    <div class="kpi"><div class="kl">Tax Collected</div><div class="kv" id="k-tax">—</div><div class="ks" id="k-tax-sub">9.25% Nashville</div></div>
     <div class="kpi"><div class="kl">Net Revenue</div><div class="kv" id="k-total">—</div><div class="ks">Net + tax</div></div>
     <div class="kpi"><div class="kl">Transactions</div><div class="kv" id="k-count">—</div><div class="ks" id="k-count-sub">SKOOP + USDC</div></div>
     <div class="kpi"><div class="kl">SKOOP Captured</div><div class="kv" id="k-skoop">—</div><div class="ks" id="k-skoop-sub">In escrow</div></div>
@@ -463,20 +463,92 @@ tfoot td{background:var(--green-lt);font-weight:700;color:var(--green);border-to
 <div id="toast"></div>
 
 <script>
+// ╔══════════════════════════════════════════════════════════════════════════╗
+// ║  BUSINESS CONFIG — edit this block to deploy for a new business         ║
+// ╚══════════════════════════════════════════════════════════════════════════╝
+const BUSINESS_CONFIG = {
+
+  // ── Identity ────────────────────────────────────────────────────────────
+  name:         'KOKOS',
+  tagline:      'ice cream',
+  location:     'Nashville, TN',
+  logoUrl:      'https://raw.githubusercontent.com/KOKOSICECREAM/website/main/Customer_dapp/KOKOS.png',
+
+  // ── Owner (only wallet that can log in) ─────────────────────────────────
+  ownerWallet:  '0x001b3fB36FE7E3a741A15Ed8bE68610442E3a50b',
+
+  // ── Chain ───────────────────────────────────────────────────────────────
+  rpc:          'https://mainnet.base.org',
+  explorerUrl:  'https://basescan.org',
+
+  // ── Contracts ───────────────────────────────────────────────────────────
+  escrow:       '0xf60a50bc78292b8577C7093D2284B689612425E8',
+  treasury:     '0xc6dD35ed9e3C83dbd028d67854d30e73467BD192',
+  posSigner:    '0x4eCc3f03c018208Ae5932eAB91bbD82F37F56D9B',
+
+  // ── Loyalty / payment token ─────────────────────────────────────────────
+  token:             '0xfd3ce21c5acd8bbbe576d0e2336c210c3cebeb92',
+  tokenSymbol:       'SKOOP',
+  tokenDecimals:     6,
+
+  // ── Stablecoin ──────────────────────────────────────────────────────────
+  stablecoin:        '0x833589fcd6edb6e08f4c7c32d4f71b54bda02913',
+  stablecoinSymbol:  'USDC',
+  stablecoinDecimals: 6,
+
+  // ── LP / price feed ─────────────────────────────────────────────────────
+  pool:         '0x64Ef20F32445EB0A86f4b97CA895fE508AF253CD',
+  positionMgr:  '0x03a520b32C04BF3bEEf7BEb72E919cf822Ed34f1',
+
+  // ── Scan ────────────────────────────────────────────────────────────────
+  startBlock:        46180000,
+  chunkSize:         9000,
+  refundWindowDays:  7,
+
+  // ── Accounting ──────────────────────────────────────────────────────────
+  taxRate:      0.0925,             // decimal — 9.25% Nashville
+  taxLabel:     '9.25% Nashville',
+  timezone:     'America/Chicago',
+
+  // ── Branding ────────────────────────────────────────────────────────────
+  colors: {
+    coral:      '#fdcec1',
+    coralMid:   '#fdaf9a',
+    coralDeep:  '#f0876a',
+    mint:       '#cde6d7',
+    mintMid:    '#a8d4bb',
+    apricot:    '#fae2d8',
+    lavender:   '#e3d1e4',
+    sand:       '#ffddad',
+    brand:      '#11483d',
+    brandDark:  '#0a2e27',
+    brandLight: 'rgba(17,72,61,0.08)',
+    cream:      '#fffaf7',
+    ink:        '#2a1f1a',
+    inkMid:     '#6b4f47',
+    inkLight:   '#a08880',
+  },
+};
+// ═══════════════════════════════════════════════════════════════════════════
+
 const CFG={
-  RPC:'https://mainnet.base.org',
-  SKOOP:'0xfd3ce21c5acd8bbbe576d0e2336c210c3cebeb92',
-  USDC:'0x833589fcd6edb6e08f4c7c32d4f71b54bda02913',
-  ESCROW:'0xf60a50bc78292b8577C7093D2284B689612425E8',
-  TREASURY:'0xc6dD35ed9e3C83dbd028d67854d30e73467BD192',
-  POS_SIGNER:'0x4eCc3f03c018208Ae5932eAB91bbD82F37F56D9B',
-  OWNER:'0x001b3fB36FE7E3a741A15Ed8bE68610442E3a50b',
-  POOL:'0x64Ef20F32445EB0A86f4b97CA895fE508AF253CD',
-  POS_MGR:'0x03a520b32C04BF3bEEf7BEb72E919cf822Ed34f1',
-  DEC:6,
-  START_BLOCK:46180000,
-  CHUNK:9000,
-  REFUND_WINDOW:7*24*3600,
+  RPC:           BUSINESS_CONFIG.rpc,
+  SKOOP:         BUSINESS_CONFIG.token,
+  USDC:          BUSINESS_CONFIG.stablecoin,
+  ESCROW:        BUSINESS_CONFIG.escrow,
+  TREASURY:      BUSINESS_CONFIG.treasury,
+  POS_SIGNER:    BUSINESS_CONFIG.posSigner,
+  OWNER:         BUSINESS_CONFIG.ownerWallet,
+  POOL:          BUSINESS_CONFIG.pool,
+  POS_MGR:       BUSINESS_CONFIG.positionMgr,
+  EXPLORER:      BUSINESS_CONFIG.explorerUrl,
+  DEC:           BUSINESS_CONFIG.tokenDecimals,
+  STABLE_DEC:    BUSINESS_CONFIG.stablecoinDecimals,
+  TAX_RATE:      BUSINESS_CONFIG.taxRate,
+  TZ:            BUSINESS_CONFIG.timezone,
+  START_BLOCK:   BUSINESS_CONFIG.startBlock,
+  CHUNK:         BUSINESS_CONFIG.chunkSize,
+  REFUND_WINDOW: BUSINESS_CONFIG.refundWindowDays * 24 * 3600,
 };
 
 const ABI_ESC=[
@@ -582,7 +654,7 @@ function setPeriod(p,btn){
 
 function getRange(){
   const now=Math.floor(Date.now()/1000);
-  function mid(dAgo){const d=new Date();d.setTime(d.getTime()-dAgo*86400000);const s=d.toLocaleDateString('en-US',{timeZone:'America/Chicago'});return Math.floor(new Date(s+' 00:00:00').getTime()/1000);}
+  function mid(dAgo){const d=new Date();d.setTime(d.getTime()-dAgo*86400000);const s=d.toLocaleDateString('en-US',{timeZone:CFG.TZ});return Math.floor(new Date(s+' 00:00:00').getTime()/1000);}
   if(period==='today')return{from:mid(0),to:now};
   if(period==='week') return{from:mid(6),to:now};
   if(period==='month')return{from:mid(29),to:now};
@@ -677,7 +749,7 @@ async function runScan(){
 
     allTx=capEvts.map(e=>{
       const totalCents=Number(e.args.totalCents);
-      const subtotalCents=Math.round(totalCents/1.0925);
+      const subtotalCents=Math.round(totalCents/(1+CFG.TAX_RATE));
       const isUsdc=e.args.paymentToken?.toLowerCase()===CFG.USDC.toLowerCase();
       return{ts:Number(e.args.timestamp),receiptId:e.args.receiptId,payer:e.args.payer,
         paymentToken:e.args.paymentToken,isUsdc,subtotalCents,
@@ -859,7 +931,7 @@ async function doBurnSKOOP(){
     showToast('Burning SKOOP…','');
     const tx=await escrow.burnPayments(ids);
     await tx.wait();
-    showToast(`${ids.length} SKOOP receipt${ids.length!==1?'s':''} burned 🔥`,'success');
+    showToast(`${ids.length} ${BUSINESS_CONFIG.tokenSymbol} receipt${ids.length!==1?'s':''} burned 🔥`,'success');
     runScan();
   }catch(e){showToast(e?.reason||e?.shortMessage||'Burn failed','error');}
 }
@@ -883,15 +955,15 @@ async function doSettleUSDC(){
 // ── RENDER ────────────────────────────────────────────────────────────────────
 const f$=c=>'$'+(c/100).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
 const fSK=r=>parseFloat(ethers.formatUnits(BigInt(r),CFG.DEC)).toLocaleString('en-US',{maximumFractionDigits:2});
-const fU=r=>'$'+parseFloat(ethers.formatUnits(BigInt(r),6)).toFixed(2);
-const toCT=ts=>new Date(ts*1000).toLocaleString('en-US',{timeZone:'America/Chicago',month:'2-digit',day:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit',hour12:true});
-const toDate=ts=>new Date(ts*1000).toLocaleDateString('en-US',{timeZone:'America/Chicago',month:'2-digit',day:'2-digit',year:'numeric'});
-const toMon=ts=>new Date(ts*1000).toLocaleDateString('en-US',{timeZone:'America/Chicago',month:'long',year:'numeric'});
-const toYr=ts=>new Date(ts*1000).toLocaleDateString('en-US',{timeZone:'America/Chicago',year:'numeric'});
+const fU=r=>'$'+parseFloat(ethers.formatUnits(BigInt(r),CFG.STABLE_DEC)).toFixed(2);
+const toCT=ts=>new Date(ts*1000).toLocaleString('en-US',{timeZone:CFG.TZ,month:'2-digit',day:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit',hour12:true});
+const toDate=ts=>new Date(ts*1000).toLocaleDateString('en-US',{timeZone:CFG.TZ,month:'2-digit',day:'2-digit',year:'numeric'});
+const toMon=ts=>new Date(ts*1000).toLocaleDateString('en-US',{timeZone:CFG.TZ,month:'long',year:'numeric'});
+const toYr=ts=>new Date(ts*1000).toLocaleDateString('en-US',{timeZone:CFG.TZ,year:'numeric'});
 const sh=a=>a.slice(0,6)+'…'+a.slice(-4);
 const shh=h=>h.slice(0,10)+'…';
-const skBadge='<span class="badge badge-sk">SKOOP</span>';
-const usdcBadge='<span class="badge badge-usdc">USDC</span>';
+const skBadge=`<span class="badge badge-sk">${BUSINESS_CONFIG.tokenSymbol}</span>`;
+const usdcBadge=`<span class="badge badge-usdc">${BUSINESS_CONFIG.stablecoinSymbol}</span>`;
 
 function renderAll(){renderKPIs();renderPeriod();renderTx();renderBurns();renderUSDCSettles();renderTsySettles();renderRew();renderSettlement();renderQuickActions();renderVoids();renderCustomerStats();renderTokenomics();}
 
@@ -1037,7 +1109,7 @@ function renderBurns(){
     <td style="white-space:nowrap;font-size:0.72rem;">${toCT(b.ts)}</td>
     <td class="r">${b.count}</td>
     <td class="r g" style="font-weight:700;">${fSK(b.totalSkoop)} SKOOP</td>
-    <td><a class="lnk" href="https://basescan.org/tx/${b.txHash}" target="_blank" rel="noopener">${shh(b.txHash)}</a></td>
+    <td><a class="lnk" href="${CFG.EXPLORER}/tx/${b.txHash}" target="_blank" rel="noopener">${shh(b.txHash)}</a></td>
   </tr>`).join('');
   const totCount=fBurnBatches.reduce((s,b)=>s+b.count,0);
   const totSkoop=fBurnBatches.reduce((s,b)=>s+BigInt(b.totalSkoop),0n);
@@ -1054,7 +1126,7 @@ function renderUSDCSettles(){
     <td class="r">${b.count}</td>
     <td class="r g" style="font-weight:700;">${fU(b.totalUsdc)}</td>
     <td class="mn">${sh(b.treasury)}</td>
-    <td><a class="lnk" href="https://basescan.org/tx/${b.txHash}" target="_blank" rel="noopener">${shh(b.txHash)}</a></td>
+    <td><a class="lnk" href="${CFG.EXPLORER}/tx/${b.txHash}" target="_blank" rel="noopener">${shh(b.txHash)}</a></td>
   </tr>`).join('');
   const totCount=fUSDCBatches.reduce((s,b)=>s+b.count,0);
   const totUsdc=fUSDCBatches.reduce((s,b)=>s+BigInt(b.totalUsdc),0n);
@@ -1072,7 +1144,7 @@ function renderTsySettles(){
     <td class="r">$${parseFloat(ethers.formatUnits(BigInt(t.burnUSDC),6)).toFixed(2)}</td>
     <td class="r">$${parseFloat(ethers.formatUnits(BigInt(t.lpUSDC),6)).toFixed(2)}</td>
     <td class="r g">${fSK(t.skoopBurned)} SKOOP</td>
-    <td><a class="lnk" href="https://basescan.org/tx/${t.txHash}" target="_blank" rel="noopener">${shh(t.txHash)}</a></td>
+    <td><a class="lnk" href="${CFG.EXPLORER}/tx/${t.txHash}" target="_blank" rel="noopener">${shh(t.txHash)}</a></td>
   </tr>`).join('');
   const totUsdc=fTsySettles.reduce((s,t)=>s+BigInt(t.totalUSDC),0n);
   const totBurned=fTsySettles.reduce((s,t)=>s+BigInt(t.skoopBurned),0n);
@@ -1088,11 +1160,11 @@ function renderRew(){
     <td style="white-space:nowrap;font-size:0.72rem;">${r.ts?toCT(r.ts):'—'}</td>
     <td class="mn">${sh(r.to)}</td>
     <td class="r g">${fSK(r.amount)} SKOOP</td>
-    <td><a class="lnk" href="https://basescan.org/tx/${r.txHash}" target="_blank" rel="noopener">${shh(r.txHash)}</a></td>
+    <td><a class="lnk" href="${CFG.EXPLORER}/tx/${r.txHash}" target="_blank" rel="noopener">${shh(r.txHash)}</a></td>
   </tr>`).join('');
   const tot=fRew.reduce((s,r)=>s+BigInt(r.amount),0n);
   tfoot.style.display='';
-  tfoot.innerHTML=`<tr><td colspan="2" style="text-align:right;">Total Rewards</td><td class="r">${fSK(tot)} SKOOP</td><td></td></tr>`;
+  tfoot.innerHTML=`<tr><td colspan="2" style="text-align:right;">Total Rewards</td><td class="r">${fSK(tot)} ${BUSINESS_CONFIG.tokenSymbol}</td><td></td></tr>`;
 }
 
 // ── QUICK ACTION BANNER ───────────────────────────────────────────────────────
@@ -1103,8 +1175,8 @@ function renderQuickActions(){
   const banner=document.getElementById('action-banner');
   if(!readySKOOP.length&&!readyUSDC.length){banner.classList.remove('on');return;}
   const parts=[];
-  if(readySKOOP.length)parts.push(`${readySKOOP.length} SKOOP receipt${readySKOOP.length!==1?'s':''} ready to burn`);
-  if(readyUSDC.length)parts.push(`${readyUSDC.length} USDC receipt${readyUSDC.length!==1?'s':''} ready to settle`);
+  if(readySKOOP.length)parts.push(`${readySKOOP.length} ${BUSINESS_CONFIG.tokenSymbol} receipt${readySKOOP.length!==1?'s':''} ready to burn`);
+  if(readyUSDC.length)parts.push(`${readyUSDC.length} ${BUSINESS_CONFIG.stablecoinSymbol} receipt${readyUSDC.length!==1?'s':''} ready to settle`);
   document.getElementById('ab-msg').textContent=parts.join(' · ');
   document.getElementById('ab-burn-btn').style.display=readySKOOP.length?'':'none';
   document.getElementById('ab-settle-btn').style.display=readyUSDC.length?'':'none';
@@ -1125,7 +1197,7 @@ function renderVoids(){
     const orig=allTx.find(t=>t.receiptId===v.receiptId);
     const isUsdc=v.paymentToken?.toLowerCase()===CFG.USDC.toLowerCase();
     const badge=isUsdc?usdcBadge:skBadge;
-    const amt=isUsdc?fU(v.tokenAmount):fSK(v.tokenAmount)+' SK';
+    const amt=isUsdc?fU(v.tokenAmount):fSK(v.tokenAmount)+' '+BUSINESS_CONFIG.tokenSymbol;
     const total=orig?f$(orig.totalCents):'—';
     const payer=orig?sh(orig.payer):'—';
     return`<tr>
@@ -1135,15 +1207,15 @@ function renderVoids(){
       <td class="r">${amt}</td>
       <td class="r" style="color:var(--ink-lt);">${total}</td>
       <td class="mn">${payer}</td>
-      <td><a class="lnk" href="https://basescan.org/tx/${v.txHash}" target="_blank" rel="noopener">${shh(v.txHash)}</a></td>
+      <td><a class="lnk" href="${CFG.EXPLORER}/tx/${v.txHash}" target="_blank" rel="noopener">${shh(v.txHash)}</a></td>
     </tr>`;
   }).join('');
   const totUSDC=fV.filter(v=>v.paymentToken?.toLowerCase()===CFG.USDC.toLowerCase()).reduce((s,v)=>s+BigInt(v.tokenAmount),0n);
   const totSK=fV.filter(v=>v.paymentToken?.toLowerCase()!==CFG.USDC.toLowerCase()).reduce((s,v)=>s+BigInt(v.tokenAmount),0n);
   tfoot.style.display='';
   const parts=[];
-  if(totSK>0n)parts.push(fSK(totSK)+' SKOOP refunded');
-  if(totUSDC>0n)parts.push(fU(totUSDC)+' USDC refunded');
+  if(totSK>0n)parts.push(fSK(totSK)+' '+BUSINESS_CONFIG.tokenSymbol+' refunded');
+  if(totUSDC>0n)parts.push(fU(totUSDC)+' '+BUSINESS_CONFIG.stablecoinSymbol+' refunded');
   tfoot.innerHTML=`<tr><td>Totals</td><td></td><td></td><td class="r">${parts.join(' · ')||'—'}</td><td colspan="3"></td></tr>`;
 }
 
@@ -1263,21 +1335,22 @@ function setBar(pct,lbl){document.getElementById('bar-fill').style.width=pct+'%'
 // ── CSV ───────────────────────────────────────────────────────────────────────
 function exportCSV(){
   const p=period.toUpperCase();
-  const gen=new Date().toLocaleString('en-US',{timeZone:'America/Chicago'});
+  const gen=new Date().toLocaleString('en-US',{timeZone:CFG.TZ});
   const g=fTx.reduce((s,t)=>s+t.subtotalCents,0),x=fTx.reduce((s,t)=>s+t.taxCents,0),tot=fTx.reduce((s,t)=>s+t.totalCents,0);
   const sk=fTx.filter(t=>!t.isUsdc).reduce((s,t)=>s+BigInt(t.tokenAmount),0n);
   const uc=fTx.filter(t=>t.isUsdc).reduce((s,t)=>s+BigInt(t.tokenAmount),0n);
-  let csv=`KOKOS Ice Cream — Accounting\nPeriod: ${p} | Generated: ${gen} CT\n\n`;
-  csv+=`SUMMARY\nGross Sales,$${(g/100).toFixed(2)}\nTax Collected,$${(x/100).toFixed(2)}\nTotal Revenue,$${(tot/100).toFixed(2)}\nTransactions,${fTx.length}\nSKOOP Captured,${fSK(sk)}\nUSDC Captured,$${parseFloat(ethers.formatUnits(uc,6)).toFixed(2)}\n\n`;
-  csv+=`TRANSACTIONS\nDate/Time (CT),Token,Receipt ID,Gross,Tax,Total,Amount,Items,Payer\n`;
-  fTx.forEach(t=>{csv+=`"${toCT(t.ts)}","${t.isUsdc?'USDC':'SKOOP'}","${t.receiptId}","${(t.subtotalCents/100).toFixed(2)}","${(t.taxCents/100).toFixed(2)}","${(t.totalCents/100).toFixed(2)}","${t.isUsdc?parseFloat(ethers.formatUnits(BigInt(t.tokenAmount),6)).toFixed(2):fSK(t.tokenAmount)}","${t.itemCount}","${t.payer}"\n`;});
-  csv+=`\nSKOOP BURNS\nDate/Time (CT),Receipts Burned,SKOOP Burned,Tx Hash\n`;
+  const B=BUSINESS_CONFIG,SYM=B.tokenSymbol,SSYM=B.stablecoinSymbol;
+  let csv=`${B.name} — Accounting\nPeriod: ${p} | Generated: ${gen}\n\n`;
+  csv+=`SUMMARY\nNet Sales,$${(g/100).toFixed(2)}\nTax Collected,$${(x/100).toFixed(2)}\nNet Revenue,$${(tot/100).toFixed(2)}\nTransactions,${fTx.length}\n${SYM} Captured,${fSK(sk)}\n${SSYM} Captured,$${parseFloat(ethers.formatUnits(uc,CFG.STABLE_DEC)).toFixed(2)}\n\n`;
+  csv+=`TRANSACTIONS\nDate/Time,Token,Receipt ID,Gross,Tax,Total,Amount,Items,Payer\n`;
+  fTx.forEach(t=>{csv+=`"${toCT(t.ts)}","${t.isUsdc?SSYM:SYM}","${t.receiptId}","${(t.subtotalCents/100).toFixed(2)}","${(t.taxCents/100).toFixed(2)}","${(t.totalCents/100).toFixed(2)}","${t.isUsdc?parseFloat(ethers.formatUnits(BigInt(t.tokenAmount),CFG.STABLE_DEC)).toFixed(2):fSK(t.tokenAmount)}","${t.itemCount}","${t.payer}"\n`;});
+  csv+=`\n${SYM} BURNS\nDate/Time,Receipts Burned,${SYM} Burned,Tx Hash\n`;
   fBurnBatches.forEach(b=>{csv+=`"${toCT(b.ts)}","${b.count}","${fSK(b.totalSkoop)}","${b.txHash}"\n`;});
-  csv+=`\nUSDC SETTLEMENTS\nDate/Time (CT),Receipts,USDC Sent,Tx Hash\n`;
-  fUSDCBatches.forEach(b=>{csv+=`"${toCT(b.ts)}","${b.count}","${parseFloat(ethers.formatUnits(BigInt(b.totalUsdc),6)).toFixed(2)}","${b.txHash}"\n`;});
-  csv+=`\nTREASURY DEPLOYS\nDate/Time (CT),USDC In,Buyback USDC,LP USDC,SKOOP Burned,Tx Hash\n`;
-  fTsySettles.forEach(t=>{csv+=`"${toCT(t.ts)}","${parseFloat(ethers.formatUnits(BigInt(t.totalUSDC),6)).toFixed(2)}","${parseFloat(ethers.formatUnits(BigInt(t.burnUSDC),6)).toFixed(2)}","${parseFloat(ethers.formatUnits(BigInt(t.lpUSDC),6)).toFixed(2)}","${fSK(t.skoopBurned)}","${t.txHash}"\n`;});
-  csv+=`\nREWARDS\nDate/Time (CT),Recipient,SKOOP Sent,Tx Hash\n`;
+  csv+=`\n${SSYM} SETTLEMENTS\nDate/Time,Receipts,${SSYM} Sent,Tx Hash\n`;
+  fUSDCBatches.forEach(b=>{csv+=`"${toCT(b.ts)}","${b.count}","${parseFloat(ethers.formatUnits(BigInt(b.totalUsdc),CFG.STABLE_DEC)).toFixed(2)}","${b.txHash}"\n`;});
+  csv+=`\nTREASURY DEPLOYS\nDate/Time,${SSYM} In,Buyback ${SSYM},LP ${SSYM},${SYM} Burned,Tx Hash\n`;
+  fTsySettles.forEach(t=>{csv+=`"${toCT(t.ts)}","${parseFloat(ethers.formatUnits(BigInt(t.totalUSDC),CFG.STABLE_DEC)).toFixed(2)}","${parseFloat(ethers.formatUnits(BigInt(t.burnUSDC),CFG.STABLE_DEC)).toFixed(2)}","${parseFloat(ethers.formatUnits(BigInt(t.lpUSDC),CFG.STABLE_DEC)).toFixed(2)}","${fSK(t.skoopBurned)}","${t.txHash}"\n`;});
+  csv+=`\nREWARDS\nDate/Time,Recipient,${SYM} Sent,Tx Hash\n`;
   fRew.forEach(r=>{csv+=`"${r.ts?toCT(r.ts):'—'}","${r.to}","${fSK(r.amount)}","${r.txHash}"\n`;});
   const{from:csvFrom,to:csvTo}=getRange();
   const fV=allVoided.filter(v=>v.ts>=csvFrom&&v.ts<=csvTo);
@@ -1290,63 +1363,64 @@ function exportCSV(){
   });
   const a=document.createElement('a');
   a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv'}));
-  a.download=`KOKOS_${p}_${new Date().toISOString().slice(0,10)}.csv`;a.click();
+  a.download=`${BUSINESS_CONFIG.name}_${p}_${new Date().toISOString().slice(0,10)}.csv`;a.click();
   showToast('CSV downloaded','success');
 }
 
 // ── PDF ───────────────────────────────────────────────────────────────────────
 function exportPDF(){
   const p=period.charAt(0).toUpperCase()+period.slice(1);
-  const gen=new Date().toLocaleString('en-US',{timeZone:'America/Chicago',dateStyle:'long',timeStyle:'short'});
+  const gen=new Date().toLocaleString('en-US',{timeZone:CFG.TZ,dateStyle:'long',timeStyle:'short'});
   const g=fTx.reduce((s,t)=>s+t.subtotalCents,0),x=fTx.reduce((s,t)=>s+t.taxCents,0),tot=fTx.reduce((s,t)=>s+t.totalCents,0);
   const sk=fTx.filter(t=>!t.isUsdc).reduce((s,t)=>s+BigInt(t.tokenAmount),0n);
   const uc=fTx.filter(t=>t.isUsdc).reduce((s,t)=>s+BigInt(t.tokenAmount),0n);
   const rewTot=fRew.reduce((s,r)=>s+BigInt(r.amount),0n);
-  const txR=fTx.map(t=>`<tr><td>${toCT(t.ts)}</td><td>${t.isUsdc?'USDC':'SKOOP'}</td><td class="mn">${t.receiptId.slice(0,14)}…</td><td>$${(t.subtotalCents/100).toFixed(2)}</td><td>$${(t.taxCents/100).toFixed(2)}</td><td><b>$${(t.totalCents/100).toFixed(2)}</b></td><td>${t.isUsdc?parseFloat(ethers.formatUnits(BigInt(t.tokenAmount),6)).toFixed(2)+' USDC':fSK(t.tokenAmount)+' SK'}</td><td>${t.itemCount}</td></tr>`).join('');
-  const buR=fBurnBatches.map(b=>`<tr><td>${toCT(b.ts)}</td><td>${b.count}</td><td><b>${fSK(b.totalSkoop)} SKOOP</b></td><td class="mn">${b.txHash.slice(0,18)}…</td></tr>`).join('');
-  const usR=fUSDCBatches.map(b=>`<tr><td>${toCT(b.ts)}</td><td>${b.count}</td><td><b>$${parseFloat(ethers.formatUnits(BigInt(b.totalUsdc),6)).toFixed(2)}</b></td><td class="mn">${b.txHash.slice(0,18)}…</td></tr>`).join('');
-  const tsR=fTsySettles.map(t=>`<tr><td>${toCT(t.ts)}</td><td>$${parseFloat(ethers.formatUnits(BigInt(t.totalUSDC),6)).toFixed(2)}</td><td>$${parseFloat(ethers.formatUnits(BigInt(t.burnUSDC),6)).toFixed(2)}</td><td>$${parseFloat(ethers.formatUnits(BigInt(t.lpUSDC),6)).toFixed(2)}</td><td>${fSK(t.skoopBurned)} SKOOP</td></tr>`).join('');
-  const reR=fRew.map(r=>`<tr><td>${r.ts?toCT(r.ts):'—'}</td><td class="mn">${r.to}</td><td>${fSK(r.amount)} SKOOP</td></tr>`).join('');
-  const html=`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>KOKOS Accounting — ${p}</title>
+  const B=BUSINESS_CONFIG,SYM=B.tokenSymbol,SSYM=B.stablecoinSymbol;
+  const txR=fTx.map(t=>`<tr><td>${toCT(t.ts)}</td><td>${t.isUsdc?SSYM:SYM}</td><td class="mn">${t.receiptId.slice(0,14)}…</td><td>$${(t.subtotalCents/100).toFixed(2)}</td><td>$${(t.taxCents/100).toFixed(2)}</td><td><b>$${(t.totalCents/100).toFixed(2)}</b></td><td>${t.isUsdc?parseFloat(ethers.formatUnits(BigInt(t.tokenAmount),CFG.STABLE_DEC)).toFixed(2)+' '+SSYM:fSK(t.tokenAmount)+' '+SYM}</td><td>${t.itemCount}</td></tr>`).join('');
+  const buR=fBurnBatches.map(b=>`<tr><td>${toCT(b.ts)}</td><td>${b.count}</td><td><b>${fSK(b.totalSkoop)} ${SYM}</b></td><td class="mn">${b.txHash.slice(0,18)}…</td></tr>`).join('');
+  const usR=fUSDCBatches.map(b=>`<tr><td>${toCT(b.ts)}</td><td>${b.count}</td><td><b>$${parseFloat(ethers.formatUnits(BigInt(b.totalUsdc),CFG.STABLE_DEC)).toFixed(2)}</b></td><td class="mn">${b.txHash.slice(0,18)}…</td></tr>`).join('');
+  const tsR=fTsySettles.map(t=>`<tr><td>${toCT(t.ts)}</td><td>$${parseFloat(ethers.formatUnits(BigInt(t.totalUSDC),CFG.STABLE_DEC)).toFixed(2)}</td><td>$${parseFloat(ethers.formatUnits(BigInt(t.burnUSDC),CFG.STABLE_DEC)).toFixed(2)}</td><td>$${parseFloat(ethers.formatUnits(BigInt(t.lpUSDC),CFG.STABLE_DEC)).toFixed(2)}</td><td>${fSK(t.skoopBurned)} ${SYM}</td></tr>`).join('');
+  const reR=fRew.map(r=>`<tr><td>${r.ts?toCT(r.ts):'—'}</td><td class="mn">${r.to}</td><td>${fSK(r.amount)} ${SYM}</td></tr>`).join('');
+  const html=`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>${B.name} Accounting — ${p}</title>
   <style>*{box-sizing:border-box;margin:0;padding:0;}body{font-family:'Helvetica Neue',Arial,sans-serif;font-size:10px;color:#2a1f1a;padding:28px 36px;line-height:1.5;}
-  h1{font-size:18px;font-weight:300;letter-spacing:0.15em;color:#11483d;margin-bottom:2px;}.sub{font-size:9px;color:#a08880;margin-bottom:16px;}
+  h1{font-size:18px;font-weight:300;letter-spacing:0.15em;color:${B.colors.brand};margin-bottom:2px;}.sub{font-size:9px;color:${B.colors.inkLight};margin-bottom:16px;}
   .kpis{display:flex;gap:10px;margin-bottom:16px;flex-wrap:wrap;}.kpi{flex:1;min-width:90px;background:#f0f9f5;border-radius:5px;padding:7px 9px;}
-  .kl{font-size:7px;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:#6b4f47;margin-bottom:2px;}.kv{font-size:15px;font-weight:600;color:#2a1f1a;}
-  h2{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.1em;color:#11483d;margin:14px 0 5px;border-bottom:1px solid #cde6d7;padding-bottom:3px;}
+  .kl{font-size:7px;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:${B.colors.inkMid};margin-bottom:2px;}.kv{font-size:15px;font-weight:600;color:${B.colors.ink};}
+  h2{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.1em;color:${B.colors.brand};margin:14px 0 5px;border-bottom:1px solid ${B.colors.mint};padding-bottom:3px;}
   table{width:100%;border-collapse:collapse;font-size:8.5px;margin-bottom:3px;}
-  th{text-align:left;padding:4px 5px;background:#fae2d8;font-size:7.5px;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:#6b4f47;}
+  th{text-align:left;padding:4px 5px;background:${B.colors.apricot};font-size:7.5px;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:${B.colors.inkMid};}
   td{padding:3px 5px;border-bottom:1px solid rgba(42,31,26,0.06);}.mn{font-family:monospace;font-size:7.5px;}
-  tfoot td{background:#e8f5ef;font-weight:700;color:#11483d;}
-  .foot{margin-top:20px;font-size:7.5px;color:#a08880;text-align:center;border-top:1px solid #eee;padding-top:8px;}
+  tfoot td{background:#e8f5ef;font-weight:700;color:${B.colors.brand};}
+  .foot{margin-top:20px;font-size:7.5px;color:${B.colors.inkLight};text-align:center;border-top:1px solid #eee;padding-top:8px;}
   @media print{body{padding:12px;}}</style></head><body>
-  <h1>KOKOS Ice Cream — Accounting</h1>
-  <div class="sub">Period: ${p} &nbsp;|&nbsp; Generated: ${gen} CT &nbsp;|&nbsp; Base Mainnet on-chain data</div>
+  <h1>${B.name} — Accounting</h1>
+  <div class="sub">Period: ${p} &nbsp;|&nbsp; Generated: ${gen} &nbsp;|&nbsp; On-chain data</div>
   <div class="kpis">
-    <div class="kpi"><div class="kl">Gross Sales</div><div class="kv">$${(g/100).toFixed(2)}</div></div>
+    <div class="kpi"><div class="kl">Net Sales</div><div class="kv">$${(g/100).toFixed(2)}</div></div>
     <div class="kpi"><div class="kl">Tax Collected</div><div class="kv">$${(x/100).toFixed(2)}</div></div>
-    <div class="kpi"><div class="kl">Total Revenue</div><div class="kv">$${(tot/100).toFixed(2)}</div></div>
-    <div class="kpi"><div class="kl">SKOOP Captured</div><div class="kv">${fSK(sk)}</div></div>
-    <div class="kpi"><div class="kl">USDC Captured</div><div class="kv">$${parseFloat(ethers.formatUnits(uc,6)).toFixed(2)}</div></div>
+    <div class="kpi"><div class="kl">Net Revenue</div><div class="kv">$${(tot/100).toFixed(2)}</div></div>
+    <div class="kpi"><div class="kl">${SYM} Captured</div><div class="kv">${fSK(sk)}</div></div>
+    <div class="kpi"><div class="kl">${SSYM} Captured</div><div class="kv">$${parseFloat(ethers.formatUnits(uc,CFG.STABLE_DEC)).toFixed(2)}</div></div>
     <div class="kpi"><div class="kl">Rewards Issued</div><div class="kv">${fSK(rewTot)}</div></div>
   </div>
   <h2>Transactions (${fTx.length})</h2>
-  <table><thead><tr><th>Date/Time (CT)</th><th>Token</th><th>Receipt</th><th>Gross</th><th>Tax</th><th>Total</th><th>Amount</th><th>Items</th></tr></thead>
+  <table><thead><tr><th>Date/Time</th><th>Token</th><th>Receipt</th><th>Gross</th><th>Tax</th><th>Total</th><th>Amount</th><th>Items</th></tr></thead>
   <tbody>${txR||'<tr><td colspan="8" style="color:#a08880;">No transactions</td></tr>'}</tbody>
   <tfoot><tr><td colspan="2">Totals</td><td></td><td>$${(g/100).toFixed(2)}</td><td>$${(x/100).toFixed(2)}</td><td>$${(tot/100).toFixed(2)}</td><td></td><td></td></tr></tfoot></table>
-  <h2>SKOOP Burns (${fBurnBatches.length} batches)</h2>
-  <table><thead><tr><th>Date/Time (CT)</th><th>Receipts</th><th>SKOOP Burned</th><th>Tx Hash</th></tr></thead>
+  <h2>${SYM} Burns (${fBurnBatches.length} batches)</h2>
+  <table><thead><tr><th>Date/Time</th><th>Receipts</th><th>${SYM} Burned</th><th>Tx Hash</th></tr></thead>
   <tbody>${buR||'<tr><td colspan="4" style="color:#a08880;">No burns</td></tr>'}</tbody></table>
-  <h2>USDC Settlements (${fUSDCBatches.length} batches)</h2>
-  <table><thead><tr><th>Date/Time (CT)</th><th>Receipts</th><th>USDC Sent</th><th>Tx Hash</th></tr></thead>
-  <tbody>${usR||'<tr><td colspan="4" style="color:#a08880;">No USDC settlements</td></tr>'}</tbody></table>
+  <h2>${SSYM} Settlements (${fUSDCBatches.length} batches)</h2>
+  <table><thead><tr><th>Date/Time</th><th>Receipts</th><th>${SSYM} Sent</th><th>Tx Hash</th></tr></thead>
+  <tbody>${usR||'<tr><td colspan="4" style="color:#a08880;">No ${SSYM} settlements</td></tr>'}</tbody></table>
   <h2>Treasury Deploys (${fTsySettles.length})</h2>
-  <table><thead><tr><th>Date/Time (CT)</th><th>USDC In</th><th>Buyback</th><th>LP</th><th>SKOOP Burned</th></tr></thead>
+  <table><thead><tr><th>Date/Time</th><th>${SSYM} In</th><th>Buyback</th><th>LP</th><th>${SYM} Burned</th></tr></thead>
   <tbody>${tsR||'<tr><td colspan="5" style="color:#a08880;">No treasury deploys</td></tr>'}</tbody></table>
   <h2>Rewards (${fRew.length})</h2>
-  <table><thead><tr><th>Date/Time (CT)</th><th>Recipient</th><th>SKOOP Sent</th></tr></thead>
+  <table><thead><tr><th>Date/Time</th><th>Recipient</th><th>${SYM} Sent</th></tr></thead>
   <tbody>${reR||'<tr><td colspan="3" style="color:#a08880;">No rewards</td></tr>'}</tbody>
-  <tfoot><tr><td colspan="2">Total Rewards</td><td>${fSK(rewTot)} SKOOP</td></tr></tfoot></table>
-  <div class="foot">KOKOS Ice Cream · Nashville TN · Escrow ${CFG.ESCROW} · Treasury ${CFG.TREASURY} · Base Mainnet</div>
+  <tfoot><tr><td colspan="2">Total Rewards</td><td>${fSK(rewTot)} ${SYM}</td></tr></tfoot></table>
+  <div class="foot">${B.name} · ${B.location} · Escrow ${CFG.ESCROW} · Treasury ${CFG.TREASURY}</div>
   </body></html>`;
   const win=window.open('','_blank');win.document.write(html);win.document.close();win.focus();
   setTimeout(()=>win.print(),400);
@@ -1359,9 +1433,44 @@ function showToast(msg,type=''){
   clearTimeout(toastT);toastT=setTimeout(()=>t.classList.remove('show'),4000);
 }
 
+// ── BRANDING ──────────────────────────────────────────────────────────────────
+function patchBranding(){
+  const B=BUSINESS_CONFIG,co=B.colors,r=document.documentElement.style;
+  r.setProperty('--coral',      co.coral);
+  r.setProperty('--coral-mid',  co.coralMid);
+  r.setProperty('--coral-deep', co.coralDeep);
+  r.setProperty('--mint',       co.mint);
+  r.setProperty('--mint-mid',   co.mintMid);
+  r.setProperty('--apricot',    co.apricot);
+  r.setProperty('--lavender',   co.lavender);
+  r.setProperty('--sand',       co.sand);
+  r.setProperty('--green',      co.brand);
+  r.setProperty('--green-dk',   co.brandDark);
+  r.setProperty('--green-lt',   co.brandLight);
+  r.setProperty('--cream',      co.cream);
+  r.setProperty('--ink',        co.ink);
+  r.setProperty('--ink-mid',    co.inkMid);
+  r.setProperty('--ink-lt',     co.inkLight);
+  document.title = B.name+' — Accounting';
+  document.querySelector('.logo img').src = B.logoUrl;
+  document.querySelector('.logo img').alt = B.name;
+  document.querySelector('.logo-text').textContent = B.name;
+  document.querySelector('.gate-desc').textContent =
+    'Connect the '+B.name+' owner wallet to view accounting reports.';
+  document.querySelector('.gate-addr').textContent = B.ownerWallet;
+  const taxSub=document.getElementById('k-tax-sub');
+  if(taxSub)taxSub.textContent=B.taxLabel;
+  // Token symbol labels
+  const feesUSDCLbl=document.querySelector('#tsy-fees-usdc')?.closest('.tsy-stat')?.querySelector('.tsy-lbl');
+  if(feesUSDCLbl)feesUSDCLbl.textContent='Uncollected '+B.stablecoinSymbol;
+  const feesSKLbl=document.querySelector('#tsy-fees-skoop')?.closest('.tsy-stat')?.querySelector('.tsy-lbl');
+  if(feesSKLbl)feesSKLbl.textContent='Uncollected '+B.tokenSymbol;
+}
+
 const today=new Date().toISOString().slice(0,10);
 document.getElementById('date-from').value=today;
 document.getElementById('date-to').value=today;
+patchBranding();
 </script>
 </body>
 </html>
