@@ -182,8 +182,14 @@ html,body{height:100%;overflow:hidden;font-family:'Instrument Sans',sans-serif;b
 .stat-val{font-size:0.95rem;font-weight:700;color:var(--ink);}
 .receipt-card{background:var(--white);border:1px solid var(--border);border-radius:7px;padding:0.45rem 0.65rem;display:flex;align-items:center;gap:0.45rem;}
 .receipt-card input[type=checkbox]{accent-color:var(--coral-deep);width:13px;height:13px;cursor:pointer;flex-shrink:0;}
+.receipt-card input[type=checkbox]:disabled{opacity:0.35;cursor:default;}
 .rc-id{font-size:0.55rem;color:var(--ink-lt);font-family:monospace;}
 .rc-amt{font-size:0.72rem;font-weight:700;color:var(--coral-deep);}
+.rc-status{font-size:0.55rem;margin-top:2px;}
+.rc-ready{color:var(--mint-dk);font-weight:700;}
+.rc-pending{color:var(--ink-lt);}
+.rc-void-btn{background:none;border:1px solid #e74c3c;color:#e74c3c;border-radius:6px;padding:0.18rem 0.45rem;font-size:0.58rem;font-weight:700;cursor:pointer;font-family:inherit;flex-shrink:0;line-height:1.2;}
+.rc-void-btn:hover{background:#e74c3c;color:white;}
 .scan-wrap{background:var(--white);border:1px solid var(--border);border-radius:10px;overflow:hidden;}
 #reward-qr-reader{display:none;width:100%;}
 #reward-qr-reader video{width:100%!important;max-height:160px;object-fit:cover;}
@@ -368,7 +374,10 @@ html,body{height:100%;overflow:hidden;font-family:'Instrument Sans',sans-serif;b
         <p style="font-size:0.68rem;color:var(--ink-lt);text-align:center;padding:0.875rem 0;">No captured receipts yet</p>
       </div>
       <button class="action-btn secondary" onclick="loadReceipts()" style="font-size:0.65rem;margin-top:auto;">Refresh Receipts</button>
-      <button class="action-btn danger" id="burn-btn" onclick="burnSelected()" disabled>Settle Selected</button>
+      <div style="display:flex;gap:0.4rem;">
+        <button class="action-btn secondary" onclick="selectAllReady()" style="flex:1;font-size:0.65rem;">Select All Ready</button>
+        <button class="action-btn danger" id="burn-btn" onclick="burnSelected()" disabled style="flex:1;">Settle Selected</button>
+      </div>
     </div>
   </div>
 </div>
@@ -514,6 +523,8 @@ const ABI_ESCROW=[
   ],name:"intent",type:"tuple"},{name:"signature",type:"bytes"}],name:"capturePayment",outputs:[],stateMutability:"nonpayable",type:"function"},
   {inputs:[{name:"receiptIds",type:"bytes32[]"}],name:"burnPayments",outputs:[],stateMutability:"nonpayable",type:"function"},
   {inputs:[{name:"receiptIds",type:"bytes32[]"}],name:"settleUSDCPayments",outputs:[],stateMutability:"nonpayable",type:"function"},
+  {inputs:[{name:"receiptId",type:"bytes32"}],name:"voidPayment",outputs:[],stateMutability:"nonpayable",type:"function"},
+  {anonymous:false,inputs:[{indexed:true,name:"receiptId",type:"bytes32"},{indexed:true,name:"payer",type:"address"},{indexed:false,name:"timestamp",type:"uint256"}],name:"PaymentVoided",type:"event"},
   {anonymous:false,inputs:[
     {indexed:true,name:"receiptId",type:"bytes32"},{indexed:true,name:"orderId",type:"bytes32"},
     {indexed:true,name:"payer",type:"address"},{indexed:false,name:"paymentToken",type:"address"},
@@ -1225,23 +1236,25 @@ async function loadReceipts(){
     const escrow=new ethers.Contract(CFG.ESCROW,ABI_ESCROW,pub);
     const latest=await pub.getBlockNumber();
     const CHUNK=9000,LOOKBACK=45000,fromBlock=Math.max(0,latest-LOOKBACK);
-    let captured=[],burned=[],settled=[];
+    let captured=[],burned=[],settled=[],voided=[];
     for(let start=fromBlock;start<latest;start+=CHUNK){
       const end=Math.min(start+CHUNK-1,latest);
-      const[cc,bb,ss]=await Promise.all([
+      const[cc,bb,ss,vv]=await Promise.all([
         escrow.queryFilter(escrow.filters.PaymentCaptured(),start,end),
         escrow.queryFilter(escrow.filters.PaymentBurned(),start,end),
         escrow.queryFilter(escrow.filters.PaymentSettled(),start,end),
+        escrow.queryFilter(escrow.filters.PaymentVoided(),start,end),
       ]);
-      captured=captured.concat(cc);burned=burned.concat(bb);settled=settled.concat(ss);
+      captured=captured.concat(cc);burned=burned.concat(bb);settled=settled.concat(ss);voided=voided.concat(vv);
     }
     const doneIds=new Set([
       ...burned.map(e=>e.args.receiptId.toLowerCase()),
       ...settled.map(e=>e.args.receiptId.toLowerCase()),
+      ...voided.map(e=>e.args.receiptId.toLowerCase()),
     ]);
     capturedReceipts=captured
       .filter(e=>!doneIds.has(e.args.receiptId.toLowerCase()))
-      .map(e=>({receiptId:e.args.receiptId,amount:e.args.tokenAmount,paymentToken:e.args.paymentToken}));
+      .map(e=>({receiptId:e.args.receiptId,amount:e.args.tokenAmount,paymentToken:e.args.paymentToken,capturedAt:Number(e.args.timestamp)}));
     renderReceipts();
     if(!capturedReceipts.length)showToast('No pending receipts','');
   }catch(e){showToast('Receipt load error','error');}
@@ -1254,6 +1267,7 @@ function renderReceipts(){
   document.getElementById('stat-skoop').textContent=totalSkoop.toLocaleString('en-US',{maximumFractionDigits:0});
   document.getElementById('stat-usdc').textContent='$'+totalUsdc.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
   if(!capturedReceipts.length){list.innerHTML='<p style="font-size:0.65rem;color:var(--ink-lt);text-align:center;padding:0.875rem 0;">No captured receipts yet</p>';document.getElementById('burn-btn').disabled=true;return;}
+  const now=Math.floor(Date.now()/1000);
   list.innerHTML=capturedReceipts.map((r,i)=>{
     const isUsdc=r.paymentToken?.toLowerCase()===CFG.USDC.toLowerCase();
     const amtStr=isUsdc
@@ -1262,10 +1276,43 @@ function renderReceipts(){
     const badge=isUsdc
       ?'<span style="font-size:0.55rem;background:var(--mint);color:var(--mint-dk);border-radius:4px;padding:1px 4px;margin-left:4px;">USDC</span>'
       :'<span style="font-size:0.55rem;background:var(--coral);color:var(--ink);border-radius:4px;padding:1px 4px;margin-left:4px;">SKOOP</span>';
-    return`<div class="receipt-card"><input type="checkbox" id="rc-${i}" value="${r.receiptId}" onchange="updateBurnBtn()"><div style="flex:1;"><div class="rc-id">${r.receiptId.slice(0,18)}…${badge}</div><div class="rc-amt">${amtStr}</div></div></div>`;
+    const windowOpen=r.capturedAt&&(now<=r.capturedAt+7*24*3600);
+    const secsLeft=r.capturedAt?(r.capturedAt+7*24*3600-now):0;
+    const statusLabel=windowOpen
+      ?`<div class="rc-status rc-pending">Settles in ${formatTimeLeft(secsLeft)}</div>`
+      :`<div class="rc-status rc-ready">Ready ✓</div>`;
+    const voidBtn=windowOpen?`<button class="rc-void-btn" onclick="voidReceipt('${r.receiptId}')">Void</button>`:'';
+    return`<div class="receipt-card"><input type="checkbox" id="rc-${i}" value="${r.receiptId}" ${windowOpen?'disabled':''} onchange="updateBurnBtn()"><div style="flex:1;"><div class="rc-id">${r.receiptId.slice(0,18)}…${badge}</div><div class="rc-amt">${amtStr}</div>${statusLabel}</div>${voidBtn}</div>`;
   }).join('');
 }
 function updateBurnBtn(){document.getElementById('burn-btn').disabled=document.querySelectorAll('#receipt-list input:checked').length===0;}
+function formatTimeLeft(secs){
+  if(secs<=0)return'now';
+  const d=Math.floor(secs/86400),h=Math.floor((secs%86400)/3600),m=Math.floor((secs%3600)/60);
+  if(d>0)return d+'d '+(h>0?h+'h':'');
+  if(h>0)return h+'h '+(m>0?m+'m':'');
+  return m+'m';
+}
+function selectAllReady(){
+  const now=Math.floor(Date.now()/1000);
+  capturedReceipts.forEach((r,i)=>{
+    const cb=document.getElementById('rc-'+i);
+    if(cb&&!cb.disabled)cb.checked=true;
+  });
+  updateBurnBtn();
+}
+async function voidReceipt(receiptId){
+  if(!signer){showToast('Connect wallet first','error');return;}
+  if(!confirm('Void this payment? Tokens will be returned to the customer.'))return;
+  try{
+    const escrow=new ethers.Contract(CFG.ESCROW,ABI_ESCROW,signer);
+    const tx=await escrow.voidPayment(receiptId);
+    showToast('Voiding…','');
+    await tx.wait();
+    showToast('Payment voided — tokens returned','success');
+    await loadReceipts();
+  }catch(e){showToast(e?.reason||e?.shortMessage||'Void failed','error');}
+}
 async function burnSelected(){
   if(!signer){showToast('Connect wallet first','error');return;}
   if(signerAddr&&signerAddr.toLowerCase()!==CFG.OWNER.toLowerCase()){showToast('Need owner wallet to settle','error');return;}
