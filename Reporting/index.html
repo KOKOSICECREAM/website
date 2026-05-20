@@ -694,7 +694,7 @@ function applyFilter(){
 
 // ── SCAN CACHE ────────────────────────────────────────────────────────────────
 const SCAN_CACHE_KEY=`kokos_v1_${CFG.ESCROW.slice(-8)}_${CFG.TREASURY.slice(-8)}`;
-const N_PAR=3;
+const N_PAR=1;
 
 function loadScanCache(){try{const r=localStorage.getItem(SCAN_CACHE_KEY);return r?JSON.parse(r):null;}catch{return null;}}
 function saveScanCache(d){try{localStorage.setItem(SCAN_CACHE_KEY,JSON.stringify(d));}catch{console.warn('Cache quota full — scan works, just slower next time');}}
@@ -743,7 +743,7 @@ async function runScan(){
   btn.disabled=true;btn.innerHTML='<span class="spin"></span> Scanning…';
   setScanBar(true);setBar(0,'Connecting…');
   try{
-    const pub=new ethers.JsonRpcProvider(CFG.RPC);
+    const pub=new ethers.JsonRpcProvider(CFG.RPC,undefined,{batchMaxCount:9});
     const latest=await pub.getBlockNumber();
 
     setBar(4,'Loading price…');
