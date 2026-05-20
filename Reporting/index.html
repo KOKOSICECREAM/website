@@ -807,10 +807,12 @@ async function runScan(){
       .sort((a,b)=>b.ts-a.ts);
 
     // Direct USDC payments: transfers to Treasury NOT from the escrow contract
+    console.log('[KOKOS] directUSDCEvts raw:',directUSDCEvts.length,directUSDCEvts.map(e=>({from:e.args.from,value:e.args.value?.toString(),blk:e.blockNumber})));
     allDirectUSDC=directUSDCEvts
       .filter(e=>e.args.from.toLowerCase()!==CFG.ESCROW.toLowerCase())
       .map(e=>({ts:tsMap[e.blockNumber]||0,from:e.args.from,amount:e.args.value,txHash:e.transactionHash}))
       .sort((a,b)=>b.ts-a.ts);
+    console.log('[KOKOS] allDirectUSDC after filter:',allDirectUSDC.length);
 
     pendingReceipts=allTx.filter(t=>!t.burned&&!t.settled&&!t.voided);
 
