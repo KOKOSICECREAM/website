@@ -200,6 +200,7 @@ tfoot td{background:var(--green-lt);font-weight:700;color:var(--green);border-to
       <input class="date-input" type="date" id="date-to">
     </div>
     <button class="ctrl-btn" id="scan-btn" onclick="runScan()">⟳ Scan Chain</button>
+    <button class="ctrl-btn sec" onclick="fullRescan()" title="Clear cache and scan all blocks from scratch">↺ Full Rescan</button>
     <button class="ctrl-btn sec" id="csv-btn" onclick="exportCSV()" disabled>↓ CSV</button>
     <button class="ctrl-btn sec" id="pdf-btn" onclick="exportPDF()" disabled>↓ PDF</button>
   </div>
@@ -691,7 +692,49 @@ function applyFilter(){
   renderAll();
 }
 
+// ── SCAN CACHE ────────────────────────────────────────────────────────────────
+const SCAN_CACHE_KEY=`kokos_v1_${CFG.ESCROW.slice(-8)}_${CFG.TREASURY.slice(-8)}`;
+const N_PAR=3;
+
+function loadScanCache(){try{const r=localStorage.getItem(SCAN_CACHE_KEY);return r?JSON.parse(r):null;}catch{return null;}}
+function saveScanCache(d){try{localStorage.setItem(SCAN_CACHE_KEY,JSON.stringify(d));}catch{console.warn('Cache quota full — scan works, just slower next time');}}
+function clearScanCache(){try{localStorage.removeItem(SCAN_CACHE_KEY);}catch{}}
+
+// Extract minimal serialisable data from ethers event objects
+const EX={
+  cap:e=>({txHash:e.transactionHash,blk:e.blockNumber,receiptId:e.args.receiptId,orderId:e.args.orderId,payer:e.args.payer,paymentToken:e.args.paymentToken,tokenAmount:e.args.tokenAmount.toString(),totalCents:e.args.totalCents.toString(),itemCount:e.args.itemCount.toString(),ts:e.args.timestamp.toString()}),
+  void:e=>({txHash:e.transactionHash,receiptId:e.args.receiptId,paymentToken:e.args.paymentToken,tokenAmount:e.args.tokenAmount.toString(),ts:e.args.timestamp.toString()}),
+  burn:e=>({receiptId:e.args.receiptId}),
+  settle:e=>({receiptId:e.args.receiptId}),
+  burnBatch:e=>({txHash:e.transactionHash,paymentCount:e.args.paymentCount.toString(),totalTokenAmount:e.args.totalTokenAmount.toString(),ts:e.args.timestamp.toString()}),
+  usdcBatch:e=>({txHash:e.transactionHash,paymentCount:e.args.paymentCount.toString(),totalUSDCAmount:e.args.totalUSDCAmount.toString(),treasury:e.args.treasury,ts:e.args.timestamp.toString()}),
+  tsySettle:e=>({txHash:e.transactionHash,totalUSDC:e.args.totalUSDC.toString(),burnUSDC:e.args.burnUSDC.toString(),lpUSDC:e.args.lpUSDC.toString(),skoopBurned:e.args.skoopBurned.toString(),ts:e.args.timestamp.toString()}),
+  rew:e=>({txHash:e.transactionHash,blk:e.blockNumber,to:e.args.to,value:e.args.value.toString()}),
+  direct:e=>({txHash:e.transactionHash,blk:e.blockNumber,from:e.args.from,value:e.args.value.toString()}),
+};
+
+// Rebuild all display arrays from cached raw data
+function buildAllData(capR,voidR,burnR,stlR,bbR,ubR,tyR,rwR,dirR,tsMap){
+  const burnedSet=new Set(burnR.map(e=>e.receiptId.toLowerCase()));
+  const settledSet=new Set(stlR.map(e=>e.receiptId.toLowerCase()));
+  const voidedSet=new Set(voidR.map(e=>e.receiptId.toLowerCase()));
+  const DEAD='0x0000000000000000000000000000000000000000';
+  allTx=capR.map(e=>{
+    const tc=Number(e.totalCents),sub=Math.round(tc/(1+CFG.TAX_RATE)),isUsdc=e.paymentToken?.toLowerCase()===CFG.USDC.toLowerCase();
+    return{ts:Number(e.ts),receiptId:e.receiptId,payer:e.payer,paymentToken:e.paymentToken,isUsdc,subtotalCents:sub,taxCents:tc-sub,totalCents:tc,tokenAmount:BigInt(e.tokenAmount),itemCount:Number(e.itemCount),burned:burnedSet.has(e.receiptId.toLowerCase()),settled:settledSet.has(e.receiptId.toLowerCase()),voided:voidedSet.has(e.receiptId.toLowerCase()),txHash:e.txHash};
+  }).sort((a,b)=>b.ts-a.ts);
+  allVoided=voidR.map(e=>({ts:Number(e.ts),receiptId:e.receiptId,paymentToken:e.paymentToken,tokenAmount:BigInt(e.tokenAmount),txHash:e.txHash})).sort((a,b)=>b.ts-a.ts);
+  allBurnBatches=bbR.map(e=>({ts:Number(e.ts),count:Number(e.paymentCount),totalSkoop:BigInt(e.totalTokenAmount),txHash:e.txHash})).sort((a,b)=>b.ts-a.ts);
+  allUSDCBatches=ubR.map(e=>({ts:Number(e.ts),count:Number(e.paymentCount),totalUsdc:BigInt(e.totalUSDCAmount),treasury:e.treasury,txHash:e.txHash})).sort((a,b)=>b.ts-a.ts);
+  allTsySettles=tyR.map(e=>({ts:Number(e.ts),totalUSDC:BigInt(e.totalUSDC),burnUSDC:BigInt(e.burnUSDC),lpUSDC:BigInt(e.lpUSDC),skoopBurned:BigInt(e.skoopBurned),txHash:e.txHash})).sort((a,b)=>b.ts-a.ts);
+  allRew=rwR.filter(e=>e.to.toLowerCase()!==CFG.ESCROW.toLowerCase()&&e.to!==DEAD).map(e=>({ts:tsMap[e.blk]||0,to:e.to,amount:BigInt(e.value),txHash:e.txHash})).sort((a,b)=>b.ts-a.ts);
+  allDirectUSDC=dirR.filter(e=>e.from.toLowerCase()!==CFG.ESCROW.toLowerCase()).map(e=>({ts:tsMap[e.blk]||0,from:e.from,amount:BigInt(e.value),txHash:e.txHash})).sort((a,b)=>b.ts-a.ts);
+  pendingReceipts=allTx.filter(t=>!t.burned&&!t.settled&&!t.voided);
+}
+
 // ── SCAN ──────────────────────────────────────────────────────────────────────
+function fullRescan(){clearScanCache();runScan();}
+
 async function runScan(){
   if(period==='custom'){
     if(!document.getElementById('date-from').value||!document.getElementById('date-to').value){showToast('Select both dates','error');return;}
@@ -702,129 +745,91 @@ async function runScan(){
   try{
     const pub=new ethers.JsonRpcProvider(CFG.RPC);
     const latest=await pub.getBlockNumber();
-    const fromBlock=CFG.START_BLOCK;
-    const chunks=Math.ceil((latest-fromBlock)/CFG.CHUNK);
-    let done=0;
 
     setBar(4,'Loading price…');
     await Promise.all([fetchPrice(pub),loadTreasury(pub)]);
 
-    const esc=new ethers.Contract(CFG.ESCROW,ABI_ESC,pub);
-    const tsy=new ethers.Contract(CFG.TREASURY,ABI_TSY,pub);
-    const sk=new ethers.Contract(CFG.SKOOP,ABI_TRF,pub);
-    const usdcTrf=new ethers.Contract(CFG.USDC,ABI_TRF,pub);
+    // Load cache — incremental scan starts from lastBlock+1
+    const cache=loadScanCache();
+    const fromBlock=cache?cache.lastBlock+1:CFG.START_BLOCK;
+    const isIncremental=!!(cache&&fromBlock>CFG.START_BLOCK);
 
-    let capEvts=[],voidEvts=[],burnRcptEvts=[],settleRcptEvts=[],burnBatchEvts=[],usdcBatchEvts=[],tsySettleEvts=[],rewEvts=[],directUSDCEvts=[];
+    let capR=cache?.capR||[],voidR=cache?.voidR||[],burnR=cache?.burnR||[],stlR=cache?.stlR||[];
+    let bbR=cache?.bbR||[],ubR=cache?.ubR||[],tyR=cache?.tyR||[],rwR=cache?.rwR||[],dirR=cache?.dirR||[];
+    let tsMap=cache?.tsMap||{};
 
-    async function queryChunk(blkStart,blkEnd,attempt=0){
-      try{
-        return await Promise.all([
-          esc.queryFilter(esc.filters.PaymentCaptured(),blkStart,blkEnd),
-          esc.queryFilter(esc.filters.PaymentVoided(),blkStart,blkEnd),
-          esc.queryFilter(esc.filters.PaymentBurned(),blkStart,blkEnd),
-          esc.queryFilter(esc.filters.PaymentSettled(),blkStart,blkEnd),
-          esc.queryFilter(esc.filters.BatchBurnExecuted(),blkStart,blkEnd),
-          esc.queryFilter(esc.filters.BatchUSDCSettled(),blkStart,blkEnd),
-          tsy.queryFilter(tsy.filters.Settled(),blkStart,blkEnd),
-          sk.queryFilter(sk.filters.Transfer(CFG.POS_SIGNER,null),blkStart,blkEnd),
-          usdcTrf.queryFilter(usdcTrf.filters.Transfer(null,CFG.TREASURY),blkStart,blkEnd),
-        ]);
-      }catch(err){
-        const msg=JSON.stringify(err);
-        const isRate=msg.includes('rate limit')||msg.includes('-32016')||msg.includes('over rate');
-        if(isRate&&attempt<4){
-          const wait=1500*(attempt+1);
-          setBar(10+Math.round((done/chunks)*82),`Rate limited — retrying in ${wait/1000}s…`);
-          await new Promise(r=>setTimeout(r,wait));
-          return queryChunk(blkStart,blkEnd,attempt+1);
+    if(fromBlock<=latest){
+      const esc=new ethers.Contract(CFG.ESCROW,ABI_ESC,pub);
+      const tsy=new ethers.Contract(CFG.TREASURY,ABI_TSY,pub);
+      const sk=new ethers.Contract(CFG.SKOOP,ABI_TRF,pub);
+      const usdcTrf=new ethers.Contract(CFG.USDC,ABI_TRF,pub);
+      const totalChunks=Math.ceil((latest-fromBlock+1)/CFG.CHUNK);
+      let done=0;
+
+      async function queryChunk(blkStart,blkEnd,attempt=0){
+        try{
+          return await Promise.all([
+            esc.queryFilter(esc.filters.PaymentCaptured(),blkStart,blkEnd),
+            esc.queryFilter(esc.filters.PaymentVoided(),blkStart,blkEnd),
+            esc.queryFilter(esc.filters.PaymentBurned(),blkStart,blkEnd),
+            esc.queryFilter(esc.filters.PaymentSettled(),blkStart,blkEnd),
+            esc.queryFilter(esc.filters.BatchBurnExecuted(),blkStart,blkEnd),
+            esc.queryFilter(esc.filters.BatchUSDCSettled(),blkStart,blkEnd),
+            tsy.queryFilter(tsy.filters.Settled(),blkStart,blkEnd),
+            sk.queryFilter(sk.filters.Transfer(CFG.POS_SIGNER,null),blkStart,blkEnd),
+            usdcTrf.queryFilter(usdcTrf.filters.Transfer(null,CFG.TREASURY),blkStart,blkEnd),
+          ]);
+        }catch(err){
+          const msg=JSON.stringify(err);
+          const isRate=msg.includes('rate limit')||msg.includes('-32016')||msg.includes('over rate');
+          if(isRate&&attempt<4){
+            const wait=1500*(attempt+1);
+            setBar(10+Math.round((done/totalChunks)*82),`Rate limited — retrying in ${wait/1000}s…`);
+            await new Promise(r=>setTimeout(r,wait));
+            return queryChunk(blkStart,blkEnd,attempt+1);
+          }
+          throw err;
         }
-        throw err;
       }
-    }
 
-    for(let s=fromBlock;s<latest;s+=CFG.CHUNK){
-      const blkEnd=Math.min(s+CFG.CHUNK-1,latest);
-      setBar(10+Math.round((done/chunks)*82),chunks>1?`Chunk ${done+1} of ${chunks}`:'Loading events…');
-      const[a,b,c,d,e,f,g,h,i]=await queryChunk(s,blkEnd);
-      capEvts=capEvts.concat(a);voidEvts=voidEvts.concat(b);
-      burnRcptEvts=burnRcptEvts.concat(c);settleRcptEvts=settleRcptEvts.concat(d);
-      burnBatchEvts=burnBatchEvts.concat(e);usdcBatchEvts=usdcBatchEvts.concat(f);
-      tsySettleEvts=tsySettleEvts.concat(g);rewEvts=rewEvts.concat(h);
-      directUSDCEvts=directUSDCEvts.concat(i);
-      done++;
+      // Fetch N_PAR chunks in parallel
+      for(let s=fromBlock;s<=latest;s+=CFG.CHUNK*N_PAR){
+        const starts=[];
+        for(let j=0;j<N_PAR&&s+j*CFG.CHUNK<=latest;j++) starts.push(s+j*CFG.CHUNK);
+        const label=isIncremental?'Updating…':(totalChunks>1?`Chunks ${done+1}–${Math.min(done+starts.length,totalChunks)} of ${totalChunks}`:'Loading events…');
+        setBar(10+Math.round((done/totalChunks)*82),label);
+        const results=await Promise.all(starts.map(bs=>queryChunk(bs,Math.min(bs+CFG.CHUNK-1,latest))));
+        for(const[a,b,c,d,e,f,g,h,i] of results){
+          capR=capR.concat(a.map(EX.cap));voidR=voidR.concat(b.map(EX.void));
+          burnR=burnR.concat(c.map(EX.burn));stlR=stlR.concat(d.map(EX.settle));
+          bbR=bbR.concat(e.map(EX.burnBatch));ubR=ubR.concat(f.map(EX.usdcBatch));
+          tyR=tyR.concat(g.map(EX.tsySettle));rwR=rwR.concat(h.map(EX.rew));
+          dirR=dirR.concat(i.map(EX.direct));
+        }
+        done+=starts.length;
+      }
+
+      // Fetch timestamps only for blocks not already in tsMap
+      const newBlocks=new Set([...rwR,...dirR].map(e=>e.blk).filter(bn=>!tsMap[bn]));
+      await Promise.all([...newBlocks].map(async bn=>{
+        for(let attempt=0;attempt<3;attempt++){
+          try{const blk=await pub.getBlock(bn);if(blk){tsMap[bn]=blk.timestamp;break;}}
+          catch{if(attempt<2)await new Promise(r=>setTimeout(r,500*(attempt+1)));}
+        }
+      }));
+
+      saveScanCache({capR,voidR,burnR,stlR,bbR,ubR,tyR,rwR,dirR,tsMap,lastBlock:latest});
     }
 
     setBar(92,'Processing…');
-
-    // Fetch block timestamps for reward and direct USDC Transfer events
-    const uniq=new Set([...rewEvts,...directUSDCEvts].map(e=>e.blockNumber));
-    const tsMap={};
-    await Promise.all([...uniq].map(async bn=>{
-      for(let attempt=0;attempt<3;attempt++){
-        try{const blk=await pub.getBlock(bn);if(blk){tsMap[bn]=blk.timestamp;break;}}
-        catch(e){if(attempt<2)await new Promise(r=>setTimeout(r,500*(attempt+1)));}
-      }
-    }));
-
-    const burnedSet=new Set(burnRcptEvts.map(e=>e.args.receiptId.toLowerCase()));
-    const settledSet=new Set(settleRcptEvts.map(e=>e.args.receiptId.toLowerCase()));
-    const voidedSet=new Set(voidEvts.map(e=>e.args.receiptId.toLowerCase()));
-    const DEAD='0x0000000000000000000000000000000000000000';
-
-    allTx=capEvts.map(e=>{
-      const totalCents=Number(e.args.totalCents);
-      const subtotalCents=Math.round(totalCents/(1+CFG.TAX_RATE));
-      const isUsdc=e.args.paymentToken?.toLowerCase()===CFG.USDC.toLowerCase();
-      return{ts:Number(e.args.timestamp),receiptId:e.args.receiptId,payer:e.args.payer,
-        paymentToken:e.args.paymentToken,isUsdc,subtotalCents,
-        taxCents:totalCents-subtotalCents,totalCents,
-        tokenAmount:e.args.tokenAmount,itemCount:Number(e.args.itemCount),
-        burned:burnedSet.has(e.args.receiptId.toLowerCase()),
-        settled:settledSet.has(e.args.receiptId.toLowerCase()),
-        voided:voidedSet.has(e.args.receiptId.toLowerCase()),
-        txHash:e.transactionHash};
-    }).sort((a,b)=>b.ts-a.ts);
-
-    allVoided=voidEvts.map(e=>({
-      ts:Number(e.args.timestamp),receiptId:e.args.receiptId,
-      paymentToken:e.args.paymentToken,tokenAmount:e.args.tokenAmount,txHash:e.transactionHash
-    })).sort((a,b)=>b.ts-a.ts);
-
-    allBurnBatches=burnBatchEvts.map(e=>({
-      ts:Number(e.args.timestamp),count:Number(e.args.paymentCount),
-      totalSkoop:e.args.totalTokenAmount,txHash:e.transactionHash
-    })).sort((a,b)=>b.ts-a.ts);
-
-    allUSDCBatches=usdcBatchEvts.map(e=>({
-      ts:Number(e.args.timestamp),count:Number(e.args.paymentCount),
-      totalUsdc:e.args.totalUSDCAmount,treasury:e.args.treasury,txHash:e.transactionHash
-    })).sort((a,b)=>b.ts-a.ts);
-
-    allTsySettles=tsySettleEvts.map(e=>({
-      ts:Number(e.args.timestamp),totalUSDC:e.args.totalUSDC,
-      burnUSDC:e.args.burnUSDC,lpUSDC:e.args.lpUSDC,
-      skoopBurned:e.args.skoopBurned,txHash:e.transactionHash
-    })).sort((a,b)=>b.ts-a.ts);
-
-    allRew=rewEvts
-      .filter(e=>e.args.to.toLowerCase()!==CFG.ESCROW.toLowerCase()&&e.args.to!==DEAD)
-      .map(e=>({ts:tsMap[e.blockNumber]||0,to:e.args.to,amount:e.args.value,txHash:e.transactionHash}))
-      .sort((a,b)=>b.ts-a.ts);
-
-    // Direct USDC payments: transfers to Treasury NOT from the escrow contract
-    allDirectUSDC=directUSDCEvts
-      .filter(e=>e.args.from.toLowerCase()!==CFG.ESCROW.toLowerCase())
-      .map(e=>({ts:tsMap[e.blockNumber]||0,from:e.args.from,amount:e.args.value,txHash:e.transactionHash}))
-      .sort((a,b)=>b.ts-a.ts);
-
-    pendingReceipts=allTx.filter(t=>!t.burned&&!t.settled&&!t.voided);
+    buildAllData(capR,voidR,burnR,stlR,bbR,ubR,tyR,rwR,dirR,tsMap);
 
     setBar(100,'Complete');
     setTimeout(()=>setScanBar(false),600);
     applyFilter();
     document.getElementById('csv-btn').disabled=false;
     document.getElementById('pdf-btn').disabled=false;
-    showToast(`${allTx.length} payments · ${pendingReceipts.length} pending · ${allVoided.length} voided`,'success');
+    showToast(`${allTx.length} payments · ${pendingReceipts.length} pending · ${allVoided.length} voided${isIncremental?' (incremental)':''}`, 'success');
   }catch(e){
     setScanBar(false);showToast('Scan error: '+(e?.message||'').slice(0,60),'error');console.error(e);
   }
