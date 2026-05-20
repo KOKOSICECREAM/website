@@ -687,7 +687,7 @@ function applyFilter(){
   fUSDCBatches=allUSDCBatches.filter(b=>b.ts>=from&&b.ts<=to);
   fTsySettles=allTsySettles.filter(b=>b.ts>=from&&b.ts<=to);
   fRew=allRew.filter(r=>r.ts>=from&&r.ts<=to);
-  fDirectUSDC=allDirectUSDC.filter(r=>r.ts>=from&&r.ts<=to);
+  fDirectUSDC=allDirectUSDC.filter(r=>r.ts===0||(r.ts>=from&&r.ts<=to));
   renderAll();
 }
 
@@ -759,7 +759,12 @@ async function runScan(){
     // Fetch block timestamps for reward and direct USDC Transfer events
     const uniq=new Set([...rewEvts,...directUSDCEvts].map(e=>e.blockNumber));
     const tsMap={};
-    await Promise.all([...uniq].map(async bn=>{try{const blk=await pub.getBlock(bn);tsMap[bn]=blk.timestamp;}catch{}}));
+    await Promise.all([...uniq].map(async bn=>{
+      for(let attempt=0;attempt<3;attempt++){
+        try{const blk=await pub.getBlock(bn);if(blk){tsMap[bn]=blk.timestamp;break;}}
+        catch(e){if(attempt<2)await new Promise(r=>setTimeout(r,500*(attempt+1)));}
+      }
+    }));
 
     const burnedSet=new Set(burnRcptEvts.map(e=>e.args.receiptId.toLowerCase()));
     const settledSet=new Set(settleRcptEvts.map(e=>e.args.receiptId.toLowerCase()));
@@ -807,12 +812,10 @@ async function runScan(){
       .sort((a,b)=>b.ts-a.ts);
 
     // Direct USDC payments: transfers to Treasury NOT from the escrow contract
-    console.log('[KOKOS] directUSDCEvts raw:',directUSDCEvts.length,directUSDCEvts.map(e=>({from:e.args.from,value:e.args.value?.toString(),blk:e.blockNumber})));
     allDirectUSDC=directUSDCEvts
       .filter(e=>e.args.from.toLowerCase()!==CFG.ESCROW.toLowerCase())
       .map(e=>({ts:tsMap[e.blockNumber]||0,from:e.args.from,amount:e.args.value,txHash:e.transactionHash}))
       .sort((a,b)=>b.ts-a.ts);
-    console.log('[KOKOS] allDirectUSDC after filter:',allDirectUSDC.length);
 
     pendingReceipts=allTx.filter(t=>!t.burned&&!t.settled&&!t.voided);
 
@@ -851,15 +854,20 @@ async function loadTreasury(pub){
   try{
     const p=pub||new ethers.JsonRpcProvider(CFG.RPC);
     const tsy=new ethers.Contract(CFG.TREASURY,ABI_TSY,p);
+    const safe=async(fn,fallback)=>{try{return await fn();}catch{return fallback;}};
     const[uBal,sBal,totDep,totBurn,lpId]=await Promise.all([
-      tsy.usdcBalance(),tsy.skoopBalance(),tsy.totalUSDCDeployed(),tsy.totalSkoopBurned(),tsy.lpPositionId()
+      safe(()=>tsy.usdcBalance(),0n),
+      safe(()=>tsy.skoopBalance(),0n),
+      safe(()=>tsy.totalUSDCDeployed(),0n),
+      safe(()=>tsy.totalSkoopBurned(),0n),
+      safe(()=>tsy.lpPositionId(),0n),
     ]);
     const usd=parseFloat(ethers.formatUnits(uBal,6));
     const skBal=parseFloat(ethers.formatUnits(sBal,CFG.DEC));
     document.getElementById('tsy-usdc').textContent='$'+usd.toFixed(2);
     document.getElementById('tsy-skoop').textContent=skBal.toLocaleString('en-US',{maximumFractionDigits:0});
-    document.getElementById('tsy-deployed').textContent='$'+parseFloat(ethers.formatUnits(totDep,6)).toFixed(2);
-    document.getElementById('tsy-burned').textContent=parseFloat(ethers.formatUnits(totBurn,CFG.DEC)).toLocaleString('en-US',{maximumFractionDigits:0});
+    document.getElementById('tsy-deployed').textContent=totDep>0n?'$'+parseFloat(ethers.formatUnits(totDep,6)).toFixed(2):'—';
+    document.getElementById('tsy-burned').textContent=totBurn>0n?parseFloat(ethers.formatUnits(totBurn,CFG.DEC)).toLocaleString('en-US',{maximumFractionDigits:0}):'—';
     document.getElementById('tsy-lp').textContent=lpId>0n?'#'+lpId.toString():'None yet';
     document.getElementById('meta-treasury').textContent=`$${usd.toFixed(2)} USDC ready · LP ${lpId>0n?'active':'not minted yet'}`;
     // LP uncollected fees
