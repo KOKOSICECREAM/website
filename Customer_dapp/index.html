@@ -504,7 +504,7 @@ html,body{height:100%;overflow:hidden;background:var(--coral);font-family:'Instr
           <span style="font-size:18px;flex-shrink:0;">🔐</span>
           <div>
             <div style="font-size:12px;font-weight:700;color:var(--ink);margin-bottom:3px;">First-time setup — 2 quick steps</div>
-            <div style="font-size:11px;color:var(--ink-mid);line-height:1.6;">Your wallet will ask to <strong>approve the token</strong> first — this is a one-time permission. Your payment follows automatically. No second scan needed.</div>
+            <div style="font-size:11px;color:var(--ink-mid);line-height:1.6;">Your wallet will ask to <strong>approve the token</strong> first — one-time only. Come back here after approving and tap Confirm to complete your payment. No second scan needed.</div>
           </div>
         </div>
         <div id="approval-progress">
@@ -826,7 +826,8 @@ async function onConnected(){
   loadPoolImmutables();fetchEthPrice();
   if(window._balancePollTimer)clearInterval(window._balancePollTimer);
   window._balancePollTimer=setInterval(()=>{if(userAddr){refreshBals().catch(()=>{});}else{clearInterval(window._balancePollTimer);}},30000);
-  // Show one-time setup prompt after app is visible — skip if URL has payment param
+  // Restore any pending payment intent (e.g. page reloaded after wallet approval on iOS)
+  await maybeRestorePendingIntent();
 }
 
 function updatePills(){
