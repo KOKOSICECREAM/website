@@ -395,6 +395,21 @@ tfoot td{background:var(--green-lt);font-weight:700;color:var(--green);border-to
     </table>
   </div>
 
+  <!-- ── DIRECT USDC PAYMENTS ─────────────────────────────── -->
+  <div class="sec-hdr">
+    <div class="sec-title">Direct USDC Payments</div>
+    <div class="sec-meta" id="meta-direct-usdc"></div>
+  </div>
+  <div class="tbl-card">
+    <div style="font-size:0.72rem;color:var(--ink-lt);padding:6px 12px 2px;">Paid via plain wallet direct to Treasury — no escrow receipt. Returns are manual.</div>
+    <table><thead><tr>
+      <th>Date / Time (CT)</th><th>Wallet</th><th class="r">USDC</th><th>Tx Hash</th>
+    </tr></thead>
+    <tbody id="tb-direct-usdc"><tr><td colspan="4" class="empty">Run a scan to load direct USDC data</td></tr></tbody>
+    <tfoot id="tf-direct-usdc" style="display:none;"></tfoot>
+    </table>
+  </div>
+
   <!-- ── TREASURY DEPLOY LOG ────────────────────────────────── -->
   <div class="sec-hdr">
     <div class="sec-title">Treasury Deploy Log</div>
@@ -582,8 +597,8 @@ const ABI_SKOOP_READ=["function totalSupply() view returns (uint256)"];
 const ABI_POS_MGR=["function positions(uint256 tokenId) view returns (uint96 nonce,address operator,address token0,address token1,uint24 fee,int24 tickLower,int24 tickUpper,uint128 liquidity,uint256 feeGrowthInside0LastX128,uint256 feeGrowthInside1LastX128,uint128 tokensOwed0,uint128 tokensOwed1)"];
 
 let provider=null,ownerAddr=null;
-let allTx=[],allVoided=[],allBurnedRcpts=[],allSettledRcpts=[],allBurnBatches=[],allUSDCBatches=[],allTsySettles=[],allRew=[];
-let fTx=[],fBurnBatches=[],fUSDCBatches=[],fTsySettles=[],fRew=[];
+let allTx=[],allVoided=[],allBurnedRcpts=[],allSettledRcpts=[],allBurnBatches=[],allUSDCBatches=[],allTsySettles=[],allRew=[],allDirectUSDC=[];
+let fTx=[],fBurnBatches=[],fUSDCBatches=[],fTsySettles=[],fRew=[],fDirectUSDC=[];
 let pendingReceipts=[];
 let period='today',skoopUSD=0,skoopTotalSupply=0n,toastT=null;
 
@@ -624,8 +639,8 @@ function showGateErr(msg){const el=document.getElementById('gate-error');el.text
 
 function disconnect(){
   provider=null;ownerAddr=null;
-  allTx=[];allVoided=[];allBurnedRcpts=[];allSettledRcpts=[];allBurnBatches=[];allUSDCBatches=[];allTsySettles=[];allRew=[];
-  fTx=[];fBurnBatches=[];fUSDCBatches=[];fTsySettles=[];fRew=[];pendingReceipts=[];
+  allTx=[];allVoided=[];allBurnedRcpts=[];allSettledRcpts=[];allBurnBatches=[];allUSDCBatches=[];allTsySettles=[];allRew=[];allDirectUSDC=[];
+  fTx=[];fBurnBatches=[];fUSDCBatches=[];fTsySettles=[];fRew=[];fDirectUSDC=[];pendingReceipts=[];
   skoopUSD=0;skoopTotalSupply=0n;
   document.getElementById('action-banner').classList.remove('on');
   document.getElementById('top-spenders-btn').disabled=true;
@@ -672,6 +687,7 @@ function applyFilter(){
   fUSDCBatches=allUSDCBatches.filter(b=>b.ts>=from&&b.ts<=to);
   fTsySettles=allTsySettles.filter(b=>b.ts>=from&&b.ts<=to);
   fRew=allRew.filter(r=>r.ts>=from&&r.ts<=to);
+  fDirectUSDC=allDirectUSDC.filter(r=>r.ts>=from&&r.ts<=to);
   renderAll();
 }
 
@@ -696,8 +712,9 @@ async function runScan(){
     const esc=new ethers.Contract(CFG.ESCROW,ABI_ESC,pub);
     const tsy=new ethers.Contract(CFG.TREASURY,ABI_TSY,pub);
     const sk=new ethers.Contract(CFG.SKOOP,ABI_TRF,pub);
+    const usdcTrf=new ethers.Contract(CFG.USDC,ABI_TRF,pub);
 
-    let capEvts=[],voidEvts=[],burnRcptEvts=[],settleRcptEvts=[],burnBatchEvts=[],usdcBatchEvts=[],tsySettleEvts=[],rewEvts=[];
+    let capEvts=[],voidEvts=[],burnRcptEvts=[],settleRcptEvts=[],burnBatchEvts=[],usdcBatchEvts=[],tsySettleEvts=[],rewEvts=[],directUSDCEvts=[];
 
     async function queryChunk(blkStart,blkEnd,attempt=0){
       try{
@@ -710,6 +727,7 @@ async function runScan(){
           esc.queryFilter(esc.filters.BatchUSDCSettled(),blkStart,blkEnd),
           tsy.queryFilter(tsy.filters.Settled(),blkStart,blkEnd),
           sk.queryFilter(sk.filters.Transfer(CFG.POS_SIGNER,null),blkStart,blkEnd),
+          usdcTrf.queryFilter(usdcTrf.filters.Transfer(null,CFG.TREASURY),blkStart,blkEnd),
         ]);
       }catch(err){
         const msg=JSON.stringify(err);
@@ -727,18 +745,19 @@ async function runScan(){
     for(let s=fromBlock;s<latest;s+=CFG.CHUNK){
       const blkEnd=Math.min(s+CFG.CHUNK-1,latest);
       setBar(10+Math.round((done/chunks)*82),chunks>1?`Chunk ${done+1} of ${chunks}`:'Loading events…');
-      const[a,b,c,d,e,f,g,h]=await queryChunk(s,blkEnd);
+      const[a,b,c,d,e,f,g,h,i]=await queryChunk(s,blkEnd);
       capEvts=capEvts.concat(a);voidEvts=voidEvts.concat(b);
       burnRcptEvts=burnRcptEvts.concat(c);settleRcptEvts=settleRcptEvts.concat(d);
       burnBatchEvts=burnBatchEvts.concat(e);usdcBatchEvts=usdcBatchEvts.concat(f);
       tsySettleEvts=tsySettleEvts.concat(g);rewEvts=rewEvts.concat(h);
+      directUSDCEvts=directUSDCEvts.concat(i);
       done++;
     }
 
     setBar(92,'Processing…');
 
-    // Fetch block timestamps for reward Transfer events
-    const uniq=new Set(rewEvts.map(e=>e.blockNumber));
+    // Fetch block timestamps for reward and direct USDC Transfer events
+    const uniq=new Set([...rewEvts,...directUSDCEvts].map(e=>e.blockNumber));
     const tsMap={};
     await Promise.all([...uniq].map(async bn=>{try{const blk=await pub.getBlock(bn);tsMap[bn]=blk.timestamp;}catch{}}));
 
@@ -785,6 +804,12 @@ async function runScan(){
     allRew=rewEvts
       .filter(e=>e.args.to.toLowerCase()!==CFG.ESCROW.toLowerCase()&&e.args.to!==DEAD)
       .map(e=>({ts:tsMap[e.blockNumber]||0,to:e.args.to,amount:e.args.value,txHash:e.transactionHash}))
+      .sort((a,b)=>b.ts-a.ts);
+
+    // Direct USDC payments: transfers to Treasury NOT from the escrow contract
+    allDirectUSDC=directUSDCEvts
+      .filter(e=>e.args.from.toLowerCase()!==CFG.ESCROW.toLowerCase())
+      .map(e=>({ts:tsMap[e.blockNumber]||0,from:e.args.from,amount:e.args.value,txHash:e.transactionHash}))
       .sort((a,b)=>b.ts-a.ts);
 
     pendingReceipts=allTx.filter(t=>!t.burned&&!t.settled&&!t.voided);
@@ -965,7 +990,7 @@ const shh=h=>h.slice(0,10)+'…';
 const skBadge=`<span class="badge badge-sk">${BUSINESS_CONFIG.tokenSymbol}</span>`;
 const usdcBadge=`<span class="badge badge-usdc">${BUSINESS_CONFIG.stablecoinSymbol}</span>`;
 
-function renderAll(){renderKPIs();renderPeriod();renderTx();renderBurns();renderUSDCSettles();renderTsySettles();renderRew();renderSettlement();renderQuickActions();renderVoids();renderCustomerStats();renderTokenomics();}
+function renderAll(){renderKPIs();renderPeriod();renderTx();renderBurns();renderUSDCSettles();renderTsySettles();renderRew();renderSettlement();renderQuickActions();renderVoids();renderCustomerStats();renderTokenomics();renderDirectUSDC();}
 
 function renderKPIs(){
   const netTx=fTx.filter(t=>!t.voided);
@@ -1150,6 +1175,21 @@ function renderTsySettles(){
   const totBurned=fTsySettles.reduce((s,t)=>s+BigInt(t.skoopBurned),0n);
   tfoot.style.display='';
   tfoot.innerHTML=`<tr><td>Totals</td><td class="r">$${parseFloat(ethers.formatUnits(totUsdc,6)).toFixed(2)}</td><td></td><td></td><td class="r">${fSK(totBurned)} SKOOP</td><td></td></tr>`;
+}
+
+function renderDirectUSDC(){
+  const tfoot=document.getElementById('tf-direct-usdc');
+  document.getElementById('meta-direct-usdc').textContent=fDirectUSDC.length+' payments';
+  if(!fDirectUSDC.length){document.getElementById('tb-direct-usdc').innerHTML='<tr><td colspan="4" class="empty">No direct USDC payments in this period</td></tr>';tfoot.style.display='none';return;}
+  document.getElementById('tb-direct-usdc').innerHTML=fDirectUSDC.map(r=>`<tr>
+    <td style="white-space:nowrap;font-size:0.72rem;">${r.ts?toCT(r.ts):'—'}</td>
+    <td class="mn">${sh(r.from)}</td>
+    <td class="r g" style="font-weight:700;">$${parseFloat(ethers.formatUnits(r.amount,6)).toFixed(2)}</td>
+    <td><a class="lnk" href="${CFG.EXPLORER}/tx/${r.txHash}" target="_blank" rel="noopener">${shh(r.txHash)}</a></td>
+  </tr>`).join('');
+  const tot=fDirectUSDC.reduce((s,r)=>s+BigInt(r.amount),0n);
+  tfoot.style.display='';
+  tfoot.innerHTML=`<tr><td colspan="2" style="text-align:right;">Total</td><td class="r">$${parseFloat(ethers.formatUnits(tot,6)).toFixed(2)}</td><td></td></tr>`;
 }
 
 function renderRew(){
