@@ -484,7 +484,7 @@ html,body{height:100%;overflow:hidden;background:var(--coral);font-family:'Instr
         </div>
       </div>
       <button class="btn-cam" id="btn-cam" onclick="startScan()">&#128247; &nbsp;Start Camera</button>
-      <div class="info-block" style="background:var(--lavender);"><div class="ib-title">How it works</div><div class="ib-text">The shop rings up your order and generates a QR. Scan it here, review the total, and confirm — SKOOP goes to escrow and burns in the next settlement.</div></div>
+      <div class="info-block" style="background:var(--lavender);"><div class="ib-title">How it works</div><div class="ib-text">The shop rings up your order and generates a QR. Scan it here, review the total, and confirm. Your wallet will ask to approve the exact amount first, then send the payment — SKOOP burns in the next settlement, USDC goes to the shop.</div></div>
     </div>
     <div class="pay-state" id="pay-confirm">
       <div class="cc-wrap" style="padding-top:16px;">
@@ -504,7 +504,7 @@ html,body{height:100%;overflow:hidden;background:var(--coral);font-family:'Instr
           <span style="font-size:18px;flex-shrink:0;">🔐</span>
           <div>
             <div style="font-size:12px;font-weight:700;color:var(--ink);margin-bottom:3px;">First-time setup — 2 quick steps</div>
-            <div style="font-size:11px;color:var(--ink-mid);line-height:1.6;">Your wallet will ask to <strong>approve the token</strong> first — one-time only. Come back here after approving and tap Confirm to complete your payment. No second scan needed.</div>
+            <div style="font-size:11px;color:var(--ink-mid);line-height:1.6;">Your wallet will ask to <strong>approve the exact amount</strong> for this payment, then confirm the payment itself — two steps, one purchase. Come back here after approving and tap Confirm. No second scan needed.</div>
           </div>
         </div>
         <div id="approval-progress">
