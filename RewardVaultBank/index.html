@@ -645,7 +645,8 @@ function renderSigners() {
   const low = signerData.filter(s => {
     if (!s.info.approved) return false;
     const t = getTargetRaw(s.info.topUpLimit);
-    return t > 0n && s.tokenBal < t;
+    const warnLine = t * BigInt(Math.round(CFG.lowBalanceWarn * 100)) / 100n;
+    return t > 0n && s.tokenBal < warnLine;
   }).length;
 
   document.getElementById('signer-meta').textContent =
@@ -905,7 +906,8 @@ async function topOffAllLow() {
   const lowSigners = signerData.filter(s => {
     if (!s.info.approved || vaultData.isPaused) return false;
     const t = getTargetRaw(s.info.topUpLimit);
-    return t > 0n && s.tokenBal < t;
+    const warnLine = t * BigInt(Math.round(CFG.lowBalanceWarn * 100)) / 100n;
+    return t > 0n && s.tokenBal < warnLine;
   });
 
   if (lowSigners.length === 0) {
