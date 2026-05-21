@@ -122,7 +122,8 @@ html,body{min-height:100%;font-family:'Instrument Sans',sans-serif;background:va
 .gas-low{color:var(--amber)!important;}
 .gas-crit{color:var(--red)!important;}
 /* Card footer */
-.sc-foot{padding:0.75rem 1.1rem;border-top:1px solid var(--border);display:flex;justify-content:flex-end;}
+.sc-foot{padding:0.75rem 1.1rem;border-top:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;gap:0.5rem;}
+.sc-foot-right{display:flex;gap:0.5rem;}
 
 /* ── Buttons ── */
 .btn{border:none;padding:0.45rem 1.2rem;border-radius:999px;font-family:inherit;font-size:0.78rem;font-weight:600;cursor:pointer;transition:opacity 0.15s;display:inline-flex;align-items:center;gap:0.4rem;}
@@ -133,6 +134,26 @@ html,body{min-height:100%;font-family:'Instrument Sans',sans-serif;background:va
 .btn-sec:hover{background:var(--apricot);opacity:1;}
 .btn-sm{padding:0.3rem 0.875rem;font-size:0.72rem;}
 .btn-top-off{background:var(--coral);color:var(--ink);}
+.btn-danger{background:var(--red);color:#fff;}
+.btn-ghost{background:transparent;color:var(--ink-lt);border:1px solid var(--border-mid)!important;font-size:0.72rem;padding:0.3rem 0.75rem;}
+.btn-ghost:hover{background:var(--red-lt);color:var(--red);border-color:var(--red)!important;opacity:1;}
+
+/* ── Admin panel ── */
+.admin-panel{background:var(--white);border:1px solid var(--border);border-radius:var(--r);padding:1.25rem;margin-bottom:2rem;}
+.admin-grid{display:grid;grid-template-columns:1fr 1fr;gap:1.5rem;}
+.admin-sect-title{font-size:0.65rem;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:var(--ink-lt);margin-bottom:0.875rem;padding-bottom:0.5rem;border-bottom:1px solid var(--border);}
+.admin-current{display:flex;align-items:baseline;gap:0.5rem;margin-bottom:0.875rem;}
+.admin-current-val{font-family:'Cormorant Garamond',serif;font-size:1.35rem;font-weight:600;color:var(--ink);}
+.admin-current-sub{font-size:0.68rem;color:var(--ink-lt);}
+.admin-field{margin-bottom:0.75rem;}
+.admin-field label{display:block;font-size:0.6rem;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:var(--ink-lt);margin-bottom:0.25rem;}
+.admin-input{width:100%;background:var(--cream);border:1px solid var(--border-mid);border-radius:var(--r-sm);padding:0.45rem 0.75rem;font-family:inherit;font-size:0.82rem;color:var(--ink);}
+.admin-input:focus{outline:none;border-color:var(--green);}
+.admin-input.mono{font-family:monospace;font-size:0.78rem;}
+.admin-hint{font-size:0.63rem;color:var(--ink-lt);margin-top:0.2rem;}
+.admin-hint.warn{color:var(--amber);font-weight:600;}
+.admin-hint.err{color:var(--red);font-weight:600;}
+@media(max-width:640px){.admin-grid{grid-template-columns:1fr;}}
 
 /* ── Modal ── */
 #topoff-modal{display:none;position:fixed;inset:0;background:rgba(42,31,26,0.55);z-index:100;align-items:center;justify-content:center;padding:1rem;}
@@ -284,6 +305,47 @@ html,body{min-height:100%;font-family:'Instrument Sans',sans-serif;background:va
     </div>
   </div>
 
+  <!-- Admin panel -->
+  <div class="admin-panel">
+    <div class="admin-grid">
+
+      <!-- Daily Limit -->
+      <div>
+        <div class="admin-sect-title">Daily Emission Limit</div>
+        <div class="admin-current">
+          <span class="admin-current-val" id="adm-cur-limit">—</span>
+          <span class="admin-current-sub" id="adm-cur-limit-sub">current</span>
+        </div>
+        <div class="admin-field">
+          <label>New Limit (<span id="adm-limit-sym">SKOOP</span> / day)</label>
+          <input class="admin-input" id="adm-limit-input" type="number" min="1" step="1" placeholder="e.g. 11123472" oninput="validateLimitInput()">
+          <div class="admin-hint" id="adm-limit-hint"></div>
+        </div>
+        <button class="btn btn-primary btn-sm" id="adm-limit-btn" onclick="setDailyLimitTx()" disabled>Set Limit</button>
+      </div>
+
+      <!-- Add Signer -->
+      <div>
+        <div class="admin-sect-title">Add POS Signer</div>
+        <div class="admin-field">
+          <label>Wallet Address</label>
+          <input class="admin-input mono" id="adm-signer-addr" type="text" placeholder="0x…" spellcheck="false" autocomplete="off" oninput="validateSignerForm()">
+        </div>
+        <div class="admin-field">
+          <label>Label</label>
+          <input class="admin-input" id="adm-signer-label" type="text" placeholder="e.g. Nashville POS2" oninput="validateSignerForm()">
+        </div>
+        <div class="admin-field">
+          <label>Per-Tx Cap (<span id="adm-signer-sym">SKOOP</span>)</label>
+          <input class="admin-input" id="adm-signer-cap" type="number" min="1" step="1" placeholder="e.g. 4444444" oninput="validateSignerForm()">
+          <div class="admin-hint" id="adm-signer-hint"></div>
+        </div>
+        <button class="btn btn-primary btn-sm" id="adm-signer-btn" onclick="addSignerTx()" disabled>Add Signer</button>
+      </div>
+
+    </div>
+  </div>
+
   <!-- Signer grid -->
   <div class="sec-hdr">
     <div class="sec-title">POS Signer Wallets</div>
@@ -394,11 +456,16 @@ const ABI_VAULT = [
   'function getSigner(address s) view returns (tuple(bool approved, string label, uint256 topUpLimit, uint256 totalReceived))',
   'function signerBalance(address s) view returns (uint256)',
   'function topUpSigner(address signer_, uint256 amount_)',
+  'function setDailyLimit(uint256 newLimit_)',
+  'function approveSigner(address signer_, string calldata label_, uint256 topUpLimit_)',
+  'function revokeSigner(address signer_)',
   // PunchcardRewardsVault extras (ignored if not present)
   'function businessName() view returns (string)',
   'function tokenDecimals() view returns (uint8)',
   'function maxSignerTopUpLimit() view returns (uint256)',
   'function maxDailyLimit() view returns (uint256)',
+  // SKOOPRewardsVault constant (same concept, different name)
+  'function MAX_SIGNER_TOP_UP() view returns (uint256)',
 ];
 
 const ABI_POOL = [
@@ -414,6 +481,7 @@ let vaultData = {};         // { balance, dailyLimit, dailyRemaining, dailyUsed,
 let signerData = [];        // [{ addr, info: POSSigner, tokenBal, ethBal }]
 let toastTimer = null;
 let modalTargetAddr = null;
+const pendingRevokes = new Set();
 
 // ─── Formatting helpers ───────────────────────────────────────────────────────
 function fmt(rawBigInt, dec) {
@@ -588,7 +656,14 @@ async function loadVault() {
       loadPrice().catch(() => {}),  // non-fatal
     ]);
 
-    vaultData = { balance, dailyLimit, dailyRem, dailyUsed, isPaused, totalTopUps, totalSent };
+    // Try reading immutable caps (non-fatal — SKOOPRewardsVault uses different names)
+    let maxDailyLimit = 0n, maxSignerCap = 0n;
+    try { maxDailyLimit = await vault.maxDailyLimit(); } catch {}
+    try { maxSignerCap = await vault.maxSignerTopUpLimit(); } catch {}
+    if (!maxSignerCap) try { maxSignerCap = await vault.MAX_SIGNER_TOP_UP(); } catch {}
+
+    vaultData = { balance, dailyLimit, dailyRem, dailyUsed, isPaused, totalTopUps, totalSent, maxDailyLimit, maxSignerCap };
+    updateAdminPanel();
 
     // Pause banner
     const pb = document.getElementById('pause-banner');
@@ -722,8 +797,14 @@ function signerCard({ addr, info, tokenBal, ethBal }) {
       <span class="sc-row-val">${fmt(info.totalReceived, decimals)} ${sym}</span>
     </div>
   </div>
-  <div class="sc-foot">
-    <button class="btn btn-top-off btn-sm" onclick="openModal('${addr}')" ${topOffDisabled}>↑ Top Off</button>
+  <div class="sc-foot" data-addr="${addr}">
+    <div>${info.approved
+      ? `<button class="btn btn-ghost btn-sm" onclick="initiateRevoke('${addr}')">Revoke</button>`
+      : `<button class="btn btn-sec btn-sm" onclick="reApprove('${addr}')">Re-approve</button>`
+    }</div>
+    <div class="sc-foot-right">
+      <button class="btn btn-top-off btn-sm" onclick="openModal('${addr}')" ${topOffDisabled}>↑ Top Off</button>
+    </div>
   </div>
 </div>`;
 }
@@ -897,6 +978,205 @@ async function doTopOff() {
     confirmBtn.disabled = false;
     confirmBtn.innerHTML = 'Confirm Top-Up →';
   }
+}
+
+// ─── Admin panel ─────────────────────────────────────────────────────────────
+function updateAdminPanel() {
+  const sym = CFG.tokenSymbol;
+  document.getElementById('adm-limit-sym').textContent = sym;
+  document.getElementById('adm-signer-sym').textContent = sym;
+
+  const curLimit = vaultData.dailyLimit ?? 0n;
+  const usdDay = skoopUSD ? ' ≈ ' + fmtUSD((Number(curLimit) / 10 ** decimals) * skoopUSD) + '/day' : '';
+  document.getElementById('adm-cur-limit').textContent = fmt(curLimit, decimals) + ' ' + sym;
+  document.getElementById('adm-cur-limit-sub').textContent = 'current' + usdDay;
+
+  const maxCap = vaultData.maxSignerCap;
+  if (maxCap && maxCap > 0n) {
+    const capHint = document.getElementById('adm-signer-hint');
+    capHint.textContent = 'Max per-tx cap: ' + fmt(maxCap, decimals) + ' ' + sym;
+    document.getElementById('adm-signer-cap').placeholder = fmtFull(maxCap, decimals);
+  }
+
+  const maxDaily = vaultData.maxDailyLimit;
+  if (maxDaily && maxDaily > 0n) {
+    const limitHint = document.getElementById('adm-limit-hint');
+    if (!limitHint.classList.contains('err')) {
+      limitHint.textContent = 'Max allowed: ' + fmt(maxDaily, decimals) + ' ' + sym;
+    }
+  }
+}
+
+function validateLimitInput() {
+  const input = document.getElementById('adm-limit-input');
+  const hint = document.getElementById('adm-limit-hint');
+  const btn = document.getElementById('adm-limit-btn');
+  const val = parseFloat(input.value);
+
+  if (isNaN(val) || val <= 0) { btn.disabled = true; return; }
+
+  const rawNew = BigInt(Math.round(val * 10 ** decimals));
+  const maxDaily = vaultData.maxDailyLimit;
+
+  if (maxDaily && maxDaily > 0n && rawNew > maxDaily) {
+    hint.textContent = 'Exceeds max allowed: ' + fmt(maxDaily, decimals) + ' ' + CFG.tokenSymbol;
+    hint.className = 'admin-hint err';
+    btn.disabled = true;
+    return;
+  }
+
+  const usdEquiv = skoopUSD ? ' ≈ ' + fmtUSD(val * skoopUSD) + '/day' : '';
+  hint.textContent = fmt(rawNew, decimals) + ' ' + CFG.tokenSymbol + usdEquiv;
+  hint.className = 'admin-hint';
+  btn.disabled = false;
+}
+
+function validateSignerForm() {
+  const addr = document.getElementById('adm-signer-addr').value.trim();
+  const label = document.getElementById('adm-signer-label').value.trim();
+  const cap = parseFloat(document.getElementById('adm-signer-cap').value);
+  const hint = document.getElementById('adm-signer-hint');
+  const btn = document.getElementById('adm-signer-btn');
+
+  if (!ethers.isAddress(addr) || !label || isNaN(cap) || cap <= 0) {
+    btn.disabled = true;
+    return;
+  }
+
+  const rawCap = BigInt(Math.round(cap * 10 ** decimals));
+  const maxCap = vaultData.maxSignerCap;
+
+  if (maxCap && maxCap > 0n && rawCap > maxCap) {
+    hint.textContent = 'Exceeds per-tx cap limit: ' + fmt(maxCap, decimals) + ' ' + CFG.tokenSymbol;
+    hint.className = 'admin-hint err';
+    btn.disabled = true;
+    return;
+  }
+
+  const existing = signerData.find(s => s.addr.toLowerCase() === addr.toLowerCase());
+  if (existing?.info.approved) {
+    hint.textContent = 'This address is already an active signer.';
+    hint.className = 'admin-hint warn';
+    btn.disabled = true;
+    return;
+  }
+
+  const usdEquiv = skoopUSD ? ' ≈ ' + fmtUSD(cap * skoopUSD) + ' per top-up' : '';
+  hint.textContent = fmt(rawCap, decimals) + ' ' + CFG.tokenSymbol + usdEquiv;
+  hint.className = 'admin-hint';
+  btn.disabled = false;
+}
+
+async function setDailyLimitTx() {
+  const btn = document.getElementById('adm-limit-btn');
+  const val = parseFloat(document.getElementById('adm-limit-input').value);
+  if (isNaN(val) || val <= 0) return;
+
+  const rawNew = BigInt(Math.round(val * 10 ** decimals));
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spin"></span>';
+
+  try {
+    const tx = await vault.setDailyLimit(rawNew);
+    showToast('Transaction submitted…');
+    await tx.wait();
+    document.getElementById('adm-limit-input').value = '';
+    document.getElementById('adm-limit-hint').textContent = '';
+    showToast('Daily limit updated ✓', 'success');
+    await loadVault();
+  } catch (e) {
+    const msg = e?.code === 4001 ? 'Rejected.' : (e?.shortMessage || e?.reason || e?.message?.slice(0, 80) || 'Failed.');
+    showToast(msg, 'error');
+    btn.disabled = false;
+    btn.textContent = 'Set Limit';
+  }
+}
+
+async function addSignerTx() {
+  const btn = document.getElementById('adm-signer-btn');
+  const addr = ethers.getAddress(document.getElementById('adm-signer-addr').value.trim());
+  const label = document.getElementById('adm-signer-label').value.trim();
+  const cap = parseFloat(document.getElementById('adm-signer-cap').value);
+  const rawCap = BigInt(Math.round(cap * 10 ** decimals));
+
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spin"></span>';
+
+  try {
+    const tx = await vault.approveSigner(addr, label, rawCap);
+    showToast('Transaction submitted…');
+    await tx.wait();
+    document.getElementById('adm-signer-addr').value = '';
+    document.getElementById('adm-signer-label').value = '';
+    document.getElementById('adm-signer-cap').value = '';
+    document.getElementById('adm-signer-hint').textContent = '';
+    showToast(label + ' added ✓', 'success');
+    await loadVault();
+  } catch (e) {
+    const msg = e?.code === 4001 ? 'Rejected.' : (e?.shortMessage || e?.reason || e?.message?.slice(0, 80) || 'Failed.');
+    showToast(msg, 'error');
+    btn.disabled = false;
+    btn.textContent = 'Add Signer';
+  }
+}
+
+// ─── Revoke / Re-approve ──────────────────────────────────────────────────────
+function initiateRevoke(addr) {
+  pendingRevokes.add(addr.toLowerCase());
+  const foot = document.querySelector(`.sc-foot[data-addr="${addr}"]`);
+  if (!foot) return;
+  const entry = signerData.find(s => s.addr.toLowerCase() === addr.toLowerCase());
+  const topOffDisabled = (!entry?.info.approved || vaultData.isPaused || vaultData.dailyRem === 0n) ? 'disabled' : '';
+  foot.innerHTML = `
+    <div style="display:flex;gap:0.5rem;align-items:center;">
+      <span style="font-size:0.68rem;color:var(--red);font-weight:600;">Revoke this signer?</span>
+    </div>
+    <div class="sc-foot-right">
+      <button class="btn btn-sec btn-sm" onclick="cancelRevoke('${addr}')">Cancel</button>
+      <button class="btn btn-danger btn-sm" onclick="doRevoke('${addr}')">Confirm</button>
+    </div>`;
+}
+
+function cancelRevoke(addr) {
+  pendingRevokes.delete(addr.toLowerCase());
+  const foot = document.querySelector(`.sc-foot[data-addr="${addr}"]`);
+  if (!foot) return;
+  const entry = signerData.find(s => s.addr.toLowerCase() === addr.toLowerCase());
+  const topOffDisabled = (!entry?.info.approved || vaultData.isPaused || vaultData.dailyRem === 0n) ? 'disabled' : '';
+  foot.innerHTML = `
+    <div><button class="btn btn-ghost btn-sm" onclick="initiateRevoke('${addr}')">Revoke</button></div>
+    <div class="sc-foot-right">
+      <button class="btn btn-top-off btn-sm" onclick="openModal('${addr}')" ${topOffDisabled}>↑ Top Off</button>
+    </div>`;
+}
+
+async function doRevoke(addr) {
+  const foot = document.querySelector(`.sc-foot[data-addr="${addr}"]`);
+  if (foot) foot.innerHTML = '<span style="font-size:0.72rem;color:var(--ink-lt);"><span class="spin"></span> Revoking…</span>';
+
+  try {
+    const tx = await vault.revokeSigner(addr);
+    showToast('Transaction submitted…');
+    await tx.wait();
+    pendingRevokes.delete(addr.toLowerCase());
+    showToast('Signer revoked ✓', 'success');
+    await loadVault();
+  } catch (e) {
+    pendingRevokes.delete(addr.toLowerCase());
+    const msg = e?.code === 4001 ? 'Rejected.' : (e?.shortMessage || e?.reason || e?.message?.slice(0, 80) || 'Failed.');
+    showToast(msg, 'error');
+    cancelRevoke(addr);
+  }
+}
+
+async function reApprove(addr) {
+  const entry = signerData.find(s => s.addr.toLowerCase() === addr.toLowerCase());
+  if (!entry) return;
+  document.getElementById('adm-signer-addr').value = addr;
+  document.getElementById('adm-signer-label').value = entry.info.label;
+  document.getElementById('adm-signer-cap').value = (Number(entry.info.topUpLimit) / 10 ** decimals).toFixed(0);
+  validateSignerForm();
+  document.getElementById('adm-signer-addr').scrollIntoView({ behavior: 'smooth', block: 'center' });
 }
 
 // ─── Batch top-off ───────────────────────────────────────────────────────────
