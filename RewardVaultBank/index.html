@@ -1,0 +1,824 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>KOKOS — Vault Bank</title>
+<link rel="icon" type="image/png" href="https://raw.githubusercontent.com/KOKOSICECREAM/website/main/Customer_dapp/KOKOS.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400;1,600&family=Instrument+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/ethers@6.13.4/dist/ethers.umd.min.js"></script>
+<style>
+:root{
+  --coral:#fdcec1;--coral-mid:#fdaf9a;--coral-deep:#f0876a;
+  --mint:#cde6d7;--mint-mid:#a8d4bb;--apricot:#fae2d8;
+  --lavender:#e3d1e4;--sand:#ffddad;
+  --green:#11483d;--green-dk:#0a2e27;--green-lt:rgba(17,72,61,0.08);
+  --cream:#fffaf7;--ink:#2a1f1a;--ink-mid:#6b4f47;--ink-lt:#a08880;
+  --white:#ffffff;--border:rgba(42,31,26,0.10);--border-mid:rgba(42,31,26,0.16);
+  --amber:#f59e0b;--amber-lt:#fffbea;--red:#dc2626;--red-lt:#fff0ee;
+  --r:14px;--r-sm:8px;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+html,body{min-height:100%;font-family:'Instrument Sans',sans-serif;background:var(--cream);color:var(--ink);-webkit-font-smoothing:antialiased;}
+
+/* ── Topbar ── */
+#topbar{background:var(--coral);display:flex;align-items:center;justify-content:space-between;padding:0 2rem;height:64px;border-bottom:1px solid var(--coral-mid);position:sticky;top:0;z-index:50;}
+.logo{display:flex;align-items:center;gap:0.75rem;}
+.logo img{height:36px;width:auto;object-fit:contain;}
+.logo-text{font-family:'Cormorant Garamond',serif;font-size:1.6rem;font-weight:600;letter-spacing:0.1em;color:var(--green);}
+.logo-sub{font-style:italic;font-weight:300;font-size:0.85rem;color:var(--ink-mid);margin-left:0.3rem;}
+#topbar-right{display:flex;align-items:center;gap:0.75rem;}
+.stripe-bar{height:4px;display:flex;}
+.stripe-bar div{flex:1;}
+#wallet-pill{display:none;font-size:0.72rem;font-weight:600;color:var(--green);background:rgba(255,255,255,0.55);padding:0.3rem 0.875rem;border-radius:999px;}
+#disc-btn{display:none;width:28px;height:28px;border-radius:50%;border:1px solid rgba(42,31,26,0.18);background:rgba(255,255,255,0.5);color:var(--ink-mid);font-size:11px;font-weight:700;cursor:pointer;align-items:center;justify-content:center;}
+
+/* ── Auth gate ── */
+#auth-gate{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:calc(100vh - 68px);gap:1.25rem;text-align:center;padding:2rem;}
+.gate-lock{width:88px;height:88px;border-radius:50%;background:var(--mint);display:flex;align-items:center;justify-content:center;font-size:2.2rem;box-shadow:0 4px 24px rgba(17,72,61,0.15);}
+.gate-title{font-family:'Cormorant Garamond',serif;font-size:2.2rem;font-weight:600;color:var(--ink);line-height:1;margin-bottom:0.4rem;}
+.gate-desc{font-size:0.85rem;color:var(--ink-mid);max-width:340px;line-height:1.65;}
+.gate-field{display:flex;flex-direction:column;gap:0.3rem;text-align:left;width:100%;max-width:380px;}
+.gate-field label{font-size:0.65rem;font-weight:700;text-transform:uppercase;letter-spacing:0.07em;color:var(--ink-lt);}
+.gate-input{background:var(--white);border:1px solid var(--border-mid);border-radius:var(--r-sm);padding:0.5rem 0.875rem;font-family:monospace;font-size:0.78rem;color:var(--ink);width:100%;}
+.gate-input:focus{outline:none;border-color:var(--green);}
+#gate-btn{background:var(--green);color:var(--coral);border:none;padding:0.8rem 2.5rem;border-radius:999px;font-family:inherit;font-size:0.9rem;font-weight:600;cursor:pointer;transition:opacity 0.15s;display:flex;align-items:center;gap:0.5rem;}
+#gate-btn:hover{opacity:0.85;}#gate-btn:disabled{opacity:0.5;cursor:not-allowed;}
+#gate-error{display:none;background:var(--red-lt);border:1px solid var(--coral-mid);border-radius:var(--r-sm);padding:0.65rem 1.25rem;font-size:0.8rem;color:var(--red);font-weight:600;max-width:380px;text-align:center;}
+
+/* ── Page layout ── */
+#main-content{display:none;}
+#page{max-width:1100px;margin:0 auto;padding:2rem 1.5rem 5rem;}
+
+/* ── Vault header bar ── */
+#vault-header{display:flex;align-items:center;justify-content:space-between;gap:1rem;flex-wrap:wrap;margin-bottom:1.5rem;}
+.vault-addr-chip{display:flex;align-items:center;gap:0.5rem;font-family:monospace;font-size:0.72rem;color:var(--ink-mid);background:var(--white);border:1px solid var(--border);border-radius:999px;padding:0.3rem 0.875rem;}
+.vault-addr-chip a{color:var(--green);text-decoration:none;}
+.vault-addr-chip a:hover{text-decoration:underline;}
+.status-badge{display:inline-flex;align-items:center;gap:0.3rem;padding:0.25rem 0.7rem;border-radius:999px;font-size:0.65rem;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;}
+.status-active{background:var(--mint);color:var(--green-dk);}
+.status-paused{background:var(--sand);color:#7a5c00;}
+#vault-header-right{display:flex;align-items:center;gap:0.5rem;}
+
+/* ── Stats grid ── */
+#stats-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:0.75rem;margin-bottom:2rem;}
+.stat-card{background:var(--white);border:1px solid var(--border);border-radius:var(--r);padding:1rem 1.1rem;position:relative;overflow:hidden;}
+.stat-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;}
+.stat-card:nth-child(1)::before{background:var(--green);}
+.stat-card:nth-child(2)::before{background:var(--coral-deep);}
+.stat-card:nth-child(3)::before{background:var(--sand);}
+.stat-card:nth-child(4)::before{background:var(--mint-mid);}
+.stat-card:nth-child(5)::before{background:var(--lavender);}
+.stat-card:nth-child(6)::before{background:var(--coral-mid);}
+.sl{font-size:0.62rem;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:var(--ink-lt);margin-bottom:0.3rem;}
+.sv{font-family:'Cormorant Garamond',serif;font-size:1.75rem;font-weight:600;color:var(--ink);line-height:1;letter-spacing:-0.5px;}
+.ss{font-size:0.65rem;color:var(--ink-lt);margin-top:0.25rem;}
+
+/* ── Section header ── */
+.sec-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem;}
+.sec-title{font-family:'Cormorant Garamond',serif;font-size:1.3rem;font-style:italic;font-weight:400;color:var(--ink-mid);}
+.sec-meta{font-size:0.72rem;color:var(--ink-lt);}
+
+/* ── Signer grid ── */
+#signer-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:1rem;}
+.signer-card{background:var(--white);border:1px solid var(--border);border-radius:var(--r);overflow:hidden;transition:box-shadow 0.15s;}
+.signer-card:hover{box-shadow:0 4px 16px rgba(42,31,26,0.08);}
+.signer-card.revoked{opacity:0.55;}
+.sc-head{padding:1rem 1.1rem 0.75rem;border-bottom:1px solid var(--border);}
+.sc-top{display:flex;align-items:flex-start;justify-content:space-between;gap:0.5rem;margin-bottom:0.5rem;}
+.sc-label{font-weight:600;font-size:0.9rem;color:var(--ink);line-height:1.2;}
+.sc-badge{flex-shrink:0;padding:2px 8px;border-radius:999px;font-size:0.58rem;font-weight:700;text-transform:uppercase;letter-spacing:0.05em;}
+.sc-badge-active{background:var(--mint);color:var(--green-dk);}
+.sc-badge-revoked{background:rgba(42,31,26,0.08);color:var(--ink-lt);}
+.sc-addr{font-family:monospace;font-size:0.68rem;color:var(--ink-lt);}
+.sc-addr a{color:var(--ink-lt);text-decoration:none;}
+.sc-addr a:hover{color:var(--green);text-decoration:underline;}
+.sc-body{padding:0.875rem 1.1rem;}
+.sc-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:0.5rem;}
+.sc-row:last-child{margin-bottom:0;}
+.sc-row-lbl{font-size:0.65rem;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:var(--ink-lt);}
+.sc-row-val{font-size:0.82rem;font-weight:600;color:var(--ink);}
+.sc-row-val.eth{font-family:monospace;font-size:0.72rem;}
+/* Balance meter */
+.bal-wrap{display:flex;flex-direction:column;gap:0.3rem;margin-bottom:0.75rem;}
+.bal-top{display:flex;align-items:baseline;justify-content:space-between;}
+.bal-num{font-size:1.2rem;font-family:'Cormorant Garamond',serif;font-weight:600;}
+.bal-sym{font-size:0.72rem;color:var(--ink-lt);margin-left:0.2rem;}
+.bal-cap{font-size:0.65rem;color:var(--ink-lt);}
+.bal-bar{height:5px;background:rgba(42,31,26,0.08);border-radius:3px;overflow:hidden;}
+.bal-fill{height:100%;border-radius:3px;transition:width 0.4s ease;}
+.bal-green .bal-fill{background:var(--mint-mid);}
+.bal-amber .bal-fill{background:var(--amber);}
+.bal-red .bal-fill{background:var(--coral-deep);}
+.bal-green .bal-num{color:var(--green);}
+.bal-amber .bal-num{color:var(--amber);}
+.bal-red .bal-num{color:var(--red);}
+.low-warn{font-size:0.65rem;font-weight:700;color:var(--amber);margin-top:0.1rem;}
+.crit-warn{font-size:0.65rem;font-weight:700;color:var(--red);margin-top:0.1rem;}
+/* Gas row */
+.gas-low{color:var(--amber)!important;}
+.gas-crit{color:var(--red)!important;}
+/* Card footer */
+.sc-foot{padding:0.75rem 1.1rem;border-top:1px solid var(--border);display:flex;justify-content:flex-end;}
+
+/* ── Buttons ── */
+.btn{border:none;padding:0.45rem 1.2rem;border-radius:999px;font-family:inherit;font-size:0.78rem;font-weight:600;cursor:pointer;transition:opacity 0.15s;display:inline-flex;align-items:center;gap:0.4rem;}
+.btn:hover{opacity:0.85;}
+.btn:disabled{opacity:0.4;cursor:not-allowed;}
+.btn-primary{background:var(--green);color:var(--coral);}
+.btn-sec{background:var(--white);color:var(--ink-mid);border:1px solid var(--border-mid)!important;}
+.btn-sec:hover{background:var(--apricot);opacity:1;}
+.btn-sm{padding:0.3rem 0.875rem;font-size:0.72rem;}
+.btn-top-off{background:var(--coral);color:var(--ink);}
+
+/* ── Modal ── */
+#topoff-modal{display:none;position:fixed;inset:0;background:rgba(42,31,26,0.55);z-index:100;align-items:center;justify-content:center;padding:1rem;}
+#topoff-modal.open{display:flex;}
+.modal-box{background:var(--white);border-radius:var(--r);padding:1.75rem;width:min(480px,100%);max-height:90vh;overflow-y:auto;box-shadow:0 16px 48px rgba(0,0,0,0.18);}
+.modal-title{font-family:'Cormorant Garamond',serif;font-size:1.4rem;font-weight:600;margin-bottom:0.25rem;}
+.modal-sub{font-size:0.78rem;color:var(--ink-mid);margin-bottom:1.25rem;font-family:monospace;}
+.modal-stats{display:grid;grid-template-columns:1fr 1fr;gap:0.6rem;margin-bottom:1.25rem;}
+.modal-stat{background:var(--cream);border:1px solid var(--border);border-radius:var(--r-sm);padding:0.65rem 0.875rem;}
+.modal-stat-lbl{font-size:0.6rem;font-weight:700;text-transform:uppercase;letter-spacing:0.07em;color:var(--ink-lt);margin-bottom:0.2rem;}
+.modal-stat-val{font-size:1.1rem;font-family:'Cormorant Garamond',serif;font-weight:600;color:var(--ink);}
+.modal-stat-sub{font-size:0.6rem;color:var(--ink-lt);}
+.modal-field{margin-bottom:1rem;}
+.modal-field label{display:block;font-size:0.62rem;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:var(--ink-lt);margin-bottom:0.35rem;}
+.modal-input-row{display:flex;gap:0.5rem;align-items:center;}
+.modal-input{flex:1;background:var(--cream);border:1px solid var(--border-mid);border-radius:var(--r-sm);padding:0.5rem 0.75rem;font-family:monospace;font-size:0.9rem;color:var(--ink);font-weight:600;}
+.modal-input:focus{outline:none;border-color:var(--green);}
+.modal-input.invalid{border-color:var(--red);}
+.modal-hint{font-size:0.68rem;color:var(--ink-lt);margin-top:0.35rem;}
+.modal-hint.warn{color:var(--amber);font-weight:600;}
+.modal-hint.err{color:var(--red);font-weight:600;}
+.modal-btns{display:flex;gap:0.5rem;justify-content:flex-end;flex-wrap:wrap;margin-top:0.5rem;}
+#modal-warn{display:none;background:var(--amber-lt);border:1px solid var(--sand);border-radius:var(--r-sm);padding:0.6rem 0.875rem;font-size:0.75rem;color:#7a5c00;margin-bottom:1rem;line-height:1.55;}
+
+/* ── Pause banner ── */
+#pause-banner{display:none;background:var(--sand);border:1px solid #e5c84a;border-radius:var(--r);padding:0.875rem 1.25rem;margin-bottom:1.5rem;align-items:center;gap:0.75rem;}
+#pause-banner.on{display:flex;}
+.pb-icon{font-size:1.2rem;}
+.pb-msg{font-size:0.82rem;color:#7a5c00;font-weight:600;flex:1;}
+
+/* ── Empty state ── */
+.empty-state{background:var(--white);border:1px solid var(--border);border-radius:var(--r);padding:3rem;text-align:center;color:var(--ink-lt);font-size:0.85rem;}
+
+/* ── Toast ── */
+#toast{position:fixed;bottom:1.5rem;left:50%;transform:translateX(-50%) translateY(80px);background:var(--ink);color:var(--coral);padding:0.65rem 1.25rem;border-radius:999px;font-size:0.8rem;font-weight:600;z-index:200;transition:transform 0.25s ease;white-space:nowrap;pointer-events:none;}
+#toast.show{transform:translateX(-50%) translateY(0);}
+#toast.success{background:var(--green);}
+#toast.error{background:var(--red);color:#fff;}
+.spin{width:13px;height:13px;border:2px solid rgba(255,255,255,0.3);border-top-color:currentColor;border-radius:50%;animation:sp 0.7s linear infinite;display:inline-block;vertical-align:middle;}
+@keyframes sp{to{transform:rotate(360deg);}}
+
+/* ── Responsive ── */
+@media(max-width:640px){
+  #topbar{padding:0 1rem;}
+  #page{padding:1rem 0.75rem 4rem;}
+  #stats-grid{grid-template-columns:1fr 1fr;}
+  .sv{font-size:1.4rem;}
+  #signer-grid{grid-template-columns:1fr;}
+  .modal-stats{grid-template-columns:1fr 1fr;}
+}
+</style>
+</head>
+<body>
+
+<header id="topbar">
+  <div class="logo">
+    <img id="logo-img" src="https://raw.githubusercontent.com/KOKOSICECREAM/website/main/Customer_dapp/KOKOS.png" alt="KOKOS">
+    <div><span class="logo-text" id="biz-name-hdr">KOKOS</span><span class="logo-sub">vault bank</span></div>
+  </div>
+  <div id="topbar-right">
+    <div id="wallet-pill"></div>
+    <button id="disc-btn" onclick="disconnect()" title="Disconnect">✕</button>
+  </div>
+</header>
+<div class="stripe-bar">
+  <div style="background:var(--coral)"></div><div style="background:var(--mint)"></div>
+  <div style="background:var(--apricot)"></div><div style="background:var(--lavender)"></div>
+  <div style="background:var(--sand)"></div><div style="background:var(--coral-mid)"></div>
+</div>
+
+<!-- Auth Gate -->
+<div id="auth-gate">
+  <div class="gate-lock">🏦</div>
+  <div>
+    <div class="gate-title">Vault Bank</div>
+    <div class="gate-desc">Connect the vault owner wallet to view signer balances and issue top-ups.</div>
+  </div>
+  <div class="gate-field">
+    <label>Rewards Vault Contract</label>
+    <input class="gate-input" id="vault-input" type="text" placeholder="0x… vault contract address" spellcheck="false" autocomplete="off">
+  </div>
+  <button id="gate-btn" onclick="connectOwner()">
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 12h.01"/><path d="M2 10h20"/></svg>
+    Connect &amp; Verify
+  </button>
+  <div id="gate-error"></div>
+</div>
+
+<!-- Main Content -->
+<div id="main-content">
+<div id="page">
+
+  <!-- Vault header -->
+  <div id="vault-header">
+    <div style="display:flex;align-items:center;gap:0.625rem;flex-wrap:wrap;">
+      <div class="vault-addr-chip">
+        🏦 <a id="vault-link" href="#" target="_blank" rel="noopener">—</a>
+      </div>
+      <span id="vault-status-badge" class="status-badge status-active">● Active</span>
+      <span id="biz-name-badge" style="display:none;font-size:0.72rem;color:var(--ink-mid);font-style:italic;"></span>
+    </div>
+    <div id="vault-header-right">
+      <button class="btn btn-sec btn-sm" onclick="loadVault()">↺ Refresh</button>
+    </div>
+  </div>
+
+  <!-- Pause banner -->
+  <div id="pause-banner">
+    <div class="pb-icon">⏸</div>
+    <div class="pb-msg">Vault is paused — top-ups are disabled. Call <code>unpause()</code> on the vault contract to resume.</div>
+  </div>
+
+  <!-- Stats -->
+  <div id="stats-grid">
+    <div class="stat-card">
+      <div class="sl">Vault Balance</div>
+      <div class="sv" id="s-vault-bal">—</div>
+      <div class="ss" id="s-vault-bal-sub">reward tokens</div>
+    </div>
+    <div class="stat-card">
+      <div class="sl">Daily Limit</div>
+      <div class="sv" id="s-daily-limit">—</div>
+      <div class="ss">max emissions / day</div>
+    </div>
+    <div class="stat-card">
+      <div class="sl">Used Today</div>
+      <div class="sv" id="s-daily-used">—</div>
+      <div class="ss" id="s-daily-used-sub">UTC day</div>
+    </div>
+    <div class="stat-card">
+      <div class="sl">Remaining Today</div>
+      <div class="sv" id="s-daily-rem">—</div>
+      <div class="ss" id="s-daily-rem-sub">available now</div>
+    </div>
+    <div class="stat-card">
+      <div class="sl">Total Topped Up</div>
+      <div class="sv" id="s-total-topups">—</div>
+      <div class="ss">lifetime to signers</div>
+    </div>
+    <div class="stat-card">
+      <div class="sl">Direct Rewards</div>
+      <div class="sv" id="s-total-sent">—</div>
+      <div class="ss">lifetime to customers</div>
+    </div>
+  </div>
+
+  <!-- Signer grid -->
+  <div class="sec-hdr">
+    <div class="sec-title">POS Signer Wallets</div>
+    <div class="sec-meta" id="signer-meta">—</div>
+  </div>
+
+  <div id="signer-grid">
+    <div class="empty-state">Connect wallet to load signer data.</div>
+  </div>
+
+</div>
+</div>
+
+<!-- Top-Off Modal -->
+<div id="topoff-modal">
+  <div class="modal-box">
+    <div class="modal-title">Top Off Signer</div>
+    <div class="modal-sub" id="modal-signer-id">—</div>
+    <div id="modal-warn"></div>
+    <div class="modal-stats">
+      <div class="modal-stat">
+        <div class="modal-stat-lbl">Current Balance</div>
+        <div class="modal-stat-val" id="modal-cur-bal">—</div>
+        <div class="modal-stat-sub" id="modal-cur-bal-sub">—</div>
+      </div>
+      <div class="modal-stat">
+        <div class="modal-stat-lbl">Top-Up Cap</div>
+        <div class="modal-stat-val" id="modal-cap">—</div>
+        <div class="modal-stat-sub">per transaction</div>
+      </div>
+      <div class="modal-stat">
+        <div class="modal-stat-lbl">Daily Remaining</div>
+        <div class="modal-stat-val" id="modal-daily-rem">—</div>
+        <div class="modal-stat-sub">available today</div>
+      </div>
+      <div class="modal-stat">
+        <div class="modal-stat-lbl">Vault Balance</div>
+        <div class="modal-stat-val" id="modal-vault-bal">—</div>
+        <div class="modal-stat-sub">total available</div>
+      </div>
+    </div>
+    <div class="modal-field">
+      <label id="modal-amt-label">Amount to Send</label>
+      <div class="modal-input-row">
+        <input class="modal-input" id="modal-amount" type="number" min="0" step="1" placeholder="0">
+        <button class="btn btn-sec btn-sm" id="modal-fill-max" onclick="fillMax()">Fill Max</button>
+      </div>
+      <div class="modal-hint" id="modal-hint"></div>
+    </div>
+    <div class="modal-btns">
+      <button class="btn btn-sec" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-primary" id="modal-confirm" onclick="doTopOff()">Confirm Top-Up →</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+// ╔══════════════════════════════════════════════════════════════════════════╗
+// ║  BUSINESS CONFIG — edit this block to deploy for a new business         ║
+// ╚══════════════════════════════════════════════════════════════════════════╝
+const BUSINESS_CONFIG = {
+  name:             'KOKOS',
+  tagline:          'ice cream',
+  logoUrl:          'https://raw.githubusercontent.com/KOKOSICECREAM/website/main/Customer_dapp/KOKOS.png',
+  rpc:              'https://mainnet.base.org',
+  explorerUrl:      'https://basescan.org',
+
+  vault:            '0xAd2Ef0D447137454e6ED8D152414B491858D2EbE',
+
+  tokenSymbol:      'SKOOP',
+  tokenDecimals:    6,
+
+  // Warn when signer balance < X% of their topUpLimit
+  lowBalanceWarn:   0.20,
+  lowBalanceCrit:   0.05,
+  // Warn on ETH gas balance
+  gasWarnEth:       0.005,
+  gasCritEth:       0.001,
+};
+// ═══════════════════════════════════════════════════════════════════════════
+
+const CFG = BUSINESS_CONFIG;
+
+// Unified ABI — works with both SKOOPRewardsVault and PunchcardRewardsVault
+const ABI_VAULT = [
+  'function owner() view returns (address)',
+  'function paused() view returns (bool)',
+  'function dailyLimit() view returns (uint256)',
+  'function dailyRemaining() view returns (uint256)',
+  'function dailyUsed() view returns (uint256)',
+  'function vaultBalance() view returns (uint256)',
+  'function totalSignerTopUps() view returns (uint256)',
+  'function totalRewardsSent() view returns (uint256)',
+  'function getSignerList() view returns (address[])',
+  'function getSigner(address s) view returns (tuple(bool approved, string label, uint256 topUpLimit, uint256 totalReceived))',
+  'function signerBalance(address s) view returns (uint256)',
+  'function topUpSigner(address signer_, uint256 amount_)',
+  // PunchcardRewardsVault extras (ignored if not present)
+  'function businessName() view returns (string)',
+  'function tokenDecimals() view returns (uint8)',
+  'function maxSignerTopUpLimit() view returns (uint256)',
+  'function maxDailyLimit() view returns (uint256)',
+];
+
+// ─────────────────────────────────────────────────────────────────────────────
+let provider = null, signer = null, vault = null, vaultAddr = '';
+let decimals = CFG.tokenDecimals;
+let vaultData = {};         // { balance, dailyLimit, dailyRemaining, dailyUsed, paused, totalTopUps, totalSent }
+let signerData = [];        // [{ addr, info: POSSigner, balance, ethBalance }]
+let toastTimer = null;
+let modalTargetAddr = null; // address currently open in top-off modal
+
+// ─── Formatting helpers ───────────────────────────────────────────────────────
+function fmt(rawBigInt, dec) {
+  const n = Number(rawBigInt) / 10 ** dec;
+  if (n >= 1e6)  return (n / 1e6).toLocaleString(undefined, { maximumFractionDigits: 2 }) + 'M';
+  if (n >= 1e3)  return (n / 1e3).toLocaleString(undefined, { maximumFractionDigits: 1 }) + 'K';
+  return n.toLocaleString(undefined, { maximumFractionDigits: 2 });
+}
+
+function fmtFull(rawBigInt, dec) {
+  const n = Number(rawBigInt) / 10 ** dec;
+  return n.toLocaleString(undefined, { maximumFractionDigits: 0 });
+}
+
+function fmtAddr(addr) {
+  return addr.slice(0, 6) + '…' + addr.slice(-4);
+}
+
+function fmtETH(weiBigInt) {
+  const eth = Number(weiBigInt) / 1e18;
+  if (eth < 0.0001) return '< 0.0001 ETH';
+  return eth.toLocaleString(undefined, { minimumFractionDigits: 4, maximumFractionDigits: 4 }) + ' ETH';
+}
+
+function toBaseUnits(humanStr, dec) {
+  const n = parseFloat(humanStr);
+  if (isNaN(n) || n <= 0) return null;
+  return BigInt(Math.round(n * 10 ** dec));
+}
+
+// ─── Auth ─────────────────────────────────────────────────────────────────────
+async function connectOwner() {
+  const btn = document.getElementById('gate-btn');
+  const errEl = document.getElementById('gate-error');
+  errEl.style.display = 'none';
+
+  const inputAddr = document.getElementById('vault-input').value.trim();
+  if (!ethers.isAddress(inputAddr)) {
+    showGateErr('Enter a valid vault contract address.');
+    return;
+  }
+
+  if (!window.ethereum) {
+    showGateErr('No injected wallet found. Install MetaMask or a compatible wallet.');
+    return;
+  }
+
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spin"></span> Verifying…';
+
+  try {
+    provider = new ethers.BrowserProvider(window.ethereum);
+    await provider.send('eth_requestAccounts', []);
+    signer = await provider.getSigner();
+    const connectedAddr = await signer.getAddress();
+
+    vaultAddr = ethers.getAddress(inputAddr);
+    vault = new ethers.Contract(vaultAddr, ABI_VAULT, signer);
+
+    const vaultOwner = await vault.owner();
+
+    if (connectedAddr.toLowerCase() !== vaultOwner.toLowerCase()) {
+      showGateErr(`Not the vault owner. Connect ${fmtAddr(vaultOwner)} to manage this vault.`);
+      provider = null; signer = null; vault = null;
+      btn.disabled = false; btn.innerHTML = 'Connect &amp; Verify';
+      return;
+    }
+
+    // Try reading token decimals from contract (PunchcardRewardsVault)
+    try { decimals = await vault.tokenDecimals(); } catch { decimals = CFG.tokenDecimals; }
+
+    document.getElementById('auth-gate').style.display = 'none';
+    document.getElementById('main-content').style.display = 'block';
+
+    const wp = document.getElementById('wallet-pill');
+    wp.textContent = 'Owner · ' + fmtAddr(connectedAddr);
+    wp.style.display = 'block';
+    document.getElementById('disc-btn').style.display = 'flex';
+
+    const link = document.getElementById('vault-link');
+    link.textContent = fmtAddr(vaultAddr);
+    link.href = CFG.explorerUrl + '/address/' + vaultAddr;
+
+    // Try reading business name (PunchcardRewardsVault)
+    try {
+      const bizName = await vault.businessName();
+      if (bizName) {
+        document.getElementById('biz-name-hdr').textContent = bizName.split(' ')[0];
+        const badge = document.getElementById('biz-name-badge');
+        badge.textContent = bizName;
+        badge.style.display = 'inline';
+      }
+    } catch { /* SKOOPRewardsVault — use CFG.name */ }
+
+    showToast('Vault owner verified ✓', 'success');
+
+    window.ethereum.on('accountsChanged', a => {
+      if (!a.length || a[0].toLowerCase() !== vaultOwner.toLowerCase()) disconnect();
+    });
+
+    await loadVault();
+
+  } catch (e) {
+    const msg = e?.code === 4001 ? 'Connection rejected.' : (e?.message?.slice(0, 100) || 'Connection failed.');
+    showGateErr(msg);
+    provider = null; signer = null; vault = null;
+    btn.disabled = false; btn.innerHTML = 'Connect &amp; Verify';
+  }
+}
+
+function showGateErr(msg) {
+  const el = document.getElementById('gate-error');
+  el.textContent = msg;
+  el.style.display = 'block';
+}
+
+function disconnect() {
+  provider = null; signer = null; vault = null; vaultAddr = '';
+  signerData = []; vaultData = {};
+  document.getElementById('auth-gate').style.display = 'flex';
+  document.getElementById('main-content').style.display = 'none';
+  document.getElementById('wallet-pill').style.display = 'none';
+  document.getElementById('disc-btn').style.display = 'none';
+  closeModal();
+}
+
+// ─── Load vault data ──────────────────────────────────────────────────────────
+async function loadVault() {
+  try {
+    const [
+      balance, dailyLimit, dailyRem, dailyUsed, isPaused,
+      totalTopUps, totalSent, signerList
+    ] = await Promise.all([
+      vault.vaultBalance(),
+      vault.dailyLimit(),
+      vault.dailyRemaining(),
+      vault.dailyUsed(),
+      vault.paused(),
+      vault.totalSignerTopUps(),
+      vault.totalRewardsSent(),
+      vault.getSignerList(),
+    ]);
+
+    vaultData = { balance, dailyLimit, dailyRem, dailyUsed, isPaused, totalTopUps, totalSent };
+
+    // Pause banner
+    const pb = document.getElementById('pause-banner');
+    isPaused ? pb.classList.add('on') : pb.classList.remove('on');
+
+    const statusBadge = document.getElementById('vault-status-badge');
+    if (isPaused) {
+      statusBadge.textContent = '⏸ Paused';
+      statusBadge.className = 'status-badge status-paused';
+    } else {
+      statusBadge.textContent = '● Active';
+      statusBadge.className = 'status-badge status-active';
+    }
+
+    // Stats
+    document.getElementById('s-vault-bal').textContent = fmt(balance, decimals);
+    document.getElementById('s-vault-bal-sub').textContent = CFG.tokenSymbol + ' remaining';
+    document.getElementById('s-daily-limit').textContent = fmt(dailyLimit, decimals);
+    document.getElementById('s-daily-used').textContent = fmt(dailyUsed, decimals);
+    document.getElementById('s-daily-used-sub').textContent = CFG.tokenSymbol + ' sent today';
+    document.getElementById('s-daily-rem').textContent = fmt(dailyRem, decimals);
+    document.getElementById('s-daily-rem-sub').textContent = CFG.tokenSymbol + ' available';
+    document.getElementById('s-total-topups').textContent = fmt(totalTopUps, decimals);
+    document.getElementById('s-total-sent').textContent = fmt(totalSent, decimals);
+
+    // Fetch all signer data in parallel
+    const signerFetches = signerList.map(addr =>
+      Promise.all([
+        vault.getSigner(addr),
+        vault.signerBalance(addr),
+        provider.getBalance(addr),
+      ]).then(([info, tokenBal, ethBal]) => ({ addr, info, tokenBal, ethBal }))
+    );
+    signerData = await Promise.all(signerFetches);
+
+    renderSigners();
+
+  } catch (e) {
+    showToast('Load failed: ' + (e?.shortMessage || e?.message?.slice(0, 60) || 'unknown error'), 'error');
+  }
+}
+
+// ─── Render signer cards ──────────────────────────────────────────────────────
+function renderSigners() {
+  const grid = document.getElementById('signer-grid');
+
+  if (signerData.length === 0) {
+    grid.innerHTML = '<div class="empty-state">No signer wallets registered on this vault.</div>';
+    document.getElementById('signer-meta').textContent = '0 wallets';
+    return;
+  }
+
+  const active = signerData.filter(s => s.info.approved).length;
+  document.getElementById('signer-meta').textContent =
+    signerData.length + ' wallet' + (signerData.length !== 1 ? 's' : '') +
+    ' · ' + active + ' active';
+
+  grid.innerHTML = signerData.map(s => signerCard(s)).join('');
+}
+
+function signerCard({ addr, info, tokenBal, ethBal }) {
+  const cap = info.topUpLimit;
+  const sym = CFG.tokenSymbol;
+
+  // Balance health
+  const pct = cap > 0n ? Math.min(Number((tokenBal * 10000n) / cap) / 100, 100) : 0;
+  const warnThresh = CFG.lowBalanceWarn * 100;
+  const critThresh = CFG.lowBalanceCrit * 100;
+  const balClass = pct < critThresh ? 'bal-red' : pct < warnThresh ? 'bal-amber' : 'bal-green';
+  const warnMsg = pct < critThresh
+    ? `<div class="crit-warn">⚠ Critical — top off now</div>`
+    : pct < warnThresh
+    ? `<div class="low-warn">↑ Low balance — consider refilling</div>`
+    : '';
+
+  // ETH gas health
+  const ethN = Number(ethBal) / 1e18;
+  const gasClass = ethN < CFG.gasCritEth ? 'gas-crit' : ethN < CFG.gasWarnEth ? 'gas-low' : '';
+  const gasWarn = ethN < CFG.gasCritEth ? ' ⚠' : ethN < CFG.gasWarnEth ? ' ↓' : '';
+
+  const badgeClass = info.approved ? 'sc-badge-active' : 'sc-badge-revoked';
+  const badgeText = info.approved ? 'Active' : 'Revoked';
+  const cardClass = info.approved ? '' : ' revoked';
+  const topOffDisabled = (!info.approved || vaultData.isPaused || vaultData.dailyRem === 0n) ? 'disabled' : '';
+
+  const explorerAddr = CFG.explorerUrl + '/address/' + addr;
+  const barWidth = Math.max(pct, 2).toFixed(1);
+
+  return `
+<div class="signer-card${cardClass}">
+  <div class="sc-head">
+    <div class="sc-top">
+      <div class="sc-label">${escHtml(info.label) || 'Unnamed Signer'}</div>
+      <span class="sc-badge ${badgeClass}">${badgeText}</span>
+    </div>
+    <div class="sc-addr"><a href="${explorerAddr}" target="_blank" rel="noopener">${fmtAddr(addr)}</a></div>
+  </div>
+  <div class="sc-body">
+    <div class="bal-wrap ${balClass}">
+      <div class="bal-top">
+        <div>
+          <span class="bal-num">${fmt(tokenBal, decimals)}</span>
+          <span class="bal-sym">${sym}</span>
+        </div>
+        <span class="bal-cap">Cap: ${fmt(cap, decimals)} ${sym}/tx</span>
+      </div>
+      <div class="bal-bar"><div class="bal-fill" style="width:${barWidth}%"></div></div>
+      ${warnMsg}
+    </div>
+    <div class="sc-row">
+      <span class="sc-row-lbl">ETH Gas</span>
+      <span class="sc-row-val eth ${gasClass}">${fmtETH(ethBal)}${gasWarn}</span>
+    </div>
+    <div class="sc-row">
+      <span class="sc-row-lbl">Lifetime Received</span>
+      <span class="sc-row-val">${fmt(info.totalReceived, decimals)} ${sym}</span>
+    </div>
+  </div>
+  <div class="sc-foot">
+    <button class="btn btn-top-off btn-sm" onclick="openModal('${addr}')" ${topOffDisabled}>↑ Top Off</button>
+  </div>
+</div>`;
+}
+
+function escHtml(str) {
+  return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+// ─── Top-Off Modal ────────────────────────────────────────────────────────────
+function openModal(addr) {
+  const entry = signerData.find(s => s.addr.toLowerCase() === addr.toLowerCase());
+  if (!entry) return;
+
+  modalTargetAddr = addr;
+  const { info, tokenBal } = entry;
+  const sym = CFG.tokenSymbol;
+
+  document.getElementById('modal-signer-id').textContent =
+    (info.label || 'Unnamed Signer') + ' · ' + fmtAddr(addr);
+  document.getElementById('modal-cur-bal').textContent = fmt(tokenBal, decimals);
+  document.getElementById('modal-cur-bal-sub').textContent = sym + ' current';
+  document.getElementById('modal-cap').textContent = fmt(info.topUpLimit, decimals);
+  document.getElementById('modal-daily-rem').textContent = fmt(vaultData.dailyRem, decimals);
+  document.getElementById('modal-vault-bal').textContent = fmt(vaultData.balance, decimals);
+  document.getElementById('modal-amt-label').textContent = `Amount to Send (${sym})`;
+
+  const warnEl = document.getElementById('modal-warn');
+  warnEl.style.display = 'none';
+  if (vaultData.dailyRem === 0n) {
+    warnEl.textContent = 'Daily emission limit reached — no top-ups until UTC midnight.';
+    warnEl.style.display = 'block';
+  }
+
+  document.getElementById('modal-amount').value = '';
+  document.getElementById('modal-amount').classList.remove('invalid');
+  document.getElementById('modal-hint').textContent = '';
+  document.getElementById('modal-hint').className = 'modal-hint';
+  document.getElementById('modal-confirm').disabled = false;
+  document.getElementById('modal-confirm').innerHTML = 'Confirm Top-Up →';
+
+  document.getElementById('topoff-modal').classList.add('open');
+  document.getElementById('modal-amount').focus();
+}
+
+function closeModal() {
+  document.getElementById('topoff-modal').classList.remove('open');
+  modalTargetAddr = null;
+}
+
+function fillMax() {
+  const entry = signerData.find(s => s.addr.toLowerCase() === modalTargetAddr?.toLowerCase());
+  if (!entry) return;
+
+  const { info } = entry;
+  const maxRaw = bigMin(info.topUpLimit, bigMin(vaultData.dailyRem, vaultData.balance));
+  const maxHuman = Number(maxRaw) / 10 ** decimals;
+  document.getElementById('modal-amount').value = maxHuman.toFixed(0);
+  validateAmount();
+}
+
+function bigMin(a, b) {
+  return a < b ? a : b;
+}
+
+function validateAmount() {
+  const input = document.getElementById('modal-amount');
+  const hint = document.getElementById('modal-hint');
+  const confirmBtn = document.getElementById('modal-confirm');
+  const val = input.value.trim();
+
+  if (!val || isNaN(parseFloat(val)) || parseFloat(val) <= 0) {
+    input.classList.remove('invalid');
+    hint.textContent = '';
+    hint.className = 'modal-hint';
+    confirmBtn.disabled = true;
+    return;
+  }
+
+  const entry = signerData.find(s => s.addr.toLowerCase() === modalTargetAddr?.toLowerCase());
+  if (!entry) return;
+
+  const rawAmount = BigInt(Math.round(parseFloat(val) * 10 ** decimals));
+  const cap = entry.info.topUpLimit;
+  const sym = CFG.tokenSymbol;
+
+  if (rawAmount > cap) {
+    input.classList.add('invalid');
+    hint.textContent = `Exceeds top-up cap of ${fmt(cap, decimals)} ${sym} per tx.`;
+    hint.className = 'modal-hint err';
+    confirmBtn.disabled = true;
+    return;
+  }
+  if (rawAmount > vaultData.dailyRem) {
+    input.classList.add('invalid');
+    hint.textContent = `Exceeds daily remaining (${fmt(vaultData.dailyRem, decimals)} ${sym}).`;
+    hint.className = 'modal-hint err';
+    confirmBtn.disabled = true;
+    return;
+  }
+  if (rawAmount > vaultData.balance) {
+    input.classList.add('invalid');
+    hint.textContent = `Exceeds vault balance (${fmt(vaultData.balance, decimals)} ${sym}).`;
+    hint.className = 'modal-hint err';
+    confirmBtn.disabled = true;
+    return;
+  }
+
+  input.classList.remove('invalid');
+  hint.textContent = `${fmtFull(rawAmount, decimals)} ${sym} base units · safe to send`;
+  hint.className = 'modal-hint';
+  confirmBtn.disabled = false;
+}
+
+document.getElementById('modal-amount').addEventListener('input', validateAmount);
+document.getElementById('topoff-modal').addEventListener('click', e => {
+  if (e.target === document.getElementById('topoff-modal')) closeModal();
+});
+
+async function doTopOff() {
+  const confirmBtn = document.getElementById('modal-confirm');
+  const val = parseFloat(document.getElementById('modal-amount').value.trim());
+  if (isNaN(val) || val <= 0 || !modalTargetAddr) return;
+
+  const rawAmount = BigInt(Math.round(val * 10 ** decimals));
+  confirmBtn.disabled = true;
+  confirmBtn.innerHTML = '<span class="spin"></span> Sending…';
+
+  try {
+    const tx = await vault.topUpSigner(modalTargetAddr, rawAmount);
+    showToast('Transaction submitted…');
+    await tx.wait();
+
+    showToast(`Top-up confirmed ✓ — ${fmtFull(rawAmount, decimals)} ${CFG.tokenSymbol} sent`, 'success');
+    closeModal();
+    await loadVault();
+
+  } catch (e) {
+    const msg = e?.code === 4001
+      ? 'Transaction rejected.'
+      : (e?.shortMessage || e?.reason || e?.message?.slice(0, 80) || 'Transaction failed.');
+    showToast(msg, 'error');
+    confirmBtn.disabled = false;
+    confirmBtn.innerHTML = 'Confirm Top-Up →';
+  }
+}
+
+// ─── Toast ────────────────────────────────────────────────────────────────────
+function showToast(msg, type = '') {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.className = 'show' + (type ? ' ' + type : '');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => { el.className = ''; }, 3500);
+}
+
+// ─── Auto-fill vault address from config + auto-connect ──────────────────────
+if (CFG.vault) {
+  document.getElementById('vault-input').value = CFG.vault;
+}
+
+if (window.ethereum) {
+  window.ethereum.request({ method: 'eth_accounts' }).then(accounts => {
+    if (accounts.length && CFG.vault && ethers.isAddress(CFG.vault)) connectOwner();
+  }).catch(() => {});
+}
+</script>
+</body>
+</html>
