@@ -71,6 +71,7 @@ html,body{min-height:100%;font-family:'Instrument Sans',sans-serif;background:va
 .stat-card:nth-child(4)::before{background:var(--mint-mid);}
 .stat-card:nth-child(5)::before{background:var(--lavender);}
 .stat-card:nth-child(6)::before{background:var(--coral-mid);}
+.stat-card:nth-child(7)::before{background:var(--mint);}
 .sl{font-size:0.62rem;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:var(--ink-lt);margin-bottom:0.3rem;}
 .sv{font-family:'Cormorant Garamond',serif;font-size:1.75rem;font-weight:600;color:var(--ink);line-height:1;letter-spacing:-0.5px;}
 .ss{font-size:0.65rem;color:var(--ink-lt);margin-top:0.25rem;}
@@ -114,6 +115,7 @@ html,body{min-height:100%;font-family:'Instrument Sans',sans-serif;background:va
 .bal-green .bal-num{color:var(--green);}
 .bal-amber .bal-num{color:var(--amber);}
 .bal-red .bal-num{color:var(--red);}
+.bal-usd-sub{font-size:0.65rem;color:var(--ink-lt);margin-top:-0.1rem;}
 .low-warn{font-size:0.65rem;font-weight:700;color:var(--amber);margin-top:0.1rem;}
 .crit-warn{font-size:0.65rem;font-weight:700;color:var(--red);margin-top:0.1rem;}
 /* Gas row */
@@ -275,12 +277,20 @@ html,body{min-height:100%;font-family:'Instrument Sans',sans-serif;background:va
       <div class="sv" id="s-total-sent">—</div>
       <div class="ss">lifetime to customers</div>
     </div>
+    <div class="stat-card">
+      <div class="sl">SKOOP Price</div>
+      <div class="sv" id="s-skoop-price">—</div>
+      <div class="ss" id="s-price-sub">Uniswap V3 spot</div>
+    </div>
   </div>
 
   <!-- Signer grid -->
   <div class="sec-hdr">
     <div class="sec-title">POS Signer Wallets</div>
-    <div class="sec-meta" id="signer-meta">—</div>
+    <div style="display:flex;align-items:center;gap:0.625rem;flex-wrap:wrap;">
+      <div class="sec-meta" id="signer-meta">—</div>
+      <button class="btn btn-primary btn-sm" id="topoff-all-btn" onclick="topOffAllLow()" disabled>↑ Top Off All Low</button>
+    </div>
   </div>
 
   <div id="signer-grid">
@@ -303,14 +313,14 @@ html,body{min-height:100%;font-family:'Instrument Sans',sans-serif;background:va
         <div class="modal-stat-sub" id="modal-cur-bal-sub">—</div>
       </div>
       <div class="modal-stat">
-        <div class="modal-stat-lbl">Top-Up Cap</div>
-        <div class="modal-stat-val" id="modal-cap">—</div>
-        <div class="modal-stat-sub">per transaction</div>
+        <div class="modal-stat-lbl">Daily Target</div>
+        <div class="modal-stat-val" id="modal-target">—</div>
+        <div class="modal-stat-sub" id="modal-target-sub">cash drawer float</div>
       </div>
       <div class="modal-stat">
         <div class="modal-stat-lbl">Daily Remaining</div>
         <div class="modal-stat-val" id="modal-daily-rem">—</div>
-        <div class="modal-stat-sub">available today</div>
+        <div class="modal-stat-sub">vault cap today</div>
       </div>
       <div class="modal-stat">
         <div class="modal-stat-lbl">Vault Balance</div>
@@ -322,7 +332,8 @@ html,body{min-height:100%;font-family:'Instrument Sans',sans-serif;background:va
       <label id="modal-amt-label">Amount to Send</label>
       <div class="modal-input-row">
         <input class="modal-input" id="modal-amount" type="number" min="0" step="1" placeholder="0">
-        <button class="btn btn-sec btn-sm" id="modal-fill-max" onclick="fillMax()">Fill Max</button>
+        <button class="btn btn-primary btn-sm" id="modal-fill-target" onclick="fillTarget()">Fill to $<span id="modal-target-lbl">100</span></button>
+        <button class="btn btn-sec btn-sm" onclick="fillMax()">Fill Max</button>
       </div>
       <div class="modal-hint" id="modal-hint"></div>
     </div>
@@ -351,9 +362,16 @@ const BUSINESS_CONFIG = {
   tokenSymbol:      'SKOOP',
   tokenDecimals:    6,
 
-  // Warn when signer balance < X% of their topUpLimit
-  lowBalanceWarn:   0.20,
-  lowBalanceCrit:   0.05,
+  // Cash-drawer target — top off each signer to this USD value per day
+  dailyTargetUSD:   100,
+
+  // Uniswap V3 SKOOP/USDC pool for live price
+  pool:             '0x64Ef20F32445EB0A86f4b97CA895fE508AF253CD',
+  tokenAddr:        '0xfd3ce21c5Acd8BbbE576d0E2336C210C3cEBeb92',
+
+  // Warn when signer USD balance < X% of dailyTargetUSD
+  lowBalanceWarn:   0.40,
+  lowBalanceCrit:   0.10,
   // Warn on ETH gas balance
   gasWarnEth:       0.005,
   gasCritEth:       0.001,
@@ -383,13 +401,19 @@ const ABI_VAULT = [
   'function maxDailyLimit() view returns (uint256)',
 ];
 
+const ABI_POOL = [
+  'function slot0() view returns (uint160 sqrtPriceX96, int24 tick, uint16, uint16, uint16, uint8, bool)',
+  'function token0() view returns (address)',
+];
+
 // ─────────────────────────────────────────────────────────────────────────────
 let provider = null, signer = null, vault = null, vaultAddr = '';
 let decimals = CFG.tokenDecimals;
+let skoopUSD = 0;           // live USD price per 1 SKOOP token
 let vaultData = {};         // { balance, dailyLimit, dailyRemaining, dailyUsed, paused, totalTopUps, totalSent }
-let signerData = [];        // [{ addr, info: POSSigner, balance, ethBalance }]
+let signerData = [];        // [{ addr, info: POSSigner, tokenBal, ethBal }]
 let toastTimer = null;
-let modalTargetAddr = null; // address currently open in top-off modal
+let modalTargetAddr = null;
 
 // ─── Formatting helpers ───────────────────────────────────────────────────────
 function fmt(rawBigInt, dec) {
@@ -414,10 +438,24 @@ function fmtETH(weiBigInt) {
   return eth.toLocaleString(undefined, { minimumFractionDigits: 4, maximumFractionDigits: 4 }) + ' ETH';
 }
 
-function toBaseUnits(humanStr, dec) {
-  const n = parseFloat(humanStr);
-  if (isNaN(n) || n <= 0) return null;
-  return BigInt(Math.round(n * 10 ** dec));
+function fmtUSD(n) {
+  if (!n && n !== 0) return '—';
+  return '$' + n.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+
+function tokenToUSD(rawBigInt) {
+  if (!skoopUSD) return '';
+  return fmtUSD((Number(rawBigInt) / 10 ** decimals) * skoopUSD);
+}
+
+function usdToRaw(usd) {
+  if (!skoopUSD) return null;
+  return BigInt(Math.round((usd / skoopUSD) * 10 ** decimals));
+}
+
+function getTargetRaw(fallbackCap) {
+  const raw = usdToRaw(CFG.dailyTargetUSD);
+  return raw ?? (fallbackCap ?? 0n);
 }
 
 // ─── Auth ─────────────────────────────────────────────────────────────────────
@@ -508,12 +546,28 @@ function showGateErr(msg) {
 
 function disconnect() {
   provider = null; signer = null; vault = null; vaultAddr = '';
-  signerData = []; vaultData = {};
+  signerData = []; vaultData = {}; skoopUSD = 0;
   document.getElementById('auth-gate').style.display = 'flex';
   document.getElementById('main-content').style.display = 'none';
   document.getElementById('wallet-pill').style.display = 'none';
   document.getElementById('disc-btn').style.display = 'none';
   closeModal();
+}
+
+// ─── Price feed ───────────────────────────────────────────────────────────────
+async function loadPrice() {
+  const poolContract = new ethers.Contract(CFG.pool, ABI_POOL, provider);
+  const [slot0Result, token0Addr] = await Promise.all([poolContract.slot0(), poolContract.token0()]);
+  const sqrtP = Number(slot0Result[0]) / 2 ** 96;
+  const price01 = sqrtP * sqrtP;  // token1/token0, both 6-decimal tokens so ratio is correct as-is
+  const skoopIsToken0 = token0Addr.toLowerCase() === CFG.tokenAddr.toLowerCase();
+  skoopUSD = skoopIsToken0 ? price01 : 1 / price01;
+
+  document.getElementById('s-skoop-price').textContent =
+    '$' + skoopUSD.toLocaleString(undefined, { minimumFractionDigits: 5, maximumFractionDigits: 7 });
+  document.getElementById('s-price-sub').textContent =
+    fmtUSD(CFG.dailyTargetUSD) + ' target ≈ ' +
+    fmt(usdToRaw(CFG.dailyTargetUSD) ?? 0n, decimals) + ' ' + CFG.tokenSymbol;
 }
 
 // ─── Load vault data ──────────────────────────────────────────────────────────
@@ -531,6 +585,7 @@ async function loadVault() {
       vault.totalSignerTopUps(),
       vault.totalRewardsSent(),
       vault.getSignerList(),
+      loadPrice().catch(() => {}),  // non-fatal
     ]);
 
     vaultData = { balance, dailyLimit, dailyRem, dailyUsed, isPaused, totalTopUps, totalSent };
@@ -587,26 +642,40 @@ function renderSigners() {
   }
 
   const active = signerData.filter(s => s.info.approved).length;
+  const low = signerData.filter(s => {
+    if (!s.info.approved) return false;
+    const t = getTargetRaw(s.info.topUpLimit);
+    return t > 0n && s.tokenBal < t;
+  }).length;
+
   document.getElementById('signer-meta').textContent =
     signerData.length + ' wallet' + (signerData.length !== 1 ? 's' : '') +
-    ' · ' + active + ' active';
+    ' · ' + active + ' active' +
+    (low > 0 ? ' · ' + low + ' need refill' : '');
+
+  const allBtn = document.getElementById('topoff-all-btn');
+  allBtn.disabled = low === 0 || vaultData.isPaused || vaultData.dailyRem === 0n;
+  allBtn.textContent = low > 0 ? `↑ Top Off ${low} Low` : '↑ All Stocked';
 
   grid.innerHTML = signerData.map(s => signerCard(s)).join('');
 }
 
 function signerCard({ addr, info, tokenBal, ethBal }) {
-  const cap = info.topUpLimit;
   const sym = CFG.tokenSymbol;
 
-  // Balance health
-  const pct = cap > 0n ? Math.min(Number((tokenBal * 10000n) / cap) / 100, 100) : 0;
+  // USD-denominated health (falls back to topUpLimit if price unavailable)
+  const targetRaw = getTargetRaw(info.topUpLimit);
+  const pct = targetRaw > 0n ? Math.min(Number((tokenBal * 10000n) / targetRaw) / 100, 100) : 0;
   const warnThresh = CFG.lowBalanceWarn * 100;
   const critThresh = CFG.lowBalanceCrit * 100;
   const balClass = pct < critThresh ? 'bal-red' : pct < warnThresh ? 'bal-amber' : 'bal-green';
+
+  const usdVal = skoopUSD ? fmtUSD((Number(tokenBal) / 10 ** decimals) * skoopUSD) : null;
+  const targetLabel = skoopUSD ? fmtUSD(CFG.dailyTargetUSD) + ' target' : fmt(info.topUpLimit, decimals) + ' ' + sym + ' cap';
   const warnMsg = pct < critThresh
     ? `<div class="crit-warn">⚠ Critical — top off now</div>`
     : pct < warnThresh
-    ? `<div class="low-warn">↑ Low balance — consider refilling</div>`
+    ? `<div class="low-warn">↑ Low — consider refilling</div>`
     : '';
 
   // ETH gas health
@@ -635,11 +704,11 @@ function signerCard({ addr, info, tokenBal, ethBal }) {
     <div class="bal-wrap ${balClass}">
       <div class="bal-top">
         <div>
-          <span class="bal-num">${fmt(tokenBal, decimals)}</span>
-          <span class="bal-sym">${sym}</span>
+          ${usdVal ? `<span class="bal-num">${usdVal}</span>` : `<span class="bal-num">${fmt(tokenBal, decimals)}</span><span class="bal-sym">${sym}</span>`}
         </div>
-        <span class="bal-cap">Cap: ${fmt(cap, decimals)} ${sym}/tx</span>
+        <span class="bal-cap">${targetLabel}</span>
       </div>
+      ${usdVal ? `<div class="bal-usd-sub">${fmt(tokenBal, decimals)} ${sym}</div>` : ''}
       <div class="bal-bar"><div class="bal-fill" style="width:${barWidth}%"></div></div>
       ${warnMsg}
     </div>
@@ -673,9 +742,22 @@ function openModal(addr) {
 
   document.getElementById('modal-signer-id').textContent =
     (info.label || 'Unnamed Signer') + ' · ' + fmtAddr(addr);
-  document.getElementById('modal-cur-bal').textContent = fmt(tokenBal, decimals);
-  document.getElementById('modal-cur-bal-sub').textContent = sym + ' current';
-  document.getElementById('modal-cap').textContent = fmt(info.topUpLimit, decimals);
+
+  const usdNow = skoopUSD ? fmtUSD((Number(tokenBal) / 10 ** decimals) * skoopUSD) : null;
+  document.getElementById('modal-cur-bal').textContent = usdNow ?? fmt(tokenBal, decimals);
+  document.getElementById('modal-cur-bal-sub').textContent = usdNow
+    ? fmt(tokenBal, decimals) + ' ' + sym
+    : sym + ' current';
+
+  const targetRaw = getTargetRaw(info.topUpLimit);
+  const targetUSD = skoopUSD ? fmtUSD(CFG.dailyTargetUSD) : null;
+  document.getElementById('modal-target').textContent = targetUSD ?? fmt(targetRaw, decimals);
+  document.getElementById('modal-target-sub').textContent = targetUSD
+    ? '≈ ' + fmt(targetRaw, decimals) + ' ' + sym
+    : 'cash drawer float';
+  document.getElementById('modal-target-lbl').textContent = CFG.dailyTargetUSD;
+  document.getElementById('modal-fill-target').style.display = skoopUSD ? '' : 'none';
+
   document.getElementById('modal-daily-rem').textContent = fmt(vaultData.dailyRem, decimals);
   document.getElementById('modal-vault-bal').textContent = fmt(vaultData.balance, decimals);
   document.getElementById('modal-amt-label').textContent = `Amount to Send (${sym})`;
@@ -703,14 +785,29 @@ function closeModal() {
   modalTargetAddr = null;
 }
 
+function fillTarget() {
+  const entry = signerData.find(s => s.addr.toLowerCase() === modalTargetAddr?.toLowerCase());
+  if (!entry || !skoopUSD) return;
+
+  const targetRaw = getTargetRaw(entry.info.topUpLimit);
+  const needed = targetRaw > entry.tokenBal ? targetRaw - entry.tokenBal : 0n;
+  if (needed <= 0n) {
+    const hint = document.getElementById('modal-hint');
+    hint.textContent = 'Already at or above target.';
+    hint.className = 'modal-hint';
+    return;
+  }
+  const toSend = bigMin(needed, bigMin(entry.info.topUpLimit, bigMin(vaultData.dailyRem, vaultData.balance)));
+  document.getElementById('modal-amount').value = (Number(toSend) / 10 ** decimals).toFixed(0);
+  validateAmount();
+}
+
 function fillMax() {
   const entry = signerData.find(s => s.addr.toLowerCase() === modalTargetAddr?.toLowerCase());
   if (!entry) return;
 
-  const { info } = entry;
-  const maxRaw = bigMin(info.topUpLimit, bigMin(vaultData.dailyRem, vaultData.balance));
-  const maxHuman = Number(maxRaw) / 10 ** decimals;
-  document.getElementById('modal-amount').value = maxHuman.toFixed(0);
+  const maxRaw = bigMin(entry.info.topUpLimit, bigMin(vaultData.dailyRem, vaultData.balance));
+  document.getElementById('modal-amount').value = (Number(maxRaw) / 10 ** decimals).toFixed(0);
   validateAmount();
 }
 
@@ -762,7 +859,8 @@ function validateAmount() {
   }
 
   input.classList.remove('invalid');
-  hint.textContent = `${fmtFull(rawAmount, decimals)} ${sym} base units · safe to send`;
+  const usdEquiv = skoopUSD ? ' · ' + fmtUSD((Number(rawAmount) / 10 ** decimals) * skoopUSD) : '';
+  hint.textContent = `${fmtFull(rawAmount, decimals)} ${sym}${usdEquiv} — safe to send`;
   hint.className = 'modal-hint';
   confirmBtn.disabled = false;
 }
@@ -797,6 +895,60 @@ async function doTopOff() {
     showToast(msg, 'error');
     confirmBtn.disabled = false;
     confirmBtn.innerHTML = 'Confirm Top-Up →';
+  }
+}
+
+// ─── Batch top-off ───────────────────────────────────────────────────────────
+async function topOffAllLow() {
+  const btn = document.getElementById('topoff-all-btn');
+
+  const lowSigners = signerData.filter(s => {
+    if (!s.info.approved || vaultData.isPaused) return false;
+    const t = getTargetRaw(s.info.topUpLimit);
+    return t > 0n && s.tokenBal < t;
+  });
+
+  if (lowSigners.length === 0) {
+    showToast('All drawers are stocked ✓');
+    return;
+  }
+
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spin"></span> Topping up…';
+
+  let remainingDaily = vaultData.dailyRem;
+  let remainingVault = vaultData.balance;
+  let successCount = 0;
+
+  for (const entry of lowSigners) {
+    const target = getTargetRaw(entry.info.topUpLimit);
+    const needed = target > entry.tokenBal ? target - entry.tokenBal : 0n;
+    if (needed <= 0n) continue;
+
+    const toSend = bigMin(needed, bigMin(entry.info.topUpLimit, bigMin(remainingDaily, remainingVault)));
+    if (toSend <= 0n) break;
+
+    try {
+      showToast(`Topping up ${escHtml(entry.info.label) || fmtAddr(entry.addr)}…`);
+      const tx = await vault.topUpSigner(entry.addr, toSend);
+      await tx.wait();
+      remainingDaily -= toSend;
+      remainingVault -= toSend;
+      successCount++;
+    } catch (e) {
+      const msg = e?.code === 4001 ? 'Rejected.' : (e?.shortMessage || 'Failed.');
+      showToast(`${entry.info.label || fmtAddr(entry.addr)}: ${msg}`, 'error');
+      break;
+    }
+  }
+
+  btn.innerHTML = '↑ Top Off All Low';
+
+  if (successCount > 0) {
+    showToast(`${successCount} drawer${successCount !== 1 ? 's' : ''} topped up ✓`, 'success');
+    await loadVault();
+  } else {
+    btn.disabled = false;
   }
 }
 
