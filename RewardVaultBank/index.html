@@ -774,43 +774,10 @@ async function loadVault() {
 
     renderSigners();
     updateRunway();
-    checkDailyLimitSufficiency();
     loadDailySent().catch(() => {});
 
   } catch (e) {
     showToast('Load failed: ' + (e?.shortMessage || e?.message?.slice(0, 60) || 'unknown error'), 'error');
-  }
-}
-
-// ─── Daily limit sufficiency check ───────────────────────────────────────────
-// As SKOOP price drops, the SKOOP needed per day ($100/loc) grows.
-// If it ever exceeds the vault's dailyLimit the top-offs will revert on-chain.
-function checkDailyLimitSufficiency() {
-  const el = document.getElementById('adm-limit-hint');
-  if (!skoopUSD || !vaultData.dailyLimit) return;
-  const numActive = signerData.filter(s => s.info.approved).length;
-  if (numActive === 0) return;
-  const neededRaw = usdToRaw(CFG.dailyTargetUSD * numActive);
-  if (!neededRaw) return;
-  if (neededRaw > vaultData.dailyLimit) {
-    const shortSKOOP = fmt(neededRaw - vaultData.dailyLimit, decimals);
-    el.textContent =
-      `⚠ Daily limit too low at current price — need ${fmt(neededRaw, decimals)} ${CFG.tokenSymbol}/day ` +
-      `(${fmtUSD(CFG.dailyTargetUSD * numActive)}) but limit is ${fmt(vaultData.dailyLimit, decimals)}. ` +
-      `Raise by ${shortSKOOP} ${CFG.tokenSymbol} or top-offs will revert.`;
-    el.className = 'admin-hint err';
-  } else {
-    // Capacity headroom: how far price can drop before limit becomes a bottleneck
-    const headroomRaw = vaultData.dailyLimit - neededRaw;
-    const headroomPct = Math.floor(Number(headroomRaw * 100n) / Number(vaultData.dailyLimit));
-    if (headroomPct < 20) {
-      el.textContent =
-        `↓ Limit covers ${fmtUSD(CFG.dailyTargetUSD * numActive)}/day with only ${headroomPct}% headroom — consider raising it.`;
-      el.className = 'admin-hint warn';
-    } else if (!el.classList.contains('err')) {
-      el.textContent = `Covers ${fmtUSD(CFG.dailyTargetUSD * numActive)}/day with ${headroomPct}% headroom.`;
-      el.className = 'admin-hint';
-    }
   }
 }
 
@@ -843,7 +810,7 @@ function updateRunway() {
     runwayEl.textContent = runwayDays >= 3650 ? (runwayDays / 365).toFixed(0) + 'y' : dispDays.toLocaleString() + 'd';
     document.getElementById('s-runway-sub').textContent =
       (runwayDays >= 3650 ? dispDays.toLocaleString() + ' days · ' : dispYears + ' yrs · ') +
-      fmtUSD(CFG.dailyTargetUSD) + '/loc × ' + numActive;
+      'at spot (extends as ' + CFG.tokenSymbol + ' burns)';
 
     // Color-code the stat card by urgency
     runwayCard.style.borderTopColor =
@@ -873,14 +840,13 @@ function updateRunway() {
       banner.innerHTML  = `
         <div class="rb-icon">${isCrit ? '🔴' : '⚠️'}</div>
         <div class="rb-body">
-          <div class="rb-title ${level}">${isCrit ? 'Critical' : 'Low'} Vault Runway — ${runwayYears} years (${Math.floor(runwayDays)} days) remaining</div>
+          <div class="rb-title ${level}">${isCrit ? 'Critical' : 'Low'} Vault Runway at Spot Price — ${runwayYears} years</div>
           <div class="rb-msg">
-            At ${fmtUSD(CFG.dailyTargetUSD)}/location × ${numActive} location${numActive !== 1 ? 's' : ''},
-            the vault burns ~${fmtUSD(dailyBurnUSD)}/day.
-            Current vault: <strong>${fmtUSD(vaultUSD)}</strong>.
-            To reach a <strong>${targetYears}-year runway</strong>, add
-            ~<strong>${shortfallFmt} ${CFG.tokenSymbol}</strong> (${fmtUSD(shortfallUSD)} at spot).
-            As ${CFG.tokenSymbol} price rises, fewer tokens are needed and runway extends automatically.
+            At today's price the vault covers ${fmtUSD(dailyBurnUSD)}/day (${fmtUSD(CFG.dailyTargetUSD)} × ${numActive} location${numActive !== 1 ? 's' : ''}).
+            Current vault value: <strong>${fmtUSD(vaultUSD)}</strong>.
+            To reach <strong>${targetYears} years at spot</strong>, add ~<strong>${shortfallFmt} ${CFG.tokenSymbol}</strong> (${fmtUSD(shortfallUSD)}).
+            Because ${CFG.tokenSymbol} is deflationary — fixed supply of 888,888,888, burned on every purchase — price appreciation
+            extends this runway automatically. This figure is a <em>floor estimate</em>, not a ceiling.
           </div>
         </div>`;
     } else {
