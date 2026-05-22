@@ -308,7 +308,7 @@ html,body{min-height:100%;font-family:'Instrument Sans',system-ui,-apple-system,
     <div class="stat-card">
       <div class="sl">Daily Limit</div>
       <div class="sv" id="s-daily-limit">—</div>
-      <div class="ss">max emissions / day</div>
+      <div class="ss" id="s-daily-limit-sub">vault emission cap</div>
     </div>
     <div class="stat-card">
       <div class="sl">Used Today</div>
@@ -721,26 +721,27 @@ async function loadVault() {
 
     // Stats
     document.getElementById('s-vault-bal').textContent = fmt(balance, decimals);
-    document.getElementById('s-vault-bal-sub').textContent = CFG.tokenSymbol + ' remaining';
-    document.getElementById('s-daily-limit').textContent = fmt(dailyLimit, decimals);
-    document.getElementById('s-daily-used').textContent = fmt(dailyUsed, decimals);
-    document.getElementById('s-daily-used-sub').textContent = CFG.tokenSymbol + ' sent today';
-    document.getElementById('s-daily-rem').textContent = fmt(dailyRem, decimals);
-    document.getElementById('s-daily-rem-sub').textContent = CFG.tokenSymbol + ' available';
-    document.getElementById('s-total-topups').textContent = fmt(totalTopUps, decimals);
-    document.getElementById('s-total-sent').textContent = fmt(totalSent, decimals);
+    const vaultUSDVal = skoopUSD ? fmtUSD((Number(balance) / 10**decimals) * skoopUSD) : null;
+    document.getElementById('s-vault-bal-sub').textContent = vaultUSDVal ? vaultUSDVal + ' at spot' : CFG.tokenSymbol + ' remaining';
 
-    // Vault runway: balance / max(dailyUsed today, dailyLimit)
-    const runwayDenom = dailyUsed > 0n ? dailyUsed : dailyLimit;
-    if (runwayDenom > 0n) {
-      const runwayDays = Number(balance) / Number(runwayDenom);
-      const runwayEl = document.getElementById('s-runway');
-      runwayEl.textContent = runwayDays >= 999 ? '999+' : runwayDays.toLocaleString(undefined, { maximumFractionDigits: 0 });
-      document.getElementById('s-runway-sub').textContent = dailyUsed > 0n ? 'days at today\'s rate' : 'days at daily limit';
+    document.getElementById('s-daily-limit').textContent = fmt(dailyLimit, decimals);
+    const limitUSD = skoopUSD ? ' · ' + fmtUSD((Number(dailyLimit) / 10**decimals) * skoopUSD) + '/day cap' : '';
+    document.getElementById('s-daily-limit-sub').textContent = 'vault emission cap' + limitUSD;
+
+    // Used / Remaining: show USD if price available, SKOOP if not
+    if (skoopUSD) {
+      document.getElementById('s-daily-used').textContent  = fmtUSD((Number(dailyUsed)  / 10**decimals) * skoopUSD);
+      document.getElementById('s-daily-used-sub').textContent  = fmt(dailyUsed,  decimals) + ' ' + CFG.tokenSymbol + ' today';
+      document.getElementById('s-daily-rem').textContent   = fmtUSD((Number(dailyRem)   / 10**decimals) * skoopUSD);
+      document.getElementById('s-daily-rem-sub').textContent   = fmt(dailyRem,   decimals) + ' ' + CFG.tokenSymbol + ' left';
     } else {
-      document.getElementById('s-runway').textContent = '—';
-      document.getElementById('s-runway-sub').textContent = 'no activity yet';
+      document.getElementById('s-daily-used').textContent  = fmt(dailyUsed,  decimals);
+      document.getElementById('s-daily-used-sub').textContent  = CFG.tokenSymbol + ' sent today';
+      document.getElementById('s-daily-rem').textContent   = fmt(dailyRem,   decimals);
+      document.getElementById('s-daily-rem-sub').textContent   = CFG.tokenSymbol + ' available';
     }
+    document.getElementById('s-total-topups').textContent = fmt(totalTopUps, decimals);
+    document.getElementById('s-total-sent').textContent   = fmt(totalSent,   decimals);
 
     // Fetch all signer data in parallel
     const signerFetches = signerList.map(addr =>
@@ -753,10 +754,41 @@ async function loadVault() {
     signerData = await Promise.all(signerFetches);
 
     renderSigners();
+    updateRunway();
     loadDailySent().catch(() => {});
 
   } catch (e) {
     showToast('Load failed: ' + (e?.shortMessage || e?.message?.slice(0, 60) || 'unknown error'), 'error');
+  }
+}
+
+// ─── Runway ───────────────────────────────────────────────────────────────────
+function updateRunway() {
+  const { balance, dailyLimit } = vaultData;
+  if (!balance || balance === 0n) {
+    document.getElementById('s-runway').textContent = '—';
+    document.getElementById('s-runway-sub').textContent = 'vault empty';
+    return;
+  }
+  const numActive = signerData.filter(s => s.info.approved).length;
+  if (skoopUSD && numActive > 0) {
+    // USD-normalised: as price rises, fewer SKOOP needed → runway extends automatically
+    const vaultUSD      = (Number(balance) / 10**decimals) * skoopUSD;
+    const dailyBurnUSD  = CFG.dailyTargetUSD * numActive;
+    const runwayDays    = vaultUSD / dailyBurnUSD;
+    document.getElementById('s-runway').textContent =
+      runwayDays >= 999 ? '999+' : Math.floor(runwayDays).toLocaleString();
+    document.getElementById('s-runway-sub').textContent =
+      fmtUSD(CFG.dailyTargetUSD) + '/location × ' + numActive + ' loc';
+  } else if (dailyLimit > 0n) {
+    // Fallback: SKOOP-based when price unavailable
+    const runwayDays = Number(balance) / Number(dailyLimit);
+    document.getElementById('s-runway').textContent =
+      runwayDays >= 999 ? '999+' : Math.floor(runwayDays).toLocaleString();
+    document.getElementById('s-runway-sub').textContent = 'days at daily limit (price unavailable)';
+  } else {
+    document.getElementById('s-runway').textContent = '—';
+    document.getElementById('s-runway-sub').textContent = 'no signers configured';
   }
 }
 
@@ -846,10 +878,33 @@ function signerCard({ addr, info, tokenBal, ethBal, sentToday }) {
       <span class="sc-row-lbl">ETH Gas</span>
       <span class="sc-row-val eth ${gasClass}">${fmtETH(ethBal)}${gasWarn}</span>
     </div>
-    <div class="sc-row">
-      <span class="sc-row-lbl">Sent Today (~24h)</span>
-      <span class="sc-row-val sent-today">${sentToday !== null ? fmt(sentToday, decimals) + ' ' + sym : '…'}</span>
-    </div>
+    ${(() => {
+      if (sentToday === null) return `
+      <div class="sc-row">
+        <span class="sc-row-lbl">Dispensed Today</span>
+        <span class="sc-row-val sent-today">loading…</span>
+      </div>`;
+      const sentN   = Number(sentToday) / 10**decimals;
+      const sentUSD = skoopUSD ? sentN * skoopUSD : null;
+      const remUSD  = sentUSD !== null ? Math.max(0, CFG.dailyTargetUSD - sentUSD) : null;
+      const remColor = remUSD !== null
+        ? (remUSD < CFG.dailyTargetUSD * CFG.lowBalanceCrit ? 'var(--red)' : remUSD < CFG.dailyTargetUSD * CFG.lowBalanceWarn ? 'var(--amber)' : 'var(--green)')
+        : 'inherit';
+      if (sentUSD !== null) return `
+      <div class="sc-row">
+        <span class="sc-row-lbl">Dispensed Today</span>
+        <span class="sc-row-val sent-today">${fmtUSD(sentUSD)} <span style="color:var(--text-3);font-weight:400;font-size:0.6rem;">of ${fmtUSD(CFG.dailyTargetUSD)}</span></span>
+      </div>
+      <div class="sc-row">
+        <span class="sc-row-lbl">Budget Left</span>
+        <span class="sc-row-val" style="color:${remColor}">${fmtUSD(remUSD)}</span>
+      </div>`;
+      return `
+      <div class="sc-row">
+        <span class="sc-row-lbl">Dispensed Today</span>
+        <span class="sc-row-val sent-today">${fmt(sentToday, decimals)} ${sym}</span>
+      </div>`;
+    })()}
     <div class="sc-row">
       <span class="sc-row-lbl">Lifetime Received</span>
       <span class="sc-row-val">${fmt(info.totalReceived, decimals)} ${sym}</span>
@@ -917,6 +972,8 @@ function openModal(addr) {
   document.getElementById('modal-confirm').innerHTML = 'Confirm Top-Up →';
 
   document.getElementById('topoff-modal').classList.add('open');
+  // Auto-populate: fill to bring this location up to the $100/day target
+  if (skoopUSD) fillTarget();
   document.getElementById('modal-amount').focus();
 }
 
@@ -1346,6 +1403,7 @@ async function loadDailySent() {
 
   await Promise.all(fetches);
   renderSigners();
+  updateRunway();
 }
 
 // ─── Auto-fill vault address from config + auto-connect ──────────────────────
