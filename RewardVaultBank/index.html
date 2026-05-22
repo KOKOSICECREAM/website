@@ -114,6 +114,18 @@ html,body{min-height:100%;font-family:'Instrument Sans',system-ui,-apple-system,
 #pause-banner.on{display:flex;}
 .pb-msg{font-size:0.75rem;color:var(--amber);font-weight:500;flex:1;}
 
+/* Runway advisory banner */
+#runway-banner{border-radius:var(--r);padding:1rem 1.25rem;margin-bottom:1.5rem;display:flex;align-items:flex-start;gap:0.875rem;line-height:1.55;}
+#runway-banner.warn{background:var(--sand);border:1px solid var(--amber-border);}
+#runway-banner.crit{background:var(--red-lt);border:1px solid var(--red-border);}
+.rb-icon{font-size:1.1rem;flex-shrink:0;margin-top:0.05rem;}
+.rb-body{flex:1;}
+.rb-title{font-weight:600;font-size:0.8rem;margin-bottom:0.2rem;}
+.rb-title.warn{color:var(--amber);}
+.rb-title.crit{color:var(--red);}
+.rb-msg{font-size:0.75rem;color:var(--ink-mid);line-height:1.65;}
+.rb-msg strong{color:var(--ink);font-weight:600;}
+
 /* Signer grid */
 #signer-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(310px,1fr));gap:1rem;}
 .signer-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);overflow:hidden;transition:border-color 0.2s,box-shadow 0.2s;}
@@ -298,6 +310,9 @@ html,body{min-height:100%;font-family:'Instrument Sans',system-ui,-apple-system,
     <div class="pb-msg">Vault is paused — top-ups are disabled. Call <code>unpause()</code> on the vault contract to resume.</div>
   </div>
 
+  <!-- Low runway advisory -->
+  <div id="runway-banner" style="display:none;"></div>
+
   <!-- Stats -->
   <div id="stats-grid">
     <div class="stat-card">
@@ -335,7 +350,7 @@ html,body{min-height:100%;font-family:'Instrument Sans',system-ui,-apple-system,
       <div class="sv" id="s-skoop-price">—</div>
       <div class="ss" id="s-price-sub">Uniswap V3 spot</div>
     </div>
-    <div class="stat-card">
+    <div class="stat-card" id="stat-runway-card">
       <div class="sl">Vault Runway</div>
       <div class="sv" id="s-runway">—</div>
       <div class="ss" id="s-runway-sub">days at current rate</div>
@@ -474,6 +489,10 @@ const BUSINESS_CONFIG = {
   // Warn on ETH gas balance
   gasWarnEth:       0.005,
   gasCritEth:       0.001,
+  // Vault runway health — calibrated to business lifespan (2–10 years)
+  runwayWarnDays:   730,  // amber: < 2 years — plan a vault top-up
+  runwayCritDays:   365,  // red:   < 1 year  — urgent action needed
+  runwayTargetDays: 1825, // suggested refill target: 5 years of operating runway
 };
 // ═══════════════════════════════════════════════════════════════════════════
 
@@ -755,6 +774,7 @@ async function loadVault() {
 
     renderSigners();
     updateRunway();
+    checkDailyLimitSufficiency();
     loadDailySent().catch(() => {});
 
   } catch (e) {
@@ -762,33 +782,123 @@ async function loadVault() {
   }
 }
 
+// ─── Daily limit sufficiency check ───────────────────────────────────────────
+// As SKOOP price drops, the SKOOP needed per day ($100/loc) grows.
+// If it ever exceeds the vault's dailyLimit the top-offs will revert on-chain.
+function checkDailyLimitSufficiency() {
+  const el = document.getElementById('adm-limit-hint');
+  if (!skoopUSD || !vaultData.dailyLimit) return;
+  const numActive = signerData.filter(s => s.info.approved).length;
+  if (numActive === 0) return;
+  const neededRaw = usdToRaw(CFG.dailyTargetUSD * numActive);
+  if (!neededRaw) return;
+  if (neededRaw > vaultData.dailyLimit) {
+    const shortSKOOP = fmt(neededRaw - vaultData.dailyLimit, decimals);
+    el.textContent =
+      `⚠ Daily limit too low at current price — need ${fmt(neededRaw, decimals)} ${CFG.tokenSymbol}/day ` +
+      `(${fmtUSD(CFG.dailyTargetUSD * numActive)}) but limit is ${fmt(vaultData.dailyLimit, decimals)}. ` +
+      `Raise by ${shortSKOOP} ${CFG.tokenSymbol} or top-offs will revert.`;
+    el.className = 'admin-hint err';
+  } else {
+    // Capacity headroom: how far price can drop before limit becomes a bottleneck
+    const headroomRaw = vaultData.dailyLimit - neededRaw;
+    const headroomPct = Math.floor(Number(headroomRaw * 100n) / Number(vaultData.dailyLimit));
+    if (headroomPct < 20) {
+      el.textContent =
+        `↓ Limit covers ${fmtUSD(CFG.dailyTargetUSD * numActive)}/day with only ${headroomPct}% headroom — consider raising it.`;
+      el.className = 'admin-hint warn';
+    } else if (!el.classList.contains('err')) {
+      el.textContent = `Covers ${fmtUSD(CFG.dailyTargetUSD * numActive)}/day with ${headroomPct}% headroom.`;
+      el.className = 'admin-hint';
+    }
+  }
+}
+
 // ─── Runway ───────────────────────────────────────────────────────────────────
 function updateRunway() {
   const { balance, dailyLimit } = vaultData;
+  const banner    = document.getElementById('runway-banner');
+  const runwayEl  = document.getElementById('s-runway');
+  const runwayCard = document.getElementById('stat-runway-card');
+
+  const clearBanner = () => { banner.style.display = 'none'; banner.className = ''; banner.innerHTML = ''; };
+
   if (!balance || balance === 0n) {
-    document.getElementById('s-runway').textContent = '—';
+    runwayEl.textContent = '—';
     document.getElementById('s-runway-sub').textContent = 'vault empty';
+    clearBanner();
     return;
   }
+
   const numActive = signerData.filter(s => s.info.approved).length;
+
   if (skoopUSD && numActive > 0) {
-    // USD-normalised: as price rises, fewer SKOOP needed → runway extends automatically
-    const vaultUSD      = (Number(balance) / 10**decimals) * skoopUSD;
-    const dailyBurnUSD  = CFG.dailyTargetUSD * numActive;
-    const runwayDays    = vaultUSD / dailyBurnUSD;
-    document.getElementById('s-runway').textContent =
-      runwayDays >= 999 ? '999+' : Math.floor(runwayDays).toLocaleString();
+    // USD-normalised: as SKOOP price rises, fewer tokens needed → runway extends automatically
+    const vaultUSD     = (Number(balance) / 10**decimals) * skoopUSD;
+    const dailyBurnUSD = CFG.dailyTargetUSD * numActive;
+    const runwayDays   = vaultUSD / dailyBurnUSD;
+
+    const dispDays = Math.floor(runwayDays);
+    const dispYears = (runwayDays / 365).toFixed(1);
+    runwayEl.textContent = runwayDays >= 3650 ? (runwayDays / 365).toFixed(0) + 'y' : dispDays.toLocaleString() + 'd';
     document.getElementById('s-runway-sub').textContent =
-      fmtUSD(CFG.dailyTargetUSD) + '/location × ' + numActive + ' loc';
+      (runwayDays >= 3650 ? dispDays.toLocaleString() + ' days · ' : dispYears + ' yrs · ') +
+      fmtUSD(CFG.dailyTargetUSD) + '/loc × ' + numActive;
+
+    // Color-code the stat card by urgency
+    runwayCard.style.borderTopColor =
+      runwayDays < CFG.runwayCritDays ? 'var(--red)' :
+      runwayDays < CFG.runwayWarnDays ? 'var(--amber)' : '';
+    runwayEl.style.color =
+      runwayDays < CFG.runwayCritDays ? 'var(--red)' :
+      runwayDays < CFG.runwayWarnDays ? 'var(--amber)' : '';
+
+    // Advisory banner when below warn threshold
+    if (runwayDays < CFG.runwayWarnDays) {
+      const isCrit = runwayDays < CFG.runwayCritDays;
+      const level  = isCrit ? 'crit' : 'warn';
+
+      // How much SKOOP to add to reach runwayTargetDays
+      const targetUSD      = CFG.runwayTargetDays * dailyBurnUSD;
+      const shortfallUSD   = Math.max(0, targetUSD - vaultUSD);
+      const shortfallSKOOP = shortfallUSD / skoopUSD;
+      const shortfallFmt   = shortfallSKOOP >= 1e6
+        ? (shortfallSKOOP / 1e6).toFixed(2) + 'M'
+        : Math.ceil(shortfallSKOOP).toLocaleString();
+
+      banner.style.display = 'flex';
+      banner.className     = level;
+      const runwayYears = (runwayDays / 365).toFixed(1);
+      const targetYears = (CFG.runwayTargetDays / 365).toFixed(0);
+      banner.innerHTML  = `
+        <div class="rb-icon">${isCrit ? '🔴' : '⚠️'}</div>
+        <div class="rb-body">
+          <div class="rb-title ${level}">${isCrit ? 'Critical' : 'Low'} Vault Runway — ${runwayYears} years (${Math.floor(runwayDays)} days) remaining</div>
+          <div class="rb-msg">
+            At ${fmtUSD(CFG.dailyTargetUSD)}/location × ${numActive} location${numActive !== 1 ? 's' : ''},
+            the vault burns ~${fmtUSD(dailyBurnUSD)}/day.
+            Current vault: <strong>${fmtUSD(vaultUSD)}</strong>.
+            To reach a <strong>${targetYears}-year runway</strong>, add
+            ~<strong>${shortfallFmt} ${CFG.tokenSymbol}</strong> (${fmtUSD(shortfallUSD)} at spot).
+            As ${CFG.tokenSymbol} price rises, fewer tokens are needed and runway extends automatically.
+          </div>
+        </div>`;
+    } else {
+      clearBanner();
+    }
+
   } else if (dailyLimit > 0n) {
     // Fallback: SKOOP-based when price unavailable
     const runwayDays = Number(balance) / Number(dailyLimit);
-    document.getElementById('s-runway').textContent =
-      runwayDays >= 999 ? '999+' : Math.floor(runwayDays).toLocaleString();
-    document.getElementById('s-runway-sub').textContent = 'days at daily limit (price unavailable)';
+    runwayEl.textContent = runwayDays >= 999 ? '999+' : Math.floor(runwayDays).toLocaleString();
+    document.getElementById('s-runway-sub').textContent = 'days at daily limit (price loading…)';
+    runwayCard.style.borderTopColor = '';
+    runwayEl.style.color = '';
+    clearBanner();
   } else {
-    document.getElementById('s-runway').textContent = '—';
+    runwayEl.textContent = '—';
     document.getElementById('s-runway-sub').textContent = 'no signers configured';
+    clearBanner();
   }
 }
 
