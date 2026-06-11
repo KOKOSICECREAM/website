@@ -756,6 +756,16 @@ async function runSettlementScan(){
     let capR=cache?.capR||[],voidR=cache?.voidR||[],burnR=cache?.burnR||[],stlR=cache?.stlR||[];
     let bbR=cache?.bbR||[],ubR=cache?.ubR||[],tyR=cache?.tyR||[];
 
+    // Render cached data immediately so settlement/burn buttons are usable
+    // while incremental blocks are still being fetched in the background.
+    if(cache){
+      buildAllData(capR,voidR,burnR,stlR,bbR,ubR,tyR,[],[],{});
+      applyFilter();
+      document.getElementById('csv-btn').disabled=false;
+      document.getElementById('pdf-btn').disabled=false;
+      document.getElementById('meta-settle').textContent='Updating…';
+    }
+
     if(fromBlock<=latest){
       const esc=new ethers.Contract(CFG.ESCROW,ABI_ESC,pub);
       const tsy=new ethers.Contract(CFG.TREASURY,ABI_TSY,pub);
