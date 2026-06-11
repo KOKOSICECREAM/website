@@ -1277,8 +1277,8 @@ function renderReceipts(){
     const badge=isUsdc
       ?'<span style="font-size:0.55rem;background:var(--mint);color:var(--mint-dk);border-radius:4px;padding:1px 4px;margin-left:4px;">USDC</span>'
       :'<span style="font-size:0.55rem;background:var(--coral);color:var(--ink);border-radius:4px;padding:1px 4px;margin-left:4px;">SKOOP</span>';
-    const windowOpen=r.capturedAt&&(now<=r.capturedAt+7*24*3600);
-    const secsLeft=r.capturedAt?(r.capturedAt+7*24*3600-now):0;
+    const windowOpen=r.capturedAt&&(now<=r.capturedAt+1*24*3600);
+    const secsLeft=r.capturedAt?(r.capturedAt+1*24*3600-now):0;
     const statusLabel=windowOpen
       ?`<div class="rc-status rc-pending">Settles in ${formatTimeLeft(secsLeft)}</div>`
       :`<div class="rc-status rc-ready">Ready ✓</div>`;
