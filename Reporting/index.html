@@ -695,7 +695,7 @@ function applyFilter(){
 
 // ── SCAN CACHE ────────────────────────────────────────────────────────────────
 const SCAN_CACHE_KEY=`kokos_v1_${CFG.ESCROW.slice(-8)}_${CFG.TREASURY.slice(-8)}`;
-const N_PAR=1;
+const N_PAR=4;
 
 function loadScanCache(){try{const r=localStorage.getItem(SCAN_CACHE_KEY);return r?JSON.parse(r):null;}catch{return null;}}
 function saveScanCache(d){try{localStorage.setItem(SCAN_CACHE_KEY,JSON.stringify(d));}catch{console.warn('Cache quota full — scan works, just slower next time');}}
@@ -785,15 +785,18 @@ async function runSettlementScan(){
         }
       }
 
-      for(let s=fromBlock;s<=latest;s+=CFG.CHUNK){
-        const end=Math.min(s+CFG.CHUNK-1,latest);
-        if(totalChunks>3)document.getElementById('meta-settle').textContent=`Scanning ${done+1}/${totalChunks}…`;
-        const[a,b,c,d,e,f,g]=await querySettleChunk(s,end);
-        capR=capR.concat(a.map(EX.cap));voidR=voidR.concat(b.map(EX.void));
-        burnR=burnR.concat(c.map(EX.burn));stlR=stlR.concat(d.map(EX.settle));
-        bbR=bbR.concat(e.map(EX.burnBatch));ubR=ubR.concat(f.map(EX.usdcBatch));
-        tyR=tyR.concat(g.map(EX.tsySettle));
-        done++;
+      for(let s=fromBlock;s<=latest;s+=CFG.CHUNK*N_PAR){
+        const starts=[];
+        for(let j=0;j<N_PAR&&s+j*CFG.CHUNK<=latest;j++) starts.push(s+j*CFG.CHUNK);
+        if(totalChunks>3)document.getElementById('meta-settle').textContent=`Scanning ${done+1}–${Math.min(done+starts.length,totalChunks)} of ${totalChunks}…`;
+        const results=await Promise.all(starts.map(bs=>querySettleChunk(bs,Math.min(bs+CFG.CHUNK-1,latest))));
+        for(const[a,b,c,d,e,f,g] of results){
+          capR=capR.concat(a.map(EX.cap));voidR=voidR.concat(b.map(EX.void));
+          burnR=burnR.concat(c.map(EX.burn));stlR=stlR.concat(d.map(EX.settle));
+          bbR=bbR.concat(e.map(EX.burnBatch));ubR=ubR.concat(f.map(EX.usdcBatch));
+          tyR=tyR.concat(g.map(EX.tsySettle));
+        }
+        done+=starts.length;
       }
       saveSettleCache({capR,voidR,burnR,stlR,bbR,ubR,tyR,lastBlock:latest});
     }
