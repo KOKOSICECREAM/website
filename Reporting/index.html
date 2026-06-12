@@ -695,7 +695,7 @@ function applyFilter(){
 
 // ── SCAN CACHE ────────────────────────────────────────────────────────────────
 const SCAN_CACHE_KEY=`kokos_v1_${CFG.ESCROW.slice(-8)}_${CFG.TREASURY.slice(-8)}`;
-const N_PAR=2;
+const N_PAR=1;
 
 function loadScanCache(){try{const r=localStorage.getItem(SCAN_CACHE_KEY);return r?JSON.parse(r):null;}catch{return null;}}
 function saveScanCache(d){try{localStorage.setItem(SCAN_CACHE_KEY,JSON.stringify(d));}catch{console.warn('Cache quota full — scan works, just slower next time');}}
@@ -926,19 +926,15 @@ async function runScan(){
 }
 
 async function fetchPrice(pub){
-  const p=pub||new ethers.JsonRpcProvider(CFG.RPC);
   try{
+    const p=pub||new ethers.JsonRpcProvider(CFG.RPC);
     const pool=new ethers.Contract(CFG.POOL,ABI_POOL,p);
     const[s0,t0]=await Promise.all([pool.slot0(),pool.token0()]);
     const sq=Number(s0.sqrtPriceX96)/Number(2n**96n);
     const raw=sq*sq;
     const skoopIsT0=t0.toLowerCase()===CFG.SKOOP.toLowerCase();
     skoopUSD=skoopIsT0?raw:1/raw;
-  }catch(e){console.error('fetchPrice (pool):', e);}
-  try{
-    const sk=new ethers.Contract(CFG.SKOOP,ABI_SKOOP_READ,p);
-    skoopTotalSupply=await sk.totalSupply();
-  }catch(e){console.error('fetchPrice (totalSupply):', e);}
+  }catch(e){console.error('fetchPrice:',e);}
 }
 
 // ── TREASURY ──────────────────────────────────────────────────────────────────
