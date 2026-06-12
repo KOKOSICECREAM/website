@@ -695,7 +695,7 @@ function applyFilter(){
 
 // ── SCAN CACHE ────────────────────────────────────────────────────────────────
 const SCAN_CACHE_KEY=`kokos_v1_${CFG.ESCROW.slice(-8)}_${CFG.TREASURY.slice(-8)}`;
-const N_PAR=4;
+const N_PAR=2;
 
 function loadScanCache(){try{const r=localStorage.getItem(SCAN_CACHE_KEY);return r?JSON.parse(r):null;}catch{return null;}}
 function saveScanCache(d){try{localStorage.setItem(SCAN_CACHE_KEY,JSON.stringify(d));}catch{console.warn('Cache quota full — scan works, just slower next time');}}
@@ -785,7 +785,7 @@ async function runSettlementScan(){
           ]);
         }catch(err){
           const msg=JSON.stringify(err);
-          if((msg.includes('rate limit')||msg.includes('-32016')||msg.includes('over rate'))&&attempt<4){
+          if((msg.includes('rate limit')||msg.includes('-32016')||msg.includes('over rate')||msg.includes('429')||msg.includes('too many'))&&attempt<4){
             const wait=1500*(attempt+1);
             document.getElementById('meta-settle').textContent=`Rate limited — retrying in ${wait/1000}s…`;
             await new Promise(r=>setTimeout(r,wait));
@@ -868,7 +868,7 @@ async function runScan(){
           ]);
         }catch(err){
           const msg=JSON.stringify(err);
-          const isRate=msg.includes('rate limit')||msg.includes('-32016')||msg.includes('over rate');
+          const isRate=msg.includes('rate limit')||msg.includes('-32016')||msg.includes('over rate')||msg.includes('429')||msg.includes('too many');
           if(isRate&&attempt<4){
             const wait=1500*(attempt+1);
             setBar(10+Math.round((done/totalChunks)*82),`Rate limited — retrying in ${wait/1000}s…`);
