@@ -926,21 +926,19 @@ async function runScan(){
 }
 
 async function fetchPrice(pub){
+  const p=pub||new ethers.JsonRpcProvider(CFG.RPC);
   try{
-    const p=pub||new ethers.JsonRpcProvider(CFG.RPC);
     const pool=new ethers.Contract(CFG.POOL,ABI_POOL,p);
-    const sk=new ethers.Contract(CFG.SKOOP,ABI_SKOOP_READ,p);
-    const[[s0,t0],supply]=await Promise.all([
-      Promise.all([pool.slot0(),pool.token0()]),
-      sk.totalSupply()
-    ]);
+    const[s0,t0]=await Promise.all([pool.slot0(),pool.token0()]);
     const sq=Number(s0.sqrtPriceX96)/Number(2n**96n);
     const raw=sq*sq;
     const skoopIsT0=t0.toLowerCase()===CFG.SKOOP.toLowerCase();
-    // SKOOP/USDC pool — both 6 decimals, no adjustment needed
     skoopUSD=skoopIsT0?raw:1/raw;
-    skoopTotalSupply=supply;
-  }catch(e){console.error('fetchPrice:',e);}
+  }catch(e){console.error('fetchPrice (pool):', e);}
+  try{
+    const sk=new ethers.Contract(CFG.SKOOP,ABI_SKOOP_READ,p);
+    skoopTotalSupply=await sk.totalSupply();
+  }catch(e){console.error('fetchPrice (totalSupply):', e);}
 }
 
 // ── TREASURY ──────────────────────────────────────────────────────────────────
