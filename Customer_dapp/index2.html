@@ -1340,10 +1340,15 @@ async function confirmPay(){
       tokenAmount:BigInt(d.tokenAmount),subtotalCents:BigInt(d.subtotalCents),taxCents:BigInt(d.taxCents),
       totalCents:BigInt(d.totalCents),itemCount:BigInt(d.itemCount),cartHash:d.cartHash,deadline:BigInt(d.deadline)
     };
+    // Re-check deadline \u2014 approve step takes time and QR may have expired
+    if(Date.now()/1000>Number(d.deadline)){
+      showToast('QR expired \u2014 ask the shop to generate a new one','err');
+      cancelPay();return;
+    }
     const escrow=new ethers.Contract(CFG.ESCROW,ABI_ESCROW,signer);let tx;
     try{tx=await escrow.capturePayment(intent,d.signature);}
     catch(e){
-      if(al<tokAmt)setApStep(2,'error','Payment rejected \u2014 tap below to try again');
+      setApStep(2,'error','Payment rejected \u2014 tap below to try again');
       showToast(e?.reason||e?.shortMessage||e?.data?.message||e?.message||"Payment rejected","err");
       btn.disabled=false;btn.textContent="Try Again";return;
     }
