@@ -199,7 +199,8 @@ tfoot td{background:var(--green-lt);font-weight:700;color:var(--green);border-to
       <span style="font-size:0.78rem;color:var(--ink-lt);">to</span>
       <input class="date-input" type="date" id="date-to">
     </div>
-    <button class="ctrl-btn" id="scan-btn" onclick="runScan()">⟳ Full Scan</button>
+    <button class="ctrl-btn" id="quick-scan-btn" onclick="runSettlementScan()">⚡ Quick Scan</button>
+    <button class="ctrl-btn sec" id="scan-btn" onclick="runScan()">⟳ Full Scan</button>
     <button class="ctrl-btn sec" onclick="fullRescan()" title="Clear cache and scan all blocks from scratch">↺ Full Rescan</button>
     <button class="ctrl-btn sec" id="csv-btn" onclick="exportCSV()" disabled>↓ CSV</button>
     <button class="ctrl-btn sec" id="pdf-btn" onclick="exportPDF()" disabled>↓ PDF</button>
@@ -746,6 +747,8 @@ function fullRescan(){clearScanCache();clearSettleCache();runScan();}
 // Skips Transfer event queries (rewards, direct USDC) and block timestamp fetching.
 // Runs automatically on connect so Settlement + Treasury are ready immediately.
 async function runSettlementScan(){
+  const qBtn=document.getElementById('quick-scan-btn');
+  if(qBtn){qBtn.disabled=true;qBtn.innerHTML='<span class="spin"></span> Loading…';}
   document.getElementById('meta-settle').textContent='Loading…';
   try{
     const pub=new ethers.JsonRpcProvider(CFG.RPC,undefined,{batchMaxCount:9});
@@ -820,6 +823,7 @@ async function runSettlementScan(){
     document.getElementById('meta-settle').textContent='Load failed — use ⟳ Full Scan';
     console.error('Settlement scan:',e);
   }
+  if(qBtn){qBtn.disabled=false;qBtn.innerHTML='⚡ Quick Scan';}
 }
 
 async function runScan(){
@@ -922,18 +926,23 @@ async function runScan(){
   }catch(e){
     setScanBar(false);showToast('Scan error: '+(e?.message||'').slice(0,60),'error');console.error(e);
   }
-  btn.disabled=false;btn.innerHTML='⟳ Scan Chain';
+  btn.disabled=false;btn.innerHTML='⟳ Full Scan';
 }
 
 async function fetchPrice(pub){
   try{
     const p=pub||new ethers.JsonRpcProvider(CFG.RPC);
     const pool=new ethers.Contract(CFG.POOL,ABI_POOL,p);
-    const[s0,t0]=await Promise.all([pool.slot0(),pool.token0()]);
+    const sk=new ethers.Contract(CFG.SKOOP,ABI_SKOOP_READ,p);
+    const[[s0,t0],supply]=await Promise.all([
+      Promise.all([pool.slot0(),pool.token0()]),
+      sk.totalSupply()
+    ]);
     const sq=Number(s0.sqrtPriceX96)/Number(2n**96n);
     const raw=sq*sq;
     const skoopIsT0=t0.toLowerCase()===CFG.SKOOP.toLowerCase();
     skoopUSD=skoopIsT0?raw:1/raw;
+    skoopTotalSupply=supply;
   }catch(e){console.error('fetchPrice:',e);}
 }
 
