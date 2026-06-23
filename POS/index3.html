@@ -1,0 +1,1202 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>KOKOS POS</title>
+<link rel="icon" type="image/png" href="KOKOS.png">
+<link rel="apple-touch-icon" href="KOKOS.png">
+<link rel="manifest" href="manifest-pos.json">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="KOKOS POS">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#fdcec1">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400&family=Instrument+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/ethers@6.13.4/dist/ethers.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+
+<style>
+:root{
+  --coral:#fdcec1;--coral-mid:#fdaf9a;--coral-deep:#f0876a;
+  --mint:#d4ede0;--mint-mid:#a8d4bb;--mint-dk:#2a7050;
+  --lavender:#e8d8f4;--lavender-mid:#c8a8e4;--lavender-dk:#7040a0;
+  --sand:#fff0c0;--sand-mid:#f5d87a;--sand-dk:#9a7010;
+  --apricot:#fae2d8;
+  --cream:#fdf6f0;--white:#fff;
+  --ink:#3a2010;--ink-mid:#8a5a45;--ink-lt:#c0a090;
+  --border:rgba(200,140,100,0.15);
+  --shadow-lg:0 8px 40px rgba(180,100,60,0.18);
+  --topbar-h:62px;
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+html,body{height:100%;overflow:hidden;font-family:'Instrument Sans',sans-serif;background:var(--coral);color:var(--ink);-webkit-font-smoothing:antialiased;}
+
+/* SHELL */
+#shell{display:flex;flex-direction:column;height:100vh;width:100vw;}
+
+/* TOPBAR */
+#topbar{height:var(--topbar-h);background:var(--coral);display:flex;align-items:center;padding:0 1rem;gap:0.75rem;flex-shrink:0;border-bottom:1px solid rgba(240,135,106,0.3);}
+.logo-wrap{display:flex;align-items:center;gap:0.5rem;flex-shrink:0;}
+.logo-wrap img{height:34px;width:auto;object-fit:contain;}
+#logo-text{font-family:'Cormorant Garamond',serif;font-size:1.2rem;font-weight:600;letter-spacing:0.1em;color:var(--ink);}
+#logo-subtitle{font-style:italic;font-size:0.82rem;color:rgba(58,32,16,0.5);margin-left:0.4rem;}
+#price-pill{flex:1;min-width:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;overflow:hidden;}
+#price-pill-main{font-size:0.95rem;font-weight:700;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%;}
+#price-pill-change{font-size:0.72rem;font-weight:600;white-space:nowrap;color:rgba(58,32,16,0.5);}
+#wallet-btn{background:var(--white);color:var(--ink);border:none;padding:0.42rem 1rem;border-radius:999px;font-family:inherit;font-size:0.78rem;font-weight:700;cursor:pointer;white-space:nowrap;flex-shrink:0;}
+
+/* WALLET BALANCE PILL */
+#wallet-balance-wrap{display:none;flex-direction:column;align-items:flex-end;gap:1px;cursor:pointer;flex-shrink:0;min-width:0;}
+#wallet-balance-wrap.visible{display:flex;}
+#wallet-balance-skoop{font-size:0.78rem;font-weight:700;color:var(--ink);white-space:nowrap;line-height:1.1;}
+#wallet-balance-usd{font-size:0.62rem;color:var(--ink-mid);white-space:nowrap;line-height:1.1;}
+#wallet-balance-dot{display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--mint-dk);margin-right:3px;vertical-align:middle;}
+#wallet-balance-dot.loading{background:var(--sand-dk);animation:pulse 1s ease infinite;}
+#wallet-balance-dot.error{background:#c0392b;}
+@media(max-width:680px){
+  #price-pill{flex:0 1 auto;}
+  #price-pill-main{font-size:0.78rem;}
+  #price-pill-change{font-size:0.62rem;}
+  #wallet-balance-skoop{font-size:0.7rem;}
+  #wallet-balance-usd{font-size:0.58rem;}
+  #wallet-btn{padding:0.42rem 0.65rem;font-size:0.72rem;}
+}
+
+/* CONTENT */
+#content{flex:1;display:grid;grid-template-columns:1fr 320px;overflow:hidden;background:var(--cream);min-height:0;}
+
+/* LEFT PANEL */
+#left-panel{display:flex;flex-direction:column;overflow:hidden;border-right:1px solid var(--border);}
+
+.cat-strip{display:flex;gap:0.3rem;overflow-x:auto;padding:0.5rem 0.75rem;border-bottom:1px solid var(--border);background:var(--white);flex-shrink:0;scrollbar-width:none;}
+.cat-strip::-webkit-scrollbar{display:none;}
+.cat-btn{flex-shrink:0;background:var(--apricot);border:none;padding:0.32rem 0.9rem;border-radius:999px;font-family:inherit;font-size:0.75rem;font-weight:600;color:var(--ink-mid);cursor:pointer;letter-spacing:0.04em;text-transform:uppercase;}
+.cat-btn.active{background:var(--coral-deep);color:var(--white);}
+.cat-btn.custom-cat{background:var(--lavender);color:var(--lavender-dk);}
+.cat-btn.custom-cat.active{background:var(--lavender-dk);color:var(--white);}
+
+/* 4-col menu grid */
+#menu-grid{flex:1;overflow-y:auto;padding:0.65rem;display:grid;grid-template-columns:repeat(3,1fr);gap:0.6rem;align-content:start;background:var(--cream);}
+
+.menu-item{border:1.5px solid transparent;border-radius:15px;padding:0.75rem 0.65rem 0.6rem;cursor:pointer;display:flex;flex-direction:column;aspect-ratio:1/1;justify-content:space-between;user-select:none;transition:border-color 0.1s,transform 0.08s;}
+.menu-item:active{transform:scale(0.92);}
+.menu-item[data-cat="scoops"]{background:#fde8e1;border-color:rgba(240,135,106,0.2);}
+.menu-item[data-cat="drinks"]{background:#d8f0e6;border-color:rgba(80,180,130,0.2);}
+.menu-item[data-cat="extras"]{background:#fff3cc;border-color:rgba(200,170,60,0.2);}
+.menu-item[data-cat="custom"]{background:var(--lavender);border-color:rgba(160,100,200,0.18);}
+.menu-item.in-cart{border-color:var(--coral-deep)!important;}
+.mi-top{display:flex;justify-content:space-between;align-items:flex-start;}
+.mi-emoji{font-size:1.8rem;line-height:1;}
+.mi-img{width:1.7rem;height:1.7rem;object-fit:cover;border-radius:6px;flex-shrink:0;}
+.mi-badge{min-width:22px;height:22px;border-radius:999px;background:var(--coral-deep);color:var(--white);font-size:0.68rem;font-weight:700;display:flex;align-items:center;justify-content:center;padding:0 3px;opacity:0;}
+.menu-item.in-cart .mi-badge{opacity:1;}
+.mi-name{font-size:0.78rem;font-weight:600;color:var(--ink);line-height:1.2;flex:1;margin-top:0.18rem;}
+.mi-bottom{display:flex;align-items:center;justify-content:space-between;}
+.mi-price{font-size:0.8rem;font-weight:700;}
+.menu-item[data-cat="scoops"] .mi-price{color:#b05030;}
+.menu-item[data-cat="drinks"] .mi-price{color:#2a7050;}
+.menu-item[data-cat="extras"] .mi-price{color:#9a7010;}
+.menu-item[data-cat="custom"] .mi-price{color:var(--lavender-dk);}
+.mi-controls{display:none;align-items:center;gap:2px;}
+.menu-item.in-cart .mi-controls{display:flex;}
+.menu-item.in-cart .mi-price{display:none;}
+.mi-q-btn{width:22px;height:22px;border-radius:50%;border:1.5px solid var(--coral-deep);background:var(--white);color:var(--coral-deep);font-size:0.85rem;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;font-family:inherit;}
+.mi-qty{font-size:0.78rem;font-weight:700;color:var(--ink);min-width:14px;text-align:center;}
+
+/* Custom amount input overlay */
+#custom-input-overlay{display:none;position:fixed;inset:0;background:rgba(58,32,16,0.45);z-index:150;align-items:center;justify-content:center;padding:1.5rem;}
+#custom-input-overlay.open{display:flex;}
+#custom-input-box{background:var(--cream);border-radius:18px;width:100%;max-width:300px;overflow:hidden;box-shadow:var(--shadow-lg);}
+#custom-input-box-header{background:var(--lavender);padding:0.875rem 1.1rem;display:flex;align-items:center;justify-content:space-between;}
+#custom-input-box-header span{font-family:'Cormorant Garamond',serif;font-size:1.1rem;font-style:italic;color:var(--lavender-dk);}
+#custom-input-box-body{padding:1rem;display:flex;flex-direction:column;gap:0.75rem;}
+.custom-amount-row{display:flex;align-items:center;gap:0.4rem;}
+.custom-amount-dollar{font-family:'Cormorant Garamond',serif;font-size:2rem;font-weight:600;color:var(--lavender-dk);line-height:1;}
+#custom-amt-input{font-family:'Cormorant Garamond',serif;font-size:2rem;font-weight:600;color:var(--ink);background:none;border:none;border-bottom:2px solid var(--lavender-mid);outline:none;width:100%;padding-bottom:0.1rem;}
+#custom-amt-input::placeholder{color:rgba(58,32,16,0.22);}
+#custom-preview{font-size:0.62rem;color:var(--lavender-dk);min-height:1rem;}
+.custom-input-actions{display:flex;gap:0.5rem;}
+.custom-tile-btn{background:var(--lavender-dk);color:var(--white);border:none;padding:0.6rem;border-radius:9px;font-family:inherit;font-size:0.72rem;font-weight:700;cursor:pointer;flex:1;}
+.custom-tile-btn:disabled{opacity:0.35;cursor:not-allowed;}
+
+/* RIGHT PANEL */
+#right-panel{display:flex;flex-direction:column;overflow:hidden;background:var(--white);}
+
+#order-head{padding:0.75rem 0.9rem;border-bottom:1px solid var(--border);background:var(--white);display:flex;align-items:center;justify-content:space-between;flex-shrink:0;}
+#order-head h2{font-family:'Cormorant Garamond',serif;font-size:1.1rem;font-style:italic;font-weight:400;color:var(--ink);}
+#clear-btn{background:none;border:1px solid var(--border);padding:0.15rem 0.55rem;border-radius:999px;font-family:inherit;font-size:0.72rem;color:var(--ink-mid);cursor:pointer;}
+
+#cart-items{flex:1;overflow-y:auto;padding:0.5rem 0.75rem;display:flex;flex-direction:column;gap:0.4rem;min-height:0;}
+.cart-empty{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;color:var(--ink-lt);gap:0.3rem;font-size:0.7rem;}
+.cart-row{background:var(--cream);border-radius:10px;padding:0.5rem 0.7rem;display:flex;align-items:center;gap:0.4rem;border:1px solid var(--border);}
+.cr-info{flex:1;}.cr-name{font-size:0.82rem;font-weight:600;color:var(--ink);}.cr-price{font-size:0.7rem;color:var(--ink-lt);}
+.cr-qty{display:flex;align-items:center;gap:2px;}
+.qty-btn{width:24px;height:24px;border-radius:50%;border:1px solid var(--border);background:var(--apricot);font-size:0.95rem;cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--ink-mid);font-family:inherit;}
+.cr-qty span{font-size:0.82rem;font-weight:700;min-width:16px;text-align:center;}
+.cr-total{font-size:0.82rem;font-weight:700;color:var(--coral-deep);min-width:44px;text-align:right;}
+
+#cart-footer{padding:0.65rem 0.9rem 0.75rem;border-top:1px solid var(--border);background:var(--white);flex-shrink:0;}
+.summary-row{display:flex;justify-content:space-between;font-size:0.75rem;color:var(--ink-mid);padding:0.15rem 0;}
+.summary-row.total{font-size:1rem;font-weight:700;color:var(--ink);padding-top:0.35rem;margin-top:0.18rem;border-top:1px solid var(--border);}
+.skoop-bar{background:var(--mint);border-radius:7px;padding:0.42rem 0.7rem;display:flex;justify-content:space-between;align-items:center;margin:0.55rem 0 0.6rem;}
+.skoop-bar span:first-child{font-size:0.7rem;color:var(--mint-dk);font-weight:600;text-transform:uppercase;letter-spacing:0.04em;}
+.skoop-bar span:last-child{font-size:0.92rem;font-weight:700;color:var(--mint-dk);}
+#checkout-btn{width:100%;background:var(--coral-deep);color:var(--white);border:none;padding:0.85rem;border-radius:11px;font-family:inherit;font-size:0.88rem;font-weight:700;cursor:pointer;letter-spacing:0.05em;text-transform:uppercase;}
+#checkout-btn:disabled{opacity:0.35;cursor:not-allowed;}
+
+/* BOTTOM MODE TABS */
+.mode-tabs{display:flex;border-top:1px solid var(--border);background:var(--white);flex-shrink:0;}
+.mode-tab{flex:1;padding:0.62rem 0.2rem;background:none;border:none;font-family:inherit;font-size:0.7rem;font-weight:600;color:var(--ink-lt);cursor:pointer;letter-spacing:0.04em;text-transform:uppercase;border-top:2px solid transparent;}
+.mode-tab.active{color:var(--coral-deep);border-top-color:var(--coral-deep);}
+
+/* SLIDE-OVER SHEET */
+#mode-overlay{display:none;position:fixed;inset:0;background:rgba(58,32,16,0.4);z-index:100;align-items:flex-end;justify-content:flex-end;}
+#mode-overlay.open{display:flex;}
+#mode-sheet{background:var(--cream);border-radius:18px 0 0 0;width:320px;height:calc(100vh - var(--topbar-h));overflow-y:auto;display:flex;flex-direction:column;box-shadow:var(--shadow-lg);}
+#mode-sheet-header{padding:0.65rem 0.875rem;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;background:var(--white);flex-shrink:0;border-radius:18px 0 0 0;}
+#mode-sheet-title{font-family:'Cormorant Garamond',serif;font-size:1rem;font-style:italic;font-weight:400;color:var(--ink);}
+#mode-sheet-close{background:none;border:none;font-size:1.2rem;cursor:pointer;color:var(--ink-mid);line-height:1;padding:0.15rem;}
+.mode-view{display:none;flex-direction:column;flex:1;padding:0.75rem;gap:0.6rem;}
+.mode-view.active{display:flex;}
+
+/* FORM */
+.field-label{font-size:0.57rem;font-weight:600;color:var(--ink-mid);letter-spacing:0.05em;text-transform:uppercase;margin-bottom:0.2rem;}
+.field-input{background:var(--white);border:1px solid var(--border);border-radius:9px;padding:0.5rem 0.75rem;font-family:inherit;font-size:0.78rem;color:var(--ink);width:100%;}
+.field-input:focus{outline:none;border-color:var(--coral-deep);}
+.addr-box{background:var(--mint);border-radius:9px;padding:0.5rem 0.75rem;font-size:0.6rem;color:var(--mint-dk);font-weight:600;word-break:break-all;min-height:36px;}
+.action-btn{width:100%;border:none;padding:0.6rem;border-radius:9px;font-family:inherit;font-size:0.72rem;font-weight:700;cursor:pointer;letter-spacing:0.03em;}
+.action-btn.primary{background:var(--coral-deep);color:var(--white);}
+.action-btn.primary:disabled{opacity:0.35;cursor:not-allowed;}
+.action-btn.secondary{background:var(--apricot);color:var(--ink);border:1px solid var(--border);}
+.action-btn.danger{background:#c0392b;color:#fff;}
+.action-btn.danger:disabled{opacity:0.4;cursor:not-allowed;}
+.section-card{background:var(--white);border:1px solid var(--border);border-radius:10px;padding:0.65rem;display:flex;flex-direction:column;gap:0.45rem;}
+.section-title{font-size:0.57rem;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:var(--ink-mid);}
+.hint-row{display:flex;justify-content:space-between;font-size:0.6rem;color:var(--ink-lt);}
+.stat-grid{display:grid;grid-template-columns:1fr 1fr;gap:0.4rem;}
+.stat-card{background:var(--white);border:1px solid var(--border);border-radius:9px;padding:0.55rem 0.65rem;}
+.stat-label{font-size:0.55rem;text-transform:uppercase;letter-spacing:0.06em;color:var(--ink-lt);}
+.stat-val{font-size:0.95rem;font-weight:700;color:var(--ink);}
+.receipt-card{background:var(--white);border:1px solid var(--border);border-radius:7px;padding:0.45rem 0.65rem;display:flex;align-items:center;gap:0.45rem;}
+.receipt-card input[type=checkbox]{accent-color:var(--coral-deep);width:13px;height:13px;cursor:pointer;flex-shrink:0;}
+.rc-id{font-size:0.55rem;color:var(--ink-lt);font-family:monospace;}
+.rc-amt{font-size:0.72rem;font-weight:700;color:var(--coral-deep);}
+.scan-wrap{background:var(--white);border:1px solid var(--border);border-radius:10px;overflow:hidden;}
+#reward-qr-reader{display:none;width:100%;}
+#reward-qr-reader video{width:100%!important;max-height:160px;object-fit:cover;}
+.scan-btn{width:100%;background:none;border:none;border-bottom:1px solid var(--border);padding:0.55rem;font-family:inherit;font-size:0.68rem;font-weight:600;color:var(--ink-mid);cursor:pointer;display:flex;align-items:center;justify-content:center;gap:0.35rem;}
+.scan-inner{padding:0.45rem 0.65rem;}
+.pending-item{background:var(--apricot);border:1px solid var(--coral-mid);border-radius:9px;padding:0.5rem 0.6rem;}
+
+/* AUTO-REWARD BANNERS */
+.auto-reward-banner{border-radius:8px;padding:0.45rem 0.65rem;font-size:0.65rem;font-weight:600;display:flex;align-items:center;gap:0.4rem;}
+.auto-reward-banner.sending{background:var(--sand);color:var(--sand-dk);}
+.auto-reward-banner.success{background:var(--mint);color:var(--mint-dk);}
+.auto-reward-banner.failed{background:#fde8e8;color:#c0392b;}
+
+/* MODAL */
+#modal-overlay{display:none;position:fixed;inset:0;background:rgba(58,32,16,0.55);z-index:200;align-items:center;justify-content:center;padding:0.75rem;box-sizing:border-box;}
+#modal-overlay.open{display:flex;}
+#modal{background:var(--cream);border-radius:18px;width:calc(100vw - 1.5rem);max-width:400px;overflow:hidden;box-shadow:var(--shadow-lg);margin:auto;}
+.modal-header{background:var(--coral);padding:0.875rem 1.1rem;display:flex;align-items:center;justify-content:space-between;}
+.modal-header h2{font-family:'Cormorant Garamond',serif;font-size:1.2rem;font-style:italic;font-weight:400;color:var(--ink);}
+.modal-close{background:none;border:none;font-size:1.2rem;cursor:pointer;color:var(--ink-mid);line-height:1;}
+.modal-body{padding:1rem;display:flex;flex-direction:column;align-items:center;gap:0.65rem;width:100%;}
+#qr-canvas-wrap{width:100%;aspect-ratio:1/1;background:#fff;border-radius:10px;border:1px solid var(--border);display:flex;align-items:center;justify-content:center;padding:14px;box-sizing:border-box;overflow:hidden;}
+#qr-canvas-wrap canvas,#qr-canvas-wrap img,#qr-canvas-wrap table{display:block!important;width:100%!important;height:100%!important;margin:0 auto!important;image-rendering:pixelated;}
+.modal-summary{width:100%;background:var(--white);border-radius:9px;padding:0.65rem 0.875rem;border:1px solid var(--border);}
+.mos-row{display:flex;justify-content:space-between;font-size:0.7rem;padding:0.16rem 0;color:var(--ink-mid);}
+.mos-row.total{font-size:0.82rem;font-weight:700;color:var(--ink);border-top:1px solid var(--border);padding-top:0.4rem;margin-top:0.18rem;}
+.mos-row.skoop{color:var(--mint-dk);font-weight:600;}
+.modal-status{width:100%;background:var(--mint);border-radius:7px;padding:0.5rem 0.8rem;font-size:0.68rem;color:var(--mint-dk);font-weight:600;text-align:center;}
+.modal-actions{width:100%;display:flex;gap:0.55rem;}
+
+/* SUCCESS */
+#modal-success{display:none;}
+@keyframes successPop{from{transform:scale(0.4);opacity:0;}to{transform:scale(1);opacity:1;}}
+@keyframes pulse{0%,100%{opacity:1;transform:scale(1);}50%{opacity:0.5;transform:scale(1.3);}}
+@keyframes spin{to{transform:rotate(360deg);}}
+
+/* TOAST */
+#toast{position:fixed;bottom:1rem;left:50%;transform:translateX(-50%) translateY(60px);background:var(--ink);color:var(--coral);padding:0.5rem 1rem;border-radius:999px;font-size:0.72rem;font-weight:600;z-index:300;transition:transform 0.2s ease;white-space:nowrap;pointer-events:none;}
+#toast.show{transform:translateX(-50%) translateY(0);}
+#toast.success{background:var(--mint-dk);color:#fff;}
+#toast.error{background:#c0392b;color:#fff;}
+
+::-webkit-scrollbar{width:3px;}::-webkit-scrollbar-track{background:transparent;}::-webkit-scrollbar-thumb{background:var(--coral-mid);border-radius:3px;}
+</style>
+</head>
+<body>
+<div id="shell">
+
+  <header id="topbar">
+    <div class="logo-wrap">
+      <img id="logo-img" src="" alt="logo" style="height:34px;width:auto;object-fit:contain;vertical-align:middle;">
+      <span id="logo-text" style="display:none;"></span>
+      <span id="logo-subtitle"></span>
+    </div>
+    <div id="price-pill">
+      <span id="price-pill-main">SKOOP: loading…</span>
+      <span id="price-pill-change">24h: —</span>
+    </div>
+    <div id="wallet-balance-wrap" title="Your SKOOP balance" onclick="refreshWalletBalance()">
+      <span id="wallet-balance-skoop"><span id="wallet-balance-dot" class="loading"></span>—</span>
+      <span id="wallet-balance-usd">wallet balance</span>
+    </div>
+    <button id="wallet-btn" onclick="connectWallet()">Connect Wallet</button>
+  </header>
+
+  <div id="content">
+
+    <!-- LEFT: menu always visible -->
+    <div id="left-panel">
+      <div class="cat-strip">
+        <button class="cat-btn active" onclick="filterCat('all',this)">All</button>
+        <button class="cat-btn" onclick="filterCat('scoops',this)">Scoops</button>
+        <button class="cat-btn" onclick="filterCat('drinks',this)">Drinks</button>
+        <button class="cat-btn" onclick="filterCat('extras',this)">Extras</button>
+
+      </div>
+      <div id="menu-grid"></div>
+    </div>
+
+    <!-- RIGHT: live order panel -->
+    <div id="right-panel">
+      <div id="order-head">
+        <h2>Current Order</h2>
+        <button id="clear-btn" onclick="clearCart()">Clear all</button>
+      </div>
+      <div id="cart-items">
+        <div class="cart-empty" id="cart-empty">
+          <span style="font-size:2rem;opacity:0.22;">🍦</span>
+          <span>Tap items to add</span>
+        </div>
+      </div>
+      <div id="cart-footer">
+        <div class="summary-row"><span>Subtotal</span><span id="sub-display">$0.00</span></div>
+        <div class="summary-row"><span id="tax-label">Tax</span><span id="tax-display">$0.00</span></div>
+        <div class="summary-row total"><span>Total</span><span id="total-display">$0.00</span></div>
+        <div class="skoop-bar"><span>≈ SKOOP</span><span id="skoop-display">—</span></div>
+        <button id="checkout-btn" onclick="openCheckout()" disabled>Generate Payment QR</button>
+      </div>
+      <div class="mode-tabs">
+        <button class="mode-tab" id="tab-rewards-btn" onclick="openModeSheet('rewards',this)">🎁 Rewards</button>
+        <button class="mode-tab" id="tab-settle-btn" onclick="openModeSheet('settle',this)">🔥 Settle</button>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- REWARDS / SETTLE SLIDE-OVER -->
+<div id="mode-overlay" onclick="closeModeSheet(event)">
+  <div id="mode-sheet">
+    <div id="mode-sheet-header">
+      <span id="mode-sheet-title">Rewards</span>
+      <button id="mode-sheet-close" onclick="closeModeSheet()">✕</button>
+    </div>
+
+    <!-- REWARDS -->
+    <div class="mode-view active" id="rewards-mode">
+      <div style="background:color-mix(in srgb,var(--mint) 55%,white);border:1px solid var(--mint-mid);border-radius:9px;padding:0.5rem 0.65rem;font-size:0.62rem;color:var(--mint-dk);line-height:1.5;">
+        <strong>⚡ Auto-Reward ON</strong> — SKOOP payments trigger a 10% reward automatically. Use below for Square / Cash only.
+      </div>
+      <div class="scan-wrap">
+        <div id="reward-qr-reader"></div>
+        <div style="display:flex;border-bottom:1px solid var(--border);">
+          <button class="scan-btn" style="border-bottom:none;flex:1;" onclick="toggleRewardScan()">
+            <span id="scan-icon">📷</span><span id="scan-label">Scan Customer QR</span>
+          </button>
+          <button id="flip-camera-btn" onclick="flipCamera()" style="display:none;background:none;border:none;border-left:1px solid var(--border);padding:0.55rem 0.75rem;font-size:1rem;cursor:pointer;color:var(--ink-mid);" title="Flip camera">🔄</button>
+        </div>
+        <div class="scan-inner">
+          <div style="font-size:0.57rem;text-transform:uppercase;letter-spacing:0.06em;color:var(--ink-lt);margin-bottom:0.28rem;">Or paste address</div>
+          <div style="display:flex;gap:0.35rem;">
+            <input class="field-input" type="text" id="reward-addr-input" placeholder="0x…" style="flex:1;font-size:0.68rem;padding:0.42rem 0.6rem;" oninput="onRewardAddrInput(this.value)">
+            <button class="action-btn secondary" onclick="pasteAddr()" style="padding:0.42rem 0.6rem;font-size:0.65rem;white-space:nowrap;">Paste</button>
+          </div>
+        </div>
+      </div>
+      <div>
+        <div class="field-label">Customer Wallet</div>
+        <div class="addr-box" id="reward-addr">—</div>
+      </div>
+      <div class="section-card" style="background:var(--sand);border:none;">
+        <div class="section-title">Square / Cash — 5% Reward</div>
+        <div style="display:flex;align-items:center;gap:0.28rem;">
+          <span style="font-size:0.88rem;font-weight:700;color:var(--ink-mid);">$</span>
+          <input class="field-input" type="number" id="sale-total" placeholder="Sale total" min="0" step="0.01" style="font-size:0.88rem;font-weight:600;padding:0.38rem 0.55rem;" oninput="calcReward(this.value)">
+        </div>
+        <div class="hint-row">
+          <span>5% of sale → SKOOP</span>
+          <span id="calc-skoop-display" style="font-weight:700;color:var(--mint-dk);">—</span>
+        </div>
+        <button class="action-btn primary" id="calc-apply-btn" onclick="applyCalcReward()" disabled style="padding:0.38rem;font-size:0.65rem;">↓ Use This Amount</button>
+      </div>
+      <div style="background:var(--mint);border-radius:7px;padding:0.35rem 0.6rem;font-size:0.6rem;color:var(--mint-dk);display:flex;justify-content:space-between;">
+        <span>💳 Square/Cash: <strong>5%</strong></span>
+        <span>⚡ Paid in SKOOP: <strong>10% auto</strong></span>
+      </div>
+      <div>
+        <div class="field-label">SKOOP to Send</div>
+        <input class="field-input" type="number" id="reward-amount" placeholder="Auto-filled or enter manually" min="0" step="1">
+        <div style="font-size:0.6rem;color:var(--ink-lt);margin-top:0.18rem;" id="reward-usd-hint"></div>
+      </div>
+      <button class="action-btn primary" id="reward-send-btn" onclick="sendReward()" disabled>Send SKOOP Reward</button>
+      <div id="daily-limit-display" style="font-size:0.6rem;color:var(--ink-lt);text-align:center;"></div>
+      <button class="action-btn secondary" onclick="resetRewards()" style="font-size:0.65rem;padding:0.42rem;">Clear</button>
+      <div id="pending-section" style="display:none;border-top:1px solid var(--border);padding-top:0.55rem;flex-direction:column;gap:0.38rem;">
+        <div style="font-size:0.57rem;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:var(--coral-deep);">⏳ Pending Rewards</div>
+        <div id="pending-list" style="display:flex;flex-direction:column;gap:0.3rem;"></div>
+      </div>
+    </div>
+
+    <!-- SETTLEMENT -->
+    <div class="mode-view" id="settle-mode">
+      <div style="background:var(--sand);border-radius:7px;padding:0.42rem 0.6rem;font-size:0.62rem;color:var(--sand-dk);">
+        Owner wallet required: <span style="font-family:monospace;color:var(--ink);font-size:0.58rem;">0x001b…50b</span>
+      </div>
+      <div class="stat-grid">
+        <div class="stat-card"><div class="stat-label">Captured</div><div class="stat-val" id="stat-captured">0</div></div>
+        <div class="stat-card"><div class="stat-label">Total SKOOP</div><div class="stat-val" id="stat-skoop">0</div></div>
+      </div>
+      <div id="receipt-list" style="display:flex;flex-direction:column;gap:0.35rem;flex:1;">
+        <p style="font-size:0.68rem;color:var(--ink-lt);text-align:center;padding:0.875rem 0;">No captured receipts yet</p>
+      </div>
+      <button class="action-btn secondary" onclick="loadReceipts()" style="font-size:0.65rem;margin-top:auto;">Refresh Receipts</button>
+      <button class="action-btn danger" id="burn-btn" onclick="burnSelected()" disabled>🔥 Burn Selected</button>
+    </div>
+  </div>
+</div>
+
+<!-- PAYMENT MODAL -->
+<div id="modal-overlay">
+  <div id="modal">
+    <div id="modal-qr">
+      <div class="modal-header">
+        <h2>Payment QR</h2>
+        <button class="modal-close" onclick="closeModal()">✕</button>
+      </div>
+      <div class="modal-body">
+        <div id="qr-canvas-wrap"></div>
+        <div class="modal-summary" id="modal-summary"></div>
+        <div class="modal-status" id="modal-status">Waiting for customer to scan…</div>
+        <div class="modal-actions">
+          <button class="action-btn secondary" style="flex:1" onclick="closeModal()">Cancel</button>
+          <button class="action-btn primary" style="flex:1" onclick="regenerateQR()">Regenerate</button>
+        </div>
+      </div>
+    </div>
+    <div id="modal-success" style="display:none;">
+      <div style="display:flex;height:5px;">
+        <div style="flex:1;background:var(--coral)"></div>
+        <div style="flex:1;background:var(--mint)"></div>
+        <div style="flex:1;background:var(--sand)"></div>
+        <div style="flex:1;background:var(--lavender)"></div>
+        <div style="flex:1;background:var(--apricot)"></div>
+      </div>
+      <div style="padding:1.5rem 1.1rem;display:flex;flex-direction:column;align-items:center;text-align:center;gap:0.75rem;">
+        <div style="width:64px;height:64px;border-radius:50%;background:var(--mint);display:flex;align-items:center;justify-content:center;animation:successPop 0.4s cubic-bezier(0.34,1.56,0.64,1);">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="var(--mint-dk)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+        </div>
+        <div>
+          <div style="font-family:'Cormorant Garamond',serif;font-size:1.6rem;font-weight:600;color:var(--ink);line-height:1.1;">Payment<br><em style="color:var(--coral-deep);">captured!</em></div>
+          <div style="font-size:0.72rem;color:var(--ink-mid);margin-top:0.25rem;" id="success-sub"></div>
+        </div>
+        <div id="success-details" style="width:100%;background:var(--apricot);border-radius:9px;padding:0.65rem 0.875rem;text-align:left;font-size:0.68rem;display:flex;flex-direction:column;gap:0.22rem;"></div>
+        <div id="success-reward-status" style="width:100%;display:none;"></div>
+        <div style="font-size:0.62rem;color:var(--ink-lt);display:flex;align-items:center;gap:0.3rem;" id="success-countdown">
+          <div style="width:6px;height:6px;border-radius:50%;background:var(--mint);animation:pulse 1s ease infinite;"></div>Closing in 4s…
+        </div>
+        <button onclick="closeSuccess()" style="width:100%;padding:0.72rem;background:var(--coral-deep);color:#fff;border:none;border-radius:9px;font-family:inherit;font-size:0.78rem;font-weight:700;cursor:pointer;">Done</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- CUSTOM AMOUNT OVERLAY -->
+<div id="custom-input-overlay" onclick="closeCustomOverlay(event)">
+  <div id="custom-input-box">
+    <div id="custom-input-box-header">
+      <span>Custom Amount</span>
+      <button onclick="closeCustomOverlay()" style="background:none;border:none;font-size:1.2rem;cursor:pointer;color:var(--lavender-dk);line-height:1;">✕</button>
+    </div>
+    <div id="custom-input-box-body">
+      <div class="custom-amount-row">
+        <span class="custom-amount-dollar">$</span>
+        <input type="number" min="0.01" step="0.01" placeholder="0.00" id="custom-amt-input" oninput="updateCustomPreview(this.value)">
+      </div>
+      <div id="custom-preview"></div>
+      <div class="custom-input-actions">
+        <button class="action-btn secondary" onclick="closeCustomOverlay()" style="flex:1;">Cancel</button>
+        <button class="custom-tile-btn" id="custom-add-btn" onclick="addCustomToCart()" disabled>+ Add to Order</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+// ═══════════════════════════════════════════════════════════════
+//  FRANCHISEE CONFIG
+// ═══════════════════════════════════════════════════════════════
+const BRAND = {
+  storeName:    'KOKOS Ice Cream',
+  storeSubtitle:'shop terminal',
+  storeId:      'KOKOS_NASHVILLE_01',
+  terminalId:   'POS_1',
+  logoUrl: 'https://raw.githubusercontent.com/KOKOSICECREAM/website/main/Customer_dapp/KOKOS.png',
+  colors:{},
+  signerWallet:   '0x4eCc3f03c018208Ae5932eAB91bbD82F37F56D9B',
+  ownerWallet:    '0x001b3fB36FE7E3a741A15Ed8bE68610442E3a50b',
+  skoopToken:     '0xfd3ce21c5acd8bbbe576d0e2336c210c3cebeb92',
+  escrowContract: '0x85e8cdedae8ecd23ee21cdc90d75cbaae9a54991',
+  skoopPool:      '0xc1d89ca13d5cbc24b92e9f40b36d43da347c5198',
+  dailyRewardLimit: 888888,
+  taxRate: 0.0925,
+  categories: [
+    { id:'scoops', label:'Scoops' },
+    { id:'drinks', label:'Drinks' },
+    { id:'extras', label:'Extras' },
+  ],
+  menuItems: [
+    { id:'s1', cat:'scoops', emoji:'🍦', name:'Kids Scoop',  price:5.00,  img:'' },
+    { id:'s2', cat:'scoops', emoji:'🍧', name:'Small',       price:7.00,  img:'' },
+    { id:'s3', cat:'scoops', emoji:'🍨', name:'Trio',        price:9.00,  img:'' },
+    { id:'s4', cat:'scoops', emoji:'🫙', name:'Pint',        price:12.00, img:'' },
+    { id:'d1', cat:'drinks', emoji:'☕', name:'Latte',        price:7.00,  img:'' },
+    { id:'d2', cat:'drinks', emoji:'💧', name:'Water',        price:1.00,  img:'' },
+    { id:'e1', cat:'extras', emoji:'🍟', name:'Fries',        price:8.00,  img:'' },
+    { id:'e2', cat:'extras', emoji:'🍦', name:'Cone',         price:0.60,  img:'' },
+    { id:'cx', cat:'custom', emoji:'✏️', name:'Custom', price:0, custom:true },
+  ],
+};
+
+// ═══════════════════════════════════════════════════════════════
+//  CHAIN CONFIG
+// ═══════════════════════════════════════════════════════════════
+const CFG={
+  CHAIN_ID:8453,CHAIN_HEX:'0x2105',RPC:'https://mainnet.base.org',
+  SKOOP:BRAND.skoopToken,ESCROW:BRAND.escrowContract,
+  SIGNER:BRAND.signerWallet,OWNER:BRAND.ownerWallet,
+  POOL_ETH_SKOOP:BRAND.skoopPool,SKOOP_DEC:6,
+  TAX_RATE:BRAND.taxRate,STORE_ID:BRAND.storeId,TERMINAL_ID:BRAND.terminalId,
+  DAILY_REWARD_LIMIT:BRAND.dailyRewardLimit,AUTO_REWARD_RATE:0.10,
+};
+
+let skoopPriceUSD=0,ethPriceUSD=0;
+const ABI_ERC20=["function transfer(address,uint256) returns (bool)"];
+const ABI_ESCROW=[
+  {inputs:[{components:[{name:"receiptId",type:"bytes32"},{name:"orderId",type:"bytes32"},{name:"storeIdHash",type:"bytes32"},{name:"terminalIdHash",type:"bytes32"},{name:"tokenAmount",type:"uint256"},{name:"subtotalCents",type:"uint256"},{name:"taxCents",type:"uint256"},{name:"totalCents",type:"uint256"},{name:"itemCount",type:"uint256"},{name:"cartHash",type:"bytes32"},{name:"deadline",type:"uint256"}],internalType:"struct KOKOSPaymentEscrowPOS.PaymentIntent",name:"intent",type:"tuple"},{name:"signature",type:"bytes"}],name:"capturePayment",outputs:[],stateMutability:"nonpayable",type:"function"},
+  {inputs:[{name:"receiptIds",type:"bytes32[]"}],name:"burnPayments",outputs:[],stateMutability:"nonpayable",type:"function"},
+  {anonymous:false,inputs:[{indexed:true,name:"receiptId",type:"bytes32"},{indexed:true,name:"orderId",type:"bytes32"},{indexed:true,name:"payer",type:"address"},{indexed:false,name:"tokenAmount",type:"uint256"},{indexed:false,name:"totalCents",type:"uint256"},{indexed:false,name:"itemCount",type:"uint256"},{indexed:false,name:"storeIdHash",type:"bytes32"},{indexed:false,name:"terminalIdHash",type:"bytes32"},{indexed:false,name:"cartHash",type:"bytes32"},{indexed:false,name:"timestamp",type:"uint256"}],name:"PaymentCaptured",type:"event"},
+  {anonymous:false,inputs:[{indexed:true,name:"receiptId",type:"bytes32"},{indexed:true,name:"orderId",type:"bytes32"},{indexed:true,name:"payer",type:"address"},{indexed:false,name:"tokenAmount",type:"uint256"},{indexed:false,name:"timestamp",type:"uint256"}],name:"PaymentBurned",type:"event"},
+  {anonymous:false,inputs:[{indexed:false,name:"paymentCount",type:"uint256"},{indexed:false,name:"totalTokenAmount",type:"uint256"},{indexed:false,name:"timestamp",type:"uint256"}],name:"BatchBurnExecuted",type:"event"}
+];
+const ABI_POOL=["function slot0() view returns (uint160 sqrtPriceX96,int24,uint16,uint16,uint16,uint8,bool)","function token0() view returns (address)"];
+const MENU=[...BRAND.menuItems];
+let provider=null,signer=null,signerAddr=null;
+let cart={},capturedReceipts=[];
+let rewardScannerActive=false,rewardScanner=null,scannedRewardAddr=null;
+let activeCat='all',toastTimer=null,calcSkoopAmount=0,successTimer=null;
+
+// ═══════════════════════════════════════════════════════════════
+//  PRICE FETCHING
+// ═══════════════════════════════════════════════════════════════
+async function fetchEthPriceOnChain(){
+  const ABI=['function slot0() view returns (uint160 sqrtPriceX96,int24,uint16,uint16,uint16,uint8,bool)','function token0() view returns (address)'];
+  const WETH='0x4200000000000000000000000000000000000006';
+  const pub=new ethers.JsonRpcProvider(CFG.RPC);
+  const pool=new ethers.Contract('0xd0b53D9277642d899DF5C87A3966A349A798F224',ABI,pub);
+  const[s0,t0]=await Promise.all([pool.slot0(),pool.token0()]);
+  const sqrtPf=Number(s0.sqrtPriceX96)/Number(2n**96n);const raw=sqrtPf*sqrtPf;
+  const p=t0.toLowerCase()===WETH.toLowerCase()?(1/raw)*1e12:raw*1e12;
+  if(p>100&&p<1000000)return p;throw new Error('bad price');
+}
+async function fetchSkoopPrice(){
+  try{
+    let gotEth=false;
+    try{const r=await fetch('https://api.coingecko.com/api/v3/simple/price?ids=ethereum&vs_currencies=usd');const d=await r.json();const p=d?.ethereum?.usd||0;if(p>100&&p<1000000){ethPriceUSD=p;gotEth=true;}}catch(e){}
+    if(!gotEth){try{ethPriceUSD=await fetchEthPriceOnChain();gotEth=true;}catch(e){}}
+    if(!gotEth)throw new Error('no ETH');
+    const pub=new ethers.JsonRpcProvider(CFG.RPC);
+    const pool=new ethers.Contract(CFG.POOL_ETH_SKOOP,ABI_POOL,pub);
+    const[s0,t0]=await Promise.all([pool.slot0(),pool.token0()]);
+    const sqrtPf=Number(s0.sqrtPriceX96)/Number(2n**96n);const priceRaw=sqrtPf*sqrtPf;
+    const skoopIsT0=t0.toLowerCase()===CFG.SKOOP.toLowerCase();
+    const skoopPerEth=skoopIsT0?(1/priceRaw)*1e12:priceRaw*1e12;
+    skoopPriceUSD=skoopPerEth>0?ethPriceUSD/skoopPerEth:0;
+    if(skoopPriceUSD>0){
+      document.getElementById('price-pill-main').textContent='1 USDC = '+Math.round(1/skoopPriceUSD).toLocaleString()+' SKOOP';
+      try{
+        const ds=await fetch('https://api.dexscreener.com/latest/dex/pairs/base/'+CFG.POOL_ETH_SKOOP);
+        const dj=await ds.json();
+        const change=dj?.pair?.priceChange?.h24;
+        if(change!==undefined&&change!==null){
+          const pct=parseFloat(change);const up=pct>=0;
+          const el=document.getElementById('price-pill-change');
+          el.textContent=(up?'▲':'▼')+' '+Math.abs(pct).toFixed(2)+'% (24h)';
+          el.style.color=up?'#2a7050':'#c0392b';
+        }
+      }catch{}
+    }
+    updateTotals();
+    // Refresh USD value on balance pill now that we have a fresh price
+    if(skoopPriceUSD>0&&signerAddr){
+      try{
+        const skText=document.getElementById('wallet-balance-skoop').textContent.replace(/[^0-9.,]/g,'').replace(/,/g,'');
+        const bal=parseFloat(skText);
+        if(!isNaN(bal)&&bal>=0){
+          const usd=bal*skoopPriceUSD;
+          document.getElementById('wallet-balance-usd').textContent='≈ $'+usd.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
+        }
+      }catch{}
+    }
+  }catch(e){document.getElementById('price-pill-main').textContent='Price unavailable';}
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  WALLET
+// ═══════════════════════════════════════════════════════════════
+async function connectWallet(){
+  if(window.ethereum){await connectInjectedWallet();return;}
+  showWalletPicker();
+}
+async function connectInjectedWallet(){
+  try{
+    provider=new ethers.BrowserProvider(window.ethereum);
+    await provider.send('eth_requestAccounts',[]);
+    const net=await provider.getNetwork();
+    if(Number(net.chainId)!==CFG.CHAIN_ID){
+      try{await provider.send('wallet_switchEthereumChain',[{chainId:CFG.CHAIN_HEX}]);}
+      catch{
+        try{await provider.send('wallet_addEthereumChain',[{chainId:CFG.CHAIN_HEX,chainName:'Base',nativeCurrency:{name:'Ether',symbol:'ETH',decimals:18},rpcUrls:['https://mainnet.base.org'],blockExplorerUrls:['https://basescan.org']}]);}
+        catch{showToast('Switch to Base network','error');return;}
+      }
+    }
+    signer=await provider.getSigner();
+    signerAddr=await signer.getAddress();
+    document.getElementById('wallet-btn').textContent=signerAddr.slice(0,6)+'…'+signerAddr.slice(-4);
+    const name=window.ethereum.isMetaMask?'MetaMask':window.ethereum.isCoinbaseWallet?'Coinbase':'Wallet';
+    showToast(name+' connected ✓','success');
+    showWalletBalancePill();
+    fetchWalletBalance();
+    loadReceipts();
+  }catch(e){
+    if(e.code===4001)showToast('Connection rejected','error');
+    else showToast('Connection failed','error');
+  }
+}
+function showWalletPicker(){
+  const posUrl=window.location.href;
+  const mmLink='https://metamask.app.link/dapp/'+posUrl.replace(/^https?:\/\//,'');
+  const cbLink='https://go.cb-wallet.com/dapp?url='+encodeURIComponent(posUrl);
+  let el=document.getElementById('wallet-picker');
+  if(el){el.style.display='flex';return;}
+  el=document.createElement('div');el.id='wallet-picker';
+  el.style.cssText='position:fixed;inset:0;background:rgba(58,32,16,0.65);z-index:999;display:flex;align-items:center;justify-content:center;padding:1.5rem;';
+  el.innerHTML=`<div style="background:var(--cream);border-radius:20px;width:100%;max-width:320px;overflow:hidden;box-shadow:var(--shadow-lg);">
+    <div style="background:var(--coral);padding:1rem 1.25rem;display:flex;align-items:center;justify-content:space-between;">
+      <span style="font-family:'Cormorant Garamond',serif;font-size:1.2rem;font-style:italic;color:var(--ink);">Open in Wallet</span>
+      <button onclick="document.getElementById('wallet-picker').style.display='none'" style="background:none;border:none;font-size:1.3rem;cursor:pointer;color:var(--ink-mid);">✕</button>
+    </div>
+    <div style="padding:1.25rem;display:flex;flex-direction:column;gap:0.75rem;">
+      <p style="font-size:0.75rem;color:var(--ink-mid);text-align:center;line-height:1.5;">Tap your wallet below to open the POS directly inside it.</p>
+      <a href="${mmLink}" style="display:flex;align-items:center;gap:0.875rem;background:var(--white);border:1.5px solid var(--border);border-radius:14px;padding:1rem;text-decoration:none;color:var(--ink);">
+        <img src="https://upload.wikimedia.org/wikipedia/commons/3/36/MetaMask_Fox.svg" style="width:36px;height:36px;object-fit:contain;flex-shrink:0;">
+        <div><div style="font-size:0.88rem;font-weight:700;">MetaMask</div><div style="font-size:0.65rem;color:var(--ink-lt);">Opens POS in MetaMask browser</div></div>
+        <span style="margin-left:auto;font-size:1rem;color:var(--ink-lt);">→</span>
+      </a>
+      <a href="${cbLink}" style="display:flex;align-items:center;gap:0.875rem;background:var(--white);border:1.5px solid var(--border);border-radius:14px;padding:1rem;text-decoration:none;color:var(--ink);">
+        <img src="https://avatars.githubusercontent.com/u/18060234" style="width:36px;height:36px;object-fit:contain;border-radius:8px;flex-shrink:0;">
+        <div><div style="font-size:0.88rem;font-weight:700;">Coinbase Wallet</div><div style="font-size:0.65rem;color:var(--ink-lt);">Opens POS in Coinbase browser</div></div>
+        <span style="margin-left:auto;font-size:1rem;color:var(--ink-lt);">→</span>
+      </a>
+      <div style="background:var(--mint);border-radius:10px;padding:0.65rem 0.875rem;font-size:0.68rem;color:var(--mint-dk);line-height:1.6;"><strong>First time?</strong> Install MetaMask or Coinbase Wallet, then come back and tap above.</div>
+    </div>
+  </div>`;
+  document.body.appendChild(el);
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  MODE SHEET
+// ═══════════════════════════════════════════════════════════════
+let activeModeSheet=null;
+function openModeSheet(mode,btn){
+  if(activeModeSheet===mode){closeModeSheet();return;}
+  activeModeSheet=mode;
+  document.querySelectorAll('.mode-tab').forEach(b=>b.classList.remove('active'));
+  if(btn)btn.classList.add('active');
+  document.querySelectorAll('.mode-view').forEach(v=>v.classList.remove('active'));
+  document.getElementById(mode+'-mode').classList.add('active');
+  document.getElementById('mode-sheet-title').textContent=mode==='rewards'?'🎁 Rewards':'🔥 Settlement';
+  document.getElementById('mode-overlay').classList.add('open');
+}
+function closeModeSheet(e){
+  if(e&&e.target!==document.getElementById('mode-overlay'))return;
+  document.getElementById('mode-overlay').classList.remove('open');
+  document.querySelectorAll('.mode-tab').forEach(b=>b.classList.remove('active'));
+  activeModeSheet=null;
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  MENU
+// ═══════════════════════════════════════════════════════════════
+function renderMenu(){
+  const grid=document.getElementById('menu-grid');
+  const items=(activeCat==='all'?MENU:MENU.filter(i=>i.cat===activeCat)).filter(i=>!i.custom);
+  let html=items.map(item=>{
+    const qty=cart[item.id]||0;const inCart=qty>0;
+    const visual=item.img
+      ?`<img src="${item.img}" alt="${item.name}" class="mi-img" onerror="this.style.display='none';this.nextElementSibling.style.display='inline'"><span class="mi-emoji" style="display:none">${item.emoji}</span>`
+      :`<span class="mi-emoji">${item.emoji}</span>`;
+    return `<div class="menu-item${inCart?' in-cart':''}" data-cat="${item.cat}" onclick="tileClick(event,'${item.id}')">
+      <div class="mi-top">${visual}<span class="mi-badge">${qty||''}</span></div>
+      <div class="mi-name">${item.name}</div>
+      <div class="mi-bottom">
+        <span class="mi-price">$${item.price.toFixed(2)}</span>
+        <div class="mi-controls" onclick="event.stopPropagation()">
+          <button class="mi-q-btn" onclick="tileQty('${item.id}',-1)">−</button>
+          <span class="mi-qty">${qty}</span>
+          <button class="mi-q-btn" onclick="tileQty('${item.id}',1)">+</button>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+  // Custom tile — same size as other tiles, always last
+  if(activeCat==='all'||activeCat==='custom'){
+    html+=`<div class="menu-item" data-cat="custom" onclick="openCustomOverlay()" style="cursor:pointer;">
+      <div class="mi-top"><span class="mi-emoji">✏️</span></div>
+      <div class="mi-name">Custom</div>
+      <div class="mi-bottom"><span class="mi-price" style="color:var(--lavender-dk);">$ amount</span></div>
+    </div>`;
+  }
+  grid.innerHTML=html;
+}
+function tileClick(e,id){if((cart[id]||0)===0)addToCart(id);}
+function tileQty(id,delta){changeQty(id,delta);}
+function filterCat(cat,btn){
+  activeCat=cat;
+  document.querySelectorAll('.cat-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  renderMenu();
+}
+function openCustomOverlay(){
+  document.getElementById('custom-amt-input').value='';
+  document.getElementById('custom-preview').textContent='';
+  document.getElementById('custom-add-btn').disabled=true;
+  document.getElementById('custom-input-overlay').classList.add('open');
+  setTimeout(()=>document.getElementById('custom-amt-input').focus(),80);
+}
+function closeCustomOverlay(e){
+  if(e&&e.target!==document.getElementById('custom-input-overlay'))return;
+  document.getElementById('custom-input-overlay').classList.remove('open');
+}
+function updateCustomPreview(val){
+  const v=parseFloat(val);
+  const btn=document.getElementById('custom-add-btn');
+  const prev=document.getElementById('custom-preview');
+  if(!v||v<=0){prev.textContent='';btn.disabled=true;return;}
+  btn.disabled=false;
+  if(skoopPriceUSD>0){
+    const tax=v*CFG.TAX_RATE;const total=v+tax;
+    prev.textContent=`+tax $${tax.toFixed(2)} → $${total.toFixed(2)} ≈ ${Math.round(total/skoopPriceUSD).toLocaleString()} SKOOP`;
+  }
+}
+function addCustomToCart(){
+  const input=document.getElementById('custom-amt-input');
+  const v=parseFloat(input.value);if(!v||v<=0)return;
+  const id='cx_'+Date.now();
+  MENU.push({id,cat:'custom',emoji:'✏️',name:'Custom $'+v.toFixed(2),price:v,_temp:true});
+  cart[id]=1;
+  document.getElementById('custom-input-overlay').classList.remove('open');
+  renderCart();renderMenu();showToast('$'+v.toFixed(2)+' added ✓','success');
+}
+function addToCart(id){cart[id]=(cart[id]||0)+1;renderCart();renderMenu();}
+function changeQty(id,delta){
+  cart[id]=(cart[id]||0)+delta;
+  if(cart[id]<=0){delete cart[id];const idx=MENU.findIndex(m=>m.id===id&&m._temp);if(idx!==-1)MENU.splice(idx,1);}
+  renderCart();renderMenu();
+}
+function clearCart(){for(let i=MENU.length-1;i>=0;i--){if(MENU[i]._temp)MENU.splice(i,1);}cart={};renderCart();renderMenu();}
+function renderCart(){
+  const container=document.getElementById('cart-items');
+  const ids=Object.keys(cart);
+  document.getElementById('cart-empty').style.display=ids.length?'none':'flex';
+  container.querySelectorAll('.cart-row').forEach(r=>{if(!cart[r.dataset.id])r.remove();});
+  ids.forEach(id=>{
+    const item=MENU.find(m=>m.id===id);const qty=cart[id];const total=item.price*qty;
+    let row=container.querySelector(`.cart-row[data-id="${id}"]`);
+    if(!row){row=document.createElement('div');row.className='cart-row';row.dataset.id=id;container.appendChild(row);}
+    row.innerHTML=`<div class="cr-info"><div class="cr-name">${item.emoji} ${item.name}</div><div class="cr-price">$${item.price.toFixed(2)} each</div></div><div class="cr-qty"><button class="qty-btn" onclick="changeQty('${id}',-1)">−</button><span>${qty}</span><button class="qty-btn" onclick="changeQty('${id}',1)">+</button></div><div class="cr-total">$${total.toFixed(2)}</div>`;
+  });
+  updateTotals();
+}
+function updateTotals(){
+  const subtotal=Object.entries(cart).reduce((s,[id,qty])=>{const item=MENU.find(m=>m.id===id);return s+(item?item.price*qty:0);},0);
+  const tax=subtotal*CFG.TAX_RATE,total=subtotal+tax;
+  document.getElementById('sub-display').textContent='$'+subtotal.toFixed(2);
+  document.getElementById('tax-display').textContent='$'+tax.toFixed(2);
+  document.getElementById('tax-label').textContent='Tax ('+(CFG.TAX_RATE*100).toFixed(2)+'%)';
+  document.getElementById('total-display').textContent='$'+total.toFixed(2);
+  const hasItems=Object.keys(cart).length>0;
+  document.getElementById('skoop-display').textContent=(hasItems&&skoopPriceUSD>0)?(total/skoopPriceUSD).toLocaleString('en-US',{maximumFractionDigits:0})+' SKOOP':hasItems?'loading…':'—';
+  document.getElementById('checkout-btn').disabled=!hasItems;
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  CHECKOUT & QR
+// ═══════════════════════════════════════════════════════════════
+async function openCheckout(){
+  if(!signer){showToast('Connect wallet first','error');return;}
+  if(!Object.keys(cart).length)return;
+  if(!skoopPriceUSD){showToast('Waiting for SKOOP price…','error');return;}
+  document.getElementById('modal-qr').style.display='';
+  document.getElementById('modal-success').style.display='none';
+  document.getElementById('modal-overlay').classList.add('open');
+  await generateQR();
+}
+async function generateQR(){
+  const subtotalCents=Math.round(Object.entries(cart).reduce((s,[id,qty])=>{const item=MENU.find(m=>m.id===id);return s+(item?item.price*qty:0);},0)*100);
+  const taxCents=Math.round(subtotalCents*CFG.TAX_RATE);
+  const totalCents=subtotalCents+taxCents;
+  const tokenAmount=BigInt(Math.round(totalCents/100/skoopPriceUSD*1e6));
+  const receiptId=ethers.id('RCPT_'+Date.now()+'_'+Math.random());
+  const orderId=ethers.id('ORD_'+Date.now());
+  const storeIdHash=ethers.id(CFG.STORE_ID);
+  const terminalHash=ethers.id(CFG.TERMINAL_ID);
+  const cartItems=Object.entries(cart).map(([id,q])=>id+':'+q).join(',');
+  const cartHash=ethers.id(cartItems);
+  const deadline=BigInt(Math.floor(Date.now()/1000)+600);
+  const itemCount=BigInt(Object.values(cart).reduce((a,b)=>a+b,0));
+  const digest=ethers.keccak256(ethers.AbiCoder.defaultAbiCoder().encode(
+    ['bytes32','bytes32','bytes32','bytes32','uint256','uint256','uint256','uint256','uint256','bytes32','uint256'],
+    [receiptId,orderId,storeIdHash,terminalHash,tokenAmount,BigInt(subtotalCents),BigInt(taxCents),BigInt(totalCents),itemCount,cartHash,deadline]
+  ));
+  let signature;
+  try{signature=await signer.signMessage(ethers.getBytes(digest));}
+  catch(e){showToast('Signature rejected','error');closeModal();return;}
+  const recovered=ethers.verifyMessage(ethers.getBytes(digest),signature);
+  if(recovered.toLowerCase()!==CFG.SIGNER.toLowerCase()){showToast('Wrong signer wallet','error');closeModal();return;}
+  function hexToU8(hex){const h=hex.replace(/^0x/,'');const b=new Uint8Array(h.length/2);for(let i=0;i<b.length;i++)b[i]=parseInt(h.substr(i*2,2),16);return b;}
+  function numToU8(n,bytes){const b=new Uint8Array(bytes);let v=BigInt(n);for(let i=bytes-1;i>=0;i--){b[i]=Number(v&0xffn);v>>=8n;}return b;}
+  const buf=new Uint8Array(186);let off=0;
+  const copy=(src)=>{buf.set(src,off);off+=src.length;};
+  copy(hexToU8(receiptId));copy(hexToU8(orderId));copy(hexToU8(cartHash));
+  copy(numToU8(tokenAmount,8));copy(numToU8(subtotalCents,4));copy(numToU8(taxCents,4));
+  copy(numToU8(totalCents,4));copy(numToU8(Object.values(cart).reduce((a,b)=>a+b,0),1));
+  copy(numToU8(deadline,4));copy(hexToU8(signature));
+  const qrPayload='K1:'+btoa(String.fromCharCode(...buf)).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');
+  const wrap=document.getElementById('qr-canvas-wrap');
+  wrap.innerHTML='<p style="color:var(--ink-lt);font-size:0.75rem;text-align:center;">Generating…</p>';
+  await new Promise(r=>setTimeout(r,80));
+  wrap.innerHTML='';
+  try{if(navigator.wakeLock)await navigator.wakeLock.request('screen');}catch{}
+  const wrapRect=wrap.getBoundingClientRect();
+  const qrSize=Math.round((wrapRect.width||280)-28);
+  try{
+    new QRCode(wrap,{text:qrPayload,width:qrSize,height:qrSize,colorDark:'#000000',colorLight:'#ffffff',correctLevel:QRCode.CorrectLevel.L});
+    await new Promise(r=>setTimeout(r,80));
+    wrap.querySelectorAll('table').forEach(t=>t.remove());
+    const rendered=wrap.querySelector('img')||wrap.querySelector('canvas');
+    if(!rendered)throw new Error('nothing rendered');
+    rendered.style.cssText=`display:block!important;width:${qrSize}px!important;height:${qrSize}px!important;margin:0 auto!important;image-rendering:pixelated;`;
+  }catch(err){
+    const img=document.createElement('img');
+    img.style.cssText=`display:block;width:${qrSize}px;height:${qrSize}px;image-rendering:pixelated;`;
+    img.alt='Payment QR';
+    img.onerror=()=>{wrap.innerHTML='<p style="color:red;font-size:0.75rem;">QR failed — check connection</p>';};
+    img.src=`https://api.qrserver.com/v1/create-qr-code/?size=${qrSize}x${qrSize}&ecc=L&margin=0&data=`+encodeURIComponent(qrPayload);
+    wrap.appendChild(img);
+  }
+  const skoopDisplay=Number(tokenAmount/1000000n).toLocaleString();
+  document.getElementById('modal-summary').innerHTML=
+    Object.entries(cart).map(([id,q])=>{const it=MENU.find(m=>m.id===id);return`<div class="mos-row"><span>${it.emoji} ${it.name} ×${q}</span><span>$${(it.price*q).toFixed(2)}</span></div>`;}).join('')+
+    `<div class="mos-row"><span>Tax</span><span>$${(taxCents/100).toFixed(2)}</span></div>`+
+    `<div class="mos-row total"><span>Total</span><span>$${(totalCents/100).toFixed(2)}</span></div>`+
+    `<div class="mos-row skoop"><span>≈ SKOOP</span><span>${skoopDisplay} SKOOP</span></div>`;
+  document.getElementById('modal-status').textContent='Waiting for customer to scan…';
+  pollForPayment(receiptId);
+}
+async function regenerateQR(){
+  const wrap=document.getElementById('qr-canvas-wrap');wrap.style.opacity='0.4';
+  await generateQR();wrap.style.opacity='1';
+}
+function closeModal(){document.getElementById('modal-overlay').classList.remove('open');}
+
+// ═══════════════════════════════════════════════════════════════
+//  AUTO-REWARD
+// ═══════════════════════════════════════════════════════════════
+async function autoSendReward(payerAddr,rewardSkoop,paidCents,receiptId){
+  setSuccessRewardStatus('sending',rewardSkoop);
+  if(getDailyRewardState()+rewardSkoop>CFG.DAILY_REWARD_LIMIT){
+    savePendingReward(receiptId,rewardSkoop,paidCents);
+    setSuccessRewardStatus('failed',rewardSkoop,'Daily limit reached');
+    showToast('Daily limit reached — reward saved to Pending','error');
+    renderPendingRewards();return;
+  }
+  try{
+    const token=new ethers.Contract(CFG.SKOOP,ABI_ERC20,signer);
+    const tx=await token.transfer(payerAddr,ethers.parseUnits(rewardSkoop.toString(),CFG.SKOOP_DEC));
+    showToast('Auto-reward broadcasting…','');
+    await tx.wait();
+    addDailyRewardSent(rewardSkoop);
+    setSuccessRewardStatus('success',rewardSkoop);
+    showToast('⚡ '+rewardSkoop.toLocaleString()+' SKOOP reward auto-sent ✓','success');
+    refreshWalletBalance();
+  }catch(e){
+    savePendingReward(receiptId,rewardSkoop,paidCents);
+    const reason=e?.code===4001?'Rejected by wallet':'Transaction failed';
+    setSuccessRewardStatus('failed',rewardSkoop,reason);
+    showToast('Auto-reward failed — saved to Pending','error');
+    renderPendingRewards();
+  }
+}
+function setSuccessRewardStatus(state,skoopAmt,errorMsg=''){
+  const el=document.getElementById('success-reward-status');if(!el)return;
+  el.style.display='block';const amtStr=skoopAmt.toLocaleString();
+  if(state==='sending'){
+    el.innerHTML=`<div class="auto-reward-banner sending"><span style="display:inline-block;width:12px;height:12px;border:2px solid var(--sand-dk);border-top-color:transparent;border-radius:50%;animation:spin 0.7s linear infinite;flex-shrink:0;"></span>Sending ${amtStr} SKOOP reward…</div>`;
+  }else if(state==='success'){
+    el.innerHTML=`<div class="auto-reward-banner success">⚡ ${amtStr} SKOOP reward sent automatically</div>`;
+  }else{
+    el.innerHTML=`<div class="auto-reward-banner failed">⚠️ Auto-reward failed (${errorMsg}) — ${amtStr} SKOOP saved to Pending</div>`;
+  }
+}
+function showPaymentSuccess(totalCents,skoopAmt,receiptId){
+  document.getElementById('modal-qr').style.display='none';
+  document.getElementById('modal-success').style.display='block';
+  document.getElementById('success-sub').textContent='$'+(totalCents/100).toFixed(2)+' · '+skoopAmt.toLocaleString('en-US',{maximumFractionDigits:2})+' SKOOP';
+  document.getElementById('success-details').innerHTML=
+    `<div style="display:flex;justify-content:space-between;padding:0.12rem 0;border-bottom:1px solid rgba(58,32,16,0.08);"><span style="color:var(--ink-mid);">Total charged</span><span style="font-weight:700;">$${(totalCents/100).toFixed(2)}</span></div>`+
+    `<div style="display:flex;justify-content:space-between;padding:0.12rem 0;border-bottom:1px solid rgba(58,32,16,0.08);"><span style="color:var(--ink-mid);">SKOOP captured</span><span style="font-weight:700;color:var(--coral-deep);">${skoopAmt.toLocaleString('en-US',{maximumFractionDigits:2})} SKOOP</span></div>`+
+    `<div style="display:flex;justify-content:space-between;padding:0.12rem 0;"><span style="color:var(--ink-mid);">Receipt</span><span style="font-family:monospace;font-size:0.58rem;">${receiptId.slice(0,20)}…</span></div>`;
+  const rewardEl=document.getElementById('success-reward-status');
+  if(rewardEl){rewardEl.style.display='none';rewardEl.innerHTML='';}
+  let secs=4;clearInterval(successTimer);
+  successTimer=setInterval(()=>{
+    secs--;
+    const el=document.getElementById('success-countdown');
+    if(el)el.innerHTML=`<div style="width:6px;height:6px;border-radius:50%;background:var(--mint);animation:pulse 1s ease infinite;"></div> Closing in ${secs}s…`;
+    if(secs<=0){clearInterval(successTimer);closeSuccess();}
+  },1000);
+}
+function closeSuccess(){clearInterval(successTimer);closeModal();}
+async function pollForPayment(receiptId){
+  const pub=new ethers.JsonRpcProvider(CFG.RPC);
+  const escrow=new ethers.Contract(CFG.ESCROW,ABI_ESCROW,pub);
+  let startBlock;try{startBlock=await pub.getBlockNumber()-5;}catch(e){startBlock=0;}
+  let attempts=0;
+  const poll=setInterval(async()=>{
+    attempts++;
+    if(attempts>200){clearInterval(poll);document.getElementById('modal-status').textContent='Timed out — regenerate QR if unpaid';return;}
+    document.getElementById('modal-status').textContent=`Waiting for payment… (${attempts*3}s)`;
+    try{
+      const events=await escrow.queryFilter(escrow.filters.PaymentCaptured(receiptId),startBlock);
+      if(events.length>0){
+        clearInterval(poll);
+        const ev=events[0];
+        const payerAddr=ev.args.payer;
+        const paidCents=Number(ev.args.totalCents);
+        const paidSkoop=parseFloat(ethers.formatUnits(BigInt(ev.args.tokenAmount),CFG.SKOOP_DEC));
+        showPaymentSuccess(paidCents,paidSkoop,ev.args.receiptId);
+        if(skoopPriceUSD>0&&signer){
+          const rewardSkoop=Math.round((paidCents/100)*CFG.AUTO_REWARD_RATE/skoopPriceUSD);
+          if(rewardSkoop>0)setTimeout(()=>autoSendReward(payerAddr,rewardSkoop,paidCents,ev.args.receiptId),600);
+        }
+        cart={};renderCart();renderMenu();loadReceipts();
+      }
+    }catch(e){}
+  },3000);
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  REWARDS (manual)
+// ═══════════════════════════════════════════════════════════════
+function setRewardAddr(addr){
+  scannedRewardAddr=addr;
+  document.getElementById('reward-addr').textContent=addr;
+  document.getElementById('reward-addr-input').value=addr;
+  document.getElementById('reward-send-btn').disabled=!(addr&&Number(document.getElementById('reward-amount').value)>0);
+}
+function onRewardAddrInput(val){
+  const addr=val.trim().replace(/^ethereum:/i,'');
+  if(ethers.isAddress(addr))setRewardAddr(addr);
+  else{scannedRewardAddr=null;document.getElementById('reward-addr').textContent='—';document.getElementById('reward-send-btn').disabled=true;}
+}
+async function pasteAddr(){
+  try{
+    const text=await navigator.clipboard.readText();
+    const addr=text.trim().replace(/^ethereum:/i,'');
+    if(ethers.isAddress(addr)){setRewardAddr(addr);showToast('Address pasted ✓','success');}
+    else showToast('Not a valid address','error');
+  }catch{showToast('Clipboard denied','error');}
+}
+let scanFacing='user';
+function toggleRewardScan(){rewardScannerActive?stopRewardScan():startRewardScan();}
+function flipCamera(){if(!rewardScannerActive)return;scanFacing=scanFacing==='environment'?'user':'environment';stopRewardScan();startRewardScan();}
+function startRewardScan(){
+  document.getElementById('reward-qr-reader').style.display='block';
+  document.getElementById('scan-label').textContent='Stop Camera';
+  document.getElementById('scan-icon').textContent='⏹';
+  document.getElementById('flip-camera-btn').style.display='flex';
+  rewardScannerActive=true;
+  rewardScanner=new Html5Qrcode('reward-qr-reader');
+  rewardScanner.start({facingMode:scanFacing},{fps:10,qrbox:{width:150,height:150}},
+    (decoded)=>{
+      const addr=decoded.trim().replace(/^ethereum:/i,'');
+      if(ethers.isAddress(addr)){setRewardAddr(addr);stopRewardScan();showToast('Wallet scanned ✓','success');}
+      else showToast('Not a valid wallet QR','error');
+    },()=>{}
+  ).catch(()=>{showToast('Camera denied — use paste','error');stopRewardScan();});
+}
+function stopRewardScan(){
+  if(rewardScanner){rewardScanner.stop().catch(()=>{});rewardScanner=null;}
+  rewardScannerActive=false;
+  document.getElementById('reward-qr-reader').style.display='none';
+  document.getElementById('scan-label').textContent='Scan Customer QR';
+  document.getElementById('scan-icon').textContent='📷';
+  document.getElementById('flip-camera-btn').style.display='none';
+}
+function resetRewards(){
+  stopRewardScan();scannedRewardAddr=null;
+  ['reward-addr-input','reward-amount','sale-total'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
+  document.getElementById('reward-addr').textContent='—';
+  document.getElementById('calc-skoop-display').textContent='—';
+  document.getElementById('calc-apply-btn').disabled=true;
+  document.getElementById('reward-usd-hint').textContent='';
+  document.getElementById('reward-send-btn').disabled=true;
+  const a=document.getElementById('reward-amount');if(a)delete a.dataset.pendingId;
+  calcSkoopAmount=0;
+}
+function calcReward(v){
+  const saleTotal=parseFloat(v);
+  const applyBtn=document.getElementById('calc-apply-btn');const display=document.getElementById('calc-skoop-display');
+  if(!saleTotal||saleTotal<=0||!skoopPriceUSD){display.textContent='—';applyBtn.disabled=true;calcSkoopAmount=0;return;}
+  calcSkoopAmount=Math.round(saleTotal*0.05/skoopPriceUSD);
+  display.textContent=calcSkoopAmount.toLocaleString()+' SKOOP';
+  applyBtn.disabled=false;
+}
+function applyCalcReward(){
+  if(!calcSkoopAmount)return;
+  const input=document.getElementById('reward-amount');
+  input.value=calcSkoopAmount;input.dispatchEvent(new Event('input'));
+  showToast(calcSkoopAmount.toLocaleString()+' SKOOP applied ✓','success');
+}
+async function sendReward(){
+  if(!signer){showToast('Connect wallet first','error');return;}
+  if(!scannedRewardAddr){showToast('No wallet address set','error');return;}
+  const amtStr=document.getElementById('reward-amount').value;
+  if(!amtStr||Number(amtStr)<=0){showToast('Enter SKOOP amount','error');return;}
+  const amtNum=parseFloat(amtStr);
+  if(getDailyRewardState()+amtNum>CFG.DAILY_REWARD_LIMIT){showToast('Daily limit reached','error');return;}
+  const btn=document.getElementById('reward-send-btn');btn.disabled=true;btn.textContent='Sending…';
+  try{
+    const token=new ethers.Contract(CFG.SKOOP,ABI_ERC20,signer);
+    const tx=await token.transfer(scannedRewardAddr,ethers.parseUnits(amtStr,CFG.SKOOP_DEC));
+    showToast('Broadcasting…','');await tx.wait();
+    addDailyRewardSent(amtNum);
+    const pendingId=document.getElementById('reward-amount').dataset.pendingId;
+    if(pendingId)removePendingReward(pendingId);
+    showToast('Reward sent ✓','success');resetRewards();
+    refreshWalletBalance();
+  }catch(e){showToast('Transaction failed','error');}
+  btn.disabled=false;btn.textContent='Send SKOOP Reward';
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  PENDING REWARDS
+// ═══════════════════════════════════════════════════════════════
+function savePendingReward(receiptId,skoopAmt,totalCents){
+  const pending=getPendingRewards();const id='PR_'+Date.now();
+  pending.push({id,receiptId:typeof receiptId==='string'?receiptId.slice(0,14)+'…':String(receiptId),skoopAmt,totalCents,ts:Date.now()});
+  localStorage.setItem('kokos_pending_rewards',JSON.stringify(pending));return id;
+}
+function getPendingRewards(){try{return JSON.parse(localStorage.getItem('kokos_pending_rewards')||'[]');}catch{return[];}}
+function removePendingReward(id){localStorage.setItem('kokos_pending_rewards',JSON.stringify(getPendingRewards().filter(r=>r.id!==id)));renderPendingRewards();}
+function renderPendingRewards(){
+  const pending=getPendingRewards();
+  const section=document.getElementById('pending-section');
+  const list=document.getElementById('pending-list');
+  if(!pending.length){section.style.display='none';return;}
+  section.style.display='flex';
+  list.innerHTML=pending.map(r=>{
+    const age=Math.round((Date.now()-r.ts)/60000);
+    return `<div class="pending-item">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.22rem;">
+        <span style="font-size:0.7rem;font-weight:700;color:var(--coral-deep);">${r.skoopAmt.toLocaleString()} SKOOP</span>
+        <span style="font-size:0.56rem;color:var(--ink-lt);">${age<1?'just now':age+'m ago'}</span>
+      </div>
+      <div style="font-size:0.58rem;color:var(--ink-mid);margin-bottom:0.3rem;">$${(r.totalCents/100).toFixed(2)} · ${r.receiptId}</div>
+      <div style="display:flex;gap:0.3rem;">
+        <button onclick="loadPendingReward('${r.id}')" class="action-btn primary" style="flex:1;padding:0.32rem;font-size:0.62rem;">Send Now</button>
+        <button onclick="removePendingReward('${r.id}')" class="action-btn secondary" style="padding:0.32rem 0.5rem;font-size:0.62rem;">✕</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+function loadPendingReward(id){
+  const r=getPendingRewards().find(x=>x.id===id);if(!r)return;
+  const input=document.getElementById('reward-amount');
+  input.value=r.skoopAmt;input.dispatchEvent(new Event('input'));
+  document.getElementById('reward-usd-hint').textContent='Failed auto-reward — scan customer wallet to retry';
+  input.dataset.pendingId=id;showToast('Loaded — scan customer wallet','success');
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  DAILY LIMIT
+// ═══════════════════════════════════════════════════════════════
+function getDailyRewardState(){
+  const today=new Date().toDateString();
+  if(localStorage.getItem('kokos_reward_day')!==today){localStorage.setItem('kokos_reward_day',today);localStorage.setItem('kokos_reward_sent','0');return 0;}
+  return parseFloat(localStorage.getItem('kokos_reward_sent')||'0');
+}
+function addDailyRewardSent(amount){
+  localStorage.setItem('kokos_reward_day',new Date().toDateString());
+  localStorage.setItem('kokos_reward_sent',(getDailyRewardState()+amount).toString());
+  updateDailyLimitDisplay();
+}
+function updateDailyLimitDisplay(){
+  const sent=getDailyRewardState();const remaining=CFG.DAILY_REWARD_LIMIT-sent;
+  const el=document.getElementById('daily-limit-display');
+  if(el){el.textContent=`Daily: ${sent.toLocaleString()} / ${CFG.DAILY_REWARD_LIMIT.toLocaleString()} SKOOP`;el.style.color=remaining<CFG.DAILY_REWARD_LIMIT*0.2?'#c0392b':'var(--ink-lt)';}
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  SETTLEMENT / BURN
+// ═══════════════════════════════════════════════════════════════
+async function loadReceipts(){
+  try{
+    const pub=new ethers.JsonRpcProvider(CFG.RPC);
+    const escrow=new ethers.Contract(CFG.ESCROW,ABI_ESCROW,pub);
+    const latest=await pub.getBlockNumber();
+    const CHUNK=9000,LOOKBACK=45000,fromBlock=Math.max(0,latest-LOOKBACK);
+    let captured=[],burned=[];
+    for(let start=fromBlock;start<latest;start+=CHUNK){
+      const end=Math.min(start+CHUNK-1,latest);
+      const[cc,bb]=await Promise.all([escrow.queryFilter(escrow.filters.PaymentCaptured(),start,end),escrow.queryFilter(escrow.filters.PaymentBurned(),start,end)]);
+      captured=captured.concat(cc);burned=burned.concat(bb);
+    }
+    const burnedIds=new Set(burned.map(e=>e.args.receiptId.toLowerCase()));
+    capturedReceipts=captured.filter(e=>!burnedIds.has(e.args.receiptId.toLowerCase())).map(e=>({receiptId:e.args.receiptId,amount:e.args.tokenAmount}));
+    renderReceipts();
+    if(!capturedReceipts.length)showToast('No unburned receipts','');
+  }catch(e){showToast('Receipt load error','error');}
+}
+function renderReceipts(){
+  const list=document.getElementById('receipt-list');
+  document.getElementById('stat-captured').textContent=capturedReceipts.length;
+  const totalSkoop=capturedReceipts.reduce((s,r)=>s+Number(ethers.formatUnits(r.amount,CFG.SKOOP_DEC)),0);
+  document.getElementById('stat-skoop').textContent=totalSkoop.toLocaleString('en-US',{maximumFractionDigits:0});
+  if(!capturedReceipts.length){list.innerHTML='<p style="font-size:0.65rem;color:var(--ink-lt);text-align:center;padding:0.875rem 0;">No captured receipts yet</p>';document.getElementById('burn-btn').disabled=true;return;}
+  list.innerHTML=capturedReceipts.map((r,i)=>`<div class="receipt-card"><input type="checkbox" id="rc-${i}" value="${r.receiptId}" onchange="updateBurnBtn()"><div style="flex:1;"><div class="rc-id">${r.receiptId.slice(0,18)}…</div><div class="rc-amt">${parseFloat(ethers.formatUnits(r.amount,CFG.SKOOP_DEC)).toLocaleString()} SKOOP</div></div></div>`).join('');
+}
+function updateBurnBtn(){document.getElementById('burn-btn').disabled=document.querySelectorAll('#receipt-list input:checked').length===0;}
+async function burnSelected(){
+  if(!signer){showToast('Connect wallet first','error');return;}
+  if(signerAddr&&signerAddr.toLowerCase()!==CFG.OWNER.toLowerCase()){showToast('Need owner wallet to burn','error');return;}
+  const checked=[...document.querySelectorAll('#receipt-list input:checked')].map(c=>c.value);
+  if(!checked.length)return;
+  const btn=document.getElementById('burn-btn');btn.disabled=true;btn.textContent='Burning…';
+  try{
+    const escrow=new ethers.Contract(CFG.ESCROW,ABI_ESCROW,signer);
+    const tx=await escrow.burnPayments(checked);
+    showToast('Broadcasting burn…','');const rcpt=await tx.wait();
+    let burnCount=checked.length,burnSkoop=0;
+    try{
+      const iface=new ethers.Interface([{anonymous:false,inputs:[{name:'paymentCount',type:'uint256'},{name:'totalTokenAmount',type:'uint256'},{name:'timestamp',type:'uint256'}],name:'BatchBurnExecuted',type:'event'}]);
+      for(const log of rcpt.logs){try{const p=iface.parseLog(log);if(p&&p.name==='BatchBurnExecuted'){burnCount=Number(p.args.paymentCount);burnSkoop=parseFloat(ethers.formatUnits(p.args.totalTokenAmount,CFG.SKOOP_DEC));break;}}catch{}}
+    }catch{}
+    const skoopStr=burnSkoop>0?burnSkoop.toLocaleString('en-US',{maximumFractionDigits:2})+' SKOOP':'';
+    document.getElementById('receipt-list').innerHTML=`<div style="background:var(--mint);border-radius:9px;padding:0.75rem;text-align:center;display:flex;flex-direction:column;align-items:center;gap:0.35rem;"><div style="font-size:1.4rem;">🔥</div><div style="font-weight:700;color:var(--mint-dk);font-size:0.82rem;">${skoopStr||burnCount+' receipts'} burned</div><div style="font-size:0.58rem;font-family:monospace;color:var(--ink-lt);">${rcpt.hash.slice(0,20)}…</div></div>`;
+    document.getElementById('stat-captured').textContent='0';document.getElementById('stat-skoop').textContent='0';
+    document.getElementById('burn-btn').disabled=true;
+    showToast('🔥 Burn complete','success');capturedReceipts=[];
+  }catch(e){showToast('Burn failed','error');}
+  btn.textContent='🔥 Burn Selected';
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  WALLET BALANCE
+// ═══════════════════════════════════════════════════════════════
+let walletBalanceTimer=null;
+function showWalletBalancePill(){
+  document.getElementById('wallet-balance-wrap').classList.add('visible');
+}
+async function fetchWalletBalance(){
+  if(!signerAddr)return;
+  const dot=document.getElementById('wallet-balance-dot');
+  const skEl=document.getElementById('wallet-balance-skoop');
+  const usdEl=document.getElementById('wallet-balance-usd');
+  dot.className='loading';
+  skEl.innerHTML='<span id="wallet-balance-dot" class="loading"></span>…';
+  usdEl.textContent='loading…';
+  try{
+    const pub=new ethers.JsonRpcProvider(CFG.RPC);
+    const ABI_BAL=["function balanceOf(address) view returns (uint256)"];
+    const token=new ethers.Contract(CFG.SKOOP,ABI_BAL,pub);
+    const raw=await token.balanceOf(signerAddr);
+    const balance=parseFloat(ethers.formatUnits(raw,CFG.SKOOP_DEC));
+    const dotEl=document.getElementById('wallet-balance-dot');
+    if(dotEl){dotEl.className='';dotEl.style.background='var(--mint-dk)';}
+    skEl.innerHTML='<span id="wallet-balance-dot" style="display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--mint-dk);margin-right:3px;vertical-align:middle;"></span>'+balance.toLocaleString('en-US',{maximumFractionDigits:0})+' SKOOP';
+    if(skoopPriceUSD>0){
+      const usd=balance*skoopPriceUSD;
+      usdEl.textContent='≈ $'+usd.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
+    } else {
+      usdEl.textContent='wallet balance';
+    }
+    clearTimeout(walletBalanceTimer);
+    walletBalanceTimer=setTimeout(fetchWalletBalance,30000);
+  }catch(e){
+    const dotEl=document.getElementById('wallet-balance-dot');
+    if(dotEl){dotEl.className='error';}
+    document.getElementById('wallet-balance-usd').textContent='tap to retry';
+  }
+}
+function refreshWalletBalance(){
+  clearTimeout(walletBalanceTimer);
+  if(signerAddr)fetchWalletBalance();
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  UTILS
+// ═══════════════════════════════════════════════════════════════
+function showToast(msg,type=''){
+  const t=document.getElementById('toast');t.textContent=msg;t.className='show '+(type||'');
+  clearTimeout(toastTimer);toastTimer=setTimeout(()=>t.classList.remove('show'),3200);
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  BRAND + INIT
+// ═══════════════════════════════════════════════════════════════
+document.addEventListener('DOMContentLoaded',()=>{
+  document.getElementById('reward-amount').addEventListener('input',(e)=>{
+    const amt=Number(e.target.value);
+    document.getElementById('reward-send-btn').disabled=!(scannedRewardAddr&&amt>0);
+    document.getElementById('reward-usd-hint').textContent=(amt>0&&skoopPriceUSD>0)?'≈ $'+(amt*skoopPriceUSD).toFixed(2)+' USD':'';
+  });
+});
+function applyBrand(){
+  const logoImg=document.getElementById('logo-img');
+  const logoText=document.getElementById('logo-text');
+  if(BRAND.logoUrl){logoImg.src=BRAND.logoUrl;logoImg.style.display='inline-block';logoText.style.display='none';}
+  else{logoImg.style.display='none';logoText.textContent=BRAND.storeName;logoText.style.display='inline';}
+  document.getElementById('logo-subtitle').textContent=BRAND.storeSubtitle;
+  document.title=BRAND.storeName+' — POS';
+  document.querySelector('meta[name="apple-mobile-web-app-title"]').content=BRAND.storeName;
+  const strip=document.querySelector('.cat-strip');
+  strip.innerHTML='<button class="cat-btn active" onclick="filterCat(\'all\',this)">All</button>'
+    +BRAND.categories.map(cat=>`<button class="cat-btn" onclick="filterCat('${cat.id}',this)">${cat.label}</button>`).join('');
+}
+applyBrand();
+renderMenu();renderCart();updateDailyLimitDisplay();renderPendingRewards();
+fetchSkoopPrice();setInterval(fetchSkoopPrice,60000);
+if(window.ethereum){window.ethereum.request({method:'eth_accounts'}).then(accounts=>{if(accounts.length)connectWallet();}).catch(()=>{});}
+</script>
+</body>
+</html>
