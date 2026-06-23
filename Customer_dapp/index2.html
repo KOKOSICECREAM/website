@@ -949,6 +949,16 @@ async function maybeRestorePendingIntent(){
     if(Date.now()/1000>Number(intent.deadline)){try{sessionStorage.removeItem('pendingIntent');}catch(e){}return;}
     pendingIntent=intent;
     await showConfirm(intent);
+    // If approval was already done before the tab reloaded, skip the re-tap and auto-submit payment
+    if(signer&&userAddr){
+      try{
+        const rp=new ethers.JsonRpcProvider(CFG.RPC);
+        const isUsdc=intent.paymentToken?.toLowerCase()===CFG.USDC.toLowerCase();
+        const tok=new ethers.Contract(isUsdc?CFG.USDC:CFG.SKOOP,ABI_ERC20,rp);
+        const al=await tok.allowance(userAddr,CFG.ESCROW);
+        if(al>=BigInt(intent.tokenAmount)){setTimeout(()=>confirmPay(),600);}
+      }catch(e){}
+    }
   }catch(e){try{sessionStorage.removeItem('pendingIntent');}catch(e2){}}
 }
 document.addEventListener('visibilitychange',async function(){
