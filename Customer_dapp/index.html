@@ -1315,7 +1315,7 @@ async function confirmPay(){
       btn.innerHTML='<span class="spinner"></span> Step 1 of 2 \u2014 Approving\u2026';
       try{
         await tok.approve(CFG.ESCROW,tokAmt);
-      }catch(e){setApStep(1,'error','Approval rejected \u2014 tap below to try again');btn.disabled=false;btn.textContent="Try Again";return;}
+      }catch(e){hideApprovalProgress();setApStep(1,'error','Approval rejected \u2014 tap below to try again');btn.disabled=false;btn.textContent="Try Again";return;}
       setApStep(1,'active','Approval submitted \u2014 confirming on chain\u2026');
       btn.innerHTML='<span class="spinner"></span> Confirming approval\u2026';
       // Poll allowance via public RPC \u2014 avoids wallet-provider receipt polling which hangs on Coinbase Wallet
@@ -1349,7 +1349,6 @@ async function confirmPay(){
       setApStep(2,'error','Payment rejected \u2014 tap below to try again');
       showToast(e?.reason||e?.shortMessage||e?.data?.message||e?.message||"Payment rejected","err");
       try{localStorage.removeItem('pendingIntent');}catch(e2){}
-      pendingIntent=null;
       btn.disabled=false;btn.textContent="Try Again";return;
     }
     if(al<tokAmt)setApStep(2,'done','Payment sent \u2713');
