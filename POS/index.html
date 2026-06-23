@@ -1237,7 +1237,7 @@ function updateDailyLimitDisplay(){
 // ═══════════════════════════════════════════════════════════════
 //  SETTLEMENT / BURN
 // ═══════════════════════════════════════════════════════════════
-async function loadReceipts(){
+async function loadReceipts(attempt=0){
   try{
     const pub=new ethers.JsonRpcProvider(CFG.RPC);
     const escrow=new ethers.Contract(CFG.ESCROW,ABI_ESCROW,pub);
@@ -1245,6 +1245,7 @@ async function loadReceipts(){
     const CHUNK=9000,LOOKBACK=90000,fromBlock=Math.max(0,latest-LOOKBACK);
     let captured=[],burned=[],settled=[],voided=[];
     for(let start=fromBlock;start<latest;start+=CHUNK){
+      if(start>fromBlock)await new Promise(r=>setTimeout(r,250));
       const end=Math.min(start+CHUNK-1,latest);
       const[cc,bb,ss,vv]=await Promise.all([
         escrow.queryFilter(escrow.filters.PaymentCaptured(),start,end),
@@ -1264,7 +1265,10 @@ async function loadReceipts(){
       .map(e=>({receiptId:e.args.receiptId,amount:e.args.tokenAmount,paymentToken:e.args.paymentToken,capturedAt:Number(e.args.timestamp)}));
     renderReceipts();
     if(!capturedReceipts.length)showToast('No pending receipts','');
-  }catch(e){showToast('Receipt load error','error');}
+  }catch(e){
+    if(attempt<2){setTimeout(()=>loadReceipts(attempt+1),3000);return;}
+    showToast('Receipt load error','error');
+  }
 }
 function renderReceipts(){
   const list=document.getElementById('receipt-list');
