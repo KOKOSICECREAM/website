@@ -1,6 +1,6 @@
-# KOKOS SKOOP — Real Ice Cream. Real Crypto. Real Value.
+# KOKOS SKOOP — Real Plant-Based Ice Cream. Real Crypto. Real Value.
 
-**KOKOS Ice Cream** is a beloved Nashville institution. Now it's also one of the first brick-and-mortar retail businesses in the world running a fully on-chain payment and loyalty system — live, in production, on Base.
+**KOKOS Ice Cream** is a beloved Nashville institution — revolutionizing what plant-based ice cream can taste like, and now revolutionizing how a retail business can run on crypto. KOKOS is one of the first brick-and-mortar businesses in the world with a fully on-chain payment and loyalty system — live, in production, on Base.
 
 This isn't a whitepaper. This is a working cash register connected to a blockchain.
 
@@ -87,7 +87,7 @@ These rewards aren't points. They're tokens. They trade. They can be held, sold,
 
 Crypto has promised real-world utility for years. KOKOS is actually doing it — no vaporware, no testnet demo, no "coming soon."
 
-A customer in Nashville walks up to a window, orders a Trio, scans a QR, taps approve in their Coinbase Wallet, and the transaction is recorded permanently on Base. They walk away with ice cream and SKOOP in their wallet. The business burns tokens. The supply drops.
+A customer in Nashville walks up to a window, orders a plant-based Trio, scans a QR, taps approve in their Coinbase Wallet, and the transaction is recorded permanently on Base. They walk away with ice cream and SKOOP in their wallet. The business burns tokens. The supply drops.
 
 That's the loop. It runs today.
 
@@ -179,7 +179,7 @@ Or earn it by buying ice cream.
 
 Nashville, TN
 
-> *The best ice cream in Nashville just became the most interesting crypto project in Nashville.*
+> *The best plant-based ice cream in Nashville just became the most interesting crypto project in Nashville.*
 
 ---
 
