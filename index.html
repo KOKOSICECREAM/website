@@ -755,7 +755,7 @@ footer { background: var(--coral); border-top: var(--border); }
   transition: max-height 0.3s ease;
 }
 .mobile-menu.open {
-  max-height: 520px;
+  max-height: 580px;
   border-bottom: var(--border);
 }
 .mobile-menu a {
@@ -771,6 +771,7 @@ footer { background: var(--coral); border-top: var(--border); }
 }
 .mobile-menu a:last-child { border-bottom: none; }
 .mobile-menu a.mob-skoop { background: var(--lavender); }
+.mobile-menu a.mob-invest { background: var(--sand); }
 .mobile-menu a.mob-cta { background: var(--coral-mid); }
 
 /* SCROLL OFFSET — compensates for sticky 84px nav */
@@ -813,8 +814,15 @@ footer { background: var(--coral); border-top: var(--border); }
   .mobile-menu { display: flex; }
   .footer-top { grid-template-columns: 1fr; }
   .footer-logo-col { border-right: none; border-bottom: var(--border); }
-  .footer-links-col { flex-wrap: wrap; }
-  .footer-links-col a { height: 48px; line-height: 48px; }
+  .footer-links-col { flex-direction: column; align-items: stretch; }
+  .footer-links-col a {
+    height: auto;
+    line-height: 1;
+    padding: 0.9rem 1.5rem;
+    border-right: none;
+    border-bottom: var(--border);
+  }
+  .footer-links-col a:last-child { border-bottom: none; }
 }
 @media (max-width: 600px) {
   .flavor-grid { grid-template-columns: 1fr; }
@@ -955,6 +963,7 @@ footer { background: var(--coral); border-top: var(--border); }
     <li><a href="#press">Press</a></li>
     <li><a href="#contact">Visit Us</a></li>
     <li><a href="https://kokosicecream.com/SKOOP/dashboard.html" target="_blank">$SKOOP</a></li>
+    <li><a href="/invest.html">Invest</a></li>
     <li><a href="#contact" class="nav-cta">Order</a></li>
   </ul>
   <button class="hamburger" id="hamburger" onclick="toggleMenu()" aria-label="Open menu">MENU</button>
@@ -968,6 +977,7 @@ footer { background: var(--coral); border-top: var(--border); }
   <a href="#press">Press</a>
   <a href="#contact">Visit Us</a>
   <a href="https://kokosicecream.com/SKOOP/dashboard.html" target="_blank" class="mob-skoop">$SKOOP Token</a>
+  <a href="/invest.html" class="mob-invest">Invest in KOKOS</a>
   <a href="#contact" class="mob-cta">Order</a>
 </div>
 
@@ -1371,6 +1381,7 @@ const FLAVORS = [
       <a href="https://www.facebook.com/kokosicecream" target="_blank">Facebook</a>
       <a href="https://www.tiktok.com/@kokosicecream" target="_blank">TikTok</a>
       <a href="https://kokosicecream.com/SKOOP/dashboard.html" target="_blank">$SKOOP Token</a>
+      <a href="/invest.html">Invest</a>
       <a href="https://www.kokosicecream.com" target="_blank">kokosicecream.com</a>
       <a href="/cdn-cgi/l/email-protection#771e191118371c181c18041e1412140512161a5914181a">Contact</a>
     </div>
