@@ -1,0 +1,539 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>KOKOS — The Next Chapter</title>
+<link rel="icon" type="image/png" href="KOKOS_logo.png" />
+<link rel="apple-touch-icon" href="KOKOS_logo.png" />
+<meta property="og:type" content="website" />
+<meta property="og:title" content="KOKOS — The Next Chapter" />
+<meta property="og:description" content="If you love what we built with KOKOS, you'll love what we're working on next." />
+<meta property="og:url" content="https://www.kokosicecream.com/invest.html" />
+<meta property="og:image" content="https://www.kokosicecream.com/cone.jpg" />
+<meta name="twitter:card" content="summary_large_image" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=Instrument+Sans:wght@300;400;500;600&display=swap" rel="stylesheet" />
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+:root {
+  --coral:     #fdcec1;
+  --mint:      #cde6d7;
+  --apricot:   #fae2d8;
+  --lavender:  #e3d1e4;
+  --sand:      #ffddad;
+  --coral-mid: #fdaf9a;
+  --blush:     #f7b8a6;
+  --green:     #11483d;
+  --cream:     #fffaf7;
+  --ink:       #1a1008;
+  --border:    3px solid #efe8e0;
+}
+
+body {
+  font-family: 'Instrument Sans', sans-serif;
+  background: var(--cream);
+  color: var(--ink);
+  overflow-x: hidden;
+}
+
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background-image: url('tropicalvibes.png');
+  background-size: cover;
+  background-position: center center;
+  background-repeat: no-repeat;
+  opacity: 0.09;
+  z-index: 0;
+  pointer-events: none;
+}
+
+body > * { position: relative; z-index: 1; }
+
+/* NAV */
+nav {
+  background: var(--coral);
+  padding: 0 2.5rem;
+  height: 84px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: var(--border);
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+.nav-logo a { display: block; line-height: 0; }
+.nav-logo img {
+  height: 68px; width: 68px;
+  border-radius: 50%; object-fit: cover;
+  background: white; border: 2.5px solid var(--ink); padding: 3px;
+}
+.nav-logo-fallback { font-family: 'DM Serif Display', serif; font-size: 1.6rem; color: var(--green); }
+.nav-back {
+  font-size: 0.72rem; font-weight: 600;
+  color: var(--ink); text-decoration: none;
+  letter-spacing: 0.12em; text-transform: uppercase;
+  opacity: 0.5; display: flex; align-items: center; gap: 0.5rem;
+  transition: opacity 0.15s;
+}
+.nav-back:hover { opacity: 1; }
+.nav-back::before { content: '←'; }
+.nav-cta-link {
+  display: flex; align-items: center;
+  padding: 0 1.4rem; height: 84px;
+  font-size: 0.72rem; font-weight: 600;
+  color: var(--ink); text-decoration: none;
+  letter-spacing: 0.14em; text-transform: uppercase;
+  border-left: var(--border); border-right: var(--border);
+  background: var(--lavender); transition: background 0.15s;
+}
+.nav-cta-link:hover { background: #d4bfd5; }
+
+/* HERO */
+.hero {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  min-height: 500px;
+  border-bottom: var(--border);
+}
+.hero-left {
+  background: var(--ink);
+  padding: 5rem 4.5rem;
+  display: flex; flex-direction: column;
+  justify-content: center; gap: 2rem;
+  border-right: var(--border);
+}
+.hero-eyebrow {
+  font-size: 0.6rem; font-weight: 600;
+  letter-spacing: 0.22em; text-transform: uppercase;
+  color: rgba(253,206,193,0.4);
+}
+.hero-left h1 {
+  font-family: 'DM Serif Display', serif;
+  font-size: clamp(2.8rem, 4.5vw, 5.2rem);
+  font-weight: 400; line-height: 1.0;
+  color: var(--coral); letter-spacing: -0.02em;
+}
+.hero-left h1 em { font-style: italic; color: var(--coral-mid); }
+.hero-left p {
+  font-size: 1rem; font-weight: 300;
+  color: rgba(255,255,255,0.5);
+  line-height: 1.85; max-width: 390px;
+}
+.hero-cta {
+  display: inline-block;
+  background: var(--coral-mid); color: var(--ink);
+  padding: 0.95rem 2rem;
+  font-size: 0.78rem; font-weight: 600;
+  letter-spacing: 0.1em; text-transform: uppercase;
+  text-decoration: none; border: 3px solid var(--coral-mid);
+  align-self: flex-start; transition: background 0.15s, border-color 0.15s;
+}
+.hero-cta:hover { background: var(--blush); border-color: var(--blush); }
+
+.hero-right {
+  background: var(--coral);
+  padding: 4rem 3.5rem;
+  display: flex; flex-direction: column;
+  justify-content: flex-end; gap: 2.5rem;
+}
+.hero-right-kicker {
+  font-size: 0.6rem; font-weight: 600;
+  letter-spacing: 0.2em; text-transform: uppercase;
+  color: var(--green); display: flex; align-items: center; gap: 0.5rem;
+}
+.hero-right-kicker::before { content: ''; display: block; width: 14px; height: 2px; background: var(--green); }
+.hero-reviews { display: flex; flex-direction: column; }
+.hero-review {
+  display: flex; flex-direction: column; gap: 0.55rem;
+  padding: 1.5rem 0; border-bottom: var(--border);
+}
+.hero-review:last-child { border-bottom: none; padding-bottom: 0; }
+.review-mark {
+  font-family: 'DM Serif Display', serif;
+  font-size: 2rem; color: var(--green); line-height: 0.8;
+}
+.review-text {
+  font-size: 0.86rem; font-weight: 300;
+  font-style: italic; color: var(--ink);
+  line-height: 1.7; opacity: 0.85;
+}
+.review-source {
+  font-size: 0.58rem; font-weight: 600;
+  letter-spacing: 0.14em; text-transform: uppercase; color: var(--green);
+}
+
+/* HIGHLIGHTS */
+.highlights {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  border-bottom: var(--border);
+}
+.highlight {
+  padding: 2.8rem 2.6rem;
+  border-right: var(--border);
+}
+.highlight:last-child { border-right: none; }
+.highlight-label {
+  display: block;
+  font-size: 0.58rem; font-weight: 600;
+  letter-spacing: 0.18em; text-transform: uppercase;
+  color: var(--green); margin-bottom: 0.9rem;
+}
+.highlight strong {
+  display: block;
+  font-family: 'DM Serif Display', serif;
+  font-size: 1.4rem; line-height: 1.1;
+  font-weight: 400; margin-bottom: 0.8rem; color: var(--ink);
+}
+.highlight p {
+  font-size: 0.82rem; line-height: 1.75;
+  font-weight: 300; color: var(--ink); opacity: 0.7;
+}
+
+/* VIDEO */
+.video-section {
+  border-bottom: var(--border);
+  background: var(--ink);
+}
+.video-wrap {
+  position: relative;
+  width: 100%;
+  padding-bottom: 56.25%;
+  background: #0e0806;
+}
+.video-wrap iframe,
+.video-wrap video {
+  position: absolute;
+  inset: 0; width: 100%; height: 100%;
+  border: none;
+}
+.video-placeholder {
+  position: absolute; inset: 0;
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center; gap: 1rem;
+  color: rgba(253,206,193,0.25);
+  border: 3px dashed rgba(253,206,193,0.1);
+}
+.video-placeholder-icon {
+  width: 72px; height: 72px; border-radius: 50%;
+  border: 2px solid rgba(253,206,193,0.18);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1.5rem;
+}
+.video-placeholder p {
+  font-size: 0.68rem; font-weight: 600;
+  letter-spacing: 0.18em; text-transform: uppercase;
+}
+
+/* NARRATIVE */
+.narrative {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  border-bottom: var(--border);
+}
+.narrative-left {
+  padding: 5rem 4.5rem;
+  border-right: var(--border);
+  display: flex; flex-direction: column;
+  justify-content: center; gap: 1.4rem;
+  background: var(--apricot);
+}
+.narrative-right {
+  padding: 5rem 4.5rem;
+  display: flex; flex-direction: column;
+  justify-content: center; gap: 1.4rem;
+  background: var(--cream);
+}
+.section-kicker {
+  font-size: 0.6rem; font-weight: 600;
+  letter-spacing: 0.2em; text-transform: uppercase;
+  color: var(--green); display: flex; align-items: center; gap: 0.5rem;
+}
+.section-kicker::before { content: ''; display: block; width: 14px; height: 2px; background: var(--green); }
+.narrative-heading {
+  font-family: 'DM Serif Display', serif;
+  font-size: clamp(1.9rem, 2.8vw, 2.8rem);
+  font-weight: 400; line-height: 1.05; color: var(--ink);
+}
+.narrative-heading em { font-style: italic; color: var(--green); }
+.narrative-body {
+  font-size: 0.92rem; font-weight: 300;
+  color: var(--ink); line-height: 1.9; opacity: 0.8;
+}
+
+/* FORM */
+.form-section {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  border-bottom: var(--border);
+}
+.form-left {
+  background: var(--mint);
+  padding: 5rem 4.5rem;
+  border-right: var(--border);
+  display: flex; flex-direction: column;
+  justify-content: center; gap: 1.4rem;
+}
+.form-heading {
+  font-family: 'DM Serif Display', serif;
+  font-size: clamp(2rem, 3vw, 3rem);
+  font-weight: 400; line-height: 1.05; color: var(--ink);
+}
+.form-heading em { font-style: italic; color: var(--green); }
+.form-subtext {
+  font-size: 0.9rem; font-weight: 300;
+  color: var(--ink); line-height: 1.85; opacity: 0.75; max-width: 340px;
+}
+.contact-line { display: flex; flex-direction: column; gap: 0.2rem; }
+.c-lbl {
+  font-size: 0.55rem; font-weight: 600;
+  letter-spacing: 0.18em; text-transform: uppercase; color: var(--green);
+}
+.c-val { font-size: 0.9rem; font-weight: 300; color: var(--ink); }
+.c-val a { color: inherit; text-decoration: none; border-bottom: 1px solid rgba(0,0,0,0.18); }
+.c-val a:hover { color: var(--green); border-bottom-color: var(--green); }
+
+.form-right {
+  background: var(--sand);
+  padding: 5rem 4.5rem;
+  display: flex; flex-direction: column;
+  justify-content: center;
+}
+.form-field {
+  width: 100%; padding: 0.85rem 1rem;
+  border: var(--border); font-family: 'Instrument Sans', sans-serif;
+  font-size: 0.88rem; background: rgba(255,255,255,0.6);
+  color: var(--ink); outline: none; margin-bottom: 0.65rem;
+  transition: background 0.15s;
+}
+.form-field:focus { background: white; }
+.form-ta { resize: none; height: 110px; }
+.form-submit {
+  background: var(--ink); color: var(--coral);
+  border: 3px solid var(--ink);
+  padding: 0.95rem 2.4rem;
+  font-family: 'Instrument Sans', sans-serif;
+  font-size: 0.78rem; font-weight: 600;
+  letter-spacing: 0.1em; text-transform: uppercase;
+  cursor: pointer; transition: background 0.15s, border-color 0.15s;
+}
+.form-submit:hover { background: var(--green); border-color: var(--green); }
+
+/* DISCLAIMER */
+.disclaimer {
+  padding: 1.1rem 2.5rem;
+  background: var(--ink);
+  color: rgba(255,255,255,0.35);
+  font-size: 0.62rem;
+  line-height: 1.65;
+  text-align: center;
+}
+
+/* FOOTER */
+footer { background: var(--coral); border-top: var(--border); }
+.footer-inner {
+  display: flex; align-items: center;
+  justify-content: space-between;
+  padding: 1.2rem 2.5rem;
+  border-bottom: var(--border);
+}
+.footer-logo img {
+  height: 38px; width: 38px;
+  border-radius: 50%; object-fit: contain;
+  background: white; border: 2px solid var(--ink);
+}
+.footer-links { display: flex; }
+.footer-links a {
+  display: block; padding: 0 1.2rem;
+  height: 46px; line-height: 46px;
+  font-size: 0.68rem; font-weight: 600;
+  letter-spacing: 0.12em; text-transform: uppercase;
+  color: var(--ink); text-decoration: none;
+  border-left: var(--border);
+}
+.footer-links a:hover { background: rgba(0,0,0,0.06); }
+.footer-bottom {
+  padding: 0.9rem 2.5rem;
+  display: flex; align-items: center; justify-content: space-between;
+}
+.footer-copy { font-size: 0.65rem; color: var(--ink); opacity: 0.5; letter-spacing: 0.06em; }
+
+/* RESPONSIVE */
+@media (max-width: 860px) {
+  nav { padding: 0 1.2rem; }
+  .nav-back { display: none; }
+  .hero { grid-template-columns: 1fr; }
+  .hero-left { padding: 3.5rem 2rem; border-right: none; border-bottom: var(--border); }
+  .hero-right { padding: 2.5rem 2rem; }
+  .highlights { grid-template-columns: 1fr; }
+  .highlight { border-right: none; border-bottom: var(--border); }
+  .highlight:last-child { border-bottom: none; }
+  .narrative { grid-template-columns: 1fr; }
+  .narrative-left { border-right: none; border-bottom: var(--border); padding: 3.5rem 2rem; }
+  .narrative-right { padding: 3.5rem 2rem; }
+  .form-section { grid-template-columns: 1fr; }
+  .form-left { border-right: none; border-bottom: var(--border); padding: 3.5rem 2rem; }
+  .form-right { padding: 3.5rem 2rem; }
+  .footer-inner { flex-direction: column; gap: 1rem; align-items: flex-start; padding: 1.2rem 1.5rem; }
+  .footer-links a { padding: 0 0.9rem; }
+  .footer-bottom { padding: 0.9rem 1.5rem; flex-direction: column; gap: 0.3rem; }
+  .disclaimer { padding: 1.1rem 1.5rem; }
+}
+@media (max-width: 600px) {
+  .hero-left { padding: 2.5rem 1.5rem; }
+  .hero-right { padding: 2.5rem 1.5rem; }
+  .narrative-left, .narrative-right { padding: 3rem 1.5rem; }
+  .form-left, .form-right { padding: 3rem 1.5rem; }
+}
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <div class="nav-logo">
+    <a href="/" aria-label="KOKOS Home">
+      <img src="KOKOS_logo.png" alt="KOKOS" onerror="this.style.display='none';this.nextElementSibling.style.display='block'" />
+      <span class="nav-logo-fallback" style="display:none;">KOKOS</span>
+    </a>
+  </div>
+  <a href="/" class="nav-back">Back to KOKOS</a>
+  <a href="#reach-out" class="nav-cta-link">Reach Out</a>
+</nav>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-left">
+    <span class="hero-eyebrow">From the Founders of KOKOS</span>
+    <h1>If you love<br>what we built,<br>wait until you<br>see <em>what's next.</em></h1>
+    <p>KOKOS started with one conviction: allergy-friendly dessert should never feel like a compromise. Nine years later, people don't choose us because they have to — they choose us because we taste better. Now we're building what comes next, and we're talking to the people who know us first.</p>
+    <a href="#reach-out" class="hero-cta">Start a Conversation</a>
+  </div>
+  <div class="hero-right">
+    <div class="hero-right-kicker">What People Say</div>
+    <div class="hero-reviews">
+      <div class="hero-review">
+        <div class="review-mark">&ldquo;</div>
+        <p class="review-text">I won't even say this is the best vegan ice cream I've had — it's hands down just the best ice cream I've ever had.</p>
+        <div class="review-source">— Google Review</div>
+      </div>
+      <div class="hero-review">
+        <div class="review-mark">&ldquo;</div>
+        <p class="review-text">The texture is actually better than dairy ice cream. I wouldn't even know it's vegan.</p>
+        <div class="review-source">— Google Review</div>
+      </div>
+      <div class="hero-review">
+        <div class="review-mark">&ldquo;</div>
+        <p class="review-text">This is THE best plant based ice cream I have ever had. I wish I lived in Nashville just to get this ice cream.</p>
+        <div class="review-source">— Google Review</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- HIGHLIGHTS -->
+<section class="highlights">
+  <div class="highlight" style="background:var(--cream);">
+    <span class="highlight-label">Nine Years Strong</span>
+    <strong>A real brand with real fans</strong>
+    <p>Customer love, product development, retail operations, events — the foundation is already built. We know what works.</p>
+  </div>
+  <div class="highlight" style="background:var(--mint);">
+    <span class="highlight-label">Taste First</span>
+    <strong>Built to win beyond the substitute category</strong>
+    <p>Plant-based without dairy, eggs, or nuts — designed so good that people choose us for the flavour, not the label.</p>
+  </div>
+  <div class="highlight" style="background:var(--lavender);">
+    <span class="highlight-label">The Vision</span>
+    <strong>More than a scoop shop</strong>
+    <p>Wholesale, grocery, schools, packaged products, food service. The scoop shop proved the concept. Now we scale it.</p>
+  </div>
+</section>
+
+<!-- VIDEO -->
+<div class="video-section">
+  <div class="video-wrap">
+    <!-- REPLACE THIS COMMENT WITH YOUR VIDEO EMBED -->
+    <!-- YouTube: <iframe src="https://www.youtube.com/embed/YOUR_VIDEO_ID" allowfullscreen></iframe> -->
+    <!-- Self-hosted: <video src="your-video.mp4" controls poster="cone.jpg"></video> -->
+    <div class="video-placeholder">
+      <div class="video-placeholder-icon">▶</div>
+      <p>Video coming soon</p>
+    </div>
+  </div>
+</div>
+
+<!-- NARRATIVE -->
+<div class="narrative">
+  <div class="narrative-left">
+    <div class="section-kicker">What We Proved</div>
+    <h2 class="narrative-heading">People choose<br>KOKOS for the <em>taste.</em></h2>
+    <p class="narrative-body">We started with a simple belief: allergy-friendly dessert should never feel like a compromise. Since then we've built loyal customer demand, operated scoop shops, developed proprietary plant-based recipes, and learned what it takes to run a food business that people genuinely love — without spending a dollar on advertising.</p>
+    <p class="narrative-body">The next phase isn't about abandoning what worked. It's about rebuilding around the strongest parts of KOKOS: the product, the brand, and the people who believe in it.</p>
+  </div>
+  <div class="narrative-right">
+    <div class="section-kicker">What's Coming</div>
+    <h2 class="narrative-heading">A stronger company.<br><em>Same obsession.</em></h2>
+    <p class="narrative-body">We're restructuring and launching what comes next. The details aren't public yet — but if you've watched us build KOKOS, you already know how we work. We care deeply, we ship, and we don't do anything halfway.</p>
+    <p class="narrative-body">We're starting this conversation with the people who know us. If that's you, we'd love to hear from you.</p>
+  </div>
+</div>
+
+<!-- FORM -->
+<section class="form-section" id="reach-out">
+  <div class="form-left">
+    <div class="section-kicker">Get in Touch</div>
+    <h2 class="form-heading">Join the first<br><em>conversations.</em></h2>
+    <p class="form-subtext">No pitch required. If you love KOKOS and want to know what we're working on next, reach out. We'll take it from there.</p>
+    <div class="contact-line">
+      <div class="c-lbl">Email</div>
+      <div class="c-val"><a href="mailto:invest@kokosicecream.com">invest@kokosicecream.com</a></div>
+    </div>
+    <div class="contact-line">
+      <div class="c-lbl">Find Us</div>
+      <div class="c-val">3 City Ave, Suite 700 · Nashville, TN</div>
+    </div>
+  </div>
+  <div class="form-right">
+    <form action="https://formspree.io/f/xjgaakkn" method="POST">
+      <input type="hidden" name="form_type" value="new_venture_inquiry" />
+      <input class="form-field" type="text" name="name" placeholder="Your name" required />
+      <input class="form-field" type="email" name="email" placeholder="Email address" required />
+      <input class="form-field" type="text" name="connection" placeholder="How do you know KOKOS?" />
+      <textarea class="form-field form-ta" name="message" placeholder="Tell us a bit about yourself…" required></textarea>
+      <button type="submit" class="form-submit">Send It</button>
+    </form>
+  </div>
+</section>
+
+<!-- DISCLAIMER -->
+<div class="disclaimer">
+  This page is for introductory discussion purposes only and does not constitute an offer to sell or a solicitation to buy securities. Any future investment opportunity will be offered only through definitive documents issued by the authorized entity.
+</div>
+
+<!-- FOOTER -->
+<footer>
+  <div class="footer-inner">
+    <div class="footer-logo">
+      <a href="/"><img src="KOKOS_logo.png" alt="KOKOS" onerror="this.style.display='none'" /></a>
+    </div>
+    <div class="footer-links">
+      <a href="/">Home</a>
+      <a href="/#about">Our Story</a>
+      <a href="/#contact">Visit the Shop</a>
+    </div>
+  </div>
+  <div class="footer-bottom">
+    <span class="footer-copy">&copy; 2026 KOKOS · Nashville, TN</span>
+    <span class="footer-copy">3 City Ave Ste 700 · 615.881.4082</span>
+  </div>
+</footer>
+
+</body>
+</html>
