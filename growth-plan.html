@@ -1,0 +1,719 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>KOKOS — Detailed Growth Phase Plan</title>
+<link rel="icon" type="image/png" href="KOKOS_logo.png" />
+<meta name="robots" content="noindex, nofollow" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=Instrument+Sans:wght@300;400;500;600&display=swap" rel="stylesheet" />
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+:root {
+  --coral:     #fdcec1;
+  --mint:      #cde6d7;
+  --apricot:   #fae2d8;
+  --lavender:  #e3d1e4;
+  --sand:      #ffddad;
+  --coral-mid: #fdaf9a;
+  --blush:     #f7b8a6;
+  --green:     #11483d;
+  --cream:     #fffaf7;
+  --ink:       #1a1008;
+  --border:    3px solid #efe8e0;
+}
+
+body {
+  font-family: 'Instrument Sans', sans-serif;
+  background: var(--cream);
+  color: var(--ink);
+}
+
+/* ── GATE ── */
+#gate {
+  position: fixed;
+  inset: 0;
+  background: var(--green);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2rem;
+  z-index: 9999;
+}
+#gate img {
+  width: 72px; height: 72px;
+  border-radius: 50%;
+  background: white;
+  border: 2.5px solid rgba(255,255,255,0.2);
+  padding: 4px;
+  object-fit: contain;
+}
+#gate h2 {
+  font-family: 'DM Serif Display', serif;
+  font-size: 1.5rem;
+  color: var(--mint);
+  font-weight: 400;
+  text-align: center;
+}
+#gate p {
+  font-size: 0.72rem;
+  font-weight: 500;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: rgba(255,255,255,0.3);
+}
+.gate-form {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.75rem;
+  width: 100%;
+  max-width: 280px;
+}
+.gate-input {
+  width: 100%;
+  padding: 0.85rem 1.1rem;
+  background: rgba(255,255,255,0.07);
+  border: 2px solid rgba(255,255,255,0.15);
+  color: white;
+  font-family: 'Instrument Sans', sans-serif;
+  font-size: 0.9rem;
+  letter-spacing: 0.06em;
+  text-align: center;
+  outline: none;
+  transition: border-color 0.2s;
+}
+.gate-input::placeholder { color: rgba(255,255,255,0.2); }
+.gate-input:focus { border-color: var(--mint); }
+.gate-btn {
+  width: 100%;
+  padding: 0.85rem;
+  background: var(--mint);
+  color: var(--ink);
+  border: none;
+  font-family: 'Instrument Sans', sans-serif;
+  font-size: 0.78rem;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.gate-btn:hover { background: #b3d9c5; }
+.gate-error {
+  font-size: 0.68rem;
+  color: #ffb3a0;
+  letter-spacing: 0.08em;
+  min-height: 1rem;
+  text-align: center;
+}
+
+/* ── DOCUMENT ── */
+#doc { display: none; }
+
+/* HEADER */
+.doc-header {
+  background: var(--green);
+  padding: 3rem 4rem 2.5rem;
+  border-bottom: var(--border);
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 2rem;
+}
+.doc-header-left { display: flex; flex-direction: column; gap: 0.8rem; }
+.doc-logo { display: flex; align-items: center; gap: 1rem; }
+.doc-logo img {
+  width: 48px; height: 48px;
+  border-radius: 50%; object-fit: contain;
+  background: white; border: 2px solid rgba(255,255,255,0.2); padding: 3px;
+}
+.doc-logo-name {
+  font-family: 'DM Serif Display', serif;
+  font-size: 1.4rem; color: var(--mint); font-weight: 400;
+}
+.doc-title {
+  font-family: 'DM Serif Display', serif;
+  font-size: clamp(1.8rem, 3vw, 2.6rem);
+  color: white; font-weight: 400; line-height: 1.1;
+}
+.doc-title em { font-style: italic; color: var(--mint); }
+.doc-header-right { text-align: right; flex-shrink: 0; }
+.doc-meta-label {
+  font-size: 0.55rem; font-weight: 600;
+  letter-spacing: 0.18em; text-transform: uppercase;
+  color: rgba(255,255,255,0.3); margin-bottom: 0.3rem;
+}
+.doc-meta-val { font-family: 'DM Serif Display', serif; font-size: 1rem; color: var(--mint); }
+
+/* INTRO BAND */
+.intro-band {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  border-bottom: var(--border);
+}
+.intro-col { padding: 2rem 2.5rem; }
+.intro-col:first-child { border-right: var(--border); background: var(--apricot); }
+.intro-col:last-child { background: var(--cream); }
+.intro-kicker {
+  font-size: 0.55rem; font-weight: 600;
+  letter-spacing: 0.18em; text-transform: uppercase;
+  color: var(--green); margin-bottom: 0.6rem;
+  display: flex; align-items: center; gap: 0.5rem;
+}
+.intro-kicker::before { content: ''; display: block; width: 14px; height: 2px; background: var(--green); }
+.intro-title {
+  font-family: 'DM Serif Display', serif;
+  font-size: 1.2rem; color: var(--ink); line-height: 1.2; margin-bottom: 0.8rem;
+}
+.intro-title em { font-style: italic; color: var(--green); }
+.intro-body {
+  font-size: 0.82rem; font-weight: 300;
+  color: var(--ink); line-height: 1.8; opacity: 0.78;
+}
+
+/* PHASE SECTION */
+.phase-section { border-bottom: var(--border); }
+.phase-header {
+  display: flex; align-items: stretch;
+  border-bottom: var(--border);
+}
+.phase-num {
+  font-family: 'DM Serif Display', serif;
+  font-size: 3rem; font-weight: 400;
+  width: 80px; min-width: 80px;
+  display: flex; align-items: center; justify-content: center;
+  border-right: var(--border);
+  line-height: 1;
+}
+.phase-header-body {
+  padding: 1.5rem 2rem;
+  flex: 1;
+  display: flex; flex-direction: column; gap: 0.3rem;
+}
+.phase-kicker {
+  font-size: 0.55rem; font-weight: 600;
+  letter-spacing: 0.18em; text-transform: uppercase; color: var(--green);
+}
+.phase-name {
+  font-family: 'DM Serif Display', serif;
+  font-size: clamp(1.2rem, 2.5vw, 1.6rem); color: var(--ink); line-height: 1.1;
+}
+.phase-name em { font-style: italic; color: var(--green); }
+.phase-timing {
+  font-size: 0.72rem; font-weight: 400;
+  color: var(--ink); opacity: 0.45; margin-top: 0.2rem;
+}
+.phase-body { display: grid; grid-template-columns: 1fr 1fr; }
+.phase-col { padding: 1.8rem 2rem; }
+.phase-col:first-child { border-right: var(--border); }
+.phase-col-label {
+  font-size: 0.55rem; font-weight: 600;
+  letter-spacing: 0.16em; text-transform: uppercase;
+  color: var(--green); margin-bottom: 0.8rem;
+}
+.bullet-list { display: flex; flex-direction: column; gap: 0.5rem; }
+.bullet-item {
+  display: flex; align-items: baseline; gap: 0.7rem;
+  font-size: 0.82rem; font-weight: 300; color: var(--ink); line-height: 1.55;
+}
+.bullet-item::before {
+  content: '–';
+  color: var(--green); flex-shrink: 0; font-size: 0.75rem;
+}
+
+/* METRICS ROW */
+.metrics-row {
+  display: flex; gap: 0;
+  border-bottom: var(--border);
+  background: var(--cream);
+}
+.metric {
+  flex: 1; padding: 1rem 1.5rem;
+  border-right: var(--border);
+  display: flex; flex-direction: column; gap: 0.2rem;
+}
+.metric:last-child { border-right: none; }
+.metric-val {
+  font-family: 'DM Serif Display', serif;
+  font-size: 1.1rem; color: var(--green); line-height: 1;
+}
+.metric-lbl {
+  font-size: 0.58rem; font-weight: 600;
+  letter-spacing: 0.12em; text-transform: uppercase;
+  color: var(--ink); opacity: 0.45;
+}
+
+/* GUARDRAILS */
+.guardrails { border-bottom: var(--border); }
+.guardrails-header {
+  padding: 1.5rem 4rem 1.2rem;
+  background: var(--ink); border-bottom: var(--border);
+}
+.guardrails-kicker {
+  font-size: 0.55rem; font-weight: 600;
+  letter-spacing: 0.2em; text-transform: uppercase;
+  color: var(--coral-mid); margin-bottom: 0.4rem;
+}
+.guardrails-title {
+  font-family: 'DM Serif Display', serif;
+  font-size: 1.4rem; color: white; font-weight: 400;
+}
+.guardrails-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+}
+.g-cell {
+  padding: 1.5rem 2rem;
+  border-right: var(--border); border-bottom: var(--border);
+}
+.g-cell:nth-child(3n) { border-right: none; }
+.g-cell:nth-last-child(-n+3) { border-bottom: none; }
+.g-cell-label {
+  font-size: 0.55rem; font-weight: 600;
+  letter-spacing: 0.16em; text-transform: uppercase;
+  color: var(--green); margin-bottom: 0.4rem;
+}
+.g-cell-body {
+  font-size: 0.8rem; font-weight: 300;
+  color: var(--ink); line-height: 1.65; opacity: 0.78;
+}
+
+/* INVESTOR NARRATIVE */
+.narrative-band {
+  display: grid; grid-template-columns: 1fr 1fr;
+  border-bottom: var(--border);
+}
+.n-col {
+  padding: 2.5rem 2.5rem;
+}
+.n-col:first-child { background: var(--mint); border-right: var(--border); }
+.n-col:last-child { background: var(--lavender); }
+.n-kicker {
+  font-size: 0.55rem; font-weight: 600;
+  letter-spacing: 0.18em; text-transform: uppercase;
+  color: var(--green); margin-bottom: 0.6rem;
+}
+.n-title {
+  font-family: 'DM Serif Display', serif;
+  font-size: 1.2rem; color: var(--ink); line-height: 1.2; margin-bottom: 0.8rem;
+}
+.n-body {
+  font-size: 0.82rem; font-weight: 300;
+  color: var(--ink); line-height: 1.8; opacity: 0.78;
+}
+
+/* DISCLAIMER */
+.disclaimer-band {
+  padding: 1.2rem 4rem;
+  background: var(--apricot);
+  border-bottom: var(--border);
+}
+.disclaimer-band p {
+  font-size: 0.62rem; font-weight: 400;
+  color: var(--ink); opacity: 0.6; line-height: 1.65;
+}
+
+/* FOOTER */
+.doc-footer {
+  background: var(--mint);
+  border-top: var(--border);
+  padding: 1rem 4rem;
+  display: flex; align-items: center; justify-content: space-between;
+}
+.doc-footer-copy { font-size: 0.65rem; color: var(--ink); opacity: 0.55; letter-spacing: 0.06em; }
+
+/* PHASE COLORS */
+.ph1 .phase-num { background: var(--coral); }
+.ph2 .phase-num { background: var(--sand); }
+.ph3 .phase-num { background: var(--lavender); }
+.ph4 .phase-num { background: var(--mint); }
+.ph5 .phase-num { background: #b3d9c5; }
+
+.ph1 .phase-col:first-child { background: rgba(253,206,193,0.18); }
+.ph2 .phase-col:first-child { background: rgba(255,221,173,0.18); }
+.ph3 .phase-col:first-child { background: rgba(227,209,228,0.18); }
+.ph4 .phase-col:first-child { background: rgba(205,230,215,0.18); }
+.ph5 .phase-col:first-child { background: rgba(179,217,197,0.18); }
+
+/* DOC NAV */
+.doc-nav {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 0 2rem; height: 48px;
+  background: var(--cream); border-bottom: var(--border);
+  position: sticky; top: 0; z-index: 50;
+}
+.doc-nav-back {
+  font-size: 0.65rem; font-weight: 600;
+  letter-spacing: 0.1em; text-transform: uppercase;
+  color: var(--ink); text-decoration: none; opacity: 0.45;
+  transition: opacity 0.15s;
+}
+.doc-nav-back:hover { opacity: 1; }
+.doc-nav-links { display: flex; }
+.doc-nav-links a {
+  font-size: 0.62rem; font-weight: 600;
+  letter-spacing: 0.1em; text-transform: uppercase;
+  color: var(--ink); text-decoration: none; opacity: 0.4;
+  padding: 0 1rem; height: 48px; line-height: 48px;
+  border-left: var(--border); transition: opacity 0.15s, background 0.15s;
+}
+.doc-nav-links a:hover { opacity: 0.8; background: rgba(0,0,0,0.03); }
+.doc-nav-links a.active { opacity: 1; background: var(--mint); }
+
+/* PRINT */
+@media print {
+  #gate { display: none !important; }
+  #doc { display: block !important; }
+  .doc-nav { display: none; }
+  body { background: white; }
+  .doc-header, .ph1 .phase-num, .ph2 .phase-num, .ph3 .phase-num,
+  .ph4 .phase-num, .ph5 .phase-num, .guardrails-header,
+  .narrative-band, .intro-band, .disclaimer-band, .doc-footer,
+  .metrics-row {
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+  .phase-section { break-inside: avoid; }
+  .guardrails-grid { break-inside: avoid; }
+}
+
+/* RESPONSIVE */
+@media (max-width: 768px) {
+  .doc-header { padding: 2rem 1.5rem; flex-direction: column; align-items: flex-start; }
+  .doc-header-right { text-align: left; }
+  .intro-band { grid-template-columns: 1fr; }
+  .intro-col:first-child { border-right: none; border-bottom: var(--border); }
+  .phase-body { grid-template-columns: 1fr; }
+  .phase-col:first-child { border-right: none; border-bottom: var(--border); }
+  .metrics-row { flex-wrap: wrap; }
+  .metric { min-width: 50%; border-bottom: var(--border); }
+  .guardrails-grid { grid-template-columns: 1fr; }
+  .g-cell { border-right: none; }
+  .g-cell:nth-last-child(-n+3) { border-bottom: var(--border); }
+  .g-cell:last-child { border-bottom: none; }
+  .narrative-band { grid-template-columns: 1fr; }
+  .n-col:first-child { border-right: none; border-bottom: var(--border); }
+  .guardrails-header, .disclaimer-band, .doc-footer { padding: 1.5rem; }
+}
+</style>
+</head>
+<body>
+
+<!-- GATE -->
+<div id="gate">
+  <img src="KOKOS_logo.png" alt="KOKOS" onerror="this.style.display='none'" />
+  <div style="text-align:center;display:flex;flex-direction:column;gap:0.4rem;">
+    <h2>Growth Phase Plan</h2>
+    <p>Private · By invitation only</p>
+  </div>
+  <div class="gate-form">
+    <input class="gate-input" id="gate-input" type="password" placeholder="Enter password" autocomplete="off" />
+    <button class="gate-btn" onclick="checkPassword()">Enter</button>
+    <div class="gate-error" id="gate-error"></div>
+  </div>
+</div>
+
+<!-- DOCUMENT -->
+<div id="doc">
+
+  <!-- DOC NAV -->
+  <div class="doc-nav">
+    <a href="/invest.html" class="doc-nav-back">← Back to KOKOS</a>
+    <div class="doc-nav-links">
+      <a href="/safe-explainer.html">How It Works</a>
+      <a href="/investor-overview.html">Investor Overview</a>
+      <a href="/growth-plan.html" class="active">Growth Plan</a>
+    </div>
+  </div>
+
+  <!-- HEADER -->
+  <div class="doc-header">
+    <div class="doc-header-left">
+      <div class="doc-logo">
+        <img src="KOKOS_logo.png" alt="KOKOS" onerror="this.style.display='none'" />
+        <span class="doc-logo-name">KOKOS</span>
+      </div>
+      <div class="doc-title">Detailed <em>Growth</em><br>Phase Plan</div>
+    </div>
+    <div class="doc-header-right">
+      <div class="doc-meta-label">Confidential</div>
+      <div class="doc-meta-val">July 2026</div>
+      <div style="margin-top:0.8rem;">
+        <div class="doc-meta-label">Contact</div>
+        <div class="doc-meta-val" style="font-size:0.82rem;">invest@kokosicecream.com</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- INTRO -->
+  <div class="intro-band">
+    <div class="intro-col">
+      <div class="intro-kicker">The Model</div>
+      <div class="intro-title">We are building the<br><em>Salt & Straw of plant-based.</em></div>
+      <div class="intro-body">Salt & Straw didn't chase grocery. They built reverence in Portland, took it to LA, San Francisco and beyond — and let the brand become the demand. KOKOS follows the same logic: nail the experience first. A location that people remember, talk about and return to is worth more than ten locations that are fine.</div>
+    </div>
+    <div class="intro-col">
+      <div class="intro-kicker">Our Positioning</div>
+      <div class="intro-title">Not a substitute.<br>The destination.</div>
+      <div class="intro-body">Allergy-friendly dessert should never feel like a compromise. KOKOS is built to win beyond the substitute category — through product obsession, design that signals quality, and the warmth and specificity of genuine hospitality. We are dairy-free. We are egg-free. We are nut-free. And we are delicious without qualification.<br/><br/>Nine years of refinement separates us from any newcomer. That is the moat.</div>
+    </div>
+  </div>
+
+  <!-- PHASE 1 -->
+  <div class="phase-section ph1">
+    <div class="phase-header">
+      <div class="phase-num">01</div>
+      <div class="phase-header-body">
+        <div class="phase-kicker">Phase One · 0–24 Months</div>
+        <div class="phase-name">Foundation + <em>Clean-Company Transition</em></div>
+        <div class="phase-timing">Funded by this seed raise · Running alongside Nashville flagship operations</div>
+      </div>
+    </div>
+    <div class="phase-body">
+      <div class="phase-col">
+        <div class="phase-col-label">What We Execute</div>
+        <div class="bullet-list">
+          <div class="bullet-item">Form Emerald Sea Holdings, Inc. (Delaware C-Corp) and new operating subsidiary</div>
+          <div class="bullet-item">Orderly wind-down of KOKOS Ice Cream LLC (targeting Dec 31, 2026)</div>
+          <div class="bullet-item">Complete new banking, accounting, insurance, permits and reporting</div>
+          <div class="bullet-item">Refresh Nashville flagship — hospitality, environment, staffing and training</div>
+          <div class="bullet-item">Standardize recipes, training materials and the production playbook</div>
+          <div class="bullet-item">Launch wholesale-ready packaging and begin local food-service outreach</div>
+          <div class="bullet-item">Begin community events, collaborations and brand-building activities</div>
+          <div class="bullet-item">Deploy ice cream van at $350K close (unlocked at full raise)</div>
+        </div>
+      </div>
+      <div class="phase-col">
+        <div class="phase-col-label">Success Looks Like</div>
+        <div class="bullet-list">
+          <div class="bullet-item">Clean legal and financial separation between old and new entities</div>
+          <div class="bullet-item">Nashville flagship consistently profitable and fully staffed</div>
+          <div class="bullet-item">At least 5 wholesale/food-service accounts active and reordering</div>
+          <div class="bullet-item">Documented playbook ready to replicate: recipes, training, ops</div>
+          <div class="bullet-item">Growing loyal customer base with measurable repeat rate</div>
+          <div class="bullet-item">Positive unit economics demonstrated across all current channels</div>
+        </div>
+      </div>
+    </div>
+    <div class="metrics-row">
+      <div class="metric"><div class="metric-val">5+</div><div class="metric-lbl">Wholesale accounts</div></div>
+      <div class="metric"><div class="metric-val">Dec '26</div><div class="metric-lbl">LLC wind-down target</div></div>
+      <div class="metric"><div class="metric-val">24 mo</div><div class="metric-lbl">Seed runway</div></div>
+      <div class="metric"><div class="metric-val">✓</div><div class="metric-lbl">Playbook documented</div></div>
+    </div>
+  </div>
+
+  <!-- PHASE 2 -->
+  <div class="phase-section ph2">
+    <div class="phase-header">
+      <div class="phase-num">02</div>
+      <div class="phase-header-body">
+        <div class="phase-kicker">Phase Two · Years 1–3</div>
+        <div class="phase-name">Own <em>Nashville</em></div>
+        <div class="phase-timing">Revenue-funded or Series A · Nashville–first</div>
+      </div>
+    </div>
+    <div class="phase-body">
+      <div class="phase-col">
+        <div class="phase-col-label">What We Execute</div>
+        <div class="bullet-list">
+          <div class="bullet-item">Deepen Nashville roots — flagship excellence and local dominance</div>
+          <div class="bullet-item">Events, pop-ups and collaborations that build cultural cachet</div>
+          <div class="bullet-item">Selective local wholesale: specialty grocers, hotels, corporate food service</div>
+          <div class="bullet-item">Customer loyalty program that rewards the KOKOS Krew</div>
+          <div class="bullet-item">Strong social and digital presence — community-led not ad-led</div>
+          <div class="bullet-item">Explore second Nashville-area location or seasonal pop-up if economics are clear</div>
+        </div>
+      </div>
+      <div class="phase-col">
+        <div class="phase-col-label">Success Looks Like</div>
+        <div class="bullet-list">
+          <div class="bullet-item">KOKOS is the name that Nashville names when asked for plant-based ice cream</div>
+          <div class="bullet-item">Wholesale and food-service revenue supplementing scoop-shop income</div>
+          <div class="bullet-item">Measurable out-of-state customer demand confirmed (visitors, direct mail, events)</div>
+          <div class="bullet-item">Positive EBITDA at the flagship; unit model clearly replicable</div>
+          <div class="bullet-item">Talented team that can operate without founder-in-shop daily</div>
+        </div>
+      </div>
+    </div>
+    <div class="metrics-row">
+      <div class="metric"><div class="metric-val">#1</div><div class="metric-lbl">Plant-based in Nashville</div></div>
+      <div class="metric"><div class="metric-val">20%+</div><div class="metric-lbl">Wholesale revenue share</div></div>
+      <div class="metric"><div class="metric-val">EBITDA+</div><div class="metric-lbl">Flagship profitability</div></div>
+      <div class="metric"><div class="metric-val">Ready</div><div class="metric-lbl">For replication</div></div>
+    </div>
+  </div>
+
+  <!-- PHASE 3 -->
+  <div class="phase-section ph3">
+    <div class="phase-header">
+      <div class="phase-num">03</div>
+      <div class="phase-header-body">
+        <div class="phase-kicker">Phase Three · Years 2–4</div>
+        <div class="phase-name">Regional <em>Replication</em></div>
+        <div class="phase-timing">Series A or strong operating cash flow</div>
+      </div>
+    </div>
+    <div class="phase-body">
+      <div class="phase-col">
+        <div class="phase-col-label">What We Execute</div>
+        <div class="bullet-list">
+          <div class="bullet-item">Enter 2–3 culturally aligned Southeastern cities (Atlanta, Austin, Charleston — TBD on performance)</div>
+          <div class="bullet-item">Use proven Nashville playbook — no improvising in new markets</div>
+          <div class="bullet-item">Build a management team beyond the founders: a GM layer, HR, finance</div>
+          <div class="bullet-item">Regional wholesale expansion following each new location</div>
+          <div class="bullet-item">Branded packaging at a quality level that holds its own in specialty retail</div>
+          <div class="bullet-item">Explore limited regional grocery placement (partnered, not full distribution)</div>
+        </div>
+      </div>
+      <div class="phase-col">
+        <div class="phase-col-label">Success Looks Like</div>
+        <div class="bullet-list">
+          <div class="bullet-item">Each new market reaches profitability within 18 months</div>
+          <div class="bullet-item">Brand recognition extends naturally into new markets before we arrive</div>
+          <div class="bullet-item">Repeatable unit economics validated across multiple geographies</div>
+          <div class="bullet-item">Regional wholesale accounts growing independently of flagship</div>
+          <div class="bullet-item">Brand is starting to attract inbound acquisition / partnership interest</div>
+        </div>
+      </div>
+    </div>
+    <div class="metrics-row">
+      <div class="metric"><div class="metric-val">2–3</div><div class="metric-lbl">New markets</div></div>
+      <div class="metric"><div class="metric-val">18 mo</div><div class="metric-lbl">Profitability target per market</div></div>
+      <div class="metric"><div class="metric-val">SE</div><div class="metric-lbl">Regional footprint</div></div>
+      <div class="metric"><div class="metric-val">GM+</div><div class="metric-lbl">Non-founder leadership</div></div>
+    </div>
+  </div>
+
+  <!-- PHASE 4 -->
+  <div class="phase-section ph4">
+    <div class="phase-header">
+      <div class="phase-num">04</div>
+      <div class="phase-header-body">
+        <div class="phase-kicker">Phase Four · Years 3–6</div>
+        <div class="phase-name">National Presence + <em>Investor Liquidity</em></div>
+        <div class="phase-timing">Growth equity or strategic partner · Long horizon</div>
+      </div>
+    </div>
+    <div class="phase-body">
+      <div class="phase-col">
+        <div class="phase-col-label">What We Execute</div>
+        <div class="bullet-list">
+          <div class="bullet-item">Selective national locations in high-density culturally aligned markets (NYC, LA, etc.)</div>
+          <div class="bullet-item">National retail test with the right specialty or natural-food partner</div>
+          <div class="bullet-item">Build a brand that appears in food media, travel guides and social culture</div>
+          <div class="bullet-item">Explore strategic acquisition, majority recapitalization or IPO pathway</div>
+          <div class="bullet-item">Investor SAFE notes convert to equity prior to or at a qualifying financing</div>
+        </div>
+      </div>
+      <div class="phase-col">
+        <div class="phase-col-label">Success Looks Like</div>
+        <div class="bullet-list">
+          <div class="bullet-item">A nationally recognized plant-based ice cream brand with an authentic story</div>
+          <div class="bullet-item">Demonstrated premium unit economics across multiple formats and geographies</div>
+          <div class="bullet-item">Strategic interest from acquirers in food, CPG or hospitality</div>
+          <div class="bullet-item">Founders and seed investors have a clear path to liquidity</div>
+        </div>
+      </div>
+    </div>
+    <div class="metrics-row">
+      <div class="metric"><div class="metric-val">National</div><div class="metric-lbl">Brand footprint</div></div>
+      <div class="metric"><div class="metric-val">Yr 5–6</div><div class="metric-lbl">Target liquidity window</div></div>
+      <div class="metric"><div class="metric-val">Strategic</div><div class="metric-lbl">Exit pathway</div></div>
+      <div class="metric"><div class="metric-val">Yr 10</div><div class="metric-lbl">Outside planning horizon</div></div>
+    </div>
+  </div>
+
+  <!-- GUARDRAILS -->
+  <div class="guardrails">
+    <div class="guardrails-header">
+      <div class="guardrails-kicker">Discipline</div>
+      <div class="guardrails-title">What we will not do</div>
+    </div>
+    <div class="guardrails-grid">
+      <div class="g-cell">
+        <div class="g-cell-label">No Over-Scaling</div>
+        <div class="g-cell-body">We will not open a second location before the first is consistently profitable, staffed and documented. Speed is not the goal. Proof is.</div>
+      </div>
+      <div class="g-cell">
+        <div class="g-cell-label">No Discount Positioning</div>
+        <div class="g-cell-body">KOKOS is premium. We do not chase grocery volume, mass distribution, or price competition. The brand's power is its perceived and actual quality.</div>
+      </div>
+      <div class="g-cell">
+        <div class="g-cell-label">No Compromising the Product</div>
+        <div class="g-cell-body">Production shortcuts that reduce quality are off the table. We would rather slow growth than sell a version of KOKOS that isn't KOKOS.</div>
+      </div>
+      <div class="g-cell">
+        <div class="g-cell-label">No Founder Dependency</div>
+        <div class="g-cell-body">By Phase 3, operations must be able to run without the founders in-shop daily. We build systems and people, not heroics.</div>
+      </div>
+      <div class="g-cell">
+        <div class="g-cell-label">No Undercapitalized Moves</div>
+        <div class="g-cell-body">We do not enter a new market without confirmed funding and a tested playbook. Each expansion is deliberate and resourced, not stretched.</div>
+      </div>
+      <div class="g-cell">
+        <div class="g-cell-label">No Losing the Story</div>
+        <div class="g-cell-body">The KOKOS brand is its origin, values and taste. Whatever our company structure becomes, the product is still made with the same obsession it was on day one.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- NARRATIVE -->
+  <div class="narrative-band">
+    <div class="n-col">
+      <div class="n-kicker">For Our Investors</div>
+      <div class="n-title">You are not early to KOKOS. You are early to what KOKOS becomes.</div>
+      <div class="n-body">This raise is not proof-of-concept funding. The concept is nine years proven. This funding completes the legal and structural transition that positions KOKOS to grow as a company — not just as a shop. It funds a founder who can now build full-time, a production system that can scale, and a brand story that is ready to travel.</div>
+    </div>
+    <div class="n-col">
+      <div class="n-kicker">The Honest Risk</div>
+      <div class="n-title">This is an early-stage, illiquid investment.</div>
+      <div class="n-body">Consumer brands are hard. Plant-based has noise. Execution risk is real. We are raising from people who know us, trust us, and understand that the return is tied to long-term brand building — not a quick flip. We will communicate honestly, spend carefully and build something our investors are proud to have backed before it was obvious.</div>
+    </div>
+  </div>
+
+  <!-- DISCLAIMER -->
+  <div class="disclaimer-band">
+    <p><strong>Important:</strong> This document is a strategic summary provided for discussion purposes only to specific invited individuals. It does not constitute an offer to sell or a solicitation to buy securities. All projections and phases are forward-looking and subject to change. Investing in early-stage companies involves significant risk, including possible loss of the entire investment. This document is not a substitute for the executed SAFE agreement and related legal documents, which govern all investor rights. Emerald Sea Holdings, Inc. | Nashville, Tennessee | invest@kokosicecream.com</p>
+  </div>
+
+  <!-- FOOTER -->
+  <div class="doc-footer">
+    <span class="doc-footer-copy">KOKOS · Growth Phase Plan · Emerald Sea Holdings, Inc. · Confidential · July 2026</span>
+    <span class="doc-footer-copy">invest@kokosicecream.com</span>
+  </div>
+
+</div><!-- /doc -->
+
+<script>
+(function() {
+  var stored = sessionStorage.getItem('kokos_investor_auth');
+  if (stored === 'granted') {
+    document.getElementById('gate').style.display = 'none';
+    document.getElementById('doc').style.display = 'block';
+  }
+  document.getElementById('gate-input').addEventListener('keydown', function(e) {
+    if (e.key === 'Enter') checkPassword();
+  });
+})();
+
+function checkPassword() {
+  var val = document.getElementById('gate-input').value.trim().toLowerCase();
+  if (val === 'kokoskrew' || val === 'invest') {
+    sessionStorage.setItem('kokos_investor_auth', 'granted');
+    document.getElementById('gate').style.display = 'none';
+    document.getElementById('doc').style.display = 'block';
+  } else {
+    document.getElementById('gate-error').textContent = 'Incorrect password.';
+    document.getElementById('gate-input').value = '';
+    document.getElementById('gate-input').focus();
+  }
+}
+</script>
+</body>
+</html>

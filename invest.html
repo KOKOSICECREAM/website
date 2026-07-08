@@ -262,6 +262,57 @@ nav {
   color: var(--ink); line-height: 1.9; opacity: 0.8;
 }
 
+/* INVESTOR DOCS */
+.investor-docs { border-bottom: var(--border); background: var(--ink); }
+.docs-header {
+  padding: 3rem 4.5rem 2rem;
+  border-bottom: var(--border);
+}
+.docs-title {
+  font-family: 'DM Serif Display', serif;
+  font-size: clamp(1.8rem, 3vw, 2.8rem);
+  font-weight: 400; line-height: 1.05; color: white; margin-bottom: 0.6rem;
+}
+.docs-title em { font-style: italic; color: var(--coral-mid); }
+.docs-sub {
+  font-size: 0.82rem; font-weight: 300;
+  color: rgba(255,255,255,0.35); line-height: 1.6;
+}
+.docs-grid { display: grid; grid-template-columns: repeat(3, 1fr); }
+.doc-card {
+  display: flex; flex-direction: column; gap: 1rem;
+  padding: 2rem 2.2rem 2.5rem;
+  border-right: 3px solid rgba(255,255,255,0.08);
+  text-decoration: none; color: inherit;
+  transition: background 0.15s;
+  position: relative;
+}
+.doc-card:last-child { border-right: none; }
+.doc-card:hover { background: rgba(255,255,255,0.05); }
+.doc-card-num {
+  font-family: 'DM Serif Display', serif;
+  font-size: 1.8rem; color: rgba(255,255,255,0.12); line-height: 1;
+}
+.doc-card-label {
+  font-size: 0.55rem; font-weight: 600;
+  letter-spacing: 0.2em; text-transform: uppercase; color: var(--coral-mid);
+  margin-bottom: 0.3rem;
+}
+.doc-card-title {
+  font-family: 'DM Serif Display', serif;
+  font-size: 1.1rem; color: white; line-height: 1.2; margin-bottom: 0.5rem;
+}
+.doc-card-desc {
+  font-size: 0.78rem; font-weight: 300;
+  color: rgba(255,255,255,0.4); line-height: 1.72;
+}
+.doc-card-arrow {
+  font-size: 1rem; color: var(--coral-mid);
+  margin-top: auto; padding-top: 0.8rem;
+  transition: transform 0.15s;
+}
+.doc-card:hover .doc-card-arrow { transform: translateX(4px); }
+
 /* FORM */
 .form-section {
   display: grid;
@@ -375,6 +426,10 @@ footer { background: var(--coral); border-top: var(--border); }
   .form-section { grid-template-columns: 1fr; }
   .form-left { border-right: none; border-bottom: var(--border); padding: 3.5rem 2rem; }
   .form-right { padding: 3.5rem 2rem; }
+  .docs-header { padding: 2.5rem 1.5rem 1.5rem; }
+  .docs-grid { grid-template-columns: 1fr; }
+  .doc-card { border-right: none; border-bottom: 3px solid rgba(255,255,255,0.08); }
+  .doc-card:last-child { border-bottom: none; }
   .footer-inner { flex-direction: column; gap: 1rem; align-items: flex-start; padding: 1.2rem 1.5rem; }
   .footer-links a { padding: 0 0.9rem; }
   .footer-bottom { padding: 0.9rem 1.5rem; flex-direction: column; gap: 0.3rem; }
@@ -478,6 +533,44 @@ footer { background: var(--coral); border-top: var(--border); }
     <p class="narrative-body">We're starting this conversation with the people who know us. If that's you, we'd love to hear from you.</p>
   </div>
 </div>
+
+<!-- INVESTOR DOCS -->
+<section class="investor-docs">
+  <div class="docs-header">
+    <div class="section-kicker">For Investors</div>
+    <h2 class="docs-title">Ready to go <em>deeper?</em></h2>
+    <p class="docs-sub">These documents are for people already in conversation with us. Password required.</p>
+  </div>
+  <div class="docs-grid">
+    <a href="/safe-explainer.html" class="doc-card">
+      <div class="doc-card-num">01</div>
+      <div class="doc-card-body">
+        <div class="doc-card-label">Start Here</div>
+        <div class="doc-card-title">How Your Investment Works</div>
+        <div class="doc-card-desc">New to SAFE notes? This plain-English guide explains exactly what you're buying, how the math works, and how you could see a return.</div>
+      </div>
+      <div class="doc-card-arrow">→</div>
+    </a>
+    <a href="/investor-overview.html" class="doc-card">
+      <div class="doc-card-num">02</div>
+      <div class="doc-card-body">
+        <div class="doc-card-label">The Numbers</div>
+        <div class="doc-card-title">Seed Investor Overview</div>
+        <div class="doc-card-desc">Raise details, use of funds, the four-phase plan, illustrative return table, and how value gets created over time.</div>
+      </div>
+      <div class="doc-card-arrow">→</div>
+    </a>
+    <a href="/growth-plan.html" class="doc-card">
+      <div class="doc-card-num">03</div>
+      <div class="doc-card-body">
+        <div class="doc-card-label">The Plan</div>
+        <div class="doc-card-title">Detailed Growth Phase Plan</div>
+        <div class="doc-card-desc">Our Salt & Straw-modeled expansion strategy — phase by phase, with objectives, success metrics, and the guardrails we hold ourselves to.</div>
+      </div>
+      <div class="doc-card-arrow">→</div>
+    </a>
+  </div>
+</section>
 
 <!-- FORM -->
 <section class="form-section" id="reach-out">

@@ -1,0 +1,733 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>KOKOS — Seed Investor Overview</title>
+<link rel="icon" type="image/png" href="KOKOS_logo.png" />
+<meta name="robots" content="noindex, nofollow" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=Instrument+Sans:wght@300;400;500;600&display=swap" rel="stylesheet" />
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+:root {
+  --coral:     #fdcec1;
+  --mint:      #cde6d7;
+  --apricot:   #fae2d8;
+  --lavender:  #e3d1e4;
+  --sand:      #ffddad;
+  --coral-mid: #fdaf9a;
+  --green:     #11483d;
+  --cream:     #fffaf7;
+  --ink:       #1a1008;
+  --border:    3px solid #efe8e0;
+}
+
+body {
+  font-family: 'Instrument Sans', sans-serif;
+  background: var(--cream);
+  color: var(--ink);
+}
+
+/* ── PASSWORD GATE ── */
+#gate {
+  position: fixed;
+  inset: 0;
+  background: var(--ink);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2rem;
+  z-index: 9999;
+}
+#gate img {
+  width: 72px; height: 72px;
+  border-radius: 50%;
+  background: white;
+  border: 2.5px solid rgba(255,255,255,0.2);
+  padding: 4px;
+  object-fit: contain;
+}
+#gate h2 {
+  font-family: 'DM Serif Display', serif;
+  font-size: 1.5rem;
+  color: var(--coral);
+  font-weight: 400;
+  text-align: center;
+}
+#gate p {
+  font-size: 0.72rem;
+  font-weight: 500;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: rgba(255,255,255,0.35);
+}
+.gate-form {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.75rem;
+  width: 100%;
+  max-width: 280px;
+}
+.gate-input {
+  width: 100%;
+  padding: 0.85rem 1.1rem;
+  background: rgba(255,255,255,0.07);
+  border: 2px solid rgba(255,255,255,0.15);
+  color: white;
+  font-family: 'Instrument Sans', sans-serif;
+  font-size: 0.9rem;
+  letter-spacing: 0.06em;
+  text-align: center;
+  outline: none;
+  transition: border-color 0.2s;
+}
+.gate-input::placeholder { color: rgba(255,255,255,0.25); }
+.gate-input:focus { border-color: var(--coral-mid); }
+.gate-btn {
+  width: 100%;
+  padding: 0.85rem;
+  background: var(--coral-mid);
+  color: var(--ink);
+  border: none;
+  font-family: 'Instrument Sans', sans-serif;
+  font-size: 0.78rem;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.gate-btn:hover { background: #f7b8a6; }
+.gate-error {
+  font-size: 0.68rem;
+  color: #e87a6a;
+  letter-spacing: 0.08em;
+  min-height: 1rem;
+  text-align: center;
+}
+
+/* ── DOCUMENT ── */
+#doc { display: none; }
+
+.doc-header {
+  background: var(--ink);
+  padding: 3rem 4rem 2.5rem;
+  border-bottom: var(--border);
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 2rem;
+}
+.doc-header-left { display: flex; flex-direction: column; gap: 0.8rem; }
+.doc-logo {
+  display: flex; align-items: center; gap: 1rem;
+}
+.doc-logo img {
+  width: 48px; height: 48px;
+  border-radius: 50%; object-fit: contain;
+  background: white; border: 2px solid rgba(255,255,255,0.2);
+  padding: 3px;
+}
+.doc-logo-name {
+  font-family: 'DM Serif Display', serif;
+  font-size: 1.4rem; color: var(--coral); font-weight: 400;
+}
+.doc-title {
+  font-family: 'DM Serif Display', serif;
+  font-size: clamp(1.8rem, 3vw, 2.6rem);
+  color: white; font-weight: 400; line-height: 1.1;
+}
+.doc-title em { font-style: italic; color: var(--coral-mid); }
+.doc-header-right { text-align: right; flex-shrink: 0; }
+.doc-meta-label {
+  font-size: 0.55rem; font-weight: 600;
+  letter-spacing: 0.18em; text-transform: uppercase;
+  color: rgba(255,255,255,0.3); margin-bottom: 0.3rem;
+}
+.doc-meta-val {
+  font-family: 'DM Serif Display', serif;
+  font-size: 1rem; color: var(--coral-mid);
+}
+
+/* RAISE GRID */
+.raise-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  border-bottom: var(--border);
+}
+.raise-cell {
+  padding: 1.6rem 2rem;
+  border-right: var(--border);
+}
+.raise-cell:last-child { border-right: none; }
+.raise-lbl {
+  font-size: 0.55rem; font-weight: 600;
+  letter-spacing: 0.18em; text-transform: uppercase;
+  color: var(--green); margin-bottom: 0.4rem;
+}
+.raise-val {
+  font-family: 'DM Serif Display', serif;
+  font-size: 1.5rem; color: var(--ink); line-height: 1.1;
+}
+.raise-sub {
+  font-size: 0.72rem; font-weight: 300;
+  color: var(--ink); opacity: 0.5; margin-top: 0.2rem;
+}
+
+/* FOUNDERS */
+.founders-band {
+  display: grid;
+  grid-template-columns: 260px 1fr;
+  border-bottom: var(--border);
+}
+.founders-left {
+  background: var(--ink);
+  padding: 3rem 2.5rem;
+  border-right: var(--border);
+  display: flex; flex-direction: column;
+  justify-content: center; gap: 0.6rem;
+}
+.founders-kicker {
+  font-size: 0.55rem; font-weight: 600;
+  letter-spacing: 0.2em; text-transform: uppercase;
+  color: var(--coral-mid);
+}
+.founders-names {
+  font-family: 'DM Serif Display', serif;
+  font-size: 1.5rem; color: var(--coral); line-height: 1.1;
+}
+.founders-role {
+  font-size: 0.65rem; font-weight: 300;
+  color: rgba(255,255,255,0.3); line-height: 1.6; margin-top: 0.2rem;
+}
+.founders-right {
+  background: var(--apricot);
+  padding: 3rem 3.5rem;
+  display: flex; flex-direction: column; gap: 1rem;
+  justify-content: center;
+}
+.founders-body {
+  font-size: 0.88rem; font-weight: 300;
+  color: var(--ink); line-height: 1.85; opacity: 0.78;
+}
+.founders-pull {
+  font-family: 'DM Serif Display', serif;
+  font-size: 1.1rem; color: var(--green);
+  line-height: 1.2; margin-top: 0.4rem;
+}
+
+/* SECTIONS */
+.section { border-bottom: var(--border); }
+.section-header {
+  padding: 2rem 4rem 1.5rem;
+  border-bottom: var(--border);
+}
+.section-kicker {
+  font-size: 0.58rem; font-weight: 600;
+  letter-spacing: 0.2em; text-transform: uppercase;
+  color: var(--green); margin-bottom: 0.5rem;
+  display: flex; align-items: center; gap: 0.5rem;
+}
+.section-kicker::before { content: ''; display: block; width: 14px; height: 2px; background: var(--green); }
+.section-title {
+  font-family: 'DM Serif Display', serif;
+  font-size: clamp(1.4rem, 2.5vw, 2rem);
+  font-weight: 400; color: var(--ink); line-height: 1.1;
+}
+.section-title em { font-style: italic; color: var(--green); }
+.section-body { padding: 2rem 4rem; }
+
+/* THREE COL */
+.three-col { display: grid; grid-template-columns: repeat(3, 1fr); }
+.t-col {
+  padding: 2rem 2rem 2.5rem;
+  border-right: var(--border);
+  display: flex; flex-direction: column; gap: 0.6rem;
+}
+.t-col:last-child { border-right: none; }
+.t-col-label {
+  font-size: 0.55rem; font-weight: 600;
+  letter-spacing: 0.18em; text-transform: uppercase; color: var(--green);
+}
+.t-col-title {
+  font-family: 'DM Serif Display', serif;
+  font-size: 1.15rem; color: var(--ink); line-height: 1.2;
+}
+.t-col-body {
+  font-size: 0.82rem; font-weight: 300;
+  color: var(--ink); line-height: 1.75; opacity: 0.75;
+}
+
+/* BODY TEXT */
+.body-text {
+  font-size: 0.9rem; font-weight: 300;
+  color: var(--ink); line-height: 1.85; opacity: 0.82;
+  max-width: 720px;
+}
+.body-text + .body-text { margin-top: 1rem; }
+
+/* WHY LIST */
+.why-list { display: flex; flex-direction: column; gap: 0; margin-top: 0.5rem; }
+.why-item {
+  display: flex; align-items: baseline; gap: 1rem;
+  padding: 0.7rem 0; border-bottom: 2px solid #efe8e0;
+  font-size: 0.88rem; font-weight: 300; color: var(--ink); line-height: 1.5;
+}
+.why-item:last-child { border-bottom: none; }
+.why-item::before {
+  content: '✦';
+  color: var(--green); font-size: 0.55rem; flex-shrink: 0; margin-top: 0.2rem;
+}
+
+/* PHASE TABLE */
+.phase-table { width: 100%; border-collapse: collapse; }
+.phase-table th {
+  font-size: 0.58rem; font-weight: 600;
+  letter-spacing: 0.16em; text-transform: uppercase;
+  color: var(--green); text-align: left;
+  padding: 0.7rem 1.2rem; border-bottom: var(--border);
+  background: var(--cream);
+}
+.phase-table td {
+  padding: 0.9rem 1.2rem; border-bottom: 2px solid #efe8e0;
+  font-size: 0.82rem; font-weight: 300; color: var(--ink); line-height: 1.5;
+  vertical-align: top;
+}
+.phase-table tr:last-child td { border-bottom: none; }
+.phase-table tr:nth-child(odd) td { background: rgba(253,206,193,0.08); }
+.phase-name { font-weight: 600; color: var(--ink); }
+
+/* ILLUSTRATION TABLE */
+.illus-table { width: 100%; border-collapse: collapse; }
+.illus-table th {
+  font-size: 0.58rem; font-weight: 600;
+  letter-spacing: 0.16em; text-transform: uppercase;
+  color: white; text-align: left;
+  padding: 0.8rem 1.4rem;
+  background: var(--ink);
+}
+.illus-table td {
+  padding: 0.85rem 1.4rem;
+  font-size: 0.88rem; font-weight: 300; color: var(--ink);
+  border-bottom: 2px solid #efe8e0;
+}
+.illus-table tr:last-child td { border-bottom: none; }
+.illus-table tr:nth-child(odd) td { background: var(--sand); }
+.illus-table tr:nth-child(even) td { background: var(--apricot); }
+.illus-val { font-family: 'DM Serif Display', serif; font-size: 1rem; }
+
+/* HOW VALUE BAND */
+.value-band {
+  background: var(--mint);
+  padding: 2.5rem 4rem;
+  border-bottom: var(--border);
+}
+.value-items { display: flex; flex-direction: column; gap: 0.5rem; margin-top: 1rem; }
+.value-item {
+  display: flex; align-items: baseline; gap: 1rem;
+  font-size: 0.88rem; font-weight: 300; color: var(--ink); line-height: 1.5;
+}
+.value-item::before { content: '→'; color: var(--green); font-size: 0.75rem; flex-shrink: 0; }
+
+/* EXIT BAND */
+.exit-band {
+  background: var(--ink);
+  padding: 2.5rem 4rem;
+  border-bottom: var(--border);
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 3rem;
+}
+.exit-col {}
+.exit-label {
+  font-size: 0.55rem; font-weight: 600;
+  letter-spacing: 0.2em; text-transform: uppercase;
+  color: var(--coral-mid); margin-bottom: 0.6rem;
+}
+.exit-title {
+  font-family: 'DM Serif Display', serif;
+  font-size: 1.3rem; color: var(--coral); line-height: 1.15; margin-bottom: 0.8rem;
+}
+.exit-body {
+  font-size: 0.82rem; font-weight: 300;
+  color: rgba(255,255,255,0.55); line-height: 1.8;
+}
+
+/* DISCLAIMER */
+.disclaimer-band {
+  padding: 1.2rem 4rem;
+  background: var(--apricot);
+}
+.disclaimer-band p {
+  font-size: 0.62rem; font-weight: 400;
+  color: var(--ink); opacity: 0.6; line-height: 1.65;
+}
+
+/* DOC FOOTER */
+.doc-footer {
+  background: var(--coral);
+  border-top: var(--border);
+  padding: 1rem 4rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.doc-footer-copy { font-size: 0.65rem; color: var(--ink); opacity: 0.55; letter-spacing: 0.06em; }
+
+/* DOC NAV */
+.doc-nav {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 0 2rem; height: 48px;
+  background: var(--cream); border-bottom: var(--border);
+  position: sticky; top: 0; z-index: 50;
+}
+.doc-nav-back {
+  font-size: 0.65rem; font-weight: 600;
+  letter-spacing: 0.1em; text-transform: uppercase;
+  color: var(--ink); text-decoration: none; opacity: 0.45;
+  transition: opacity 0.15s;
+}
+.doc-nav-back:hover { opacity: 1; }
+.doc-nav-links { display: flex; }
+.doc-nav-links a {
+  font-size: 0.62rem; font-weight: 600;
+  letter-spacing: 0.1em; text-transform: uppercase;
+  color: var(--ink); text-decoration: none; opacity: 0.4;
+  padding: 0 1rem; height: 48px; line-height: 48px;
+  border-left: var(--border); transition: opacity 0.15s, background 0.15s;
+}
+.doc-nav-links a:hover { opacity: 0.8; background: rgba(0,0,0,0.03); }
+.doc-nav-links a.active { opacity: 1; background: var(--coral); }
+
+/* PRINT */
+@media print {
+  #gate { display: none !important; }
+  #doc { display: block !important; }
+  .doc-nav { display: none; }
+  body { background: white; }
+  .doc-header { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  .raise-grid, .three-col, .exit-band, .value-band, .disclaimer-band, .doc-footer {
+    -webkit-print-color-adjust: exact; print-color-adjust: exact;
+  }
+  .section { break-inside: avoid; }
+  .illus-table tr { break-inside: avoid; }
+}
+
+/* RESPONSIVE */
+@media (max-width: 768px) {
+  .doc-header { padding: 2rem 1.5rem; flex-direction: column; align-items: flex-start; }
+  .doc-header-right { text-align: left; }
+  .founders-band { grid-template-columns: 1fr; }
+  .founders-left { border-right: none; border-bottom: var(--border); padding: 2rem 1.5rem; }
+  .founders-right { padding: 2rem 1.5rem; }
+  .raise-grid { grid-template-columns: 1fr 1fr; }
+  .raise-cell:nth-child(2n) { border-right: none; }
+  .raise-cell { border-bottom: var(--border); }
+  .raise-cell:nth-last-child(-n+2) { border-bottom: none; }
+  .three-col { grid-template-columns: 1fr; }
+  .t-col { border-right: none; border-bottom: var(--border); }
+  .t-col:last-child { border-bottom: none; }
+  .section-header, .section-body { padding: 1.5rem; }
+  .exit-band { grid-template-columns: 1fr; gap: 2rem; padding: 2rem 1.5rem; }
+  .value-band, .disclaimer-band, .doc-footer { padding: 1.5rem; }
+}
+</style>
+</head>
+<body>
+
+<!-- GATE -->
+<div id="gate">
+  <img src="KOKOS_logo.png" alt="KOKOS" onerror="this.style.display='none'" />
+  <div style="text-align:center;display:flex;flex-direction:column;gap:0.4rem;">
+    <h2>Investor Overview</h2>
+    <p>Private · By invitation only</p>
+  </div>
+  <div class="gate-form">
+    <input class="gate-input" id="gate-input" type="password" placeholder="Enter password" autocomplete="off" />
+    <button class="gate-btn" onclick="checkPassword()">Enter</button>
+    <div class="gate-error" id="gate-error"></div>
+  </div>
+</div>
+
+<!-- DOCUMENT -->
+<div id="doc">
+
+  <!-- DOC NAV -->
+  <div class="doc-nav">
+    <a href="/invest.html" class="doc-nav-back">← Back to KOKOS</a>
+    <div class="doc-nav-links">
+      <a href="/safe-explainer.html">How It Works</a>
+      <a href="/investor-overview.html" class="active">Investor Overview</a>
+      <a href="/growth-plan.html">Growth Plan</a>
+    </div>
+  </div>
+
+  <!-- HEADER -->
+  <div class="doc-header">
+    <div class="doc-header-left">
+      <div class="doc-logo">
+        <img src="KOKOS_logo.png" alt="KOKOS" onerror="this.style.display='none'" />
+        <span class="doc-logo-name">KOKOS</span>
+      </div>
+      <div class="doc-title">Seed Investor<br><em>Overview</em></div>
+    </div>
+    <div class="doc-header-right">
+      <div class="doc-meta-label">Confidential</div>
+      <div class="doc-meta-val">July 2026</div>
+      <div style="margin-top:0.8rem;">
+        <div class="doc-meta-label">Contact</div>
+        <div class="doc-meta-val" style="font-size:0.82rem;">invest@kokosicecream.com</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- RAISE NUMBERS -->
+  <div class="raise-grid">
+    <div class="raise-cell" style="background:var(--coral);">
+      <div class="raise-lbl">Minimum Close</div>
+      <div class="raise-val">$250,000</div>
+    </div>
+    <div class="raise-cell" style="background:var(--mint);">
+      <div class="raise-lbl">Target Raise</div>
+      <div class="raise-val">$350,000</div>
+    </div>
+    <div class="raise-cell" style="background:var(--lavender);">
+      <div class="raise-lbl">SAFE Cap</div>
+      <div class="raise-val">$4M</div>
+      <div class="raise-sub">Post-money valuation cap</div>
+    </div>
+    <div class="raise-cell" style="background:var(--sand);">
+      <div class="raise-lbl">Runway</div>
+      <div class="raise-val">24 months</div>
+      <div class="raise-sub">Plus operating revenue</div>
+    </div>
+  </div>
+
+  <!-- FOUNDERS -->
+  <div class="founders-band">
+    <div class="founders-left">
+      <div class="founders-kicker">From the Founders</div>
+      <div class="founders-names">Sam Brooker<br>&amp; Jerusa van Lith</div>
+      <div class="founders-role">Husband &amp; Wife · Co-Founders · Nashville, TN</div>
+    </div>
+    <div class="founders-right">
+      <p class="founders-body">We started KOKOS nine years ago with a simple and stubborn conviction: that ice cream made without dairy, eggs, or nuts should be so good that no one notices what's missing. We weren't building a substitute. We were building the best ice cream — full stop. Ice cream that anyone could eat. Not because they had to, not with a disclaimer, not with lowered expectations. Just genuinely, undeniably good.</p>
+      <p class="founders-body">As a husband and wife team, we've done every part of this ourselves. Product development, recipe testing, staffing, community building, customer education, and nine years of refining what it means to make something people love without compromising for anyone. What came out the other side is a brand with real fans — customers who drive across Nashville, who bring their non-vegan friends, who write reviews that sound less like feedback and more like gratitude.</p>
+      <p class="founders-pull">The goal has never changed: ice cream for everyone.</p>
+    </div>
+  </div>
+
+  <!-- THE OPPORTUNITY -->
+  <div class="section">
+    <div class="section-header">
+      <div class="section-kicker">The Opportunity</div>
+      <div class="section-title">Plant-based is not a side category.<br>It is <em>the future of ice cream.</em></div>
+    </div>
+    <div class="section-body">
+      <p class="body-text">KOKOS is positioned to lead that shift — with premium products that are dairy-free, egg-free and nut-free, without asking customers to compromise on indulgence, hospitality or design. After nine years we understand the ins and outs of product development, production, staffing, seasonality, retail, events, expansion and customer education. We are building from real experience — not a theory.</p>
+    </div>
+  </div>
+
+  <!-- WHY KOKOS -->
+  <div class="section">
+    <div class="section-header">
+      <div class="section-kicker">Why KOKOS</div>
+      <div class="section-title">Nine years of proof.<br><em>One focused plan.</em></div>
+    </div>
+    <div class="section-body">
+      <div class="why-list">
+        <div class="why-item">Beloved, recognized brand in Nashville with a loyal and returning customer base</div>
+        <div class="why-item">Out-of-state demand already demonstrated — proven the brand travels</div>
+        <div class="why-item">Distinct plant-based and allergy-friendly positioning in a growing category</div>
+        <div class="why-item">Nine years of hard-won product and operating knowledge</div>
+        <div class="why-item">Clear pathways through retail, events, wholesale and food service</div>
+        <div class="why-item">New holding company structure designed for institutional investment and long-term growth</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- WHAT THIS ROUND FUNDS -->
+  <div class="section">
+    <div class="section-header">
+      <div class="section-kicker">Use of Funds</div>
+      <div class="section-title">What this <em>round builds</em></div>
+    </div>
+    <div class="three-col">
+      <div class="t-col" style="background:var(--apricot);">
+        <div class="t-col-label">Operating Foundation</div>
+        <div class="t-col-title">Clean company. Clean start.</div>
+        <div class="t-col-body">New holding company and operating subsidiary, banking, accounting, permits, insurance, transition support and clean reporting.</div>
+      </div>
+      <div class="t-col" style="background:var(--mint);">
+        <div class="t-col-label">Product + Production</div>
+        <div class="t-col-title">Wholesale-ready systems.</div>
+        <div class="t-col-body">Packaging, ingredients, inventory, manufacturing equipment, quality controls and the production infrastructure to supply beyond the scoop shop.</div>
+      </div>
+      <div class="t-col" style="background:var(--sand);">
+        <div class="t-col-label">Growth Engine</div>
+        <div class="t-col-title">Founder-led for 24 months.</div>
+        <div class="t-col-body">Founder operating salary, key payroll support, local wholesale, events and customer acquisition. The ice cream van is unlocked only at the full $350K raise.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- PHASE PLAN -->
+  <div class="section">
+    <div class="section-header">
+      <div class="section-kicker">The Plan</div>
+      <div class="section-title">Build a strategically valuable brand<br>in <em>5–6 years.</em></div>
+    </div>
+    <div class="section-body" style="padding-top:0;padding-bottom:0;">
+      <table class="phase-table">
+        <thead>
+          <tr>
+            <th style="width:18%;">Timing</th>
+            <th style="width:20%;">Phase</th>
+            <th>Primary Objective</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>0 – 24 months</td>
+            <td><span class="phase-name">Foundation</span></td>
+            <td>Complete the clean-company transition, strengthen the Nashville flagship, standardize production, launch wholesale-ready packaging.</td>
+          </tr>
+          <tr>
+            <td>Years 1 – 3</td>
+            <td><span class="phase-name">Own Nashville</span></td>
+            <td>Become Nashville's defining premium plant-based ice cream brand through flagship excellence, events, collaborations, wholesale and customer loyalty.</td>
+          </tr>
+          <tr>
+            <td>Years 2 – 4</td>
+            <td><span class="phase-name">Regional Replication</span></td>
+            <td>Enter a small number of culturally aligned Southeastern markets with repeatable economics and a management team beyond the founders.</td>
+          </tr>
+          <tr>
+            <td>Years 3 – 6</td>
+            <td><span class="phase-name">National + Liquidity</span></td>
+            <td>Selective national shops and retail tests; prepare for strategic acquisition, majority recapitalization or other founder liquidity event.</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ILLUSTRATION -->
+  <div class="section">
+    <div class="section-header">
+      <div class="section-kicker">Illustrative Returns</div>
+      <div class="section-title">How a <em>$25,000</em> investment works</div>
+    </div>
+    <div class="section-body">
+      <p class="body-text" style="margin-bottom:1.5rem;">$25,000 ÷ $4,000,000 = approximately 0.625% at the SAFE cap, before future dilution. The investment is made through a post-money SAFE — not a loan and not a guaranteed return. The SAFE converts into equity upon a qualifying financing or is treated according to its terms if a liquidity event occurs first.</p>
+      <table class="illus-table">
+        <thead>
+          <tr>
+            <th>Illustrative Company Value</th>
+            <th>Illustrative 0.625% Value</th>
+            <th>Approx. Multiple</th>
+            <th>Illustrative Gain</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><span class="illus-val">$10M</span></td>
+            <td><span class="illus-val">$62,500</span></td>
+            <td>2.5×</td>
+            <td>$37,500</td>
+          </tr>
+          <tr>
+            <td><span class="illus-val">$25M</span></td>
+            <td><span class="illus-val">$156,250</span></td>
+            <td>6.25×</td>
+            <td>$131,250</td>
+          </tr>
+          <tr>
+            <td><span class="illus-val">$50M</span></td>
+            <td><span class="illus-val">$312,500</span></td>
+            <td>12.5×</td>
+            <td>$287,500</td>
+          </tr>
+          <tr>
+            <td><span class="illus-val">$100M</span></td>
+            <td><span class="illus-val">$625,000</span></td>
+            <td>25×</td>
+            <td>$600,000</td>
+          </tr>
+        </tbody>
+      </table>
+      <p style="font-size:0.65rem;color:var(--ink);opacity:0.45;margin-top:0.8rem;line-height:1.6;">These examples ignore future dilution and are illustrations — not forecasts or promises of financial performance.</p>
+    </div>
+  </div>
+
+  <!-- HOW VALUE IS CREATED -->
+  <div class="value-band">
+    <div class="section-kicker">How Value Is Created</div>
+    <div class="value-items">
+      <div class="value-item">Stronger flagship unit economics and a documented Nashville playbook</div>
+      <div class="value-item">Recurring wholesale and food-service accounts that reorder</div>
+      <div class="value-item">Scalable production, packaging and quality systems</div>
+      <div class="value-item">Regional brand replication into culturally aligned Southeastern markets</div>
+      <div class="value-item">Strategic appeal to larger food and consumer companies at exit</div>
+    </div>
+  </div>
+
+  <!-- EXIT -->
+  <div class="exit-band">
+    <div class="exit-col">
+      <div class="exit-label">Preferred Outcome</div>
+      <div class="exit-title">Strategic liquidity in Years 5–6</div>
+      <div class="exit-body">Build KOKOS into a category-leading consumer brand that is attractive to strategic buyers, growth investors or recapitalization partners. Year 10 is the outside planning horizon — not the target.</div>
+    </div>
+    <div class="exit-col">
+      <div class="exit-label">Why Now</div>
+      <div class="exit-title">Nine years of learning. One focused plan.</div>
+      <div class="exit-body">This round is not funding an idea. It is funding a disciplined transition from a founder-built local brand into a scalable platform positioned to help define the future of ice cream. Investor return comes from appreciation and a future liquidity event.</div>
+    </div>
+  </div>
+
+  <!-- DISCLAIMER -->
+  <div class="disclaimer-band">
+    <p><strong>Important:</strong> This is a high-risk, illiquid private-company investment. Investors could lose their entire investment. Actual ownership, conversion and liquidity rights are governed solely by the executed SAFE and related company documents. This overview is a discussion summary and not a guarantee, forecast or substitute for legal, tax or financial advice. Emerald Sea Holdings, Inc. | Nashville, Tennessee | invest@kokosicecream.com</p>
+  </div>
+
+  <!-- FOOTER -->
+  <div class="doc-footer">
+    <span class="doc-footer-copy">KOKOS · Emerald Sea Holdings, Inc. · Confidential · July 2026</span>
+    <span class="doc-footer-copy">invest@kokosicecream.com</span>
+  </div>
+
+</div><!-- /doc -->
+
+<script>
+(function() {
+  var stored = sessionStorage.getItem('kokos_investor_auth');
+  if (stored === 'granted') {
+    document.getElementById('gate').style.display = 'none';
+    document.getElementById('doc').style.display = 'block';
+  }
+  document.getElementById('gate-input').addEventListener('keydown', function(e) {
+    if (e.key === 'Enter') checkPassword();
+  });
+})();
+
+function checkPassword() {
+  var val = document.getElementById('gate-input').value.trim().toLowerCase();
+  if (val === 'kokoskrew' || val === 'invest') {
+    sessionStorage.setItem('kokos_investor_auth', 'granted');
+    document.getElementById('gate').style.display = 'none';
+    document.getElementById('doc').style.display = 'block';
+  } else {
+    document.getElementById('gate-error').textContent = 'Incorrect password.';
+    document.getElementById('gate-input').value = '';
+    document.getElementById('gate-input').focus();
+  }
+}
+</script>
+</body>
+</html>
