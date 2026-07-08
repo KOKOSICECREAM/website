@@ -1,0 +1,920 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>KOKOS — How Your Investment Works</title>
+<link rel="icon" type="image/png" href="KOKOS_logo.png" />
+<meta name="robots" content="noindex, nofollow" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=Instrument+Sans:wght@300;400;500;600&display=swap" rel="stylesheet" />
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+:root {
+  --coral:     #fdcec1;
+  --mint:      #cde6d7;
+  --apricot:   #fae2d8;
+  --lavender:  #e3d1e4;
+  --sand:      #ffddad;
+  --coral-mid: #fdaf9a;
+  --green:     #11483d;
+  --cream:     #fffaf7;
+  --ink:       #1a1008;
+  --border:    3px solid #efe8e0;
+}
+
+body {
+  font-family: 'Instrument Sans', sans-serif;
+  background: var(--cream);
+  color: var(--ink);
+}
+
+/* ── GATE ── */
+#gate {
+  position: fixed;
+  inset: 0;
+  background: var(--ink);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2rem;
+  z-index: 9999;
+}
+#gate img {
+  width: 72px; height: 72px;
+  border-radius: 50%;
+  background: white;
+  border: 2.5px solid rgba(255,255,255,0.2);
+  padding: 4px;
+  object-fit: contain;
+}
+#gate h2 {
+  font-family: 'DM Serif Display', serif;
+  font-size: 1.5rem;
+  color: var(--sand);
+  font-weight: 400;
+  text-align: center;
+}
+#gate p {
+  font-size: 0.72rem;
+  font-weight: 500;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: rgba(255,255,255,0.3);
+}
+.gate-form {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.75rem;
+  width: 100%;
+  max-width: 280px;
+}
+.gate-input {
+  width: 100%;
+  padding: 0.85rem 1.1rem;
+  background: rgba(255,255,255,0.07);
+  border: 2px solid rgba(255,255,255,0.15);
+  color: white;
+  font-family: 'Instrument Sans', sans-serif;
+  font-size: 0.9rem;
+  letter-spacing: 0.06em;
+  text-align: center;
+  outline: none;
+  transition: border-color 0.2s;
+}
+.gate-input::placeholder { color: rgba(255,255,255,0.2); }
+.gate-input:focus { border-color: var(--sand); }
+.gate-btn {
+  width: 100%;
+  padding: 0.85rem;
+  background: var(--sand);
+  color: var(--ink);
+  border: none;
+  font-family: 'Instrument Sans', sans-serif;
+  font-size: 0.78rem;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.gate-btn:hover { background: #f5d095; }
+.gate-error {
+  font-size: 0.68rem;
+  color: #e87a6a;
+  letter-spacing: 0.08em;
+  min-height: 1rem;
+  text-align: center;
+}
+
+/* ── DOC ── */
+#doc { display: none; }
+
+/* HEADER */
+.doc-header {
+  background: var(--ink);
+  padding: 3rem 4rem 2.5rem;
+  border-bottom: var(--border);
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 2rem;
+}
+.doc-header-left { display: flex; flex-direction: column; gap: 0.8rem; }
+.doc-logo { display: flex; align-items: center; gap: 1rem; }
+.doc-logo img {
+  width: 48px; height: 48px;
+  border-radius: 50%; object-fit: contain;
+  background: white; border: 2px solid rgba(255,255,255,0.2); padding: 3px;
+}
+.doc-logo-name {
+  font-family: 'DM Serif Display', serif;
+  font-size: 1.4rem; color: var(--sand); font-weight: 400;
+}
+.doc-title {
+  font-family: 'DM Serif Display', serif;
+  font-size: clamp(1.8rem, 3vw, 2.6rem);
+  color: white; font-weight: 400; line-height: 1.1;
+}
+.doc-title em { font-style: italic; color: var(--coral-mid); }
+.doc-header-right { text-align: right; flex-shrink: 0; }
+.doc-meta-label {
+  font-size: 0.55rem; font-weight: 600;
+  letter-spacing: 0.18em; text-transform: uppercase;
+  color: rgba(255,255,255,0.3); margin-bottom: 0.3rem;
+}
+.doc-meta-val { font-family: 'DM Serif Display', serif; font-size: 1rem; color: var(--sand); }
+
+/* INTRO BAND */
+.intro-band {
+  background: var(--sand);
+  padding: 2.5rem 4rem;
+  border-bottom: var(--border);
+}
+.intro-kicker {
+  font-size: 0.55rem; font-weight: 600;
+  letter-spacing: 0.2em; text-transform: uppercase;
+  color: var(--green); margin-bottom: 0.5rem;
+}
+.intro-headline {
+  font-family: 'DM Serif Display', serif;
+  font-size: clamp(1.4rem, 2.5vw, 2rem);
+  color: var(--ink); font-weight: 400; line-height: 1.15;
+  margin-bottom: 0.8rem;
+}
+.intro-headline em { font-style: italic; color: var(--green); }
+.intro-body {
+  font-size: 0.9rem; font-weight: 300;
+  color: var(--ink); line-height: 1.85; opacity: 0.78;
+  max-width: 720px;
+}
+
+/* STATS ROW */
+.stats-row {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  border-bottom: var(--border);
+}
+.stat-cell {
+  padding: 1.6rem 2rem;
+  border-right: var(--border);
+  display: flex; flex-direction: column; gap: 0.3rem;
+}
+.stat-cell:last-child { border-right: none; }
+.stat-lbl {
+  font-size: 0.55rem; font-weight: 600;
+  letter-spacing: 0.18em; text-transform: uppercase;
+  color: var(--green);
+}
+.stat-val {
+  font-family: 'DM Serif Display', serif;
+  font-size: 1.5rem; color: var(--ink); line-height: 1.1;
+}
+.stat-sub { font-size: 0.72rem; font-weight: 300; color: var(--ink); opacity: 0.5; margin-top: 0.1rem; }
+
+/* WHAT IS A SAFE */
+.explainer-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  border-bottom: var(--border);
+}
+.ex-col {
+  padding: 2.5rem 2.5rem;
+  border-right: var(--border);
+}
+.ex-col:last-child { border-right: none; background: var(--cream); }
+.ex-col:first-child { background: var(--apricot); }
+.ex-kicker {
+  font-size: 0.55rem; font-weight: 600;
+  letter-spacing: 0.18em; text-transform: uppercase;
+  color: var(--green); margin-bottom: 0.6rem;
+  display: flex; align-items: center; gap: 0.5rem;
+}
+.ex-kicker::before { content: ''; display: block; width: 14px; height: 2px; background: var(--green); }
+.ex-title {
+  font-family: 'DM Serif Display', serif;
+  font-size: 1.2rem; color: var(--ink); line-height: 1.2; margin-bottom: 0.9rem;
+}
+.ex-body {
+  font-size: 0.85rem; font-weight: 300;
+  color: var(--ink); line-height: 1.82; opacity: 0.78;
+}
+
+/* MATH BOX */
+.math-band {
+  background: var(--green);
+  padding: 2.5rem 4rem;
+  border-bottom: var(--border);
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 3rem;
+  align-items: center;
+}
+.math-left {}
+.math-kicker {
+  font-size: 0.55rem; font-weight: 600;
+  letter-spacing: 0.2em; text-transform: uppercase;
+  color: var(--mint); margin-bottom: 0.6rem;
+}
+.math-title {
+  font-family: 'DM Serif Display', serif;
+  font-size: 1.3rem; color: white; line-height: 1.2; margin-bottom: 0.8rem;
+}
+.math-body {
+  font-size: 0.82rem; font-weight: 300;
+  color: rgba(255,255,255,0.55); line-height: 1.8;
+}
+.math-eq {
+  background: rgba(255,255,255,0.07);
+  border: 2px solid rgba(255,255,255,0.12);
+  padding: 1.5rem 2rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  align-items: center;
+  text-align: center;
+}
+.math-line {
+  font-family: 'DM Serif Display', serif;
+  font-size: 1.1rem; color: white; line-height: 1.2;
+}
+.math-divider { width: 60%; height: 2px; background: rgba(255,255,255,0.2); }
+.math-result {
+  font-family: 'DM Serif Display', serif;
+  font-size: 1.8rem; color: var(--sand); line-height: 1;
+}
+.math-result-lbl {
+  font-size: 0.62rem; font-weight: 600;
+  letter-spacing: 0.12em; text-transform: uppercase;
+  color: rgba(255,255,255,0.35);
+}
+
+/* HOW YOU MAKE MONEY */
+.returns-section { border-bottom: var(--border); }
+.returns-header {
+  padding: 2rem 4rem 1.5rem;
+  border-bottom: var(--border);
+  background: var(--coral);
+}
+.returns-kicker {
+  font-size: 0.55rem; font-weight: 600;
+  letter-spacing: 0.2em; text-transform: uppercase;
+  color: var(--green); margin-bottom: 0.5rem;
+}
+.returns-title {
+  font-family: 'DM Serif Display', serif;
+  font-size: clamp(1.4rem, 2.5vw, 2rem);
+  color: var(--ink); font-weight: 400; line-height: 1.1;
+}
+.returns-title em { font-style: italic; }
+
+.returns-ways {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  border-bottom: var(--border);
+}
+.returns-way {
+  padding: 2rem;
+  border-right: var(--border);
+  display: flex; flex-direction: column; gap: 0.6rem;
+}
+.returns-way:last-child { border-right: none; }
+.returns-way-num {
+  font-family: 'DM Serif Display', serif;
+  font-size: 2rem; color: var(--coral-mid); line-height: 1;
+}
+.returns-way-title {
+  font-family: 'DM Serif Display', serif;
+  font-size: 1rem; color: var(--ink); line-height: 1.2;
+}
+.returns-way-body {
+  font-size: 0.8rem; font-weight: 300;
+  color: var(--ink); line-height: 1.72; opacity: 0.72;
+}
+
+/* TABLE */
+.table-section { border-bottom: var(--border); }
+.table-header {
+  padding: 2rem 4rem 1.5rem;
+  border-bottom: var(--border);
+}
+.table-kicker {
+  font-size: 0.55rem; font-weight: 600;
+  letter-spacing: 0.2em; text-transform: uppercase;
+  color: var(--green); margin-bottom: 0.5rem;
+  display: flex; align-items: center; gap: 0.5rem;
+}
+.table-kicker::before { content: ''; display: block; width: 14px; height: 2px; background: var(--green); }
+.table-title {
+  font-family: 'DM Serif Display', serif;
+  font-size: clamp(1.2rem, 2vw, 1.6rem);
+  color: var(--ink); font-weight: 400; line-height: 1.1;
+}
+.table-title em { font-style: italic; color: var(--green); }
+.table-wrap { padding: 0 4rem 2.5rem; }
+.illus-table { width: 100%; border-collapse: collapse; margin-top: 1.5rem; }
+.illus-table th {
+  font-size: 0.58rem; font-weight: 600;
+  letter-spacing: 0.14em; text-transform: uppercase;
+  color: white; text-align: left;
+  padding: 0.85rem 1.4rem;
+  background: var(--ink);
+}
+.illus-table td {
+  padding: 0.95rem 1.4rem;
+  font-size: 0.88rem; font-weight: 300; color: var(--ink);
+  border-bottom: 2px solid #efe8e0;
+  vertical-align: middle;
+}
+.illus-table tr:last-child td { border-bottom: none; }
+.illus-table tbody tr:nth-child(odd) td { background: var(--sand); }
+.illus-table tbody tr:nth-child(even) td { background: var(--apricot); }
+.illus-table tfoot td {
+  background: var(--mint) !important;
+  font-weight: 600; border-top: var(--border); border-bottom: none;
+}
+.big-num { font-family: 'DM Serif Display', serif; font-size: 1.1rem; }
+.table-note {
+  font-size: 0.65rem; color: var(--ink); opacity: 0.45; margin-top: 0.8rem; line-height: 1.6;
+}
+
+/* JOURNEY */
+.journey-band {
+  border-bottom: var(--border);
+}
+.journey-header {
+  padding: 2rem 4rem 1.5rem;
+  border-bottom: var(--border);
+  background: var(--lavender);
+}
+.journey-kicker {
+  font-size: 0.55rem; font-weight: 600;
+  letter-spacing: 0.2em; text-transform: uppercase;
+  color: var(--green); margin-bottom: 0.5rem;
+}
+.journey-title {
+  font-family: 'DM Serif Display', serif;
+  font-size: clamp(1.2rem, 2vw, 1.6rem);
+  color: var(--ink); font-weight: 400; line-height: 1.1;
+}
+.journey-steps {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+}
+.journey-step {
+  padding: 2rem 1.8rem;
+  border-right: var(--border);
+  display: flex; flex-direction: column; gap: 0.5rem;
+}
+.journey-step:last-child { border-right: none; }
+.step-num {
+  width: 32px; height: 32px;
+  background: var(--ink); color: white;
+  border-radius: 50%;
+  font-family: 'DM Serif Display', serif;
+  font-size: 0.9rem;
+  display: flex; align-items: center; justify-content: center;
+  margin-bottom: 0.3rem;
+}
+.step-title {
+  font-family: 'DM Serif Display', serif;
+  font-size: 1rem; color: var(--ink); line-height: 1.2;
+}
+.step-body {
+  font-size: 0.78rem; font-weight: 300;
+  color: var(--ink); line-height: 1.72; opacity: 0.72;
+}
+
+/* FAQ */
+.faq-section { border-bottom: var(--border); }
+.faq-header {
+  padding: 2rem 4rem 1.5rem;
+  border-bottom: var(--border);
+}
+.faq-kicker {
+  font-size: 0.55rem; font-weight: 600;
+  letter-spacing: 0.2em; text-transform: uppercase;
+  color: var(--green); margin-bottom: 0.5rem;
+  display: flex; align-items: center; gap: 0.5rem;
+}
+.faq-kicker::before { content: ''; display: block; width: 14px; height: 2px; background: var(--green); }
+.faq-title {
+  font-family: 'DM Serif Display', serif;
+  font-size: clamp(1.2rem, 2vw, 1.6rem);
+  color: var(--ink); font-weight: 400;
+}
+.faq-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+}
+.faq-item {
+  padding: 1.5rem 2.5rem;
+  border-right: var(--border);
+  border-bottom: var(--border);
+}
+.faq-item:nth-child(even) { border-right: none; }
+.faq-item:nth-last-child(-n+2) { border-bottom: none; }
+.faq-q {
+  font-family: 'DM Serif Display', serif;
+  font-size: 0.95rem; color: var(--ink); margin-bottom: 0.5rem; line-height: 1.3;
+}
+.faq-a {
+  font-size: 0.8rem; font-weight: 300;
+  color: var(--ink); line-height: 1.75; opacity: 0.72;
+}
+
+/* FOUNDERS STRIP */
+.founders-strip {
+  display: grid;
+  grid-template-columns: 240px 1fr;
+  border-bottom: var(--border);
+}
+.founders-strip-left {
+  background: var(--ink);
+  padding: 2.5rem 2rem;
+  border-right: var(--border);
+  display: flex; flex-direction: column;
+  justify-content: center; gap: 0.5rem;
+}
+.fs-kicker {
+  font-size: 0.55rem; font-weight: 600;
+  letter-spacing: 0.2em; text-transform: uppercase;
+  color: var(--coral-mid);
+}
+.fs-names {
+  font-family: 'DM Serif Display', serif;
+  font-size: 1.2rem; color: var(--coral); line-height: 1.15;
+}
+.fs-role {
+  font-size: 0.62rem; font-weight: 300;
+  color: rgba(255,255,255,0.28); line-height: 1.5; margin-top: 0.1rem;
+}
+.founders-strip-right {
+  background: var(--mint);
+  padding: 2.5rem 3rem;
+  display: flex; flex-direction: column; gap: 0.8rem;
+  justify-content: center;
+}
+.fs-body {
+  font-size: 0.88rem; font-weight: 300;
+  color: var(--ink); line-height: 1.82; opacity: 0.78;
+}
+
+/* CLOSING */
+.closing-band {
+  background: var(--ink);
+  padding: 2.5rem 4rem;
+  border-bottom: var(--border);
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 3rem;
+}
+.closing-col {}
+.closing-kicker {
+  font-size: 0.55rem; font-weight: 600;
+  letter-spacing: 0.2em; text-transform: uppercase;
+  color: var(--coral-mid); margin-bottom: 0.6rem;
+}
+.closing-title {
+  font-family: 'DM Serif Display', serif;
+  font-size: 1.2rem; color: white; line-height: 1.2; margin-bottom: 0.7rem;
+}
+.closing-body {
+  font-size: 0.82rem; font-weight: 300;
+  color: rgba(255,255,255,0.5); line-height: 1.8;
+}
+
+/* DISCLAIMER */
+.disclaimer-band {
+  padding: 1.2rem 4rem;
+  background: var(--apricot);
+  border-bottom: var(--border);
+}
+.disclaimer-band p {
+  font-size: 0.62rem; font-weight: 400;
+  color: var(--ink); opacity: 0.6; line-height: 1.65;
+}
+
+/* FOOTER */
+.doc-footer {
+  background: var(--sand);
+  border-top: var(--border);
+  padding: 1rem 4rem;
+  display: flex; align-items: center; justify-content: space-between;
+}
+.doc-footer-copy { font-size: 0.65rem; color: var(--ink); opacity: 0.55; letter-spacing: 0.06em; }
+
+/* DOC NAV */
+.doc-nav {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 0 2rem; height: 48px;
+  background: var(--cream); border-bottom: var(--border);
+  position: sticky; top: 0; z-index: 50;
+}
+.doc-nav-back {
+  font-size: 0.65rem; font-weight: 600;
+  letter-spacing: 0.1em; text-transform: uppercase;
+  color: var(--ink); text-decoration: none; opacity: 0.45;
+  transition: opacity 0.15s;
+}
+.doc-nav-back:hover { opacity: 1; }
+.doc-nav-links { display: flex; }
+.doc-nav-links a {
+  font-size: 0.62rem; font-weight: 600;
+  letter-spacing: 0.1em; text-transform: uppercase;
+  color: var(--ink); text-decoration: none; opacity: 0.4;
+  padding: 0 1rem; height: 48px; line-height: 48px;
+  border-left: var(--border); transition: opacity 0.15s, background 0.15s;
+}
+.doc-nav-links a:hover { opacity: 0.8; background: rgba(0,0,0,0.03); }
+.doc-nav-links a.active { opacity: 1; background: var(--sand); }
+
+/* PRINT */
+@media print {
+  #gate { display: none !important; }
+  #doc { display: block !important; }
+  .doc-nav { display: none; }
+  body { background: white; }
+  .doc-header, .intro-band, .stats-row, .math-band,
+  .returns-header, .returns-ways, .journey-header,
+  .illus-table th, .illus-table tbody tr,
+  .closing-band, .disclaimer-band, .doc-footer {
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+  .table-section, .faq-section, .journey-band { break-inside: avoid; }
+  .illus-table tr { break-inside: avoid; }
+}
+
+/* RESPONSIVE */
+@media (max-width: 768px) {
+  .doc-header { padding: 2rem 1.5rem; flex-direction: column; align-items: flex-start; }
+  .doc-header-right { text-align: left; }
+  .intro-band, .disclaimer-band, .doc-footer { padding: 1.5rem; }
+  .stats-row { grid-template-columns: 1fr 1fr; }
+  .stat-cell:nth-child(2n) { border-right: none; }
+  .stat-cell { border-bottom: var(--border); }
+  .stat-cell:nth-last-child(-n+2) { border-bottom: none; }
+  .explainer-grid { grid-template-columns: 1fr; }
+  .ex-col { border-right: none; border-bottom: var(--border); }
+  .ex-col:last-child { border-bottom: none; }
+  .math-band { grid-template-columns: 1fr; gap: 2rem; padding: 2rem 1.5rem; }
+  .returns-header, .table-header, .faq-header, .journey-header { padding: 1.5rem; }
+  .returns-ways { grid-template-columns: 1fr; }
+  .returns-way { border-right: none; border-bottom: var(--border); }
+  .returns-way:last-child { border-bottom: none; }
+  .table-wrap { padding: 0 1.5rem 2rem; }
+  .journey-steps { grid-template-columns: 1fr 1fr; }
+  .journey-step:nth-child(2n) { border-right: none; }
+  .journey-step { border-bottom: var(--border); }
+  .journey-step:nth-last-child(-n+2) { border-bottom: none; }
+  .faq-grid { grid-template-columns: 1fr; }
+  .faq-item { border-right: none; border-bottom: var(--border); }
+  .faq-item:nth-last-child(-n+2) { border-bottom: var(--border); }
+  .faq-item:last-child { border-bottom: none; }
+  .founders-strip { grid-template-columns: 1fr; }
+  .founders-strip-left { border-right: none; border-bottom: var(--border); padding: 2rem 1.5rem; }
+  .founders-strip-right { padding: 2rem 1.5rem; }
+  .closing-band { grid-template-columns: 1fr; gap: 2rem; padding: 2rem 1.5rem; }
+}
+</style>
+</head>
+<body>
+
+<!-- GATE -->
+<div id="gate">
+  <img src="KOKOS_logo.png" alt="KOKOS" onerror="this.style.display='none'" />
+  <div style="text-align:center;display:flex;flex-direction:column;gap:0.4rem;">
+    <h2>How Your Investment Works</h2>
+    <p>Private · By invitation only</p>
+  </div>
+  <div class="gate-form">
+    <input class="gate-input" id="gate-input" type="password" placeholder="Enter password" autocomplete="off" />
+    <button class="gate-btn" onclick="checkPassword()">Enter</button>
+    <div class="gate-error" id="gate-error"></div>
+  </div>
+</div>
+
+<!-- DOCUMENT -->
+<div id="doc">
+
+  <!-- DOC NAV -->
+  <div class="doc-nav">
+    <a href="/invest.html" class="doc-nav-back">← Back to KOKOS</a>
+    <div class="doc-nav-links">
+      <a href="/safe-explainer.html" class="active">How It Works</a>
+      <a href="/investor-overview.html">Investor Overview</a>
+      <a href="/growth-plan.html">Growth Plan</a>
+    </div>
+  </div>
+
+  <!-- HEADER -->
+  <div class="doc-header">
+    <div class="doc-header-left">
+      <div class="doc-logo">
+        <img src="KOKOS_logo.png" alt="KOKOS" onerror="this.style.display='none'" />
+        <span class="doc-logo-name">KOKOS</span>
+      </div>
+      <div class="doc-title">How Your<br><em>Investment Works</em></div>
+    </div>
+    <div class="doc-header-right">
+      <div class="doc-meta-label">Confidential</div>
+      <div class="doc-meta-val">July 2026</div>
+      <div style="margin-top:0.8rem;">
+        <div class="doc-meta-label">Contact</div>
+        <div class="doc-meta-val" style="font-size:0.82rem;">invest@kokosicecream.com</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- INTRO -->
+  <div class="intro-band">
+    <div class="intro-kicker">Plain English</div>
+    <div class="intro-headline">You are not making a loan.<br>You are <em>betting on the company.</em></div>
+    <p class="intro-body">KOKOS is raising money through an instrument called a SAFE — Simple Agreement for Future Equity. If you haven't seen one before, don't worry. This document walks you through exactly what a SAFE is, how your money works, and how you could eventually see a return. No jargon required.</p>
+  </div>
+
+  <!-- STATS -->
+  <div class="stats-row">
+    <div class="stat-cell" style="background:var(--coral);">
+      <div class="stat-lbl">Example Investment</div>
+      <div class="stat-val">$25,000</div>
+    </div>
+    <div class="stat-cell" style="background:var(--mint);">
+      <div class="stat-lbl">Instrument</div>
+      <div class="stat-val" style="font-size:1.1rem; margin-top:0.3rem;">Post-money SAFE</div>
+    </div>
+    <div class="stat-cell" style="background:var(--lavender);">
+      <div class="stat-lbl">Valuation Cap</div>
+      <div class="stat-val">$4,000,000</div>
+    </div>
+    <div class="stat-cell" style="background:var(--sand);">
+      <div class="stat-lbl">Illustrative Ownership</div>
+      <div class="stat-val">~0.625%</div>
+      <div class="stat-sub">before future dilution</div>
+    </div>
+  </div>
+
+  <!-- WHAT IS A SAFE -->
+  <div class="explainer-grid">
+    <div class="ex-col">
+      <div class="ex-kicker">What a SAFE is</div>
+      <div class="ex-title">A promise of future equity — not a loan.</div>
+      <div class="ex-body">A SAFE stands for Simple Agreement for Future Equity. It was created by Y Combinator to make early-stage investing simpler and fairer for both sides.<br><br>When you invest through a SAFE, the company takes your money now and promises that when a future milestone happens — like a bigger fundraising round or an acquisition — your investment converts into actual equity in the company.<br><br>You are not a lender. There is no scheduled repayment, no interest rate, and no maturity date that forces a payout. You are an early believer who gets in at a favorable valuation cap in exchange for accepting early-stage risk.</div>
+    </div>
+    <div class="ex-col">
+      <div class="ex-kicker">What a SAFE is not</div>
+      <div class="ex-title">Not a loan. Not a guarantee. Not a sure thing.</div>
+      <div class="ex-body">A SAFE is not a loan — the company does not owe you a repayment on a schedule. It is not a guaranteed return — your outcome depends entirely on how the company performs. It is not a bond or savings product.<br><br>You will not receive monthly interest. You will not get your money back at a fixed date. If the company fails before a triggering event occurs, you could lose your entire investment.<br><br>That is the trade-off: you accept real risk in exchange for getting in early, at a $4 million valuation cap, before the company's value grows to reflect what you believe it will become.</div>
+    </div>
+  </div>
+
+  <!-- THE MATH -->
+  <div class="math-band">
+    <div class="math-left">
+      <div class="math-kicker">The Math</div>
+      <div class="math-title">$25,000 at a $4M cap equals approximately 0.625%</div>
+      <div class="math-body">At the $4 million post-money valuation cap, a $25,000 investment represents approximately 0.625% of the company before any future dilution. Future fundraising rounds will dilute everyone — that is normal and expected — but your percentage is locked in at conversion based on these terms.</div>
+    </div>
+    <div class="math-eq">
+      <div class="math-line">$25,000</div>
+      <div class="math-divider"></div>
+      <div class="math-line">$4,000,000</div>
+      <div style="height:0.8rem;"></div>
+      <div class="math-result">0.625%</div>
+      <div class="math-result-lbl">Approximate ownership at cap</div>
+    </div>
+  </div>
+
+  <!-- HOW YOU MAKE MONEY -->
+  <div class="returns-section">
+    <div class="returns-header">
+      <div class="returns-kicker">The Return</div>
+      <div class="returns-title">Three ways a SAFE investor<br>could <em>see money back</em></div>
+    </div>
+    <div class="returns-ways">
+      <div class="returns-way">
+        <div class="returns-way-num">01</div>
+        <div class="returns-way-title">Company is acquired</div>
+        <div class="returns-way-body">If KOKOS is acquired by another company, the SAFE converts into equity at the cap and you receive your share of the acquisition proceeds. This is the most common liquidity path for consumer brand investors.</div>
+      </div>
+      <div class="returns-way">
+        <div class="returns-way-num">02</div>
+        <div class="returns-way-title">Company raises a priced round</div>
+        <div class="returns-way-body">If Emerald Sea Holdings, Inc. raises a larger equity round — Series A or beyond — your SAFE converts into shares of that class (or a related class). You then own actual stock, and that stock could be sold in a later event.</div>
+      </div>
+      <div class="returns-way">
+        <div class="returns-way-num">03</div>
+        <div class="returns-way-title">Majority recapitalization or IPO</div>
+        <div class="returns-way-body">If the company is partially sold, recapitalized with a majority investor, or eventually goes public, the SAFE converts and your equity position participates in that event under the terms of the agreement.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ILLUSTRATION TABLE -->
+  <div class="table-section">
+    <div class="table-header">
+      <div class="table-kicker">Illustrative Outcomes</div>
+      <div class="table-title">What <em>0.625%</em> looks like at different company values</div>
+    </div>
+    <div class="table-wrap">
+      <table class="illus-table">
+        <thead>
+          <tr>
+            <th>Illustrative Company Value</th>
+            <th>Your ~0.625%</th>
+            <th>Approx. Multiple</th>
+            <th>Illustrative Gain</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><span class="big-num">$4,000,000</span></td>
+            <td><span class="big-num">$25,000</span></td>
+            <td>1.0× — break-even</td>
+            <td>$0</td>
+          </tr>
+          <tr>
+            <td><span class="big-num">$10,000,000</span></td>
+            <td><span class="big-num">$62,500</span></td>
+            <td>2.5×</td>
+            <td>$37,500</td>
+          </tr>
+          <tr>
+            <td><span class="big-num">$25,000,000</span></td>
+            <td><span class="big-num">$156,250</span></td>
+            <td>6.25×</td>
+            <td>$131,250</td>
+          </tr>
+          <tr>
+            <td><span class="big-num">$50,000,000</span></td>
+            <td><span class="big-num">$312,500</span></td>
+            <td>12.5×</td>
+            <td>$287,500</td>
+          </tr>
+        </tbody>
+        <tfoot>
+          <tr>
+            <td colspan="4">These are illustrations only — not forecasts or promises. Actual returns depend on SAFE terms, future dilution, transaction costs, taxes, and whether the company achieves a liquidity event.</td>
+          </tr>
+        </tfoot>
+      </table>
+      <p class="table-note">Real ownership at exit will usually be lower than 0.625% due to dilution from future fundraising. Future financing rounds are expected and normal — they also tend to indicate the company is growing.</p>
+    </div>
+  </div>
+
+  <!-- JOURNEY -->
+  <div class="journey-band">
+    <div class="journey-header">
+      <div class="journey-kicker">Step by Step</div>
+      <div class="journey-title">What happens after you invest</div>
+    </div>
+    <div class="journey-steps">
+      <div class="journey-step">
+        <div class="step-num">1</div>
+        <div class="step-title">You sign the SAFE and wire funds</div>
+        <div class="step-body">You execute the SAFE agreement and transfer $25,000 (or your chosen amount) to Emerald Sea Holdings, Inc. The SAFE is now a legal contract.</div>
+      </div>
+      <div class="journey-step">
+        <div class="step-num">2</div>
+        <div class="step-title">The company builds</div>
+        <div class="step-body">KOKOS uses the proceeds to grow — completing the company transition, building wholesale, improving the flagship, and executing the growth plan. You get updates along the way.</div>
+      </div>
+      <div class="journey-step">
+        <div class="step-num">3</div>
+        <div class="step-title">A triggering event occurs</div>
+        <div class="step-body">When the company raises a priced equity round, is acquired, or another SAFE trigger occurs, your SAFE converts into equity. You become a shareholder.</div>
+      </div>
+      <div class="journey-step">
+        <div class="step-num">4</div>
+        <div class="step-title">Liquidity event</div>
+        <div class="step-body">If the company is sold or otherwise becomes liquid, you receive your share of the proceeds based on your equity ownership and the terms of the transaction.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- FAQ -->
+  <div class="faq-section">
+    <div class="faq-header">
+      <div class="faq-kicker">Common Questions</div>
+      <div class="faq-title">Answered honestly</div>
+    </div>
+    <div class="faq-grid">
+      <div class="faq-item">
+        <div class="faq-q">Do I own shares right now?</div>
+        <div class="faq-a">Not yet. A SAFE is a contractual right to receive equity when a triggering event occurs — not immediate share ownership. Think of it as a reserved seat that activates when the time comes.</div>
+      </div>
+      <div class="faq-item">
+        <div class="faq-q">Am I guaranteed 0.625% forever?</div>
+        <div class="faq-a">No. The 0.625% is what your investment implies at the $4M cap before dilution. Future fundraising rounds will dilute all shareholders — including you. That dilution is normal and expected as the company grows.</div>
+      </div>
+      <div class="faq-item">
+        <div class="faq-q">Do I receive interest or dividends?</div>
+        <div class="faq-a">No. A SAFE is not a loan and pays no interest. Dividends are possible only if the board declares them in the future — which is unlikely in the early years when profits are reinvested for growth.</div>
+      </div>
+      <div class="faq-item">
+        <div class="faq-q">When do I get my money back?</div>
+        <div class="faq-a">There is no scheduled repayment date. A return depends on a future liquidity event: an acquisition, a larger priced equity round, or another triggering event. These typically take 5–10 years at the earliest.</div>
+      </div>
+      <div class="faq-item">
+        <div class="faq-q">Can I lose all of my investment?</div>
+        <div class="faq-a">Yes. This is an early-stage, illiquid, high-risk investment. If the company fails before a triggering event occurs, the SAFE has no guaranteed recovery. Only invest what you can genuinely afford to lose.</div>
+      </div>
+      <div class="faq-item">
+        <div class="faq-q">Can I sell my SAFE to someone else?</div>
+        <div class="faq-a">Generally, SAFEs are not transferable without company consent. Your investment is intended to be held until a company liquidity event — it is not a tradable instrument like a stock.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- FOUNDERS -->
+  <div class="founders-strip">
+    <div class="founders-strip-left">
+      <div class="fs-kicker">The People Behind It</div>
+      <div class="fs-names">Sam Brooker &amp; Jerusa van Lith</div>
+      <div class="fs-role">Husband &amp; Wife · Co-Founders · Nashville, TN</div>
+    </div>
+    <div class="founders-strip-right">
+      <p class="fs-body">We started KOKOS nine years ago with a simple and stubborn conviction: that ice cream made without dairy, eggs, or nuts should be so good that no one notices what's missing. Not a substitute. The best ice cream — full stop. Ice cream for everyone.</p>
+      <p class="fs-body">Nine years later, the goal hasn't changed. The company around it is growing up to match it.</p>
+    </div>
+  </div>
+
+  <!-- CLOSING -->
+  <div class="closing-band">
+    <div class="closing-col">
+      <div class="closing-kicker">What You Are Really Betting On</div>
+      <div class="closing-title">That KOKOS becomes something Nashville and beyond can't imagine losing.</div>
+      <div class="closing-body">Nine years in, the brand is loved. The product is proven. The vision is clear. This round funds the transition from a founder-built local brand into a scalable company with the legal, financial and operational structure to grow — and eventually to give investors a return worth having.</div>
+    </div>
+    <div class="closing-col">
+      <div class="closing-kicker">Next Steps</div>
+      <div class="closing-title">Start with a conversation.</div>
+      <div class="closing-body">If you are interested or just have questions, reach out directly. There is no hard sell here. If this investment is right for you and for us, we will both know it. The SAFE documents and full investor overview are available on request.<br><br style="margin-bottom:0.5rem;"/><strong style="color:var(--coral-mid);">invest@kokosicecream.com</strong></div>
+    </div>
+  </div>
+
+  <!-- DISCLAIMER -->
+  <div class="disclaimer-band">
+    <p><strong>Important:</strong> This document is an illustrative explainer provided for discussion purposes only. It does not constitute an offer to sell or a solicitation to buy any security. The figures shown are illustrative examples — not forecasts, projections or promises of financial performance. All investor rights and obligations are governed solely by the executed SAFE agreement and applicable law. This is a high-risk, illiquid investment; investors could lose their entire investment. Consult your own legal, tax and financial advisors before investing. Emerald Sea Holdings, Inc. | Nashville, Tennessee | invest@kokosicecream.com</p>
+  </div>
+
+  <!-- FOOTER -->
+  <div class="doc-footer">
+    <span class="doc-footer-copy">KOKOS · How Your Investment Works · Emerald Sea Holdings, Inc. · Confidential · July 2026</span>
+    <span class="doc-footer-copy">invest@kokosicecream.com</span>
+  </div>
+
+</div><!-- /doc -->
+
+<script>
+(function() {
+  var stored = sessionStorage.getItem('kokos_investor_auth');
+  if (stored === 'granted') {
+    document.getElementById('gate').style.display = 'none';
+    document.getElementById('doc').style.display = 'block';
+  }
+  document.getElementById('gate-input').addEventListener('keydown', function(e) {
+    if (e.key === 'Enter') checkPassword();
+  });
+})();
+
+function checkPassword() {
+  var val = document.getElementById('gate-input').value.trim().toLowerCase();
+  if (val === 'kokoskrew' || val === 'invest') {
+    sessionStorage.setItem('kokos_investor_auth', 'granted');
+    document.getElementById('gate').style.display = 'none';
+    document.getElementById('doc').style.display = 'block';
+  } else {
+    document.getElementById('gate-error').textContent = 'Incorrect password.';
+    document.getElementById('gate-input').value = '';
+    document.getElementById('gate-input').focus();
+  }
+}
+</script>
+</body>
+</html>
