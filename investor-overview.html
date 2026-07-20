@@ -157,6 +157,30 @@ body {
   font-size: 1rem; color: var(--coral-mid);
 }
 
+/* WEFUNDER CTA */
+.wf-cta-band {
+  background: var(--green);
+  padding: 1.4rem 2rem;
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 1.5rem; flex-wrap: wrap;
+  border-bottom: var(--border);
+}
+.wf-cta-text {
+  font-size: 0.78rem; font-weight: 500;
+  color: rgba(255,255,255,0.7); letter-spacing: 0.02em;
+}
+.wf-cta-text strong { color: white; }
+.wf-cta-btn {
+  display: inline-block;
+  background: var(--coral-mid); color: var(--ink);
+  padding: 0.65rem 1.5rem;
+  font-size: 0.68rem; font-weight: 600;
+  letter-spacing: 0.1em; text-transform: uppercase;
+  text-decoration: none; white-space: nowrap;
+  transition: opacity 0.15s; flex-shrink: 0;
+}
+.wf-cta-btn:hover { opacity: 0.85; }
+
 /* RAISE GRID */
 .raise-grid {
   display: grid;
@@ -630,6 +654,12 @@ body {
       <div class="raise-val">24 months</div>
       <div class="raise-sub">Self-funded from revenue by Year 2</div>
     </div>
+  </div>
+
+  <!-- WEFUNDER CTA -->
+  <div class="wf-cta-band">
+    <span class="wf-cta-text"><strong>Now open to everyone.</strong> Reg CF · No accreditation required · SAFE · $4M cap</span>
+    <a class="wf-cta-btn" href="https://wefunder.com/emerald.sea.holdings.inc" target="_blank" rel="noopener">Invest on Wefunder →</a>
   </div>
 
   <!-- FOUNDERS -->

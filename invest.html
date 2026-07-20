@@ -262,6 +262,56 @@ nav {
   color: var(--ink); line-height: 1.9; opacity: 0.8;
 }
 
+/* WEFUNDER BAND */
+.wefunder-band {
+  background: var(--green);
+  border-bottom: var(--border);
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: center;
+  gap: 2rem;
+  padding: 3.5rem 4.5rem;
+}
+.wf-left {}
+.wf-eyebrow {
+  font-size: 0.58rem; font-weight: 600;
+  letter-spacing: 0.2em; text-transform: uppercase;
+  color: rgba(255,255,255,0.4); margin-bottom: 0.9rem;
+}
+.wf-heading {
+  font-family: 'DM Serif Display', serif;
+  font-size: clamp(1.6rem, 2.8vw, 2.4rem);
+  font-weight: 400; line-height: 1.1; color: white;
+  margin-bottom: 1rem;
+}
+.wf-heading em { font-style: italic; color: var(--coral); }
+.wf-details {
+  display: flex; gap: 2rem; flex-wrap: wrap;
+}
+.wf-detail {
+  display: flex; flex-direction: column; gap: 0.2rem;
+}
+.wf-detail-val {
+  font-size: 1rem; font-weight: 600; color: white;
+}
+.wf-detail-lbl {
+  font-size: 0.6rem; font-weight: 500;
+  letter-spacing: 0.12em; text-transform: uppercase;
+  color: rgba(255,255,255,0.4);
+}
+.wf-btn {
+  display: inline-flex; align-items: center; gap: 0.5rem;
+  background: var(--coral-mid); color: var(--ink);
+  padding: 1rem 2rem;
+  font-size: 0.78rem; font-weight: 600;
+  letter-spacing: 0.1em; text-transform: uppercase;
+  text-decoration: none; white-space: nowrap;
+  border: 3px solid var(--coral-mid);
+  transition: background 0.15s, border-color 0.15s;
+  flex-shrink: 0;
+}
+.wf-btn:hover { background: var(--coral); border-color: var(--coral); }
+
 /* INVESTOR DOCS */
 .investor-docs { border-bottom: var(--border); background: var(--ink); }
 .docs-header {
@@ -423,6 +473,8 @@ footer { background: var(--coral); border-top: var(--border); }
   .narrative { grid-template-columns: 1fr; }
   .narrative-left { border-right: none; border-bottom: var(--border); padding: 3.5rem 2rem; }
   .narrative-right { padding: 3.5rem 2rem; }
+  .wefunder-band { grid-template-columns: 1fr; padding: 2.5rem 1.5rem; }
+  .wf-btn { width: 100%; justify-content: center; }
   .form-section { grid-template-columns: 1fr; }
   .form-left { border-right: none; border-bottom: var(--border); padding: 3.5rem 2rem; }
   .form-right { padding: 3.5rem 2rem; }
@@ -454,7 +506,7 @@ footer { background: var(--coral); border-top: var(--border); }
     </a>
   </div>
   <a href="/" class="nav-back">Back to KOKOS</a>
-  <a href="#reach-out" class="nav-cta-link">Reach Out</a>
+  <a href="https://wefunder.com/emerald.sea.holdings.inc" class="nav-cta-link" target="_blank" rel="noopener">Invest on Wefunder</a>
 </nav>
 
 <!-- HERO -->
@@ -533,6 +585,34 @@ footer { background: var(--coral); border-top: var(--border); }
     <p class="narrative-body">We're starting this conversation with the people who know us. If that's you, we'd love to hear from you.</p>
   </div>
 </div>
+
+<!-- WEFUNDER -->
+<section class="wefunder-band">
+  <div class="wf-left">
+    <div class="wf-eyebrow">Now Open · Regulation CF · No Accreditation Required</div>
+    <h2 class="wf-heading">Invest in <em>KOKOS</em> on Wefunder.</h2>
+    <p style="font-size:0.7rem;color:rgba(255,255,255,0.35);margin-bottom:1.2rem;letter-spacing:0.04em;">Issued by <a href="https://emeraldsea.xyz" target="_blank" rel="noopener" style="color:rgba(255,255,255,0.5);text-decoration:none;">Emerald Sea Holdings, Inc.</a> · Delaware C-Corp</p>
+    <div class="wf-details">
+      <div class="wf-detail">
+        <span class="wf-detail-val">$50K</span>
+        <span class="wf-detail-lbl">Minimum raise</span>
+      </div>
+      <div class="wf-detail">
+        <span class="wf-detail-val">$124K</span>
+        <span class="wf-detail-lbl">Maximum raise</span>
+      </div>
+      <div class="wf-detail">
+        <span class="wf-detail-val">SAFE</span>
+        <span class="wf-detail-lbl">Instrument</span>
+      </div>
+      <div class="wf-detail">
+        <span class="wf-detail-val">$4M</span>
+        <span class="wf-detail-lbl">Valuation cap</span>
+      </div>
+    </div>
+  </div>
+  <a class="wf-btn" href="https://wefunder.com/emerald.sea.holdings.inc" target="_blank" rel="noopener">Invest on Wefunder →</a>
+</section>
 
 <!-- INVESTOR DOCS -->
 <section class="investor-docs">
@@ -618,7 +698,7 @@ footer { background: var(--coral); border-top: var(--border); }
   </div>
   <div class="footer-bottom">
     <span class="footer-copy">&copy; 2026 KOKOS · Nashville, TN</span>
-    <span class="footer-copy">3 City Ave Ste 700 · 615.881.4082</span>
+    <span class="footer-copy"><a href="https://emeraldsea.xyz" target="_blank" rel="noopener" style="color:inherit;text-decoration:none;opacity:0.7;">emeraldsea.xyz</a> · 3 City Ave Ste 700 · 615.881.4082</span>
   </div>
 </footer>
 
