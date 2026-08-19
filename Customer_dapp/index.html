@@ -726,6 +726,16 @@ function updateSkoopBalanceDisplay(){
 function showWalletOptions(){document.getElementById('wallet-choice-sheet').classList.add('open');document.getElementById('wallet-choice-back').classList.add('open');}
 function hideWalletOptions(){document.getElementById('wallet-choice-sheet').classList.remove('open');document.getElementById('wallet-choice-back').classList.remove('open');}
 
+// Where the wallet's in-app browser should reopen us. Carries ?d= through the hand-off:
+// a first-timer who scanned the shop QR in Safari would otherwise lose the payment
+// intent, since localStorage does not cross from Safari into the wallet's browser.
+function dappReopenUrl(){
+  let base='https://kokosicecream.com/Customer_dapp/index.html';
+  if(location.protocol==='https:')base=location.origin+location.pathname;
+  let d=null;try{d=new URLSearchParams(location.search).get('d');}catch(e){}
+  return d?base+'?d='+encodeURIComponent(d):base;
+}
+
 async function connectCoinbaseWallet(){
   hideWalletOptions();
   const btn=document.getElementById('gate-connect-btn');
@@ -733,14 +743,16 @@ async function connectCoinbaseWallet(){
   const isMobile=/iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
   if(isMobile){
     if(btn){btn.textContent='Opening\u2026';btn.disabled=true;}
-    showToast('Opening Coinbase Wallet\u2026','');
-    const _dappUrl='https://kokosicecream.com/Customer_dapp/index.html';
-    window.location.href='cbwallet://dapp?url='+encodeURIComponent(_dappUrl);
-    setTimeout(()=>{window.location.href='https://go.cb-w.com/dapp?cb_url='+encodeURIComponent(_dappUrl);},1500);
+    showToast('Opening Base App\u2026','');
+    // Universal link ONLY. The cbwallet:// custom scheme still launches the app (now
+    // Base App) but no longer routes into the dapp browser \u2014 you land on the wallet
+    // home screen. And this must fire synchronously inside the click handler: a
+    // setTimeout breaks the user-gesture association and iOS drops the navigation.
+    window.location.href='https://go.cb-w.com/dapp?cb_url='+encodeURIComponent(dappReopenUrl());
     setTimeout(()=>{if(btn){btn.textContent='Get Started';btn.disabled=false;}},5000);
     return;
   }
-  showToast('Scan QR with Coinbase Wallet','');
+  showToast('Scan QR with Base App / Coinbase Wallet','');
   await connectWalletConnect();
 }
 
@@ -752,7 +764,8 @@ async function connectMetaMask(){
   if(isMobile){
     if(btn){btn.textContent='Opening\u2026';btn.disabled=true;}
     showToast('Opening MetaMask\u2026','');
-    setTimeout(()=>{window.location.href='https://metamask.app.link/dapp/kokosicecream.com/Customer_dapp/index.html';},400);
+    // Immediate, not setTimeout \u2014 same gesture rule as the Base App link above.
+    window.location.href='https://metamask.app.link/dapp/'+dappReopenUrl().replace(/^https?:\/\//,'');
     setTimeout(()=>{if(btn){btn.textContent='Get Started';btn.disabled=false;}},4000);
     return;
   }
