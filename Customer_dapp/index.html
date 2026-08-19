@@ -427,7 +427,7 @@ html,body{height:100%;overflow:hidden;background:var(--coral);font-family:'Instr
     <div class="stripe stripe-thin"><div class="s2"></div><div class="s4"></div><div class="s1"></div><div class="s5"></div><div class="s3"></div><div class="s6"></div></div>
     <div class="section-hdr"><div class="section-hdr-title">Recent activity</div></div>
     <div class="tx-list">
-      <div class="tx-row"><div class="tx-dot td-mint">&#127873;</div><div class="tx-info"><div class="tx-name">Reward earned</div><div class="tx-date">Connect wallet to load history</div></div><div class="tx-val"><div class="amt amt-plus">&#8212;</div></div></div>
+      <div class="tx-row"><div class="tx-dot td-mint" style="font-size:11px;">&#9203;</div><div class="tx-info"><div class="tx-name">Loading activity&hellip;</div><div class="tx-date">Checking recent rewards</div></div></div>
     </div>
   </div>
 
@@ -919,7 +919,7 @@ async function refreshBals(){
   await updateFromBal();
   // Activity is a log scan — far heavier than a balance read. Refresh it on its own
   // slower cadence so the 30s balance poll doesn't reset the list to "Loading…".
-  if(Date.now()-_lastActivityLoad>120000)loadActivityFeed({silent:true});
+  if(Date.now()-_lastActivityLoad>60000)loadActivityFeed({silent:true});
 }
 
 async function updateFromBal(){
@@ -985,12 +985,45 @@ async function loadActivityFeed(opts){
   }
 }
 
+// ── SETTLED RECEIPTS ──────────────────────────────────────────────────────────
+// A paid intent must never come back on the confirm card. It can return by three
+// separate routes: the ?d= auto-launch replaying on any page reload (the URL keeps
+// ?d= forever), the localStorage restore, and re-scanning the same QR. Tracking the
+// receiptId is the only thing that closes all three.
+function settledReceipts(){
+  try{return JSON.parse(localStorage.getItem('settledReceipts')||'[]');}catch(e){return [];}
+}
+function isReceiptSettled(id){return !!id&&settledReceipts().indexOf(id)!==-1;}
+function markReceiptSettled(id){
+  if(!id)return;
+  try{
+    const l=settledReceipts();
+    if(l.indexOf(id)===-1)l.push(id);
+    localStorage.setItem('settledReceipts',JSON.stringify(l.slice(-50)));
+  }catch(e){}
+}
+// Drop ?d= once it's been paid so a reload can't replay it.
+function stripPaymentParam(){
+  try{
+    if(new URLSearchParams(location.search).get('d'))history.replaceState(null,'',location.pathname);
+  }catch(e){}
+}
+
+// Clear every trace of the current intent — in memory, in storage, and in the URL.
+function clearPendingIntent(settled){
+  if(settled&&pendingIntent)markReceiptSettled(pendingIntent.receiptId);
+  pendingIntent=null;
+  try{localStorage.removeItem('pendingIntent');}catch(e){}
+  if(settled)stripPaymentParam();
+}
+
 async function maybeRestorePendingIntent(){
   if(pendingIntent)return;
   let saved;try{saved=localStorage.getItem('pendingIntent');}catch(e){return;}
   if(!saved)return;
   try{
     const intent=JSON.parse(saved);
+    if(isReceiptSettled(intent.receiptId)){try{localStorage.removeItem('pendingIntent');}catch(e){}stripPaymentParam();return;}
     if(Date.now()/1000>Number(intent.deadline)){try{localStorage.removeItem('pendingIntent');}catch(e){}return;}
     pendingIntent=intent;
     await showConfirm(intent);
@@ -1023,6 +1056,9 @@ fetchEthPrice().catch(()=>{});
 (function(){
   const d=new URLSearchParams(window.location.search).get('d');
   if(!d)return;
+  // ?d= survives in the address bar after payment, so every reload would replay a
+  // paid intent. Drop it silently rather than reopening a settled confirm card.
+  try{if(isReceiptSettled(decodeK2(d).receiptId)){stripPaymentParam();return;}}catch(e){}
   // Navigate to Pay screen and parse the K2 payload
   setTimeout(()=>{goTo('pay');setTimeout(()=>parseQR('K2:'+d),200);},100);
 })();
@@ -1322,6 +1358,7 @@ function parseQR(raw){
     }else{
       showToast("Not a KOKOS payment QR","err");setScanState('retry');return;
     }
+    if(isReceiptSettled(intent.receiptId)){showToast("Already paid \u2014 ask the shop for a new QR","err");stripPaymentParam();setScanState('retry');return;}
     if(Date.now()/1000>Number(intent.deadline)){showToast("QR expired \u2014 ask shop to regenerate","err");setScanState('retry');return;}
     try{
       if(!verifyIntent(intent)){showToast("Invalid QR \u2014 not a KOKOS payment","err");setScanState('retry');return;}
@@ -1433,7 +1470,7 @@ function showRewardPreview(d,isUsdc){
 }
 
 function cancelPay(){
-  pendingIntent=null;try{localStorage.removeItem('pendingIntent');}catch(e){}hideApprovalProgress();
+  clearPendingIntent(false);stripPaymentParam();hideApprovalProgress();
   stopExpiryCountdown();
   const btn=document.getElementById("btn-confirm");if(btn){btn.disabled=false;btn.textContent="Confirm & Pay";btn.onclick=confirmPay;}
   const notice=document.getElementById('first-time-notice');if(notice)notice.style.display='none';
@@ -1551,7 +1588,7 @@ async function _confirmPay(){
       `<div class="sc-row"><span class="sk">Tx</span><span class="sv"><a href="${explorer}" target="_blank" rel="noopener" style="font-family:monospace;font-size:0.62rem;color:var(--coral-deep);">${tx.hash.slice(0,16)}\u2026 &#8599;</a></span></div>`+
       `<div class="sc-row"><span class="sk">Block</span><span class="sv">confirming\u2026</span></div>`;
     setTimeout(()=>{navigator.vibrate&&navigator.vibrate([100,50,100]);playChaChingSound();document.getElementById("success-screen").classList.add("show");},400);
-    pendingIntent=null;try{localStorage.removeItem('pendingIntent');}catch(e){}hideApprovalProgress();
+    markReceiptSettled(d.receiptId);clearPendingIntent(true);hideApprovalProgress();
     waitForReceipt(tx.hash).then(rcpt=>{
       const blockEl=document.querySelector('#success-detail .sc-row:last-child .sv');
       if(rcpt&&rcpt.blockNumber){if(blockEl)blockEl.textContent=rcpt.blockNumber;}
@@ -1569,13 +1606,25 @@ async function _confirmPay(){
 function closeSuccess(){
   document.getElementById("success-screen").classList.remove("show");
   stopExpiryCountdown();
+  // Defensive: the payment already cleared this, but nothing may leave the confirm
+  // card armed once the success screen has been dismissed.
+  clearPendingIntent(true);
   const rp=document.getElementById('reward-preview');if(rp)rp.style.display='none';
   const exp=document.getElementById('cc-exp');if(exp){exp.style.color='';exp.style.fontWeight='';}
+  const cbtn=document.getElementById('btn-confirm');if(cbtn){cbtn.disabled=false;cbtn.textContent='Confirm & Pay';cbtn.onclick=confirmPay;}
   document.getElementById("pay-confirm").classList.remove("active");
   document.getElementById("pay-scan").classList.add("active");
   goTo("home");
-  // Rewards land a few seconds after capture — pull the feed in so they see it.
-  setTimeout(()=>loadActivityFeed({silent:true}),6000);
+  chaseRewardActivity();
+}
+
+// The POS broadcasts the reward ~600ms after capture and it still needs a block to
+// land, so a single check right after the payment usually finds nothing. Poll with
+// backoff instead — these are explicit calls, so they bypass the 120s feed throttle.
+function chaseRewardActivity(){
+  [4000,10000,20000,40000,70000].forEach(ms=>setTimeout(()=>{
+    if(userAddr)loadActivityFeed({silent:true});
+  },ms));
 }
 
 function buildMyQR(){
@@ -1596,7 +1645,11 @@ function goTo(name){
   if(name==="buy")updateFromBal();
   // Coming back to Pay with a live intent (e.g. after topping up on Buy) re-runs the
   // balance/allowance check so the button reflects the wallet as it is now.
-  if(name==="pay"){if(pendingIntent)showConfirm(pendingIntent);else setTimeout(maybeAutoStartScan,250);}
+  if(name==="pay"){
+    if(pendingIntent&&isReceiptSettled(pendingIntent.receiptId))clearPendingIntent(true);
+    if(pendingIntent)showConfirm(pendingIntent);
+    else{document.getElementById("pay-confirm").classList.remove("active");document.getElementById("pay-scan").classList.add("active");setTimeout(maybeAutoStartScan,250);}
+  }
   if(name==="qr")setTimeout(buildMyQR,80);
 }
 
