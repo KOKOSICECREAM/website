@@ -124,6 +124,11 @@ html,body{height:100%;overflow:hidden;background:var(--coral);font-family:'Instr
 .bal-eyebrow{font-size:10px;font-weight:600;letter-spacing:2.5px;text-transform:uppercase;color:var(--ink-mid);margin-bottom:6px;}
 .bal-number{font-family:'Cormorant Garamond',serif;font-size:62px;font-weight:600;color:var(--ink);letter-spacing:-2px;line-height:1;margin-bottom:6px;}
 .bal-sub{font-size:13px;color:var(--ink-mid);font-weight:500;}
+.rewards-chip{display:none;align-items:center;gap:9px;background:var(--mint);border:1.5px solid rgba(42,31,26,0.14);border-radius:var(--r-pill);padding:7px 15px 7px 11px;margin-top:11px;}
+.rewards-chip.show{display:inline-flex;}
+.rc-ic{font-size:17px;line-height:1;flex-shrink:0;}
+.rc-amt{font-size:13px;font-weight:700;color:var(--green);line-height:1.2;}
+.rc-sub{font-size:10.5px;font-weight:500;color:var(--ink-mid);line-height:1.2;margin-top:1px;}
 .action-grid{display:grid;grid-template-columns:1fr 1fr;flex-shrink:0;}
 .action-cell{padding:20px 18px;display:flex;flex-direction:column;gap:10px;cursor:pointer;transition:filter 0.15s;border:none;font-family:'Instrument Sans',sans-serif;text-align:left;}
 .action-cell:hover{filter:brightness(0.96);}.action-cell:active{filter:brightness(0.92);}
@@ -416,6 +421,15 @@ html,body{height:100%;overflow:hidden;background:var(--coral);font-family:'Instr
       <div class="bal-number" id="home-bal">&#8212;</div>
       <div class="bal-sub" id="home-usd">SKOOP</div>
       <div style="font-size:12px;color:var(--ink-mid);font-weight:500;margin-bottom:4px;min-height:16px;" id="home-usd-val"></div>
+      <!-- Rewards live above the fold — the activity list at the bottom of the screen
+           was below the fold on a phone, so earned rewards were effectively invisible. -->
+      <div class="rewards-chip" id="home-rewards-chip">
+        <span class="rc-ic">&#127846;</span>
+        <div>
+          <div class="rc-amt" id="rc-amt">&#8212;</div>
+          <div class="rc-sub" id="rc-sub">earned in the last 24 hours</div>
+        </div>
+      </div>
       <div style="margin-top:6px;font-size:9px;font-weight:500;color:var(--ink-light);letter-spacing:0.3px;word-break:break-all;opacity:0.7;cursor:pointer;" onclick="navigator.clipboard.writeText('0xfd3ce21c5acd8bbbe576d0e2336c210c3cebeb92').then(()=>showToast('CA copied','ok'))">CA: 0xfd3ce21c5Acd8BbbE576d0E2336C210C3cEBeb92</div>
     </div>
     <div class="action-grid">
@@ -941,9 +955,24 @@ async function updateFromBal(){
 }
 
 // ── ACTIVITY FEED ─────────────────────────────────────────────────────────────
-// Single 9000-block call (~5 hrs on Base's 2s blocks) — fast, within the RPC's log cap,
-// so it covers rewards from the current visit rather than a full history.
+// Base's RPC hard-caps eth_getLogs at a 10,000 block range (error -32614), so a full
+// day (~43,200 blocks at 2s) has to be fetched as parallel chunks. Each call is ~200ms
+// and they run concurrently, so the whole day costs about as much as one request.
+const ACTIVITY_WINDOW_BLOCKS=43200; // ~24h
+const LOG_CHUNK=9000;               // safely under the 10k cap
 let _lastActivityLoad=0;
+
+// Mirrors the activity row into the balance block, where it's always on screen.
+function renderRewardsChip(count,amt){
+  const chip=document.getElementById('home-rewards-chip');
+  const a=document.getElementById('rc-amt'),s=document.getElementById('rc-sub');
+  if(!chip||!a||!s)return;
+  if(!count){chip.classList.remove('show');return;}
+  a.textContent='+'+amt.toLocaleString('en-US',{maximumFractionDigits:2})+' SKOOP';
+  const usd=skoopPriceUSD>0?' · ≈$'+(amt*skoopPriceUSD).toFixed(2):'';
+  s.textContent=count+' reward'+(count!==1?'s':'')+' in the last 24 hours'+usd;
+  chip.classList.add('show');
+}
 async function loadActivityFeed(opts){
   if(!userAddr)return;
   const list=document.querySelector('.tx-list');
@@ -962,21 +991,29 @@ async function loadActivityFeed(opts){
       POOL_ETH_SKOOP.slice(2).toLowerCase(),
       POOL_USDC_SKOOP.slice(2).toLowerCase(),
     ];
-    const logs=await readProvider.send('eth_getLogs',[{
+    const ranges=[];
+    for(let s=currentBlock-ACTIVITY_WINDOW_BLOCKS;s<=currentBlock;s+=LOG_CHUNK){
+      ranges.push([Math.max(0,s),Math.min(s+LOG_CHUNK-1,currentBlock)]);
+    }
+    // One failing chunk degrades the total rather than blanking the whole feed.
+    const chunks=await Promise.all(ranges.map(([a,b])=>readProvider.send('eth_getLogs',[{
       address:CFG.SKOOP,
       topics:[topic0,null,pad(userAddr)],
-      fromBlock:'0x'+(currentBlock-9000).toString(16),
-      toBlock:'0x'+currentBlock.toString(16)
-    }]).catch(()=>[]);
+      fromBlock:'0x'+a.toString(16),
+      toBlock:'0x'+b.toString(16)
+    }]).catch(()=>[])));
+    const logs=[].concat.apply([],chunks);
     const rewards=logs.filter(l=>!EXCLUDED.includes((l.topics[1]||'').slice(-40).toLowerCase()));
     if(!rewards.length){
-      list.innerHTML='<div class="tx-row"><div class="tx-dot td-apricot">\ud83c\udf66</div><div class="tx-info"><div class="tx-name">No rewards in the last few hours</div><div class="tx-date">Pay with SKOOP or show your QR to earn</div></div></div>';
+      renderRewardsChip(0,0);
+      list.innerHTML='<div class="tx-row"><div class="tx-dot td-apricot">\ud83c\udf66</div><div class="tx-info"><div class="tx-name">No rewards in the last 24 hours</div><div class="tx-date">Pay with SKOOP or show your QR to earn</div></div></div>';
       return;
     }
     const fmt=n=>n.toLocaleString('en-US',{maximumFractionDigits:2});
     const amt=rewards.reduce((s,l)=>s+parseFloat(ethers.formatUnits(BigInt(l.data),CFG.SKOOP_DEC)),0);
     const usd=skoopPriceUSD>0?' \u00b7 \u2248$'+(amt*skoopPriceUSD).toFixed(2):'';
-    const todayRow=`<div class="tx-row" style="background:var(--mint);"><div class="tx-dot td-mint">\ud83c\udf66</div><div class="tx-info"><div class="tx-name" style="font-weight:700;">Rewards earned</div><div class="tx-date">${rewards.length} reward${rewards.length!==1?'s':''} \u00b7 last few hours${usd}</div></div><div class="tx-val"><div class="amt amt-plus" style="font-size:20px;">+${fmt(amt)}</div></div></div>`;
+    renderRewardsChip(rewards.length,amt);
+    const todayRow=`<div class="tx-row" style="background:var(--mint);"><div class="tx-dot td-mint">\ud83c\udf66</div><div class="tx-info"><div class="tx-name" style="font-weight:700;">Rewards earned</div><div class="tx-date">${rewards.length} reward${rewards.length!==1?'s':''} \u00b7 last 24 hours${usd}</div></div><div class="tx-val"><div class="amt amt-plus" style="font-size:20px;">+${fmt(amt)}</div></div></div>`;
     list.innerHTML=todayRow;
   }catch(e){
     // A background refresh that fails leaves the last good rows on screen.
