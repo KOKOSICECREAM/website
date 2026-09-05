@@ -280,6 +280,95 @@ nav {
 }
 .headline-band h2 em { font-style: italic; color: var(--green); text-transform: none; }  /* accent ✓ */
 
+/* MUSIC CITY MENU */
+.mcm-section { border-bottom: var(--border); background: var(--cream); }
+.mcm-header {
+  padding: 2.5rem 3rem 2rem;
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  border-bottom: var(--border);
+}
+.mcm-intro {
+  padding: 2rem 3rem 0;
+  max-width: 780px;
+}
+.mcm-intro p {
+  font-size: 0.95rem;
+  font-weight: 300;
+  line-height: 1.75;
+  color: var(--ink);
+  opacity: 0.8;
+}
+.mcm-grid {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 1.5rem 1rem;
+  padding: 2.5rem 3rem 3rem;
+}
+.mcm-person {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 0.75rem;
+}
+.mcm-portrait {
+  width: 100%;
+  max-width: 132px;
+  aspect-ratio: 1 / 1;
+  border-radius: 50%;
+  border: 3px solid var(--ink);
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+}
+.mcm-portrait img {
+  width: 100%; height: 100%;
+  object-fit: cover;
+  display: block;
+}
+.mcm-monogram {
+  font-family: 'DM Serif Display', serif;
+  font-size: 2.2rem;
+  color: var(--ink);
+  opacity: 0.3;
+  letter-spacing: 0.02em;
+}
+/* Placeholder scoop shown until a real photo is dropped in */
+.mcm-scoop {
+  width: 62%; height: 62%;
+  border-radius: 50%;
+  border: 2px solid rgba(0,0,0,0.12);
+}
+.mcm-person.is-mystery .mcm-portrait {
+  border-style: dashed;
+  border-color: rgba(26,16,8,0.35);
+  background: repeating-linear-gradient(
+    45deg,
+    rgba(26,16,8,0.03) 0 8px,
+    transparent 8px 16px
+  );
+}
+.mcm-person.is-mystery .mcm-monogram { font-size: 2.4rem; opacity: 0.32; }
+.mcm-flavor {
+  font-family: 'DM Serif Display', serif;
+  font-size: 1.02rem;
+  line-height: 1.2;
+  color: var(--ink);
+}
+.mcm-name {
+  font-size: 0.6rem;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--green);
+}
+.mcm-person.is-mystery .mcm-name { color: rgba(26,16,8,0.4); }
+.mcm-person.is-mystery .mcm-flavor { color: rgba(26,16,8,0.45); font-style: italic; }
+
 /* FLAVOR GRID */
 .flavor-grid-section { border-bottom: var(--border); }
 .flavor-grid-header {
@@ -794,6 +883,9 @@ footer { background: var(--coral); border-top: var(--border); }
   .about-grid { grid-template-columns: 1fr; }
   .about-col { border-right: none; border-bottom: var(--border); }
   .about-col:last-child { border-bottom: none; }
+  .mcm-grid { grid-template-columns: repeat(3, 1fr); padding: 2rem 1.5rem 2.5rem; }
+  .mcm-header { padding: 2.5rem 1.5rem 2rem; }
+  .mcm-intro { padding: 2rem 1.5rem 0; }
   .flavor-grid { grid-template-columns: 1fr 1fr; }
   .flavor-card:nth-child(3n) { border-right: var(--border); }
   .flavor-card:nth-child(2n) { border-right: none; }
@@ -825,6 +917,7 @@ footer { background: var(--coral); border-top: var(--border); }
   .footer-links-col a:last-child { border-bottom: none; }
 }
 @media (max-width: 600px) {
+  .mcm-grid { grid-template-columns: 1fr 1fr; gap: 2rem 1rem; }
   .flavor-grid { grid-template-columns: 1fr; }
   .flavor-card { border-right: none !important; }
   .flavor-card:nth-last-child(-n+3) { border-bottom: var(--border) !important; }
@@ -1033,6 +1126,142 @@ footer { background: var(--coral); border-top: var(--border); }
 <div class="headline-band" style="background:var(--sand);">
   <h2><!-- SITE:headline-line1 -->The creamiest scoop in Nashville.<!-- /SITE:headline-line1 --><br><em><!-- SITE:headline-line2 -->No dairy required.<!-- /SITE:headline-line2 --></em></h2>
 </div>
+
+<!-- MUSIC CITY MENU -->
+<section class="mcm-section" id="music-city">
+  <div class="mcm-header">
+    <div>
+      <div class="section-label-tag">Now Scooping</div>
+      <h2 class="section-heading">The Music City <em>Menu</em></h2>
+    </div>
+    <a href="#flavors" class="see-all-link">Read the Flavors &#8599;</a>
+  </div>
+  <div class="mcm-intro">
+    <p>Nashville is made by the people in it &mdash; the songwriters, the athletes, the comedians, the ones who put this city on the map and the ones who keep it interesting. So we&rsquo;re naming ice cream after them. Four are in the case right now. Two are still a secret.</p>
+  </div>
+  <div class="mcm-grid" id="mcm-grid"></div>
+</section>
+
+<!-- ============================================================
+  MUSIC CITY MENU CONFIG — EDIT THIS SECTION
+
+  Each entry needs:
+    name    — who we're honoring
+    flavor  — the flavor named for them
+    photo   — path to a SQUARE photo OF THE ICE CREAM.
+              The paths below are already set — just add the
+              image files to a folder named "music-city" and
+              they appear automatically. Until then, each
+              circle shows a colored scoop instead.
+    scoop   — placeholder scoop color (used until the photo lands)
+    ring    — circle background behind the scoop
+    mystery — true for a not-yet-revealed artist
+
+  PHOTO FILES TO ADD (square crops, ~600x600 or larger):
+    music-city/ice-cream-in-my-oj.jpg
+    music-city/iced-coffee-whip-cream.jpg
+    music-city/lavender-haze.jpg
+    music-city/the-16225.jpg
+    music-city/mystery-5.jpg   (when artist 5 is revealed)
+    music-city/mystery-6.jpg   (when artist 6 is revealed)
+
+  TO REVEAL A MYSTERY ARTIST: fill in name + flavor and change
+  mystery from true to false.
+============================================================ -->
+<script>
+const MUSIC_CITY = [
+  {
+    name:   "Hayley Williams",
+    flavor: "Ice Cream In My OJ",
+    photo:  "music-city/ice-cream-in-my-oj.jpg",
+    scoop:  "#ff6714",
+    ring:   "var(--sand)"
+  },
+  {
+    name:   "Nate Bargatze",
+    flavor: "Iced Coffee Whip Cream",
+    photo:  "music-city/iced-coffee-whip-cream.jpg",
+    scoop:  "#8c6c40",
+    ring:   "var(--apricot)"
+  },
+  {
+    name:   "Taylor Swift",
+    flavor: "Lavender HAZE",
+    photo:  "music-city/lavender-haze.jpg",
+    scoop:  "#a498e2",
+    ring:   "var(--lavender)"
+  },
+  {
+    name:   "Shawn Johnson",
+    flavor: "The 16.225",
+    photo:  "music-city/the-16225.jpg",
+    scoop:  "#7B3F00",
+    ring:   "var(--coral)"
+  },
+  {
+    name:    "",
+    flavor:  "",
+    photo:   "music-city/mystery-5.jpg",
+    scoop:   "",
+    ring:    "var(--cream)",
+    mystery: true
+  },
+  {
+    name:    "",
+    flavor:  "",
+    photo:   "music-city/mystery-6.jpg",
+    scoop:   "",
+    ring:    "var(--cream)",
+    mystery: true
+  }
+];
+
+// Renders the row — no need to touch anything below this line
+(function() {
+  var grid = document.getElementById('mcm-grid');
+  if (!grid) return;
+
+  MUSIC_CITY.forEach(function(p) {
+    var el = document.createElement('div');
+    el.className = 'mcm-person' + (p.mystery ? ' is-mystery' : '');
+
+    var portrait = document.createElement('div');
+    portrait.className = 'mcm-portrait';
+    portrait.style.background = p.ring || 'var(--cream)';
+
+    // Placeholder first, then swap in the photo only once it loads.
+    // A missing file simply leaves the placeholder in place.
+    if (p.mystery) {
+      portrait.innerHTML = '<span class="mcm-monogram">?</span>';
+    } else {
+      portrait.innerHTML = '<div class="mcm-scoop" style="background:' + p.scoop + '"></div>';
+    }
+
+    if (p.photo) {
+      var img = new Image();
+      img.onload = function() {
+        portrait.innerHTML = '';
+        img.alt = p.flavor || 'KOKOS ice cream';
+        portrait.appendChild(img);
+      };
+      img.src = p.photo;
+    }
+
+    var name = document.createElement('div');
+    name.className = 'mcm-name';
+    name.textContent = p.mystery ? 'Mystery Artist' : p.name;
+
+    var flavor = document.createElement('div');
+    flavor.className = 'mcm-flavor';
+    flavor.textContent = p.mystery ? 'Coming soon' : p.flavor;
+
+    el.appendChild(portrait);
+    el.appendChild(name);
+    el.appendChild(flavor);
+    grid.appendChild(el);
+  });
+})();
+</script>
 
 <!-- FLAVORS -->
 <section class="flavor-grid-section" id="flavors">
