@@ -262,55 +262,92 @@ nav {
   color: var(--ink); line-height: 1.9; opacity: 0.8;
 }
 
-/* WEFUNDER BAND */
-.wefunder-band {
-  background: var(--green);
+/* WAYS TO INVEST — TIERS */
+.tiers { border-bottom: var(--border); }
+.tiers-header {
+  padding: 3.5rem 4.5rem 2.5rem;
   border-bottom: var(--border);
-  display: grid;
-  grid-template-columns: 1fr auto;
-  align-items: center;
-  gap: 2rem;
-  padding: 3.5rem 4.5rem;
 }
-.wf-left {}
-.wf-eyebrow {
+.tiers-header-inner { max-width: 760px; }
+.tiers-title {
+  font-family: 'DM Serif Display', serif;
+  font-size: clamp(1.9rem, 3.4vw, 3rem);
+  font-weight: 400; line-height: 1.06;
+  margin: 0.6rem 0 1rem;
+}
+.tiers-title em { font-style: italic; color: var(--green); }
+.tiers-sub {
+  font-size: 0.95rem; font-weight: 300;
+  line-height: 1.72; opacity: 0.78;
+}
+.tiers-grid { display: grid; grid-template-columns: 1fr 1fr; }
+.tier {
+  padding: 3rem 3rem 3.2rem;
+  display: flex; flex-direction: column;
+}
+.tier-a { background: var(--green); border-right: var(--border); }
+.tier-b { background: var(--sand); }
+.tier-eyebrow {
   font-size: 0.58rem; font-weight: 600;
   letter-spacing: 0.2em; text-transform: uppercase;
-  color: rgba(255,255,255,0.4); margin-bottom: 0.9rem;
+  margin-bottom: 0.9rem;
 }
-.wf-heading {
+.tier-a .tier-eyebrow { color: rgba(255,255,255,0.45); }
+.tier-b .tier-eyebrow { color: rgba(26,16,8,0.5); }
+.tier-name {
   font-family: 'DM Serif Display', serif;
-  font-size: clamp(1.6rem, 2.8vw, 2.4rem);
-  font-weight: 400; line-height: 1.1; color: white;
-  margin-bottom: 1rem;
+  font-size: clamp(1.5rem, 2.4vw, 2rem);
+  font-weight: 400; line-height: 1.12;
+  margin-bottom: 0.9rem;
 }
-.wf-heading em { font-style: italic; color: var(--coral); }
-.wf-details {
-  display: flex; gap: 2rem; flex-wrap: wrap;
+.tier-a .tier-name { color: white; }
+.tier-a .tier-name em { font-style: italic; color: var(--coral); }
+.tier-b .tier-name { color: var(--ink); }
+.tier-b .tier-name em { font-style: italic; color: var(--green); }
+.tier-body {
+  font-size: 0.92rem; font-weight: 300; line-height: 1.72;
+  margin-bottom: 1.5rem;
 }
-.wf-detail {
-  display: flex; flex-direction: column; gap: 0.2rem;
+.tier-a .tier-body { color: rgba(255,255,255,0.72); }
+.tier-b .tier-body { color: rgba(26,16,8,0.78); }
+.tier-body em { font-style: italic; font-weight: 400; color: var(--green); }
+.tier-facts {
+  display: flex; flex-direction: column;
+  gap: 0.75rem; margin-bottom: 2rem;
+  padding-top: 1.4rem;
 }
-.wf-detail-val {
-  font-size: 1rem; font-weight: 600; color: white;
-}
-.wf-detail-lbl {
+.tier-a .tier-facts { border-top: 3px solid rgba(255,255,255,0.14); }
+.tier-b .tier-facts { border-top: 3px solid rgba(26,16,8,0.12); }
+.tier-fact { display: flex; justify-content: space-between; gap: 1rem; align-items: baseline; }
+.tier-fact-lbl {
   font-size: 0.6rem; font-weight: 500;
   letter-spacing: 0.12em; text-transform: uppercase;
-  color: rgba(255,255,255,0.4);
 }
-.wf-btn {
-  display: inline-flex; align-items: center; gap: 0.5rem;
-  background: var(--coral-mid); color: var(--ink);
-  padding: 1rem 2rem;
+.tier-a .tier-fact-lbl { color: rgba(255,255,255,0.42); }
+.tier-b .tier-fact-lbl { color: rgba(26,16,8,0.45); }
+.tier-fact-val { font-size: 0.9rem; font-weight: 600; text-align: right; }
+.tier-a .tier-fact-val { color: white; }
+.tier-b .tier-fact-val { color: var(--ink); }
+.tier-cta {
+  display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem;
+  padding: 1rem 2rem; margin-top: auto;
   font-size: 0.78rem; font-weight: 600;
   letter-spacing: 0.1em; text-transform: uppercase;
-  text-decoration: none; white-space: nowrap;
-  border: 3px solid var(--coral-mid);
-  transition: background 0.15s, border-color 0.15s;
-  flex-shrink: 0;
+  text-decoration: none; text-align: center;
+  border: 3px solid;
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
 }
-.wf-btn:hover { background: var(--coral); border-color: var(--coral); }
+.tier-a .tier-cta { background: transparent; color: white; border-color: rgba(255,255,255,0.38); }
+.tier-a .tier-cta:hover { background: white; color: var(--green); border-color: white; }
+.tier-b .tier-cta { background: var(--ink); color: var(--cream); border-color: var(--ink); }
+.tier-b .tier-cta:hover { background: var(--green); border-color: var(--green); }
+.tier-note {
+  font-size: 0.66rem; font-weight: 400; line-height: 1.65;
+  margin-top: 0.9rem; letter-spacing: 0.02em;
+}
+.tier-a .tier-note { color: rgba(255,255,255,0.38); }
+.tier-b .tier-note { color: rgba(26,16,8,0.48); }
+.tier-note a { color: inherit; text-decoration: underline; text-underline-offset: 2px; }
 
 /* INVESTOR DOCS */
 .investor-docs { border-bottom: var(--border); background: var(--ink); }
@@ -326,7 +363,21 @@ nav {
 .docs-title em { font-style: italic; color: var(--coral-mid); }
 .docs-sub {
   font-size: 0.82rem; font-weight: 300;
-  color: rgba(255,255,255,0.35); line-height: 1.6;
+  color: rgba(255,255,255,0.4); line-height: 1.7;
+  max-width: 660px;
+}
+.docs-sub a {
+  color: rgba(255,255,255,0.72);
+  text-decoration: none;
+  border-bottom: 1px solid rgba(255,255,255,0.28);
+  transition: color 0.15s, border-color 0.15s;
+}
+.docs-sub a:hover { color: white; border-bottom-color: white; }
+.docs-access {
+  margin-top: 1.1rem;
+  font-size: 0.62rem; font-weight: 600;
+  letter-spacing: 0.14em; text-transform: uppercase;
+  color: var(--coral-mid);
 }
 .docs-grid { display: grid; grid-template-columns: repeat(3, 1fr); }
 .doc-card {
@@ -473,8 +524,10 @@ footer { background: var(--coral); border-top: var(--border); }
   .narrative { grid-template-columns: 1fr; }
   .narrative-left { border-right: none; border-bottom: var(--border); padding: 3.5rem 2rem; }
   .narrative-right { padding: 3.5rem 2rem; }
-  .wefunder-band { grid-template-columns: 1fr; padding: 2.5rem 1.5rem; }
-  .wf-btn { width: 100%; justify-content: center; }
+  .tiers-header { padding: 2.5rem 1.5rem 1.5rem; }
+  .tiers-grid { grid-template-columns: 1fr; }
+  .tier { padding: 2.5rem 1.5rem 2.8rem; }
+  .tier-a { border-right: none; border-bottom: var(--border); }
   .form-section { grid-template-columns: 1fr; }
   .form-left { border-right: none; border-bottom: var(--border); padding: 3.5rem 2rem; }
   .form-right { padding: 3.5rem 2rem; }
@@ -506,7 +559,7 @@ footer { background: var(--coral); border-top: var(--border); }
     </a>
   </div>
   <a href="/" class="nav-back">Back to KOKOS</a>
-  <a href="https://wefunder.com/emerald.sea.holdings.inc" class="nav-cta-link" target="_blank" rel="noopener">Invest on Wefunder</a>
+  <a href="#ways-to-invest" class="nav-cta-link">Ways to Invest</a>
 </nav>
 
 <!-- HERO -->
@@ -514,8 +567,8 @@ footer { background: var(--coral); border-top: var(--border); }
   <div class="hero-left">
     <span class="hero-eyebrow">From the Founders of KOKOS</span>
     <h1>If you love<br>what we built,<br>wait until you<br>see <em>what's next.</em></h1>
-    <p>KOKOS started with one conviction: allergy-friendly dessert should never feel like a compromise. Nine years later, people don't choose us because they have to — they choose us because we taste better. Now we're building what comes next, and we're talking to the people who know us first.</p>
-    <a href="#reach-out" class="hero-cta">Start a Conversation</a>
+    <p>KOKOS started with one conviction: allergy-friendly dessert should never feel like a compromise. Nine years later, people don't choose us because they have to — they choose us because we taste better. <strong style="font-weight:500;">Emerald Sea Holdings, Inc.</strong> is the company we — Sam Brooker and Jerusa van Lith — formed to grow that vision, and we're raising capital now to make it happen.</p>
+    <a href="#ways-to-invest" class="hero-cta">See Both Options</a>
   </div>
   <div class="hero-right">
     <div class="hero-right-kicker">What People Say</div>
@@ -553,8 +606,8 @@ footer { background: var(--coral); border-top: var(--border); }
   </div>
   <div class="highlight" style="background:var(--lavender);">
     <span class="highlight-label">The Vision</span>
-    <strong>More than a scoop shop</strong>
-    <p>Wholesale, grocery, schools, packaged products, food service. The scoop shop proved the concept. Now we scale it.</p>
+    <strong>Founder-led and independent</strong>
+    <p>KOKOS answered the hard question — can plant-based ice cream win on taste alone. Emerald Sea Holdings is where we act on the answer.</p>
   </div>
 </section>
 
@@ -575,51 +628,85 @@ footer { background: var(--coral); border-top: var(--border); }
   <div class="narrative-left">
     <div class="section-kicker">What We Proved</div>
     <h2 class="narrative-heading">People choose<br>KOKOS for the <em>taste.</em></h2>
-    <p class="narrative-body">We started with a simple belief: allergy-friendly dessert should never feel like a compromise. Since then we've built loyal customer demand, operated scoop shops, developed proprietary plant-based recipes, and learned what it takes to run a food business that people genuinely love — without spending a dollar on advertising.</p>
-    <p class="narrative-body">The next phase isn't about abandoning what worked. It's about rebuilding around the strongest parts of KOKOS: the product, the brand, and the people who believe in it.</p>
+    <p class="narrative-body">Nine years in, we've earned loyal customer demand, run scoop shops, developed proprietary plant-based recipes, and learned what it takes to operate a food business people genuinely love — without spending a dollar on advertising.</p>
+    <p class="narrative-body">That's our proof: the recipes, the standards, the demand, the regulars who keep coming back. Everything ahead of us rests on it.</p>
   </div>
   <div class="narrative-right">
-    <div class="section-kicker">What's Coming</div>
-    <h2 class="narrative-heading">A stronger company.<br><em>Same obsession.</em></h2>
-    <p class="narrative-body">We're restructuring and launching what comes next. The details aren't public yet — but if you've watched us build KOKOS, you already know how we work. We care deeply, we ship, and we don't do anything halfway.</p>
-    <p class="narrative-body">We're starting this conversation with the people who know us. If that's you, we'd love to hear from you.</p>
+    <div class="section-kicker">Where We're Going</div>
+    <h2 class="narrative-heading">Bigger than<br><em>one shop.</em></h2>
+    <p class="narrative-body">KOKOS showed us what we're capable of at the scale of one storefront. Emerald Sea exists to put that same product in far more hands — more cities, more shelves, more people who never had a dessert they could actually eat.</p>
+    <p class="narrative-body">We're raising capital now to fund that step. What you'd be investing in is the whole picture — our shops, wholesale accounts, grocery and retail, events, and direct-to-customer — all under one company.</p>
   </div>
 </div>
 
-<!-- WEFUNDER -->
-<section class="wefunder-band">
-  <div class="wf-left">
-    <div class="wf-eyebrow">Now Open · Regulation CF · No Accreditation Required</div>
-    <h2 class="wf-heading">Invest on Wefunder.</h2>
-    <p style="font-size:0.7rem;color:rgba(255,255,255,0.35);margin-bottom:1.2rem;letter-spacing:0.04em;">Issued by <a href="https://emeraldsea.xyz" target="_blank" rel="noopener" style="color:rgba(255,255,255,0.5);text-decoration:none;">Emerald Sea Holdings, Inc.</a> · Delaware C-Corp</p>
-    <div class="wf-details">
-      <div class="wf-detail">
-        <span class="wf-detail-val">$50K</span>
-        <span class="wf-detail-lbl">Minimum raise</span>
-      </div>
-      <div class="wf-detail">
-        <span class="wf-detail-val">$124K</span>
-        <span class="wf-detail-lbl">Maximum raise</span>
-      </div>
-      <div class="wf-detail">
-        <span class="wf-detail-val">SAFE</span>
-        <span class="wf-detail-lbl">Instrument</span>
-      </div>
-      <div class="wf-detail">
-        <span class="wf-detail-val">$4M</span>
-        <span class="wf-detail-lbl">Valuation cap</span>
-      </div>
+<!-- WAYS TO INVEST -->
+<section class="tiers" id="ways-to-invest">
+  <div class="tiers-header">
+    <div class="tiers-header-inner">
+      <div class="section-kicker">Two Ways In</div>
+      <h2 class="tiers-title">Own a piece of<br><em>what we're building.</em></h2>
+      <p class="tiers-sub">We structured this round so two very different kinds of people could take part: those who write institutional checks, and those who queue up on a hot Saturday night. Both matter to how this gets made.</p>
     </div>
   </div>
-  <a class="wf-btn" href="https://wefunder.com/emerald.sea.holdings.inc" target="_blank" rel="noopener">Invest on Wefunder →</a>
+  <div class="tiers-grid">
+
+    <!-- TIER 1 -->
+    <div class="tier tier-a">
+      <div class="tier-eyebrow">Tier One</div>
+      <h3 class="tier-name">Institutional &amp;<br><em>Accredited Investors</em></h3>
+      <p class="tier-body">A direct investment in Emerald Sea Holdings, Inc. — larger allocations, full access to our materials, and the thinking behind every number. You'll talk with us before you commit. That's the point of this tier.</p>
+      <div class="tier-facts">
+        <div class="tier-fact">
+          <span class="tier-fact-lbl">Instrument</span>
+          <span class="tier-fact-val">Post-money SAFE</span>
+        </div>
+        <div class="tier-fact">
+          <span class="tier-fact-lbl">Valuation cap</span>
+          <span class="tier-fact-val">$4M</span>
+        </div>
+        <div class="tier-fact">
+          <span class="tier-fact-lbl">Typical check</span>
+          <span class="tier-fact-val">~$10K &middot; No minimum</span>
+        </div>
+      </div>
+      <a class="tier-cta" href="#reach-out">Start a Conversation &rarr;</a>
+      <p class="tier-note">Reach us any time at <a href="mailto:invest@kokosicecream.com">invest@kokosicecream.com</a>.</p>
+    </div>
+
+    <!-- TIER 2 -->
+    <div class="tier tier-b">
+      <div class="tier-eyebrow">Tier Two</div>
+      <h3 class="tier-name">Our<br><em>Community Owners</em></h3>
+      <p class="tier-body">We've always made <em>ice cream for everyone.</em> This works the same way — open to anyone who wants in. Our regulars made this shop what it is, and we'd rather they held a piece of the company than anyone else.</p>
+      <div class="tier-facts">
+        <div class="tier-fact">
+          <span class="tier-fact-lbl">Open to</span>
+          <span class="tier-fact-val">Everyone</span>
+        </div>
+        <div class="tier-fact">
+          <span class="tier-fact-lbl">Instrument</span>
+          <span class="tier-fact-val">Post-money SAFE</span>
+        </div>
+        <div class="tier-fact">
+          <span class="tier-fact-lbl">Valuation cap</span>
+          <span class="tier-fact-val">$4M</span>
+        </div>
+      </div>
+      <a class="tier-cta" href="https://wefunder.com/emerald.sea.holdings.inc" target="_blank" rel="noopener">Become a Community Owner &rarr;</a>
+      <p class="tier-note">Offered under Regulation CF. Investments are processed through our funding portal, <a href="https://wefunder.com/emerald.sea.holdings.inc" target="_blank" rel="noopener">Wefunder</a>. This community round is $50K&ndash;$124K of a $250K&ndash;$350K total raise.</p>
+    </div>
+
+  </div>
 </section>
 
 <!-- INVESTOR DOCS -->
 <section class="investor-docs">
   <div class="docs-header">
-    <div class="section-kicker">For Investors</div>
-    <h2 class="docs-title">Ready to go <em>deeper?</em></h2>
-    <p class="docs-sub">These documents are for people already in conversation with us. Password required.</p>
+    <div class="section-kicker">Institutional &amp; Accredited Investors</div>
+    <h2 class="docs-title">The plan, <em>in detail.</em></h2>
+    <p class="docs-sub">Our pitch deck, use of funds, and the phased growth plan for Emerald Sea Holdings, Inc.</p>
+    <p class="docs-sub" style="margin-top:0.8rem;">These pages are password-protected. To request access, contact us at <a href="mailto:invest@kokosicecream.com">invest@kokosicecream.com</a> or through the <a href="#reach-out">form below</a>. The SAFE note itself we review together — on a call or in person.</p>
+    <div class="docs-access">Password required &middot; SAFE reviewed by call or meeting</div>
   </div>
   <div class="docs-grid">
     <a href="/safe-explainer.html" class="doc-card">
@@ -656,8 +743,8 @@ footer { background: var(--coral); border-top: var(--border); }
 <section class="form-section" id="reach-out">
   <div class="form-left">
     <div class="section-kicker">Get in Touch</div>
-    <h2 class="form-heading">Join the first<br><em>conversations.</em></h2>
-    <p class="form-subtext">No pitch required. If you love KOKOS and want to know what we're working on next, reach out. We'll take it from there.</p>
+    <h2 class="form-heading">Let's<br><em>talk.</em></h2>
+    <p class="form-subtext">For institutional and accredited investors, and for anyone who'd rather ask questions before deciding. No pitch required.</p>
     <div class="contact-line">
       <div class="c-lbl">Email</div>
       <div class="c-val"><a href="mailto:invest@kokosicecream.com">invest@kokosicecream.com</a></div>
@@ -681,7 +768,7 @@ footer { background: var(--coral); border-top: var(--border); }
 
 <!-- DISCLAIMER -->
 <div class="disclaimer">
-  This page is for introductory discussion purposes only and does not constitute an offer to sell or a solicitation to buy securities. Any future investment opportunity will be offered only through definitive documents issued by the authorized entity.
+  KOKOS is a brand of Emerald Sea Holdings, Inc. This page is for informational purposes only and is not itself an offer to sell or a solicitation to buy securities. The Regulation CF offering is made only through the offering materials filed with the SEC and posted on the funding portal; any offering to accredited investors is made only through definitive documents issued by Emerald Sea Holdings, Inc. Investing in early-stage companies involves risk, including the risk of losing your entire investment.
 </div>
 
 <!-- FOOTER -->
