@@ -12,7 +12,7 @@ no code changes needed:
 | `iced-coffee-whip-cream.jpg`        | Iced Coffee Whip Cream  | Nate Bargatze   |
 | `lavender-haze.jpg`                 | Lavender HAZE           | Taylor Swift    |
 | `the-16225.jpg`                     | The 16.225              | Shawn Johnson   |
-| `mystery-5.jpg`                     | (artist 5, unrevealed)  | —               |
+| `fountain-of-youth.jpg`             | Fountain of Youth       | Dr. Motley & Dr. Axe |
 | `mystery-6.jpg`                     | (artist 6, unrevealed)  | —               |
 
 **Specs:** square crop, 600x600 or larger. They render inside a circle,
