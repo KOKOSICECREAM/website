@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Get the SKOOP app — KOKOS</title>
+<meta name="description" content="Add SKOOP by KOKOS to your phone's home screen. Pay with SKOOP, earn 10% back on every scoop.">
+<meta name="theme-color" content="#fdcec1">
+<meta name="apple-mobile-web-app-title" content="SKOOP">
+
+<!-- This page's own manifest — deliberately NOT the dapp's. It installs the real app
+     (start_url /Customer_dapp/index.html) rather than bookmarking this page, and its
+     "id" is set to the dapp's implicit id (its resolved start_url) so Chrome treats an
+     install from here as the SAME app: no duplicate icon, and /Customer_dapp/manifest.json
+     stays untouched. The install page must also live OUTSIDE /Customer_dapp/, because
+     that app's service worker caches any in-scope navigation as its app shell. -->
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="/Customer_dapp/KOKOS_SKOOP.png">
+<link rel="icon" href="/Customer_dapp/KOKOS_SKOOP.png">
+
+<meta property="og:title" content="Get the SKOOP app — KOKOS">
+<meta property="og:description" content="Add SKOOP to your home screen. Pay with SKOOP, earn 10% back on every scoop.">
+<meta property="og:image" content="https://kokosicecream.com/Customer_dapp/KOKOS_SKOOP.png">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=Instrument+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+<style>
+:root{
+  --coral:#fdcec1;--coral-mid:#fdaf9a;--coral-deep:#e8876a;
+  --mint:#cde6d7;--apricot:#fae2d8;--lavender:#e3d1e4;--sand:#ffddad;
+  --cream:#fffaf7;--cream2:#fff3ec;
+  --ink:#2a1f1a;--ink-mid:#6b4f47;--ink-light:#b09490;
+  --green:#11483d;--border:rgba(42,31,26,0.10);
+  --r:22px;--r-sm:12px;--r-pill:999px;
+}
+*{box-sizing:border-box}
+body{
+  margin:0;padding:0;
+  font-family:'Instrument Sans',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
+  color:var(--ink);background:var(--coral);
+  background-image:radial-gradient(circle at 12% 8%,rgba(255,255,255,.55),transparent 42%),
+                   radial-gradient(circle at 88% 92%,rgba(205,230,215,.55),transparent 45%);
+  background-attachment:fixed;
+  -webkit-font-smoothing:antialiased;
+}
+.wrap{max-width:520px;margin:0 auto;padding:28px 20px calc(40px + env(safe-area-inset-bottom))}
+
+/* ---------- hero ---------- */
+.badge{width:104px;height:104px;border-radius:50%;display:block;margin:0 auto 18px;
+       box-shadow:0 10px 30px rgba(42,31,26,.16)}
+h1{font-family:'DM Serif Display',Georgia,serif;font-weight:400;font-size:clamp(30px,8.5vw,40px);
+   line-height:1.08;text-align:center;margin:0 0 10px;letter-spacing:-.01em}
+h1 em{font-style:italic;color:var(--green)}
+.sub{text-align:center;font-size:15px;line-height:1.5;color:var(--ink-mid);margin:0 auto 26px;max-width:22em}
+
+/* ---------- cards ---------- */
+.card{background:var(--cream);border-radius:var(--r);padding:22px 20px;margin-bottom:14px;
+      box-shadow:0 2px 10px rgba(42,31,26,.07);border:1px solid var(--border)}
+.card h2{font-family:'DM Serif Display',Georgia,serif;font-weight:400;font-size:22px;margin:0 0 4px;line-height:1.2}
+.card .lede{font-size:14px;color:var(--ink-mid);line-height:1.5;margin:0 0 18px}
+.kicker{display:inline-flex;align-items:center;gap:6px;font-size:11px;font-weight:700;letter-spacing:.09em;
+        text-transform:uppercase;color:var(--green);background:var(--mint);
+        padding:5px 11px;border-radius:var(--r-pill);margin-bottom:12px}
+
+/* ---------- big button ---------- */
+.btn{display:flex;align-items:center;justify-content:center;gap:9px;width:100%;
+     font-family:inherit;font-size:17px;font-weight:600;border:none;cursor:pointer;
+     padding:17px 20px;border-radius:var(--r-pill);text-decoration:none;
+     background:var(--green);color:#fff;box-shadow:0 4px 14px rgba(17,72,61,.28);
+     transition:transform .12s ease,box-shadow .12s ease}
+.btn:active{transform:translateY(1px);box-shadow:0 2px 8px rgba(17,72,61,.28)}
+.btn.alt{background:var(--coral-deep);box-shadow:0 4px 14px rgba(232,135,106,.32)}
+.btn.ghost{background:transparent;color:var(--green);box-shadow:none;border:1.5px solid rgba(17,72,61,.28);font-size:15px;padding:13px 20px}
+.btn svg{flex:none}
+
+/* ---------- numbered steps ---------- */
+ol.steps{list-style:none;counter-reset:s;margin:0;padding:0}
+ol.steps li{counter-increment:s;display:flex;gap:14px;align-items:flex-start;padding:13px 0;
+            border-bottom:1px solid var(--border)}
+ol.steps li:last-child{border-bottom:none;padding-bottom:2px}
+ol.steps li::before{content:counter(s);flex:none;width:28px;height:28px;border-radius:50%;
+  background:var(--coral);color:var(--green);font-size:13px;font-weight:700;
+  display:flex;align-items:center;justify-content:center;margin-top:-1px}
+ol.steps .txt{font-size:15px;line-height:1.45;color:var(--ink-mid);padding-top:3px}
+ol.steps strong{color:var(--ink);font-weight:600}
+.glyph{display:inline-flex;align-items:center;justify-content:center;vertical-align:-5px;
+       width:24px;height:24px;border-radius:7px;background:var(--cream2);
+       border:1px solid var(--border);margin:0 2px}
+.glyph svg{width:13px;height:13px}
+
+/* ---------- iOS share-button pointer ---------- */
+.pointer{margin-top:20px;padding:16px;border-radius:var(--r-sm);background:var(--apricot);
+         text-align:center;font-size:13px;line-height:1.5;color:var(--ink-mid)}
+.pointer .arrow{display:block;margin:10px auto 0;width:26px;color:var(--coral-deep);
+                animation:nudge 1.5s ease-in-out infinite}
+@keyframes nudge{0%,100%{transform:translateY(0)}50%{transform:translateY(7px)}}
+@media (prefers-reduced-motion:reduce){.pointer .arrow{animation:none}}
+
+/* ---------- desktop QR ---------- */
+.qrbox{text-align:center}
+.qrbox img{width:220px;height:220px;display:block;margin:0 auto 14px;
+           border-radius:var(--r-sm);background:var(--cream)}
+
+/* ---------- perks ---------- */
+.perks{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:20px}
+.perk{background:rgba(255,255,255,.5);border-radius:var(--r-sm);padding:13px 9px;text-align:center}
+.perk b{display:block;font-family:'DM Serif Display',Georgia,serif;font-weight:400;
+        font-size:19px;color:var(--green);line-height:1.1;margin-bottom:3px}
+.perk span{font-size:11px;line-height:1.3;color:var(--ink-mid);display:block}
+
+.foot{text-align:center;font-size:12px;color:var(--ink-mid);margin-top:22px;line-height:1.6}
+.foot a{color:var(--green)}
+.hide{display:none !important}
+.toast{position:fixed;left:50%;bottom:26px;transform:translateX(-50%);background:var(--green);
+       color:#fff;font-size:14px;padding:12px 20px;border-radius:var(--r-pill);
+       box-shadow:0 6px 20px rgba(17,72,61,.3);z-index:50}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <img class="badge" src="/Customer_dapp/KOKOS_SKOOP.png" alt="KOKOS SKOOP">
+  <h1>Put SKOOP on your <em>home screen</em></h1>
+  <p class="sub">Scan to pay, earn 10&#37; back in SKOOP on every scoop. No app store, no download &mdash; it saves straight to your phone.</p>
+
+  <!-- ========== ANDROID: real one-tap install ========== -->
+  <section class="card hide" id="c-android">
+    <span class="kicker">One tap</span>
+    <h2>Install SKOOP</h2>
+    <p class="lede">Your phone can add it for you right now.</p>
+    <button class="btn" id="install-btn">
+      <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="m7 11 5 5 5-5"/><path d="M4 20h16"/></svg>
+      Install the SKOOP app
+    </button>
+  </section>
+
+  <!-- ========== iOS SAFARI: Add to Home Screen ========== -->
+  <section class="card hide" id="c-ios">
+    <span class="kicker">Two taps</span>
+    <h2>Add to Home Screen</h2>
+    <p class="lede">iPhone saves web apps from the Share menu.</p>
+    <ol class="steps">
+      <li><span class="txt">Tap the <strong>Share</strong> button
+        <span class="glyph"><svg viewBox="0 0 24 24" fill="none" stroke="#2a1f1a" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 15V3"/><path d="m8 7 4-4 4 4"/><path d="M4 13v7a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-7"/></svg></span>
+        at the bottom of Safari</span></li>
+      <li><span class="txt">Scroll down and tap <strong>Add to Home&nbsp;Screen</strong></span></li>
+      <li><span class="txt">Tap <strong>Add</strong> &mdash; the SKOOP scoop lands on your home screen</span></li>
+    </ol>
+    <div class="pointer">
+      It&rsquo;s the square-with-an-arrow icon down there &darr;
+      <svg class="arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v15"/><path d="m5 13 7 7 7-7"/></svg>
+    </div>
+  </section>
+
+  <!-- ========== iOS, but inside an in-app browser ========== -->
+  <section class="card hide" id="c-ios-inapp">
+    <span class="kicker">Quick detour</span>
+    <h2>Open this in Safari</h2>
+    <p class="lede">This in-app browser can&rsquo;t save to your home screen &mdash; Safari can.</p>
+    <ol class="steps">
+      <li><span class="txt">Tap the <strong>&hellip;</strong> or
+        <span class="glyph"><svg viewBox="0 0 24 24" fill="none" stroke="#2a1f1a" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 15V3"/><path d="m8 7 4-4 4 4"/><path d="M4 13v7a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-7"/></svg></span>
+        menu in the corner</span></li>
+      <li><span class="txt">Choose <strong>Open in Safari</strong></span></li>
+      <li><span class="txt">Follow the two steps that appear there</span></li>
+    </ol>
+    <button class="btn ghost" id="copy-btn" style="margin-top:18px">Copy the link instead</button>
+  </section>
+
+  <!-- ========== ANDROID w/o install event, or other mobile ========== -->
+  <section class="card hide" id="c-generic">
+    <span class="kicker">Two taps</span>
+    <h2>Save it to your phone</h2>
+    <p class="lede">Your browser can keep SKOOP as an app icon.</p>
+    <ol class="steps">
+      <li><span class="txt">Tap the <strong>&#8942;</strong> menu in the top-right corner</span></li>
+      <li><span class="txt">Tap <strong>Install app</strong> or <strong>Add to Home screen</strong></span></li>
+      <li><span class="txt">Confirm &mdash; done</span></li>
+    </ol>
+  </section>
+
+  <!-- ========== DESKTOP: show the QR ========== -->
+  <section class="card qrbox hide" id="c-desktop">
+    <span class="kicker">Grab your phone</span>
+    <h2>Scan this with your camera</h2>
+    <p class="lede">SKOOP lives on your phone &mdash; point your camera here to install it.</p>
+    <img src="KOKOS_dapp_QR.svg" alt="QR code linking to kokosicecream.com/get">
+    <a class="btn ghost" href="/Customer_dapp/">Open SKOOP in this browser</a>
+  </section>
+
+  <!-- ========== always available ========== -->
+  <a class="btn alt" id="open-btn" href="/Customer_dapp/">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+    Open SKOOP now
+  </a>
+
+  <div class="perks">
+    <div class="perk"><b>10&#37;</b><span>back in SKOOP</span></div>
+    <div class="perk"><b>Scan</b><span>to pay in store</span></div>
+    <div class="perk"><b>Base</b><span>low fees, fast</span></div>
+  </div>
+
+  <p class="foot">
+    KOKOS &mdash; plant-based ice cream, Nashville<br>
+    <a href="https://kokosicecream.com">kokosicecream.com</a>
+  </p>
+</div>
+
+<script>
+(function(){
+  var DAPP = '/Customer_dapp/' + (location.search || '');
+
+  // Already installed and launched from the home screen? Go straight to the app.
+  if (window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone) {
+    location.replace(DAPP); return;
+  }
+  document.getElementById('open-btn').href = DAPP;
+
+  var ua  = navigator.userAgent;
+  var iOS = /iPad|iPhone|iPod/.test(ua) ||
+            (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1); // iPadOS
+  var android = /Android/.test(ua);
+  // Safari on iOS is the only iOS browser that can Add to Home Screen. Chrome/Firefox/
+  // Edge on iOS are Safari underneath but ship their own UA token, and social in-app
+  // webviews (Instagram, Facebook, TikTok, Snapchat, LinkedIn) can't do it at all.
+  var iosSafari = iOS && /Safari/.test(ua) && !/CriOS|FxiOS|EdgiOS|OPiOS|Instagram|FBAN|FBAV|Line|Snapchat|TikTok|LinkedIn/i.test(ua);
+
+  // Exactly one card is ever visible. Always switch through show() so a late
+  // event can't leave two sets of contradictory instructions on screen.
+  var CARDS = ['c-android','c-ios','c-ios-inapp','c-generic','c-desktop'];
+  function show(id){
+    CARDS.forEach(function(c){
+      document.getElementById(c).classList.toggle('hide', c !== id);
+    });
+  }
+
+  if (android)                show('c-generic');   // upgraded to c-android if the prompt arrives
+  else if (iosSafari)         show('c-ios');
+  else if (iOS)               show('c-ios-inapp');
+  else if (/Mobile/.test(ua)) show('c-generic');
+  else                        show('c-desktop');
+
+  // --- Android / desktop Chromium: the real install prompt -------------------
+  // Never fires on iOS (Safari doesn't implement it), so the iOS cards stay put.
+  var deferred = null;
+  window.addEventListener('beforeinstallprompt', function(e){
+    e.preventDefault(); deferred = e;
+    if (!iOS) show('c-android');
+  });
+
+  document.getElementById('install-btn').addEventListener('click', async function(){
+    if (!deferred) return;
+    deferred.prompt();
+    var choice = await deferred.userChoice;
+    deferred = null;
+    if (choice.outcome !== 'accepted') show('c-generic');   // they dismissed it — show the manual route
+  });
+
+  window.addEventListener('appinstalled', function(){
+    CARDS.forEach(function(c){ document.getElementById(c).classList.add('hide'); });
+    toast('Installed! Look for the SKOOP scoop on your home screen.');
+  });
+
+  // --- iOS in-app browser escape hatch --------------------------------------
+  var copyBtn = document.getElementById('copy-btn');
+  if (copyBtn) copyBtn.addEventListener('click', function(){
+    var url = 'https://kokosicecream.com/get/';
+    function done(){ copyBtn.textContent = 'Copied — now paste it in Safari'; }
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(url).then(done, fallback);
+    } else fallback();
+    function fallback(){
+      var t = document.createElement('textarea');
+      t.value = url; t.setAttribute('readonly',''); t.style.position='fixed'; t.style.opacity='0';
+      document.body.appendChild(t); t.select(); t.setSelectionRange(0, 99999);
+      try { document.execCommand('copy'); done(); } catch(e){ copyBtn.textContent = url; }
+      document.body.removeChild(t);
+    }
+  });
+
+  // Registered so this page is service-worker-controlled — part of Chrome's
+  // criteria for offering the one-tap install above. Failure is harmless: the
+  // manual "Add to Home screen" steps still work.
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', function(){
+      navigator.serviceWorker.register('sw.js').catch(function(){});
+    });
+  }
+
+  function toast(msg){
+    var el = document.createElement('div');
+    el.className = 'toast'; el.textContent = msg;
+    document.body.appendChild(el);
+    setTimeout(function(){ el.remove(); }, 5000);
+  }
+})();
+</script>
+</body>
+</html>
