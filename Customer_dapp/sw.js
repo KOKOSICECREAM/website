@@ -1,4 +1,4 @@
-const CACHE='skoop-v5';
+const CACHE='skoop-v6';
 
 // Third-party libs are version-pinned URLs — safe to serve from cache forever.
 const CDN=[
@@ -8,7 +8,8 @@ const CDN=[
   'https://cdn.jsdelivr.net/npm/@walletconnect/modal@2.6.2/dist/index.umd.js',
   'https://cdn.jsdelivr.net/npm/@walletconnect/ethereum-provider@2.10.0/dist/index.umd.js',
 ];
-const ASSETS=['./','./index.html','./manifest.json','./KOKOS_SKOOP.png','./KOKOS.png',...CDN];
+const ASSETS=['./','./index.html','./manifest.json','./KOKOS_SKOOP.png','./KOKOS.png',
+              './KOKOS_SKOOP_192.png','./KOKOS_SKOOP_512.png','./KOKOS_SKOOP_maskable.png',...CDN];
 
 // Never intercept: live chain/price/wallet traffic and fonts.
 const BYPASS=['mainnet.base.org','walletconnect','coinbase.com','geckoterminal','walletlink',
