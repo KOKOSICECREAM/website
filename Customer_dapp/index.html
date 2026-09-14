@@ -41,10 +41,17 @@
   --r:18px;--r-sm:10px;--r-pill:999px;--nav-h:76px;--green:#11483d;
 }
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
-html,body{height:100%;overflow:hidden;background:var(--coral);font-family:'Instrument Sans',sans-serif;color:var(--ink);-webkit-font-smoothing:antialiased;}
-#app{display:flex;flex-direction:column;height:100%;max-width:430px;margin:0 auto;position:relative;background:var(--coral);overflow:hidden;}
-.screen{display:none;flex-direction:column;flex:1;overflow-y:auto;overflow-x:hidden;padding-bottom:calc(var(--nav-h) + env(safe-area-inset-bottom,0px) + 8px);-webkit-overflow-scrolling:touch;}
+html,body{height:100%;height:100dvh;overflow:hidden;background:var(--coral);font-family:'Instrument Sans',sans-serif;color:var(--ink);-webkit-font-smoothing:antialiased;}
+#app{display:flex;flex-direction:column;height:100%;height:100dvh;min-height:0;max-width:430px;margin:0 auto;position:relative;background:var(--coral);overflow:hidden;}
+.screen{display:none;flex-direction:column;flex:1;min-height:0;overflow-y:auto;overflow-x:hidden;padding-bottom:calc(var(--nav-h) + env(safe-area-inset-bottom,0px) + 8px);-webkit-overflow-scrolling:touch;}
 .screen.active{display:flex;}
+/* The shell is a column of flex items; without min-height:0 a scrollable child
+   sizes to its content instead of its parent, so overflow-y never engages and the
+   bottom of the list is simply clipped. 100dvh keeps the shell to the *visible*
+   viewport — under an in-app browser's chrome 100% resolves taller than the screen,
+   which pushed the activity list off the bottom with body overflow:hidden blocking
+   any page scroll. That combination is why 'Rewards earned' had no way to be reached. */
+#main-app,#connect-gate{min-height:0;}
 .stripe{display:flex;height:8px;flex-shrink:0;}
 .stripe .s1{flex:1;background:var(--coral)}.stripe .s2{flex:1;background:var(--mint)}
 .stripe .s3{flex:1;background:var(--apricot)}.stripe .s4{flex:1;background:var(--lavender)}
@@ -56,13 +63,13 @@ html,body{height:100%;overflow:hidden;background:var(--coral);font-family:'Instr
 .nav-item.active .nav-icon{background:var(--coral);}
 .nav-label{font-size:10px;font-weight:600;letter-spacing:0.4px;color:var(--ink-light);transition:color 0.15s;}
 .nav-item.active .nav-label{color:var(--coral-deep);}
-#connect-gate{flex:1;display:flex;flex-direction:column;background:var(--coral);overflow:hidden;}
+#connect-gate{flex:1;min-height:0;display:flex;flex-direction:column;background:var(--coral);overflow:hidden;}
 .gate-blocks{display:grid;grid-template-columns:1fr 1fr;grid-template-rows:1fr 1fr;height:240px;flex-shrink:0;position:relative;}
 .gate-block{position:relative;overflow:hidden;}
 .gb-coral{background:var(--coral);}.gb-mint{background:var(--mint);}.gb-lavender{background:var(--lavender);}.gb-sand{background:var(--sand);}
 .gate-logo-center{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);z-index:10;width:160px;height:160px;border-radius:50%;overflow:hidden;box-shadow:0 8px 48px rgba(42,31,26,0.18);}
 .gate-logo-center img{width:100%;height:100%;object-fit:cover;}
-.gate-bottom{background:var(--white);border-top-left-radius:28px;border-top-right-radius:28px;flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;position:relative;z-index:5;}
+.gate-bottom{background:var(--white);border-top-left-radius:28px;border-top-right-radius:28px;flex:1;min-height:0;overflow-y:auto;-webkit-overflow-scrolling:touch;position:relative;z-index:5;}
 .gate-bottom-inner{padding:28px 24px 48px;}
 .gate-tagline{font-family:'Cormorant Garamond',serif;font-size:22px;font-weight:600;font-style:italic;color:var(--ink);text-align:center;margin-bottom:20px;line-height:1.3;}
 .btn-primary{width:100%;padding:17px;background:var(--coral-deep);color:var(--white);border:none;border-radius:var(--r);font-family:'Instrument Sans',sans-serif;font-size:15px;font-weight:600;cursor:pointer;transition:all 0.2s;display:flex;align-items:center;justify-content:center;gap:8px;}
