@@ -751,7 +751,7 @@ async function runSettlementScan(){
   if(qBtn){qBtn.disabled=true;qBtn.innerHTML='<span class="spin"></span> Loading…';}
   document.getElementById('meta-settle').textContent='Loading…';
   try{
-    const pub=new ethers.JsonRpcProvider(CFG.RPC,undefined,{batchMaxCount:9});
+    const pub=new ethers.JsonRpcProvider(CFG.RPC,undefined,{batchMaxCount:1});
     const[latest]=await Promise.all([pub.getBlockNumber(),fetchPrice(pub)]);
     const cache=loadSettleCache();
     const fromBlock=cache?cache.lastBlock+1:CFG.START_BLOCK;
@@ -834,7 +834,7 @@ async function runScan(){
   btn.disabled=true;btn.innerHTML='<span class="spin"></span> Scanning…';
   setScanBar(true);setBar(0,'Connecting…');
   try{
-    const pub=new ethers.JsonRpcProvider(CFG.RPC,undefined,{batchMaxCount:9});
+    const pub=new ethers.JsonRpcProvider(CFG.RPC,undefined,{batchMaxCount:1});
     const latest=await pub.getBlockNumber();
 
     setBar(4,'Loading price…');

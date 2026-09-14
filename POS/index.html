@@ -566,7 +566,9 @@ let activeCat='all',toastTimer=null,calcSkoopAmount=0,successTimer=null;
 // ═══════════════════════════════════════════════════════════════
 async function fetchSkoopPrice(){
   try{
-    const pub=new ethers.JsonRpcProvider(CFG.RPC);
+    // batchMaxCount:1 — slot0() and token0() go out together below, and a batched
+    // pair fails as a unit under Base's rate limit. This price drives the reward math.
+    const pub=new ethers.JsonRpcProvider(CFG.RPC,CFG.CHAIN_ID,{batchMaxCount:1});
     const pool=new ethers.Contract(CFG.POOL_USDC_SKOOP,ABI_POOL,pub);
     const[s0,t0]=await Promise.all([pool.slot0(),pool.token0()]);
     const sq=Number(s0.sqrtPriceX96)/Number(2n**96n);
@@ -1242,7 +1244,7 @@ function updateDailyLimitDisplay(){
 // run a few at a time. A span that comes back rate-limited is retried, never
 // dropped: a missing burn/settle log would resurrect a finished receipt, and a
 // missing capture would hide one the shop still has to settle.
-const LOG_SPAN=1800,LOG_PAR=6;
+const LOG_SPAN=1800,LOG_PAR=10;
 async function getLogsSpan(pub,filter,from,to,attempt=0){
   try{
     return await pub.send('eth_getLogs',[{...filter,
@@ -1267,7 +1269,7 @@ async function getLogsChunked(pub,filter,fromBlock,toBlock){
 }
 async function loadReceipts(attempt=0){
   try{
-    const pub=new ethers.JsonRpcProvider(CFG.RPC,CFG.CHAIN_ID,{staticNetwork:true});
+    const pub=new ethers.JsonRpcProvider(CFG.RPC,CFG.CHAIN_ID,{staticNetwork:true,batchMaxCount:1});
     const escrow=new ethers.Contract(CFG.ESCROW,ABI_ESCROW,pub);
     const latest=await pub.getBlockNumber();
     const LOOKBACK=90000,fromBlock=Math.max(0,latest-LOOKBACK);

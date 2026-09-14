@@ -697,9 +697,14 @@ let _justDisconnected=false;
 
 // Single shared read-only provider — staticNetwork skips an eth_chainId round-trip per call.
 // Every on-chain read goes through here so we never rebuild a provider mid-flow.
+// batchMaxCount:1 disables JSON-RPC batching. ethers otherwise coalesces calls made in
+// the same tick into one HTTP request, and when Base rate-limits that request it answers
+// without a per-call response array — so ethers fails *every* call in the batch with
+// "missing response for request", and each retry re-batches and fails the same way.
+// Sent one at a time the identical calls all succeed.
 let _readRPC=null;
 function rpc(){
-  if(!_readRPC)_readRPC=new ethers.JsonRpcProvider(CFG.RPC,CFG.CHAIN_ID,{staticNetwork:true});
+  if(!_readRPC)_readRPC=new ethers.JsonRpcProvider(CFG.RPC,CFG.CHAIN_ID,{staticNetwork:true,batchMaxCount:1});
   return _readRPC;
 }
 
