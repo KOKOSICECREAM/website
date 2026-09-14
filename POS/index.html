@@ -1237,32 +1237,56 @@ function updateDailyLimitDisplay(){
 // ═══════════════════════════════════════════════════════════════
 //  SETTLEMENT / BURN
 // ═══════════════════════════════════════════════════════════════
+// Base's public RPC caps eth_getLogs at a 2,000-block range and rate-limits
+// bursts, so the lookback is split into spans small enough to be accepted and
+// run a few at a time. A span that comes back rate-limited is retried, never
+// dropped: a missing burn/settle log would resurrect a finished receipt, and a
+// missing capture would hide one the shop still has to settle.
+const LOG_SPAN=1800,LOG_PAR=6;
+async function getLogsSpan(pub,filter,from,to,attempt=0){
+  try{
+    return await pub.send('eth_getLogs',[{...filter,
+      fromBlock:'0x'+from.toString(16),toBlock:'0x'+to.toString(16)}]);
+  }catch(err){
+    if(attempt<4){
+      await new Promise(r=>setTimeout(r,500*(attempt+1)));
+      return getLogsSpan(pub,filter,from,to,attempt+1);
+    }
+    throw err;
+  }
+}
+async function getLogsChunked(pub,filter,fromBlock,toBlock){
+  const ranges=[];
+  for(let s=fromBlock;s<=toBlock;s+=LOG_SPAN)ranges.push([s,Math.min(s+LOG_SPAN-1,toBlock)]);
+  const out=[];
+  for(let i=0;i<ranges.length;i+=LOG_PAR){
+    const res=await Promise.all(ranges.slice(i,i+LOG_PAR).map(([a,b])=>getLogsSpan(pub,filter,a,b)));
+    for(const r of res)out.push(...r);
+  }
+  return out;
+}
 async function loadReceipts(attempt=0){
   try{
-    const pub=new ethers.JsonRpcProvider(CFG.RPC);
+    const pub=new ethers.JsonRpcProvider(CFG.RPC,CFG.CHAIN_ID,{staticNetwork:true});
     const escrow=new ethers.Contract(CFG.ESCROW,ABI_ESCROW,pub);
     const latest=await pub.getBlockNumber();
-    const CHUNK=9000,LOOKBACK=90000,fromBlock=Math.max(0,latest-LOOKBACK);
-    let captured=[],burned=[],settled=[],voided=[];
-    for(let start=fromBlock;start<latest;start+=CHUNK){
-      if(start>fromBlock)await new Promise(r=>setTimeout(r,250));
-      const end=Math.min(start+CHUNK-1,latest);
-      const[cc,bb,ss,vv]=await Promise.all([
-        escrow.queryFilter(escrow.filters.PaymentCaptured(),start,end),
-        escrow.queryFilter(escrow.filters.PaymentBurned(),start,end),
-        escrow.queryFilter(escrow.filters.PaymentSettled(),start,end),
-        escrow.queryFilter(escrow.filters.PaymentVoided(),start,end),
-      ]);
-      captured=captured.concat(cc);burned=burned.concat(bb);settled=settled.concat(ss);voided=voided.concat(vv);
+    const LOOKBACK=90000,fromBlock=Math.max(0,latest-LOOKBACK);
+    // All four receipt events share one request per span via a topic0 OR-filter,
+    // which keeps the smaller spans from quadrupling the number of round-trips.
+    const topic=n=>escrow.interface.getEvent(n).topicHash;
+    const raw=await getLogsChunked(pub,
+      {address:CFG.ESCROW,topics:[[topic('PaymentCaptured'),topic('PaymentBurned'),topic('PaymentSettled'),topic('PaymentVoided')]]},
+      fromBlock,latest);
+    const captured=[],doneIds=new Set();
+    for(const log of raw){
+      const p=escrow.interface.parseLog(log);
+      if(!p)continue;
+      if(p.name==='PaymentCaptured')captured.push(p.args);
+      else doneIds.add(p.args.receiptId.toLowerCase());
     }
-    const doneIds=new Set([
-      ...burned.map(e=>e.args.receiptId.toLowerCase()),
-      ...settled.map(e=>e.args.receiptId.toLowerCase()),
-      ...voided.map(e=>e.args.receiptId.toLowerCase()),
-    ]);
     capturedReceipts=captured
-      .filter(e=>!doneIds.has(e.args.receiptId.toLowerCase()))
-      .map(e=>({receiptId:e.args.receiptId,amount:e.args.tokenAmount,paymentToken:e.args.paymentToken,capturedAt:Number(e.args.timestamp)}));
+      .filter(a=>!doneIds.has(a.receiptId.toLowerCase()))
+      .map(a=>({receiptId:a.receiptId,amount:a.tokenAmount,paymentToken:a.paymentToken,capturedAt:Number(a.timestamp)}));
     renderReceipts();
     if(!capturedReceipts.length)showToast('No pending receipts','');
   }catch(e){
