@@ -1,4 +1,4 @@
-const CACHE='skoop-v6';
+const CACHE='skoop-v7';
 
 // Third-party libs are version-pinned URLs — safe to serve from cache forever.
 const CDN=[

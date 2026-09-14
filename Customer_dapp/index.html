@@ -43,7 +43,13 @@
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
 html,body{height:100%;height:100dvh;overflow:hidden;background:var(--coral);font-family:'Instrument Sans',sans-serif;color:var(--ink);-webkit-font-smoothing:antialiased;}
 #app{display:flex;flex-direction:column;height:100%;height:100dvh;min-height:0;max-width:430px;margin:0 auto;position:relative;background:var(--coral);overflow:hidden;}
-.screen{display:none;flex-direction:column;flex:1;min-height:0;overflow-y:auto;overflow-x:hidden;padding-bottom:calc(var(--nav-h) + env(safe-area-inset-bottom,0px) + 8px);-webkit-overflow-scrolling:touch;}
+.screen{display:none;flex-direction:column;flex:1;min-height:0;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;}
+/* Nav clearance is a real flex item, not padding. WebKit leaves the bottom padding of
+   an overflow:auto flex container out of the scrollable extent, so on iOS the last row
+   ended flush with the bottom of the scroll area and the nav sat on top of it — the
+   activity row showed about half. A spacer box is laid out like any other child, so the
+   scroll actually reaches past the nav. flex-shrink:0 keeps it from being squeezed away. */
+.screen::after{content:'';display:block;flex:0 0 auto;height:calc(var(--nav-h) + env(safe-area-inset-bottom,0px) + 8px);}
 .screen.active{display:flex;}
 /* The shell is a column of flex items; without min-height:0 a scrollable child
    sizes to its content instead of its parent, so overflow-y never engages and the
