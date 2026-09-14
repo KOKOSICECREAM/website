@@ -1160,7 +1160,7 @@ async function fetchQuote(amt){
     let amtOut=null,isEstimate=false;
     try{
       const ABI_Q2=["function quoteExactInputSingle((address tokenIn,address tokenOut,uint256 amountIn,uint24 fee,uint160 sqrtPriceLimitX96)) returns (uint256 amountOut,uint160 sqrtPriceX96After,uint32 initializedTicksCrossed,uint256 gasEstimate)"];
-      const q=new ethers.Contract('0x3d4e44eb1374240ce5f1b136cf395a8eae25d0ae',ABI_Q2,rpc());
+      const q=new ethers.Contract('0x3d4e44Eb1374240CE5F1B871ab261CD16335B76a',ABI_Q2,rpc());
       const [out]=await q.quoteExactInputSingle.staticCall({tokenIn,tokenOut:CFG.SKOOP,amountIn:amtIn,fee,sqrtPriceLimitX96:0n});
       amtOut=out;
     }catch(e1){
