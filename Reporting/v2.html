@@ -1,0 +1,1789 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>KOKOS — Accounting</title>
+<link rel="icon" type="image/png" href="KOKOS.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400;1,600&family=Instrument+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/ethers@6.13.4/dist/ethers.umd.min.js"></script>
+<style>
+:root{
+  --coral:#fdcec1;--coral-mid:#fdaf9a;--coral-deep:#f0876a;
+  --mint:#cde6d7;--mint-mid:#a8d4bb;--apricot:#fae2d8;
+  --lavender:#e3d1e4;--sand:#ffddad;
+  --green:#11483d;--green-dk:#0a2e27;--green-lt:rgba(17,72,61,0.08);
+  --cream:#fffaf7;--ink:#2a1f1a;--ink-mid:#6b4f47;--ink-lt:#a08880;
+  --white:#ffffff;--border:rgba(42,31,26,0.10);--border-mid:rgba(42,31,26,0.16);
+  --r:14px;--r-sm:8px;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+html,body{min-height:100%;font-family:'Instrument Sans',sans-serif;background:var(--cream);color:var(--ink);-webkit-font-smoothing:antialiased;}
+#topbar{background:var(--coral);display:flex;align-items:center;justify-content:space-between;padding:0 2rem;height:64px;border-bottom:1px solid var(--coral-mid);position:sticky;top:0;z-index:50;}
+.logo{display:flex;align-items:center;gap:0.75rem;}
+.logo img{height:36px;width:auto;object-fit:contain;}
+.logo-text{font-family:'Cormorant Garamond',serif;font-size:1.6rem;font-weight:600;letter-spacing:0.1em;color:var(--green);}
+.logo-sub{font-style:italic;font-weight:300;font-size:0.85rem;color:var(--ink-mid);margin-left:0.3rem;}
+#topbar-right{display:flex;align-items:center;gap:0.75rem;}
+.stripe-bar{height:4px;display:flex;}
+.stripe-bar div{flex:1;}
+#auth-gate{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:calc(100vh - 68px);gap:1.5rem;text-align:center;padding:2rem;}
+.gate-lock{width:88px;height:88px;border-radius:50%;background:var(--mint);display:flex;align-items:center;justify-content:center;font-size:2.2rem;box-shadow:0 4px 24px rgba(17,72,61,0.15);}
+.gate-title{font-family:'Cormorant Garamond',serif;font-size:2.2rem;font-weight:600;color:var(--ink);line-height:1;margin-bottom:0.4rem;}
+.gate-desc{font-size:0.85rem;color:var(--ink-mid);max-width:320px;line-height:1.65;}
+.gate-addr{font-size:0.68rem;font-family:monospace;color:var(--ink-lt);margin-top:0.3rem;word-break:break-all;max-width:340px;}
+#gate-btn{background:var(--green);color:var(--coral);border:none;padding:0.8rem 2.5rem;border-radius:999px;font-family:inherit;font-size:0.9rem;font-weight:600;cursor:pointer;transition:opacity 0.15s;display:flex;align-items:center;gap:0.5rem;}
+#gate-btn:hover{opacity:0.85;}#gate-btn:disabled{opacity:0.5;cursor:not-allowed;}
+#gate-error{display:none;background:#fff0ee;border:1px solid var(--coral-mid);border-radius:var(--r-sm);padding:0.65rem 1.25rem;font-size:0.8rem;color:#c0392b;font-weight:600;max-width:360px;text-align:center;}
+#main-content{display:none;}
+#page{max-width:1100px;margin:0 auto;padding:2rem 1.5rem 4rem;}
+#controls{display:flex;align-items:center;gap:0.75rem;flex-wrap:wrap;margin-bottom:1.75rem;}
+.period-pill{display:flex;background:var(--white);border:1px solid var(--border-mid);border-radius:999px;padding:3px;gap:2px;}
+.pp-btn{background:none;border:none;padding:0.3rem 1rem;border-radius:999px;font-family:inherit;font-size:0.78rem;font-weight:600;color:var(--ink-mid);cursor:pointer;transition:all 0.15s;}
+.pp-btn.active{background:var(--green);color:var(--coral);}
+.date-inputs{display:flex;align-items:center;gap:0.5rem;}
+.date-input{background:var(--white);border:1px solid var(--border-mid);border-radius:var(--r-sm);padding:0.4rem 0.75rem;font-family:inherit;font-size:0.78rem;color:var(--ink);}
+.date-input:focus{outline:none;border-color:var(--green);}
+.ctrl-btn{background:var(--green);color:var(--coral);border:none;padding:0.45rem 1.2rem;border-radius:999px;font-family:inherit;font-size:0.78rem;font-weight:600;cursor:pointer;transition:opacity 0.15s;display:inline-flex;align-items:center;gap:0.4rem;}
+.ctrl-btn:hover{opacity:0.85;}
+.ctrl-btn.sec{background:var(--white);color:var(--ink-mid);border:1px solid var(--border-mid);}
+.ctrl-btn.sec:hover{background:var(--apricot);opacity:1;}
+.ctrl-btn.warn{background:var(--sand);color:var(--ink);}
+.ctrl-btn.warn:hover{opacity:0.82;}
+.ctrl-btn:disabled{opacity:0.4;cursor:not-allowed;}
+#scan-bar-wrap{display:none;background:var(--white);border:1px solid var(--border);border-radius:var(--r);padding:0.875rem 1.25rem;margin-bottom:1.5rem;align-items:center;gap:1rem;}
+#scan-bar-wrap.on{display:flex;}
+.bar-track{flex:1;height:6px;background:var(--border);border-radius:3px;overflow:hidden;}
+.bar-fill{height:100%;background:var(--green);border-radius:3px;transition:width 0.3s ease;width:0%;}
+.bar-lbl{font-size:0.75rem;font-weight:600;color:var(--ink-mid);white-space:nowrap;}
+#kpi-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:0.75rem;margin-bottom:1.75rem;}
+.kpi{background:var(--white);border:1px solid var(--border);border-radius:var(--r);padding:1rem 1.1rem;position:relative;overflow:hidden;}
+.kpi::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;}
+.kpi:nth-child(1)::before{background:var(--coral-deep);}
+.kpi:nth-child(2)::before{background:var(--green);}
+.kpi:nth-child(3)::before{background:var(--sand);}
+.kpi:nth-child(4)::before{background:var(--mint-mid);}
+.kpi:nth-child(5)::before{background:var(--coral);}
+.kpi:nth-child(6)::before{background:var(--mint);}
+.kpi:nth-child(7)::before{background:var(--lavender);}
+.kpi:nth-child(8)::before{background:var(--coral-mid);}
+.kl{font-size:0.62rem;font-weight:600;text-transform:uppercase;letter-spacing:0.08em;color:var(--ink-lt);margin-bottom:0.35rem;}
+.kv{font-family:'Cormorant Garamond',serif;font-size:1.8rem;font-weight:600;color:var(--ink);line-height:1;letter-spacing:-0.5px;}
+.ks{font-size:0.68rem;color:var(--ink-lt);margin-top:0.3rem;}
+.sec-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:0.75rem;}
+.sec-title{font-family:'Cormorant Garamond',serif;font-size:1.2rem;font-style:italic;font-weight:400;color:var(--ink-mid);}
+.sec-meta{font-size:0.72rem;color:var(--ink-lt);}
+.tbl-card{background:var(--white);border:1px solid var(--border);border-radius:var(--r);overflow:hidden;margin-bottom:2rem;}
+.tbl-scroll{max-height:400px;overflow-y:auto;}
+.tbl-scroll::-webkit-scrollbar{width:4px;}
+.tbl-scroll::-webkit-scrollbar-thumb{background:var(--coral-mid);border-radius:2px;}
+table{width:100%;border-collapse:collapse;font-size:0.78rem;}
+thead{background:var(--apricot);position:sticky;top:0;z-index:1;}
+th{padding:0.6rem 0.875rem;text-align:left;font-size:0.65rem;font-weight:700;text-transform:uppercase;letter-spacing:0.07em;color:var(--ink-mid);white-space:nowrap;}
+th.r,td.r{text-align:right;}
+td{padding:0.55rem 0.875rem;border-top:1px solid var(--border);vertical-align:middle;}
+tr:hover td{background:rgba(42,31,26,0.015);}
+.g{color:var(--green);font-weight:600;}
+.mn{font-family:monospace;font-size:0.7rem;color:var(--ink-lt);}
+.lnk{color:var(--green);text-decoration:none;font-family:monospace;font-size:0.7rem;}
+.lnk:hover{text-decoration:underline;}
+tfoot td{background:var(--green-lt);font-weight:700;color:var(--green);border-top:2px solid var(--mint-mid);}
+.empty{padding:2.5rem;text-align:center;color:var(--ink-lt);font-size:0.82rem;}
+.badge{display:inline-block;padding:1px 7px;border-radius:999px;font-size:0.58rem;font-weight:700;text-transform:uppercase;letter-spacing:0.05em;vertical-align:middle;}
+.badge-sk{background:var(--coral);color:var(--ink);}
+.badge-usdc{background:var(--mint);color:var(--green-dk);}
+.badge-void{background:var(--sand);color:#7a5c00;}
+.badge-rdy{background:var(--green-lt);color:var(--green);border:1px solid var(--mint-mid);}
+/* Settlement */
+.settle-split{display:grid;grid-template-columns:1fr 1fr;gap:0.875rem;margin-bottom:0.5rem;}
+.settle-col-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:0.5rem;}
+.settle-col-title{font-size:0.7rem;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:var(--ink-mid);}
+.settle-col-count{font-size:0.68rem;color:var(--ink-lt);}
+.settle-actions{display:flex;gap:0.5rem;margin-top:0.75rem;flex-wrap:wrap;}
+/* Treasury */
+.tsy-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:0.6rem;margin-bottom:0.875rem;}
+.tsy-stat{background:var(--cream);border:1px solid var(--border);border-radius:var(--r-sm);padding:0.7rem 0.875rem;}
+.tsy-lbl{font-size:0.6rem;font-weight:700;text-transform:uppercase;letter-spacing:0.07em;color:var(--ink-lt);margin-bottom:0.25rem;}
+.tsy-val{font-size:1.25rem;font-family:'Cormorant Garamond',serif;font-weight:600;color:var(--ink);line-height:1;}
+.tsy-sub{font-size:0.65rem;color:var(--ink-lt);margin-top:0.2rem;}
+.tsy-actions{display:flex;gap:0.5rem;flex-wrap:wrap;padding-top:0.75rem;border-top:1px solid var(--border);margin-top:0.25rem;}
+/* Modal */
+#settle-modal{display:none;position:fixed;inset:0;background:rgba(42,31,26,0.55);z-index:100;align-items:center;justify-content:center;padding:1rem;}
+#settle-modal.open{display:flex;}
+.modal-box{background:var(--white);border-radius:var(--r);padding:1.75rem;width:min(500px,100%);max-height:90vh;overflow-y:auto;box-shadow:0 16px 48px rgba(0,0,0,0.18);}
+.modal-title{font-family:'Cormorant Garamond',serif;font-size:1.4rem;font-weight:600;margin-bottom:0.25rem;}
+.modal-sub{font-size:0.78rem;color:var(--ink-mid);margin-bottom:0.875rem;line-height:1.55;}
+.modal-info{background:var(--mint);border-radius:var(--r-sm);padding:0.65rem 0.875rem;font-size:0.78rem;font-weight:600;color:var(--green-dk);margin-bottom:0.75rem;}
+.modal-warn{background:#fffbea;border:1px solid var(--sand);border-radius:var(--r-sm);padding:0.6rem 0.875rem;font-size:0.75rem;color:#7a5c00;margin-bottom:1rem;line-height:1.55;}
+.modal-grid{display:grid;grid-template-columns:1fr 1fr;gap:0.6rem;margin-bottom:1.25rem;}
+.modal-field label{display:block;font-size:0.62rem;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:var(--ink-lt);margin-bottom:0.2rem;}
+.modal-field input{width:100%;background:var(--cream);border:1px solid var(--border-mid);border-radius:var(--r-sm);padding:0.4rem 0.65rem;font-family:monospace;font-size:0.78rem;color:var(--ink);}
+.modal-field input:focus{outline:none;border-color:var(--green);}
+.modal-btns{display:flex;gap:0.5rem;justify-content:flex-end;flex-wrap:wrap;}
+/* Toast */
+#toast{position:fixed;bottom:1.5rem;left:50%;transform:translateX(-50%) translateY(80px);background:var(--ink);color:var(--coral);padding:0.65rem 1.25rem;border-radius:999px;font-size:0.8rem;font-weight:600;z-index:200;transition:transform 0.25s ease;white-space:nowrap;}
+#toast.show{transform:translateX(-50%) translateY(0);}
+#toast.success{background:var(--green);}
+#toast.error{background:#c0392b;color:#fff;}
+.spin{width:13px;height:13px;border:2px solid rgba(255,255,255,0.3);border-top-color:currentColor;border-radius:50%;animation:sp 0.7s linear infinite;display:inline-block;vertical-align:middle;}
+@keyframes sp{to{transform:rotate(360deg);}}
+@media(max-width:768px){.settle-split{grid-template-columns:1fr;}}
+@media(max-width:640px){
+  #topbar{padding:0 1rem;}#page{padding:1rem 0.75rem 3rem;}
+  #controls{flex-direction:column;align-items:flex-start;}
+  #kpi-grid{grid-template-columns:1fr 1fr;}.kv{font-size:1.4rem;}
+  th,td{padding:0.45rem 0.55rem;font-size:0.7rem;}
+}
+@media print{
+  #topbar,#controls,#scan-bar-wrap,#action-banner,#toast,#auth-gate,#settle-modal,.tsy-actions,.settle-actions,.ctrl-btn{display:none!important;}
+  #page{padding:0;max-width:100%;}.tbl-scroll{max-height:none;overflow:visible;}
+}
+/* Quick-action banner */
+#action-banner{display:none;background:var(--green);color:var(--coral);border-radius:var(--r);padding:0.875rem 1.25rem;margin-bottom:1.5rem;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:0.75rem;}
+#action-banner.on{display:flex;}
+.ab-msg{font-size:0.82rem;font-weight:600;}
+.ab-btns{display:flex;gap:0.5rem;}
+.ab-btn{background:rgba(255,255,255,0.18);border:1px solid rgba(255,255,255,0.35);color:var(--coral);border-radius:999px;padding:0.3rem 0.875rem;font-size:0.76rem;font-weight:700;cursor:pointer;font-family:inherit;transition:background 0.15s;}
+.ab-btn:hover{background:rgba(255,255,255,0.28);}
+.kpi:nth-child(9)::before{background:var(--coral-deep);}
+.kpi:nth-child(10)::before{background:var(--lavender);}
+</style>
+</head>
+<body>
+
+<header id="topbar">
+  <div class="logo">
+    <img src="https://raw.githubusercontent.com/KOKOSICECREAM/website/main/Customer_dapp/KOKOS.png" alt="KOKOS">
+    <div><span class="logo-text">KOKOS</span><span class="logo-sub">accounting</span></div>
+  </div>
+  <div id="topbar-right">
+    <div id="wallet-pill" style="display:none;font-size:0.72rem;font-weight:600;color:var(--green);background:rgba(255,255,255,0.55);padding:0.3rem 0.875rem;border-radius:999px;"></div>
+    <button id="disc-btn" onclick="disconnect()" style="display:none;width:28px;height:28px;border-radius:50%;border:1px solid rgba(42,31,26,0.18);background:rgba(255,255,255,0.5);color:var(--ink-mid);font-size:11px;font-weight:700;cursor:pointer;align-items:center;justify-content:center;" title="Disconnect">✕</button>
+  </div>
+</header>
+<div class="stripe-bar">
+  <div style="background:var(--coral)"></div><div style="background:var(--mint)"></div>
+  <div style="background:var(--apricot)"></div><div style="background:var(--lavender)"></div>
+  <div style="background:var(--sand)"></div><div style="background:var(--coral-mid)"></div>
+</div>
+
+<div id="auth-gate">
+  <div class="gate-lock">🔒</div>
+  <div>
+    <div class="gate-title">Owner Access Only</div>
+    <div class="gate-desc">Connect the KOKOS owner wallet to view accounting reports.</div>
+    <div class="gate-addr">0x001b3fB36FE7E3a741A15Ed8bE68610442E3a50b</div>
+  </div>
+  <button id="gate-btn" onclick="connectOwner()">
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 12h.01"/><path d="M2 10h20"/></svg>
+    Connect Wallet
+  </button>
+  <div id="gate-error"></div>
+</div>
+
+<div id="main-content">
+<div id="page">
+
+  <div id="controls">
+    <div class="period-pill">
+      <button class="pp-btn active" onclick="setPeriod('today',this)">Today</button>
+      <button class="pp-btn" onclick="setPeriod('week',this)">Week</button>
+      <button class="pp-btn" onclick="setPeriod('month',this)">Month</button>
+      <button class="pp-btn" onclick="setPeriod('year',this)">Year</button>
+      <button class="pp-btn" onclick="setPeriod('all',this)">All Time</button>
+      <button class="pp-btn" onclick="setPeriod('custom',this)">Custom</button>
+    </div>
+    <div class="date-inputs" id="custom-dates" style="display:none;">
+      <input class="date-input" type="date" id="date-from">
+      <span style="font-size:0.78rem;color:var(--ink-lt);">to</span>
+      <input class="date-input" type="date" id="date-to">
+    </div>
+    <button class="ctrl-btn" id="quick-scan-btn" onclick="runSettlementScan()">⚡ Quick Scan</button>
+    <button class="ctrl-btn sec" id="scan-btn" onclick="runScan()">⟳ Full Scan</button>
+    <button class="ctrl-btn sec" onclick="fullRescan()" title="Clear cache and scan all blocks from scratch">↺ Full Rescan</button>
+    <button class="ctrl-btn sec" id="csv-btn" onclick="exportCSV()" disabled>↓ CSV</button>
+    <button class="ctrl-btn sec" id="pdf-btn" onclick="exportPDF()" disabled>↓ PDF</button>
+  </div>
+
+  <div id="scan-bar-wrap">
+    <div class="bar-track"><div class="bar-fill" id="bar-fill"></div></div>
+    <div class="bar-lbl" id="bar-lbl">Scanning…</div>
+  </div>
+
+  <div id="action-banner">
+    <div class="ab-msg" id="ab-msg">Ready to settle</div>
+    <div class="ab-btns">
+      <button class="ab-btn" id="ab-burn-btn" onclick="doBurnSKOOP()">🔥 Burn SKOOP</button>
+      <button class="ab-btn" id="ab-settle-btn" onclick="doSettleUSDC()">→ Settle USDC</button>
+    </div>
+  </div>
+
+  <div id="kpi-grid">
+    <div class="kpi"><div class="kl">Net Sales</div><div class="kv" id="k-gross">—</div><div class="ks" id="k-gross-sub">Excl. voided</div></div>
+    <div class="kpi"><div class="kl">Tax Collected</div><div class="kv" id="k-tax">—</div><div class="ks" id="k-tax-sub">9.25% Nashville</div></div>
+    <div class="kpi"><div class="kl">Net Revenue</div><div class="kv" id="k-total">—</div><div class="ks">Net + tax</div></div>
+    <div class="kpi"><div class="kl">Transactions</div><div class="kv" id="k-count">—</div><div class="ks" id="k-count-sub">SKOOP + USDC</div></div>
+    <div class="kpi"><div class="kl">SKOOP Captured</div><div class="kv" id="k-skoop">—</div><div class="ks" id="k-skoop-sub">In escrow</div></div>
+    <div class="kpi"><div class="kl">USDC Captured</div><div class="kv" id="k-usdc">—</div><div class="ks" id="k-usdc-sub">In escrow</div></div>
+    <div class="kpi"><div class="kl">Avg Ticket</div><div class="kv" id="k-avg">—</div><div class="ks">Per transaction</div></div>
+    <div class="kpi"><div class="kl">SKOOP Burned</div><div class="kv" id="k-burned">—</div><div class="ks">All time via burns</div></div>
+    <div class="kpi"><div class="kl">Voided</div><div class="kv" id="k-voided">—</div><div class="ks" id="k-voided-sub">Refunded</div></div>
+    <div class="kpi"><div class="kl">Unique Customers</div><div class="kv" id="k-wallets">—</div><div class="ks" id="k-wallets-sub">Distinct wallets</div></div>
+  </div>
+
+  <!-- Reconciliation strip. The escrow's own balance is the source of truth for how
+       much is still owed; if the listed receipts don't add up to it, something is
+       missing and settling from this page would be incomplete. -->
+  <div id="recon-strip" style="display:none;margin:0 0 0.6rem;padding:0.6rem 0.8rem;border-radius:8px;font-size:0.76rem;line-height:1.5;border:1px solid transparent;">
+    <div id="recon-headline" style="font-weight:700;"></div>
+    <div id="recon-detail" style="opacity:0.85;margin-top:2px;font-family:ui-monospace,monospace;font-size:0.72rem;"></div>
+    <button id="recon-btn" onclick="loadOpenReceipts()" style="margin-top:6px;font-size:0.7rem;padding:4px 10px;border-radius:6px;border:1px solid rgba(0,0,0,0.18);background:#fff;cursor:pointer;">Re-check open receipts</button>
+  </div>
+
+  <!-- ── SETTLEMENT ─────────────────────────────────────────── -->
+  <div class="sec-hdr" style="margin-bottom:0.5rem;">
+    <div class="sec-title">Settlement</div>
+    <div class="sec-meta" id="meta-settle">Run scan to load</div>
+  </div>
+
+  <div class="settle-split">
+    <div>
+      <div class="settle-col-hdr">
+        <div class="settle-col-title">Within 24-hour window <span class="badge badge-void">Voidable</span></div>
+        <div class="settle-col-count" id="settle-void-count"></div>
+      </div>
+      <div class="tbl-card" style="margin-bottom:0;">
+        <div class="tbl-scroll" style="max-height:260px;">
+          <table><thead><tr>
+            <th>Date</th><th>Token</th><th class="r">Total</th><th class="r">Window left</th><th></th>
+          </tr></thead>
+          <tbody id="tb-voidable"><tr><td colspan="5" class="empty">Run scan to load</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <div>
+      <div class="settle-col-hdr">
+        <div class="settle-col-title">Past window <span class="badge badge-rdy">Ready</span></div>
+        <div class="settle-col-count" id="settle-ready-count"></div>
+      </div>
+      <div class="tbl-card" style="margin-bottom:0;">
+        <div class="tbl-scroll" style="max-height:260px;">
+          <table><thead><tr>
+            <th>Date</th><th>Token</th><th class="r">Amount</th><th>Payer</th>
+          </tr></thead>
+          <tbody id="tb-ready"><tr><td colspan="4" class="empty">Run scan to load</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+      <div class="settle-actions">
+        <button class="ctrl-btn" id="burn-skoop-btn" onclick="doBurnSKOOP()" disabled>🔥 Burn SKOOP</button>
+        <button class="ctrl-btn" id="settle-usdc-btn" onclick="doSettleUSDC()" disabled>→ Settle USDC</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── TREASURY ───────────────────────────────────────────── -->
+  <div class="sec-hdr" style="margin-top:1.75rem;margin-bottom:0.5rem;">
+    <div class="sec-title">Treasury</div>
+    <div class="sec-meta" id="meta-treasury">—</div>
+  </div>
+  <div class="tbl-card" style="padding:1.25rem;margin-bottom:2rem;">
+    <div class="tsy-grid">
+      <div class="tsy-stat"><div class="tsy-lbl">USDC Balance</div><div class="tsy-val" id="tsy-usdc">—</div><div class="tsy-sub">Ready to deploy</div></div>
+      <div class="tsy-stat"><div class="tsy-lbl">SKOOP Balance</div><div class="tsy-val" id="tsy-skoop">—</div><div class="tsy-sub">From LP fees</div></div>
+      <div class="tsy-stat"><div class="tsy-lbl">Total Deployed</div><div class="tsy-val" id="tsy-deployed">—</div><div class="tsy-sub">Lifetime USDC</div></div>
+      <div class="tsy-stat"><div class="tsy-lbl">SKOOP Burned</div><div class="tsy-val" id="tsy-burned">—</div><div class="tsy-sub">Via buybacks</div></div>
+      <div class="tsy-stat"><div class="tsy-lbl">LP Position</div><div class="tsy-val" id="tsy-lp">—</div><div class="tsy-sub">Uniswap V3 NFT</div></div>
+      <div class="tsy-stat"><div class="tsy-lbl">Uncollected USDC</div><div class="tsy-val" id="tsy-fees-usdc">—</div><div class="tsy-sub">LP fees accrued</div></div>
+      <div class="tsy-stat"><div class="tsy-lbl">Uncollected SKOOP</div><div class="tsy-val" id="tsy-fees-skoop">—</div><div class="tsy-sub">LP fees accrued</div></div>
+    </div>
+    <div class="tsy-actions">
+      <button class="ctrl-btn sec" onclick="loadTreasury()">↺ Refresh</button>
+      <button class="ctrl-btn" onclick="doCollectFees()">Collect LP Fees</button>
+      <button class="ctrl-btn warn" onclick="openSettleModal()">Deploy to LP / Burn</button>
+    </div>
+  </div>
+
+  <!-- ── TOKENOMICS ───────────────────────────────────────── -->
+  <div class="sec-hdr" style="margin-bottom:0.5rem;">
+    <div class="sec-title">Tokenomics</div>
+    <div class="sec-meta" id="meta-tok">Scan to load price data</div>
+  </div>
+  <div class="tbl-card" style="padding:1.25rem;margin-bottom:2rem;">
+    <div class="tsy-grid">
+      <div class="tsy-stat"><div class="tsy-lbl">SKOOP Price</div><div class="tsy-val" id="tok-price">—</div><div class="tsy-sub">Uniswap V3 spot</div></div>
+      <div class="tsy-stat"><div class="tsy-lbl">Market Cap</div><div class="tsy-val" id="tok-mcap">—</div><div class="tsy-sub" id="tok-mcap-sub">Price × supply</div></div>
+      <div class="tsy-stat"><div class="tsy-lbl">Circulating Supply</div><div class="tsy-val" id="tok-circ">—</div><div class="tsy-sub">Post-burn supply</div></div>
+      <div class="tsy-stat"><div class="tsy-lbl">Total Burned</div><div class="tsy-val" id="tok-total-burned">—</div><div class="tsy-sub">Escrow + treasury</div></div>
+      <div class="tsy-stat"><div class="tsy-lbl">Monthly Burn Rate</div><div class="tsy-val" id="tok-monthly-burn">—</div><div class="tsy-sub">Last 30 days</div></div>
+      <div class="tsy-stat"><div class="tsy-lbl">Rewards Cost</div><div class="tsy-val" id="tok-rew-cost">—</div><div class="tsy-sub">% of period revenue</div></div>
+    </div>
+  </div>
+
+  <!-- ── CUSTOMER ANALYTICS ─────────────────────────────────── -->
+  <div class="sec-hdr" style="margin-bottom:0.5rem;">
+    <div class="sec-title">Customers</div>
+    <div class="sec-meta" id="meta-cust">Run scan to load</div>
+  </div>
+  <div class="tbl-card" style="padding:1.25rem;margin-bottom:2rem;">
+    <div class="tsy-grid">
+      <div class="tsy-stat"><div class="tsy-lbl">Unique Wallets</div><div class="tsy-val" id="c-uniq">—</div><div class="tsy-sub" id="c-uniq-sub">Period</div></div>
+      <div class="tsy-stat"><div class="tsy-lbl">Repeat Customers</div><div class="tsy-val" id="c-repeat">—</div><div class="tsy-sub" id="c-repeat-sub">2+ visits</div></div>
+      <div class="tsy-stat"><div class="tsy-lbl">Avg Visits</div><div class="tsy-val" id="c-avgv">—</div><div class="tsy-sub">Per wallet (period)</div></div>
+      <div class="tsy-stat"><div class="tsy-lbl">Top Wallet</div><div class="tsy-val" id="c-top">—</div><div class="tsy-sub" id="c-top-sub">Most visits</div></div>
+    </div>
+    <div style="margin-top:0.875rem;">
+      <div class="settle-col-hdr">
+        <div class="settle-col-title">Top Spenders <span style="font-size:0.65rem;font-weight:400;color:var(--ink-lt);">(lifetime onchain)</span></div>
+        <button class="ctrl-btn sec" id="top-spenders-btn" onclick="loadTopSpenders()" style="font-size:0.7rem;padding:0.2rem 0.75rem;" disabled>Load Onchain Data</button>
+      </div>
+      <div class="tbl-card" style="margin-bottom:0;margin-top:0.4rem;">
+        <div class="tbl-scroll" style="max-height:220px;">
+          <table><thead><tr>
+            <th>#</th><th>Wallet</th><th class="r">Visits</th><th class="r">Lifetime Spend (SKOOP)</th><th class="r">Last Visit</th>
+          </tr></thead>
+          <tbody id="tb-top-spenders"><tr><td colspan="5" class="empty">Click "Load Onchain Data" after scanning</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── PERIOD TABLE ───────────────────────────────────────── -->
+  <div class="sec-hdr">
+    <div class="sec-title" id="period-title">Sales by Period</div>
+  </div>
+  <div class="tbl-card">
+    <table><thead><tr>
+      <th>Period</th><th class="r">Txs</th><th class="r">Gross</th><th class="r">Tax</th><th class="r">Total</th><th class="r">SKOOP</th><th class="r">USDC</th><th class="r">Avg</th>
+    </tr></thead>
+    <tbody id="tb-period"><tr><td colspan="8" class="empty">Run a scan to load data</td></tr></tbody>
+    <tfoot id="tf-period" style="display:none;"></tfoot>
+    </table>
+  </div>
+
+  <!-- ── TRANSACTION LOG ────────────────────────────────────── -->
+  <div class="sec-hdr">
+    <div class="sec-title">Transaction Log</div>
+    <div class="sec-meta" id="meta-tx"></div>
+  </div>
+  <div class="tbl-card"><div class="tbl-scroll">
+    <table><thead><tr>
+      <th>Date / Time (CT)</th><th>Token</th><th>Receipt</th><th class="r">Gross</th><th class="r">Tax</th><th class="r">Total</th><th class="r">Amount</th><th class="r">Items</th><th>Payer</th>
+    </tr></thead>
+    <tbody id="tb-tx"><tr><td colspan="9" class="empty">Run a scan to load transactions</td></tr></tbody>
+    </table>
+  </div></div>
+
+  <!-- ── SKOOP BURN LOG ─────────────────────────────────────── -->
+  <div class="sec-hdr">
+    <div class="sec-title">SKOOP Burn Log</div>
+    <div class="sec-meta" id="meta-burn"></div>
+  </div>
+  <div class="tbl-card">
+    <table><thead><tr>
+      <th>Date / Time (CT)</th><th class="r">Receipts</th><th class="r">SKOOP Burned</th><th>Tx Hash</th>
+    </tr></thead>
+    <tbody id="tb-burn"><tr><td colspan="4" class="empty">Run a scan to load burn data</td></tr></tbody>
+    <tfoot id="tf-burn" style="display:none;"></tfoot>
+    </table>
+  </div>
+
+  <!-- ── USDC SETTLEMENT LOG ────────────────────────────────── -->
+  <div class="sec-hdr">
+    <div class="sec-title">USDC Settlement Log</div>
+    <div class="sec-meta" id="meta-usdc-settle"></div>
+  </div>
+  <div class="tbl-card">
+    <table><thead><tr>
+      <th>Date / Time (CT)</th><th class="r">Receipts</th><th class="r">USDC Sent</th><th>Treasury</th><th>Tx Hash</th>
+    </tr></thead>
+    <tbody id="tb-usdc-settle"><tr><td colspan="5" class="empty">Run a scan to load USDC settlement data</td></tr></tbody>
+    <tfoot id="tf-usdc-settle" style="display:none;"></tfoot>
+    </table>
+  </div>
+
+  <!-- ── DIRECT USDC PAYMENTS ─────────────────────────────── -->
+  <div class="sec-hdr">
+    <div class="sec-title">Direct USDC Payments</div>
+    <div class="sec-meta" id="meta-direct-usdc"></div>
+  </div>
+  <div class="tbl-card">
+    <div style="font-size:0.72rem;color:var(--ink-lt);padding:6px 12px 2px;">Paid via plain wallet direct to Treasury — no escrow receipt. Returns are manual.</div>
+    <table><thead><tr>
+      <th>Date / Time (CT)</th><th>Wallet</th><th class="r">USDC</th><th>Tx Hash</th>
+    </tr></thead>
+    <tbody id="tb-direct-usdc"><tr><td colspan="4" class="empty">Run a scan to load direct USDC data</td></tr></tbody>
+    <tfoot id="tf-direct-usdc" style="display:none;"></tfoot>
+    </table>
+  </div>
+
+  <!-- ── TREASURY DEPLOY LOG ────────────────────────────────── -->
+  <div class="sec-hdr">
+    <div class="sec-title">Treasury Deploy Log</div>
+    <div class="sec-meta" id="meta-tsy-settle"></div>
+  </div>
+  <div class="tbl-card">
+    <table><thead><tr>
+      <th>Date / Time (CT)</th><th class="r">USDC In</th><th class="r">Buyback (60%)</th><th class="r">LP (40%)</th><th class="r">SKOOP Burned</th><th>Tx Hash</th>
+    </tr></thead>
+    <tbody id="tb-tsy-settle"><tr><td colspan="6" class="empty">Run a scan to load treasury deploy data</td></tr></tbody>
+    <tfoot id="tf-tsy-settle" style="display:none;"></tfoot>
+    </table>
+  </div>
+
+  <!-- ── REWARDS LOG ────────────────────────────────────────── -->
+  <div class="sec-hdr">
+    <div class="sec-title">Rewards Issued</div>
+    <div class="sec-meta" id="meta-rew"></div>
+  </div>
+  <div class="tbl-card">
+    <table><thead><tr>
+      <th>Date / Time (CT)</th><th>Recipient</th><th class="r">SKOOP Sent</th><th>Tx Hash</th>
+    </tr></thead>
+    <tbody id="tb-rew"><tr><td colspan="4" class="empty">Run a scan to load reward data</td></tr></tbody>
+    <tfoot id="tf-rew" style="display:none;"></tfoot>
+    </table>
+  </div>
+
+  <!-- ── VOID LOG ────────────────────────────────────────────── -->
+  <div class="sec-hdr">
+    <div class="sec-title">Void Log</div>
+    <div class="sec-meta" id="meta-voids"></div>
+  </div>
+  <div class="tbl-card">
+    <table><thead><tr>
+      <th>Date / Time (CT)</th><th>Token</th><th>Receipt</th><th class="r">Amount</th><th class="r">Total (at capture)</th><th>Payer</th><th>Tx Hash</th>
+    </tr></thead>
+    <tbody id="tb-voids"><tr><td colspan="7" class="empty">Run a scan to load void data</td></tr></tbody>
+    <tfoot id="tf-voids" style="display:none;"></tfoot>
+    </table>
+  </div>
+
+</div>
+</div>
+
+<!-- SETTLE MODAL -->
+<div id="settle-modal">
+  <div class="modal-box">
+    <div class="modal-title">Deploy Treasury to LP / Burn</div>
+    <div class="modal-sub">60% of USDC buys SKOOP and burns it permanently. 40% swaps half to SKOOP and deepens the SKOOP/USDC LP position.</div>
+    <div class="modal-info" id="settle-modal-info">Loading treasury balance…</div>
+    <div class="modal-warn">⚠ Slippage: use 0 only for testing. On mainnet with real volume, compute minimums from the current pool price to block sandwich attacks. Leave all 4 as 0 to proceed without protection.</div>
+    <div class="modal-grid">
+      <div class="modal-field"><label>Min SKOOP from burn swap</label><input id="sm-min1" type="text" value="0" placeholder="0"></div>
+      <div class="modal-field"><label>Min SKOOP for LP swap</label><input id="sm-min2" type="text" value="0" placeholder="0"></div>
+      <div class="modal-field"><label>Min USDC into LP position</label><input id="sm-min3" type="text" value="0" placeholder="0"></div>
+      <div class="modal-field"><label>Min SKOOP into LP position</label><input id="sm-min4" type="text" value="0" placeholder="0"></div>
+    </div>
+    <div class="modal-btns">
+      <button class="ctrl-btn sec" onclick="closeSettleModal()">Cancel</button>
+      <button class="ctrl-btn warn" onclick="doSettle()">Deploy →</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+// ╔══════════════════════════════════════════════════════════════════════════╗
+// ║  BUSINESS CONFIG — edit this block to deploy for a new business         ║
+// ╚══════════════════════════════════════════════════════════════════════════╝
+const BUSINESS_CONFIG = {
+
+  // ── Identity ────────────────────────────────────────────────────────────
+  name:         'KOKOS',
+  tagline:      'ice cream',
+  location:     'Nashville, TN',
+  logoUrl:      'https://raw.githubusercontent.com/KOKOSICECREAM/website/main/Customer_dapp/KOKOS.png',
+
+  // ── Owner (only wallet that can log in) ─────────────────────────────────
+  ownerWallet:  '0x001b3fB36FE7E3a741A15Ed8bE68610442E3a50b',
+
+  // ── Chain ───────────────────────────────────────────────────────────────
+  rpc:          'https://mainnet.base.org',
+  explorerUrl:  'https://basescan.org',
+
+  // ── Contracts ───────────────────────────────────────────────────────────
+  escrow:       '0x4db1DA8719f2e51F016d5D54D1175C9f49749121',
+  treasury:     '0x187b746aB9e369c01A540aE098dB29fb0c7AbcdA',
+  posSigner:    '0x4eCc3f03c018208Ae5932eAB91bbD82F37F56D9B',
+
+  // ── Loyalty / payment token ─────────────────────────────────────────────
+  token:             '0xfd3ce21c5acd8bbbe576d0e2336c210c3cebeb92',
+  tokenSymbol:       'SKOOP',
+  tokenDecimals:     6,
+
+  // ── Stablecoin ──────────────────────────────────────────────────────────
+  stablecoin:        '0x833589fcd6edb6e08f4c7c32d4f71b54bda02913',
+  stablecoinSymbol:  'USDC',
+  stablecoinDecimals: 6,
+
+  // ── LP / price feed ─────────────────────────────────────────────────────
+  pool:         '0x64Ef20F32445EB0A86f4b97CA895fE508AF253CD',
+  positionMgr:  '0x03a520b32C04BF3bEEf7BEb72E919cf822Ed34f1',
+
+  // ── Scan ────────────────────────────────────────────────────────────────
+  startBlock:        46180000,
+  chunkSize:         1800,   // Base's public RPC caps eth_getLogs at a 2,000-block range
+  refundWindowDays:  1,
+
+  // ── Accounting ──────────────────────────────────────────────────────────
+  taxRate:      0.0925,             // decimal — 9.25% Nashville
+  taxLabel:     '9.25% Nashville',
+  timezone:     'America/Chicago',
+
+  // ── Branding ────────────────────────────────────────────────────────────
+  colors: {
+    coral:      '#fdcec1',
+    coralMid:   '#fdaf9a',
+    coralDeep:  '#f0876a',
+    mint:       '#cde6d7',
+    mintMid:    '#a8d4bb',
+    apricot:    '#fae2d8',
+    lavender:   '#e3d1e4',
+    sand:       '#ffddad',
+    brand:      '#11483d',
+    brandDark:  '#0a2e27',
+    brandLight: 'rgba(17,72,61,0.08)',
+    cream:      '#fffaf7',
+    ink:        '#2a1f1a',
+    inkMid:     '#6b4f47',
+    inkLight:   '#a08880',
+  },
+};
+// ═══════════════════════════════════════════════════════════════════════════
+
+const CFG={
+  RPC:           BUSINESS_CONFIG.rpc,
+  SKOOP:         BUSINESS_CONFIG.token,
+  USDC:          BUSINESS_CONFIG.stablecoin,
+  ESCROW:        BUSINESS_CONFIG.escrow,
+  TREASURY:      BUSINESS_CONFIG.treasury,
+  POS_SIGNER:    BUSINESS_CONFIG.posSigner,
+  OWNER:         BUSINESS_CONFIG.ownerWallet,
+  POOL:          BUSINESS_CONFIG.pool,
+  POS_MGR:       BUSINESS_CONFIG.positionMgr,
+  EXPLORER:      BUSINESS_CONFIG.explorerUrl,
+  DEC:           BUSINESS_CONFIG.tokenDecimals,
+  STABLE_DEC:    BUSINESS_CONFIG.stablecoinDecimals,
+  TAX_RATE:      BUSINESS_CONFIG.taxRate,
+  TZ:            BUSINESS_CONFIG.timezone,
+  START_BLOCK:   BUSINESS_CONFIG.startBlock,
+  CHUNK:         BUSINESS_CONFIG.chunkSize,
+  REFUND_WINDOW: BUSINESS_CONFIG.refundWindowDays * 24 * 3600,
+};
+
+const ABI_ESC=[
+  {anonymous:false,inputs:[{indexed:true,name:"receiptId",type:"bytes32"},{indexed:true,name:"orderId",type:"bytes32"},{indexed:true,name:"payer",type:"address"},{indexed:false,name:"paymentToken",type:"address"},{indexed:false,name:"tokenAmount",type:"uint256"},{indexed:false,name:"totalCents",type:"uint256"},{indexed:false,name:"itemCount",type:"uint256"},{indexed:false,name:"storeIdHash",type:"bytes32"},{indexed:false,name:"terminalIdHash",type:"bytes32"},{indexed:false,name:"cartHash",type:"bytes32"},{indexed:false,name:"timestamp",type:"uint256"}],name:"PaymentCaptured",type:"event"},
+  {anonymous:false,inputs:[{indexed:true,name:"receiptId",type:"bytes32"},{indexed:true,name:"orderId",type:"bytes32"},{indexed:true,name:"payer",type:"address"},{indexed:false,name:"paymentToken",type:"address"},{indexed:false,name:"tokenAmount",type:"uint256"},{indexed:false,name:"timestamp",type:"uint256"}],name:"PaymentVoided",type:"event"},
+  {anonymous:false,inputs:[{indexed:true,name:"receiptId",type:"bytes32"},{indexed:true,name:"orderId",type:"bytes32"},{indexed:true,name:"payer",type:"address"},{indexed:false,name:"tokenAmount",type:"uint256"},{indexed:false,name:"timestamp",type:"uint256"}],name:"PaymentBurned",type:"event"},
+  {anonymous:false,inputs:[{indexed:true,name:"receiptId",type:"bytes32"},{indexed:true,name:"orderId",type:"bytes32"},{indexed:true,name:"payer",type:"address"},{indexed:false,name:"usdcAmount",type:"uint256"},{indexed:false,name:"timestamp",type:"uint256"}],name:"PaymentSettled",type:"event"},
+  {anonymous:false,inputs:[{indexed:false,name:"paymentCount",type:"uint256"},{indexed:false,name:"totalTokenAmount",type:"uint256"},{indexed:false,name:"timestamp",type:"uint256"}],name:"BatchBurnExecuted",type:"event"},
+  {anonymous:false,inputs:[{indexed:false,name:"paymentCount",type:"uint256"},{indexed:false,name:"totalUSDCAmount",type:"uint256"},{indexed:true,name:"treasury",type:"address"},{indexed:false,name:"timestamp",type:"uint256"}],name:"BatchUSDCSettled",type:"event"},
+  {inputs:[{name:"receiptIds",type:"bytes32[]"}],name:"burnPayments",outputs:[],stateMutability:"nonpayable",type:"function"},
+  {inputs:[{name:"receiptIds",type:"bytes32[]"}],name:"settleUSDCPayments",outputs:[],stateMutability:"nonpayable",type:"function"},
+  {inputs:[{name:"receiptId",type:"bytes32"}],name:"voidPayment",outputs:[],stateMutability:"nonpayable",type:"function"},
+  // v2 trusts these over anything reconstructed from event history.
+  {inputs:[{name:"receiptId",type:"bytes32"}],name:"paymentStatus",outputs:[{name:"",type:"uint8"}],stateMutability:"view",type:"function"},
+  {inputs:[{name:"receiptId",type:"bytes32"}],name:"isExpired",outputs:[{name:"",type:"bool"}],stateMutability:"view",type:"function"},
+  {inputs:[],name:"skoopEscrowBalance",outputs:[{name:"",type:"uint256"}],stateMutability:"view",type:"function"},
+  {inputs:[],name:"usdcEscrowBalance",outputs:[{name:"",type:"uint256"}],stateMutability:"view",type:"function"},
+  {inputs:[],name:"refundWindow",outputs:[{name:"",type:"uint256"}],stateMutability:"view",type:"function"},
+  {inputs:[{name:"wallet",type:"address"}],name:"totalSpentByWallet",outputs:[{type:"uint256"}],stateMutability:"view",type:"function"},
+];
+
+const ABI_TSY=[
+  {anonymous:false,inputs:[{indexed:false,name:"totalUSDC",type:"uint256"},{indexed:false,name:"burnUSDC",type:"uint256"},{indexed:false,name:"lpUSDC",type:"uint256"},{indexed:false,name:"skoopBurned",type:"uint256"},{indexed:false,name:"lpLiquidity",type:"uint128"},{indexed:false,name:"timestamp",type:"uint256"}],name:"Settled",type:"event"},
+  {anonymous:false,inputs:[{indexed:false,name:"amount0USDC",type:"uint256"},{indexed:false,name:"amount1SKOOP",type:"uint256"},{indexed:false,name:"timestamp",type:"uint256"}],name:"FeesCollected",type:"event"},
+  {inputs:[],name:"collectFees",outputs:[{name:"amount0",type:"uint256"},{name:"amount1",type:"uint256"}],stateMutability:"nonpayable",type:"function"},
+  {inputs:[{name:"minSkoopFromBurn",type:"uint256"},{name:"minSkoopForLP",type:"uint256"},{name:"minUSDCIntoLP",type:"uint256"},{name:"minSkoopIntoLP",type:"uint256"}],name:"settle",outputs:[],stateMutability:"nonpayable",type:"function"},
+  {inputs:[],name:"usdcBalance",outputs:[{type:"uint256"}],stateMutability:"view",type:"function"},
+  {inputs:[],name:"skoopBalance",outputs:[{type:"uint256"}],stateMutability:"view",type:"function"},
+  {inputs:[],name:"totalUSDCDeployed",outputs:[{type:"uint256"}],stateMutability:"view",type:"function"},
+  {inputs:[],name:"totalSkoopBurned",outputs:[{type:"uint256"}],stateMutability:"view",type:"function"},
+  {inputs:[],name:"lpPositionId",outputs:[{type:"uint256"}],stateMutability:"view",type:"function"},
+];
+
+const ABI_TRF=["event Transfer(address indexed from,address indexed to,uint256 value)"];
+const ABI_POOL=["function slot0() view returns (uint160 sqrtPriceX96,int24,uint16,uint16,uint16,uint8,bool)","function token0() view returns (address)"];
+const ABI_SKOOP_READ=["function totalSupply() view returns (uint256)"];
+const ABI_POS_MGR=["function positions(uint256 tokenId) view returns (uint96 nonce,address operator,address token0,address token1,uint24 fee,int24 tickLower,int24 tickUpper,uint128 liquidity,uint256 feeGrowthInside0LastX128,uint256 feeGrowthInside1LastX128,uint128 tokensOwed0,uint128 tokensOwed1)"];
+
+let provider=null,ownerAddr=null;
+let allTx=[],allVoided=[],allBurnedRcpts=[],allSettledRcpts=[],allBurnBatches=[],allUSDCBatches=[],allTsySettles=[],allRew=[],allDirectUSDC=[];
+let fTx=[],fBurnBatches=[],fUSDCBatches=[],fTsySettles=[],fRew=[],fDirectUSDC=[];
+let pendingReceipts=[];
+let period='today',skoopUSD=0,skoopTotalSupply=0n,toastT=null,rewardsLoaded=false;
+
+// ── AUTH ──────────────────────────────────────────────────────────────────────
+async function connectOwner(){
+  const btn=document.getElementById('gate-btn');
+  const errEl=document.getElementById('gate-error');
+  errEl.style.display='none';
+  if(!window.ethereum){showGateErr('MetaMask not detected.');return;}
+  btn.disabled=true;btn.innerHTML='<span class="spin"></span> Connecting…';
+  try{
+    provider=new ethers.BrowserProvider(window.ethereum);
+    await provider.send('eth_requestAccounts',[]);
+    const sig=await provider.getSigner();
+    ownerAddr=await sig.getAddress();
+    if(ownerAddr.toLowerCase()!==CFG.OWNER.toLowerCase()){
+      showGateErr('Wrong wallet — connect '+CFG.OWNER.slice(0,6)+'…'+CFG.OWNER.slice(-4)+' to access accounting.');
+      provider=null;ownerAddr=null;btn.disabled=false;btn.innerHTML='Connect Wallet';return;
+    }
+    document.getElementById('auth-gate').style.display='none';
+    document.getElementById('main-content').style.display='block';
+    const wp=document.getElementById('wallet-pill');
+    wp.textContent='Owner · '+ownerAddr.slice(0,6)+'…'+ownerAddr.slice(-4);
+    wp.style.display='block';
+    document.getElementById('disc-btn').style.display='flex';
+    showToast('Owner wallet verified ✓','success');
+    loadTreasury();
+    // Settling depends only on this — it reconciles against the escrow balance in
+    // seconds. The historical scan below is for the reporting figures and can take
+    // its time without holding up settlement.
+    loadOpenReceipts();
+    runSettlementScan();
+    window.ethereum.on('accountsChanged',a=>{
+      if(!a.length||a[0].toLowerCase()!==CFG.OWNER.toLowerCase())disconnect();
+    });
+  }catch(e){
+    const msg=e?.code===4001?'Connection rejected.':e?.message?.slice(0,80)||'Connection failed.';
+    showGateErr(msg);btn.disabled=false;btn.innerHTML='Connect Wallet';
+  }
+}
+
+function showGateErr(msg){const el=document.getElementById('gate-error');el.textContent=msg;el.style.display='block';}
+
+function disconnect(){
+  provider=null;ownerAddr=null;
+  allTx=[];allVoided=[];allBurnedRcpts=[];allSettledRcpts=[];allBurnBatches=[];allUSDCBatches=[];allTsySettles=[];allRew=[];allDirectUSDC=[];
+  fTx=[];fBurnBatches=[];fUSDCBatches=[];fTsySettles=[];fRew=[];fDirectUSDC=[];pendingReceipts=[];
+  skoopUSD=0;skoopTotalSupply=0n;rewardsLoaded=false;
+  document.getElementById('action-banner').classList.remove('on');
+  document.getElementById('top-spenders-btn').disabled=true;
+  document.getElementById('auth-gate').style.display='flex';
+  document.getElementById('main-content').style.display='none';
+  document.getElementById('wallet-pill').style.display='none';
+  document.getElementById('disc-btn').style.display='none';
+  document.getElementById('csv-btn').disabled=true;
+  document.getElementById('pdf-btn').disabled=true;
+}
+
+if(window.ethereum){
+  window.ethereum.request({method:'eth_accounts'}).then(a=>{
+    if(a.length&&a[0].toLowerCase()===CFG.OWNER.toLowerCase())connectOwner();
+  }).catch(()=>{});
+}
+
+// ── PERIOD ────────────────────────────────────────────────────────────────────
+function setPeriod(p,btn){
+  period=p;
+  document.querySelectorAll('.pp-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('custom-dates').style.display=p==='custom'?'flex':'none';
+  if(p!=='custom'&&allTx.length)applyFilter();
+}
+
+function getRange(){
+  const now=Math.floor(Date.now()/1000);
+  function mid(dAgo){const d=new Date();d.setTime(d.getTime()-dAgo*86400000);const s=d.toLocaleDateString('en-US',{timeZone:CFG.TZ});return Math.floor(new Date(s+' 00:00:00').getTime()/1000);}
+  if(period==='today')return{from:mid(0),to:now};
+  if(period==='week') return{from:mid(6),to:now};
+  if(period==='month')return{from:mid(29),to:now};
+  if(period==='year') return{from:mid(364),to:now};
+  if(period==='all')  return{from:0,to:now};
+  const f=document.getElementById('date-from').value;
+  const t=document.getElementById('date-to').value;
+  return{from:f?Math.floor(new Date(f+'T00:00:00').getTime()/1000):0,to:t?Math.floor(new Date(t+'T23:59:59').getTime()/1000):now};
+}
+
+function applyFilter(){
+  const{from,to}=getRange();
+  fTx=allTx.filter(t=>t.ts>=from&&t.ts<=to);
+  fBurnBatches=allBurnBatches.filter(b=>b.ts>=from&&b.ts<=to);
+  fUSDCBatches=allUSDCBatches.filter(b=>b.ts>=from&&b.ts<=to);
+  fTsySettles=allTsySettles.filter(b=>b.ts>=from&&b.ts<=to);
+  fRew=allRew.filter(r=>r.ts>=from&&r.ts<=to);
+  fDirectUSDC=allDirectUSDC.filter(r=>r.ts===0||(r.ts>=from&&r.ts<=to));
+  renderAll();
+}
+
+// ── SCAN CACHE ────────────────────────────────────────────────────────────────
+const SCAN_CACHE_KEY=`kokos_v1_${CFG.ESCROW.slice(-8)}_${CFG.TREASURY.slice(-8)}`;
+const N_PAR=1;
+
+function loadScanCache(){try{const r=localStorage.getItem(SCAN_CACHE_KEY);return r?JSON.parse(r):null;}catch{return null;}}
+function saveScanCache(d){try{localStorage.setItem(SCAN_CACHE_KEY,JSON.stringify(d));}catch{console.warn('Cache quota full — scan works, just slower next time');}}
+function clearScanCache(){try{localStorage.removeItem(SCAN_CACHE_KEY);}catch{}}
+
+// ── SETTLEMENT SCAN CACHE (fast subset — no Transfer events) ──────────────────
+const SETTLE_CACHE_KEY=`kokos_settle_v1_${CFG.ESCROW.slice(-8)}`;
+function loadSettleCache(){try{const r=localStorage.getItem(SETTLE_CACHE_KEY);return r?JSON.parse(r):null;}catch{return null;}}
+function saveSettleCache(d){try{localStorage.setItem(SETTLE_CACHE_KEY,JSON.stringify(d));}catch{console.warn('Settle cache full');}}
+function clearSettleCache(){try{localStorage.removeItem(SETTLE_CACHE_KEY);}catch{}}
+
+// Extract minimal serialisable data from ethers event objects
+const EX={
+  cap:e=>({txHash:e.transactionHash,blk:e.blockNumber,receiptId:e.args.receiptId,orderId:e.args.orderId,payer:e.args.payer,paymentToken:e.args.paymentToken,tokenAmount:e.args.tokenAmount.toString(),totalCents:e.args.totalCents.toString(),itemCount:e.args.itemCount.toString(),ts:e.args.timestamp.toString()}),
+  void:e=>({txHash:e.transactionHash,receiptId:e.args.receiptId,paymentToken:e.args.paymentToken,tokenAmount:e.args.tokenAmount.toString(),ts:e.args.timestamp.toString()}),
+  burn:e=>({receiptId:e.args.receiptId}),
+  settle:e=>({receiptId:e.args.receiptId}),
+  burnBatch:e=>({txHash:e.transactionHash,paymentCount:e.args.paymentCount.toString(),totalTokenAmount:e.args.totalTokenAmount.toString(),ts:e.args.timestamp.toString()}),
+  usdcBatch:e=>({txHash:e.transactionHash,paymentCount:e.args.paymentCount.toString(),totalUSDCAmount:e.args.totalUSDCAmount.toString(),treasury:e.args.treasury,ts:e.args.timestamp.toString()}),
+  tsySettle:e=>({txHash:e.transactionHash,totalUSDC:e.args.totalUSDC.toString(),burnUSDC:e.args.burnUSDC.toString(),lpUSDC:e.args.lpUSDC.toString(),skoopBurned:e.args.skoopBurned.toString(),ts:e.args.timestamp.toString()}),
+  rew:e=>({txHash:e.transactionHash,blk:e.blockNumber,to:e.args.to,value:e.args.value.toString()}),
+  direct:e=>({txHash:e.transactionHash,blk:e.blockNumber,from:e.args.from,value:e.args.value.toString()}),
+};
+
+// Rebuild all display arrays from cached raw data
+function buildAllData(capR,voidR,burnR,stlR,bbR,ubR,tyR,rwR,dirR,tsMap){
+  const burnedSet=new Set(burnR.map(e=>e.receiptId.toLowerCase()));
+  const settledSet=new Set(stlR.map(e=>e.receiptId.toLowerCase()));
+  const voidedSet=new Set(voidR.map(e=>e.receiptId.toLowerCase()));
+  const DEAD='0x0000000000000000000000000000000000000000';
+  allTx=capR.map(e=>{
+    const tc=Number(e.totalCents),sub=Math.round(tc/(1+CFG.TAX_RATE)),isUsdc=e.paymentToken?.toLowerCase()===CFG.USDC.toLowerCase();
+    return{ts:Number(e.ts),receiptId:e.receiptId,payer:e.payer,paymentToken:e.paymentToken,isUsdc,subtotalCents:sub,taxCents:tc-sub,totalCents:tc,tokenAmount:BigInt(e.tokenAmount),itemCount:Number(e.itemCount),burned:burnedSet.has(e.receiptId.toLowerCase()),settled:settledSet.has(e.receiptId.toLowerCase()),voided:voidedSet.has(e.receiptId.toLowerCase()),txHash:e.txHash};
+  }).sort((a,b)=>b.ts-a.ts);
+  allVoided=voidR.map(e=>({ts:Number(e.ts),receiptId:e.receiptId,paymentToken:e.paymentToken,tokenAmount:BigInt(e.tokenAmount),txHash:e.txHash})).sort((a,b)=>b.ts-a.ts);
+  allBurnBatches=bbR.map(e=>({ts:Number(e.ts),count:Number(e.paymentCount),totalSkoop:BigInt(e.totalTokenAmount),txHash:e.txHash})).sort((a,b)=>b.ts-a.ts);
+  allUSDCBatches=ubR.map(e=>({ts:Number(e.ts),count:Number(e.paymentCount),totalUsdc:BigInt(e.totalUSDCAmount),treasury:e.treasury,txHash:e.txHash})).sort((a,b)=>b.ts-a.ts);
+  allTsySettles=tyR.map(e=>({ts:Number(e.ts),totalUSDC:BigInt(e.totalUSDC),burnUSDC:BigInt(e.burnUSDC),lpUSDC:BigInt(e.lpUSDC),skoopBurned:BigInt(e.skoopBurned),txHash:e.txHash})).sort((a,b)=>b.ts-a.ts);
+  allRew=rwR.filter(e=>e.to.toLowerCase()!==CFG.ESCROW.toLowerCase()&&e.to!==DEAD).map(e=>({ts:tsMap[e.blk]||0,to:e.to,amount:BigInt(e.value),txHash:e.txHash})).sort((a,b)=>b.ts-a.ts);
+  allDirectUSDC=dirR.filter(e=>e.from.toLowerCase()!==CFG.ESCROW.toLowerCase()).map(e=>({ts:tsMap[e.blk]||0,from:e.from,amount:BigInt(e.value),txHash:e.txHash})).sort((a,b)=>b.ts-a.ts);
+  pendingReceipts=allTx.filter(t=>!t.burned&&!t.settled&&!t.voided);
+}
+
+// ── SCAN ──────────────────────────────────────────────────────────────────────
+function fullRescan(){clearScanCache();clearSettleCache();runScan();}
+
+// ── SETTLEMENT SCAN — fast path, escrow + treasury events only ────────────────
+// Skips Transfer event queries (rewards, direct USDC) and block timestamp fetching.
+// Runs automatically on connect so Settlement + Treasury are ready immediately.
+async function runSettlementScan(){
+  const qBtn=document.getElementById('quick-scan-btn');
+  if(qBtn){qBtn.disabled=true;qBtn.innerHTML='<span class="spin"></span> Loading…';}
+  document.getElementById('meta-settle').textContent='Loading…';
+  try{
+    const pub=new ethers.JsonRpcProvider(CFG.RPC,undefined,{batchMaxCount:1});
+    const[latest]=await Promise.all([pub.getBlockNumber(),fetchPrice(pub)]);
+    const cache=loadSettleCache();
+    const fromBlock=cache?cache.lastBlock+1:CFG.START_BLOCK;
+    const isIncremental=!!(cache&&fromBlock>CFG.START_BLOCK);
+    let capR=cache?.capR||[],voidR=cache?.voidR||[],burnR=cache?.burnR||[],stlR=cache?.stlR||[];
+    let bbR=cache?.bbR||[],ubR=cache?.ubR||[],tyR=cache?.tyR||[];
+
+    // Render cached data immediately so settlement/burn buttons are usable
+    // while incremental blocks are still being fetched in the background.
+    if(cache){
+      buildAllData(capR,voidR,burnR,stlR,bbR,ubR,tyR,[],[],{});
+      applyFilter();
+      document.getElementById('csv-btn').disabled=false;
+      document.getElementById('pdf-btn').disabled=false;
+      document.getElementById('meta-settle').textContent='Updating…';
+    }
+
+    if(fromBlock<=latest){
+      const esc=new ethers.Contract(CFG.ESCROW,ABI_ESC,pub);
+      const tsy=new ethers.Contract(CFG.TREASURY,ABI_TSY,pub);
+      const totalChunks=Math.ceil((latest-fromBlock+1)/CFG.CHUNK);
+      let done=0;
+
+      async function querySettleChunk(s,end,attempt=0){
+        try{
+          return await Promise.all([
+            esc.queryFilter(esc.filters.PaymentCaptured(),s,end),
+            esc.queryFilter(esc.filters.PaymentVoided(),s,end),
+            esc.queryFilter(esc.filters.PaymentBurned(),s,end),
+            esc.queryFilter(esc.filters.PaymentSettled(),s,end),
+            esc.queryFilter(esc.filters.BatchBurnExecuted(),s,end),
+            esc.queryFilter(esc.filters.BatchUSDCSettled(),s,end),
+            tsy.queryFilter(tsy.filters.Settled(),s,end),
+          ]);
+        }catch(err){
+          const msg=JSON.stringify(err);
+          if((msg.includes('rate limit')||msg.includes('-32016')||msg.includes('over rate')||msg.includes('429')||msg.includes('too many'))&&attempt<4){
+            const wait=1500*(attempt+1);
+            document.getElementById('meta-settle').textContent=`Rate limited — retrying in ${wait/1000}s…`;
+            await new Promise(r=>setTimeout(r,wait));
+            return querySettleChunk(s,end,attempt+1);
+          }
+          throw err;
+        }
+      }
+
+      for(let s=fromBlock;s<=latest;s+=CFG.CHUNK*N_PAR){
+        const starts=[];
+        for(let j=0;j<N_PAR&&s+j*CFG.CHUNK<=latest;j++) starts.push(s+j*CFG.CHUNK);
+        if(totalChunks>3)document.getElementById('meta-settle').textContent=`Scanning ${done+1}–${Math.min(done+starts.length,totalChunks)} of ${totalChunks}…`;
+        const results=await Promise.all(starts.map(bs=>querySettleChunk(bs,Math.min(bs+CFG.CHUNK-1,latest))));
+        for(const[a,b,c,d,e,f,g] of results){
+          capR=capR.concat(a.map(EX.cap));voidR=voidR.concat(b.map(EX.void));
+          burnR=burnR.concat(c.map(EX.burn));stlR=stlR.concat(d.map(EX.settle));
+          bbR=bbR.concat(e.map(EX.burnBatch));ubR=ubR.concat(f.map(EX.usdcBatch));
+          tyR=tyR.concat(g.map(EX.tsySettle));
+        }
+        done+=starts.length;
+      }
+      saveSettleCache({capR,voidR,burnR,stlR,bbR,ubR,tyR,lastBlock:latest});
+    }
+
+    buildAllData(capR,voidR,burnR,stlR,bbR,ubR,tyR,[],[],{});
+    applyFilter();
+    document.getElementById('csv-btn').disabled=false;
+    document.getElementById('pdf-btn').disabled=false;
+    showToast(`${allTx.length} payments · ${pendingReceipts.length} pending${isIncremental?' (updated)':''}`, 'success');
+  }catch(e){
+    document.getElementById('meta-settle').textContent='Load failed — use ⟳ Full Scan';
+    console.error('Settlement scan:',e);
+  }
+  if(qBtn){qBtn.disabled=false;qBtn.innerHTML='⚡ Quick Scan';}
+}
+
+async function runScan(){
+  if(period==='custom'){
+    if(!document.getElementById('date-from').value||!document.getElementById('date-to').value){showToast('Select both dates','error');return;}
+  }
+  const btn=document.getElementById('scan-btn');
+  btn.disabled=true;btn.innerHTML='<span class="spin"></span> Scanning…';
+  setScanBar(true);setBar(0,'Connecting…');
+  try{
+    const pub=new ethers.JsonRpcProvider(CFG.RPC,undefined,{batchMaxCount:1});
+    const latest=await pub.getBlockNumber();
+
+    setBar(4,'Loading price…');
+    await Promise.all([fetchPrice(pub),loadTreasury(pub)]);
+
+    // Load cache — incremental scan starts from lastBlock+1
+    const cache=loadScanCache();
+    const fromBlock=cache?cache.lastBlock+1:CFG.START_BLOCK;
+    const isIncremental=!!(cache&&fromBlock>CFG.START_BLOCK);
+
+    let capR=cache?.capR||[],voidR=cache?.voidR||[],burnR=cache?.burnR||[],stlR=cache?.stlR||[];
+    let bbR=cache?.bbR||[],ubR=cache?.ubR||[],tyR=cache?.tyR||[],rwR=cache?.rwR||[],dirR=cache?.dirR||[];
+    let tsMap=cache?.tsMap||{};
+
+    if(fromBlock<=latest){
+      const esc=new ethers.Contract(CFG.ESCROW,ABI_ESC,pub);
+      const tsy=new ethers.Contract(CFG.TREASURY,ABI_TSY,pub);
+      const sk=new ethers.Contract(CFG.SKOOP,ABI_TRF,pub);
+      const usdcTrf=new ethers.Contract(CFG.USDC,ABI_TRF,pub);
+      const totalChunks=Math.ceil((latest-fromBlock+1)/CFG.CHUNK);
+      let done=0;
+
+      async function queryChunk(blkStart,blkEnd,attempt=0){
+        try{
+          return await Promise.all([
+            esc.queryFilter(esc.filters.PaymentCaptured(),blkStart,blkEnd),
+            esc.queryFilter(esc.filters.PaymentVoided(),blkStart,blkEnd),
+            esc.queryFilter(esc.filters.PaymentBurned(),blkStart,blkEnd),
+            esc.queryFilter(esc.filters.PaymentSettled(),blkStart,blkEnd),
+            esc.queryFilter(esc.filters.BatchBurnExecuted(),blkStart,blkEnd),
+            esc.queryFilter(esc.filters.BatchUSDCSettled(),blkStart,blkEnd),
+            tsy.queryFilter(tsy.filters.Settled(),blkStart,blkEnd),
+            sk.queryFilter(sk.filters.Transfer(CFG.POS_SIGNER,null),blkStart,blkEnd),
+            usdcTrf.queryFilter(usdcTrf.filters.Transfer(null,CFG.TREASURY),blkStart,blkEnd),
+          ]);
+        }catch(err){
+          const msg=JSON.stringify(err);
+          const isRate=msg.includes('rate limit')||msg.includes('-32016')||msg.includes('over rate')||msg.includes('429')||msg.includes('too many');
+          if(isRate&&attempt<4){
+            const wait=1500*(attempt+1);
+            setBar(10+Math.round((done/totalChunks)*82),`Rate limited — retrying in ${wait/1000}s…`);
+            await new Promise(r=>setTimeout(r,wait));
+            return queryChunk(blkStart,blkEnd,attempt+1);
+          }
+          throw err;
+        }
+      }
+
+      // Fetch N_PAR chunks in parallel
+      for(let s=fromBlock;s<=latest;s+=CFG.CHUNK*N_PAR){
+        const starts=[];
+        for(let j=0;j<N_PAR&&s+j*CFG.CHUNK<=latest;j++) starts.push(s+j*CFG.CHUNK);
+        const label=isIncremental?'Updating…':(totalChunks>1?`Chunks ${done+1}–${Math.min(done+starts.length,totalChunks)} of ${totalChunks}`:'Loading events…');
+        setBar(10+Math.round((done/totalChunks)*82),label);
+        const results=await Promise.all(starts.map(bs=>queryChunk(bs,Math.min(bs+CFG.CHUNK-1,latest))));
+        for(const[a,b,c,d,e,f,g,h,i] of results){
+          capR=capR.concat(a.map(EX.cap));voidR=voidR.concat(b.map(EX.void));
+          burnR=burnR.concat(c.map(EX.burn));stlR=stlR.concat(d.map(EX.settle));
+          bbR=bbR.concat(e.map(EX.burnBatch));ubR=ubR.concat(f.map(EX.usdcBatch));
+          tyR=tyR.concat(g.map(EX.tsySettle));rwR=rwR.concat(h.map(EX.rew));
+          dirR=dirR.concat(i.map(EX.direct));
+        }
+        done+=starts.length;
+      }
+
+      // Fetch timestamps only for blocks not already in tsMap
+      const newBlocks=new Set([...rwR,...dirR].map(e=>e.blk).filter(bn=>!tsMap[bn]));
+      await Promise.all([...newBlocks].map(async bn=>{
+        for(let attempt=0;attempt<3;attempt++){
+          try{const blk=await pub.getBlock(bn);if(blk){tsMap[bn]=blk.timestamp;break;}}
+          catch{if(attempt<2)await new Promise(r=>setTimeout(r,500*(attempt+1)));}
+        }
+      }));
+
+      saveScanCache({capR,voidR,burnR,stlR,bbR,ubR,tyR,rwR,dirR,tsMap,lastBlock:latest});
+    }
+
+    setBar(92,'Processing…');
+    buildAllData(capR,voidR,burnR,stlR,bbR,ubR,tyR,rwR,dirR,tsMap);
+
+    setBar(100,'Complete');
+    setTimeout(()=>setScanBar(false),600);
+    rewardsLoaded=true;
+    saveSettleCache({capR,voidR,burnR,stlR,bbR,ubR,tyR,lastBlock:latest});
+    applyFilter();
+    document.getElementById('csv-btn').disabled=false;
+    document.getElementById('pdf-btn').disabled=false;
+    showToast(`${allTx.length} payments · ${pendingReceipts.length} pending · ${allVoided.length} voided${isIncremental?' (incremental)':''}`, 'success');
+  }catch(e){
+    setScanBar(false);showToast('Scan error: '+(e?.message||'').slice(0,60),'error');console.error(e);
+  }
+  btn.disabled=false;btn.innerHTML='⟳ Full Scan';
+}
+
+async function fetchPrice(pub){
+  try{
+    const p=pub||new ethers.JsonRpcProvider(CFG.RPC);
+    const pool=new ethers.Contract(CFG.POOL,ABI_POOL,p);
+    const sk=new ethers.Contract(CFG.SKOOP,ABI_SKOOP_READ,p);
+    const[[s0,t0],supply]=await Promise.all([
+      Promise.all([pool.slot0(),pool.token0()]),
+      sk.totalSupply()
+    ]);
+    const sq=Number(s0.sqrtPriceX96)/Number(2n**96n);
+    const raw=sq*sq;
+    const skoopIsT0=t0.toLowerCase()===CFG.SKOOP.toLowerCase();
+    skoopUSD=skoopIsT0?raw:1/raw;
+    skoopTotalSupply=supply;
+  }catch(e){console.error('fetchPrice:',e);}
+}
+
+// ── TREASURY ──────────────────────────────────────────────────────────────────
+async function loadTreasury(pub){
+  try{
+    const p=pub||new ethers.JsonRpcProvider(CFG.RPC);
+    const tsy=new ethers.Contract(CFG.TREASURY,ABI_TSY,p);
+    const safe=async(fn,fallback)=>{try{return await fn();}catch{return fallback;}};
+    const[uBal,sBal,totDep,totBurn,lpId]=await Promise.all([
+      safe(()=>tsy.usdcBalance(),0n),
+      safe(()=>tsy.skoopBalance(),0n),
+      safe(()=>tsy.totalUSDCDeployed(),0n),
+      safe(()=>tsy.totalSkoopBurned(),0n),
+      safe(()=>tsy.lpPositionId(),0n),
+    ]);
+    const usd=parseFloat(ethers.formatUnits(uBal,6));
+    const skBal=parseFloat(ethers.formatUnits(sBal,CFG.DEC));
+    document.getElementById('tsy-usdc').textContent='$'+usd.toFixed(2);
+    document.getElementById('tsy-skoop').textContent=skBal.toLocaleString('en-US',{maximumFractionDigits:0});
+    document.getElementById('tsy-deployed').textContent=totDep>0n?'$'+parseFloat(ethers.formatUnits(totDep,6)).toFixed(2):'—';
+    document.getElementById('tsy-burned').textContent=totBurn>0n?parseFloat(ethers.formatUnits(totBurn,CFG.DEC)).toLocaleString('en-US',{maximumFractionDigits:0}):'—';
+    document.getElementById('tsy-lp').textContent=lpId>0n?'#'+lpId.toString():'None yet';
+    document.getElementById('meta-treasury').textContent=`$${usd.toFixed(2)} USDC ready · LP ${lpId>0n?'active':'not minted yet'}`;
+    // LP uncollected fees
+    if(lpId>0n){
+      try{
+        const posMgr=new ethers.Contract(CFG.POS_MGR,ABI_POS_MGR,p);
+        const pos=await posMgr.positions(lpId);
+        // pool is USDC(token0)/SKOOP(token1)
+        const fees0=parseFloat(ethers.formatUnits(pos.tokensOwed0,6));
+        const fees1=parseFloat(ethers.formatUnits(pos.tokensOwed1,CFG.DEC));
+        document.getElementById('tsy-fees-usdc').textContent='$'+fees0.toFixed(2);
+        document.getElementById('tsy-fees-skoop').textContent=fees1.toLocaleString('en-US',{maximumFractionDigits:0});
+      }catch{document.getElementById('tsy-fees-usdc').textContent='—';document.getElementById('tsy-fees-skoop').textContent='—';}
+    }else{
+      document.getElementById('tsy-fees-usdc').textContent='—';
+      document.getElementById('tsy-fees-skoop').textContent='—';
+    }
+  }catch(e){console.error('loadTreasury:',e);}
+}
+
+async function doCollectFees(){
+  try{
+    const signer=await provider.getSigner();
+    const tsy=new ethers.Contract(CFG.TREASURY,ABI_TSY,signer);
+    showToast('Collecting LP fees…','');
+    const tx=await tsy.collectFees();
+    await tx.wait();
+    showToast('LP fees collected ✓','success');
+    loadTreasury();
+  }catch(e){showToast(e?.reason||e?.shortMessage||'Collect fees failed','error');}
+}
+
+async function openSettleModal(){
+  document.getElementById('settle-modal-info').textContent='Loading…';
+  document.getElementById('settle-modal').classList.add('open');
+  try{
+    const pub=new ethers.JsonRpcProvider(CFG.RPC);
+    const tsy=new ethers.Contract(CFG.TREASURY,ABI_TSY,pub);
+    const uBal=await tsy.usdcBalance();
+    const usd=parseFloat(ethers.formatUnits(uBal,6));
+    if(usd===0){
+      document.getElementById('settle-modal-info').textContent='Treasury USDC balance: $0.00 — settle USDC receipts first.';
+    }else{
+      document.getElementById('settle-modal-info').textContent=
+        `$${usd.toFixed(2)} USDC available · $${(usd*0.6).toFixed(2)} → buyback+burn · $${(usd*0.4).toFixed(2)} → LP`;
+    }
+  }catch{document.getElementById('settle-modal-info').textContent='Could not load treasury balance.';}
+}
+
+function closeSettleModal(){document.getElementById('settle-modal').classList.remove('open');}
+
+document.getElementById('settle-modal').addEventListener('click',e=>{if(e.target===e.currentTarget)closeSettleModal();});
+
+async function doSettle(){
+  const min1=document.getElementById('sm-min1').value.trim()||'0';
+  const min2=document.getElementById('sm-min2').value.trim()||'0';
+  const min3=document.getElementById('sm-min3').value.trim()||'0';
+  const min4=document.getElementById('sm-min4').value.trim()||'0';
+  if(min1==='0'&&min2==='0'&&min3==='0'&&min4==='0'){
+    if(!confirm('All slippage minimums are 0 — sandwich attacks are possible on mainnet. Continue?'))return;
+  }
+  closeSettleModal();
+  try{
+    const signer=await provider.getSigner();
+    const tsy=new ethers.Contract(CFG.TREASURY,ABI_TSY,signer);
+    showToast('Deploying USDC…','');
+    const tx=await tsy.settle(BigInt(min1),BigInt(min2),BigInt(min3),BigInt(min4));
+    await tx.wait();
+    showToast('Treasury deployed ✓','success');
+    loadTreasury();runScan();
+  }catch(e){showToast(e?.reason||e?.shortMessage||'Deploy failed','error');}
+}
+
+// ── OPEN RECEIPTS: RECONCILED AGAINST THE ESCROW BALANCE ──────────────────────
+// Settling used to depend on the full historical scan, which walks ~5.1M blocks from
+// START_BLOCK and takes about 44 minutes on a cold cache. Until it finished, the
+// settle and burn buttons acted on an incomplete list.
+//
+// The escrow's own balance is the authority on how much is still owed, so this walks
+// backwards from the head and stops the moment the open receipts account for it.
+// Everything still owed is by definition recent, so this is seconds, not minutes.
+//
+// Event history is only used to DISCOVER candidate ids. Whether a receipt is actually
+// open, and whether it can be settled yet, is then read from the contract itself —
+// paymentStatus() and isExpired() — so a missed log can't strand funds or mislabel a
+// receipt as ready.
+const OPEN_SPAN=1800, OPEN_PAR=10, OPEN_FLOOR=CFG.START_BLOCK, MAX_VERIFY=300;
+// A direct token transfer into the escrow (not via capturePayment) inflates the
+// balance and would never reconcile, so the walk is bounded. Hitting this cap is
+// itself the finding — it means the gap is real and needs looking at, not that the
+// page should keep grinding through 5M blocks.
+const MAX_SCAN=1500000; // ~35 days of Base
+const PS={0:'None',1:'Captured',2:'Voided',3:'Burned',4:'Settled'};
+let reconState=null;
+
+async function openLogs(pub,filter,a,b,att=0){
+  try{
+    return await pub.send('eth_getLogs',[{...filter,fromBlock:'0x'+a.toString(16),toBlock:'0x'+b.toString(16)}]);
+  }catch(e){
+    if(att<4){await new Promise(r=>setTimeout(r,500*(att+1)));return openLogs(pub,filter,a,b,att+1);}
+    throw e;
+  }
+}
+
+async function loadOpenReceipts(){
+  const strip=document.getElementById('recon-strip');
+  const head=document.getElementById('recon-headline');
+  const det=document.getElementById('recon-detail');
+  strip.style.display='block';
+  strip.style.background='#eef2f7';strip.style.borderColor='#c9d4e2';strip.style.color='#243447';
+  head.textContent='Checking open receipts…';det.textContent='';
+  try{
+    const pub=new ethers.JsonRpcProvider(CFG.RPC,undefined,{batchMaxCount:1});
+    const esc=new ethers.Contract(CFG.ESCROW,ABI_ESC,pub);
+    const [skOwed,usOwed,rw,latest]=await Promise.all([
+      esc.skoopEscrowBalance(),esc.usdcEscrowBalance(),esc.refundWindow(),pub.getBlockNumber()
+    ]);
+    CFG.REFUND_WINDOW=Number(rw); // from the contract, not a hardcoded assumption
+
+    const T=n=>esc.interface.getEvent(n).topicHash;
+    const filter={address:CFG.ESCROW,topics:[[T('PaymentCaptured'),T('PaymentBurned'),T('PaymentSettled'),T('PaymentVoided')]]};
+
+    const caps=new Map(),closed=new Set();
+    let scanned=0,reconciled=false,hi=latest;
+    // Walk backwards. A closure always lands at or after its capture, so by the time a
+    // capture appears we have already seen anything that closed it.
+    while(hi>OPEN_FLOOR&&!reconciled&&scanned<MAX_SCAN){
+      const lo=Math.max(OPEN_FLOOR,hi-OPEN_SPAN*OPEN_PAR+1);
+      const spans=[];
+      for(let a=lo;a<=hi;a+=OPEN_SPAN)spans.push([a,Math.min(a+OPEN_SPAN-1,hi)]);
+      const res=await Promise.all(spans.map(([a,b])=>openLogs(pub,filter,a,b)));
+      for(const chunk of res)for(const l of chunk){
+        const pl=esc.interface.parseLog(l); if(!pl)continue;
+        const id=pl.args.receiptId.toLowerCase();
+        if(pl.name==='PaymentCaptured'){
+          if(!caps.has(id))caps.set(id,{receiptId:pl.args.receiptId,paymentToken:pl.args.paymentToken,
+            tokenAmount:pl.args.tokenAmount,totalCents:Number(pl.args.totalCents),
+            payer:pl.args.payer,ts:Number(pl.args.timestamp),block:parseInt(l.blockNumber,16)});
+        }else closed.add(id);
+      }
+      scanned+=hi-lo+1;
+      const open=[...caps.entries()].filter(([k])=>!closed.has(k)).map(([,v])=>v);
+      let sk=0n,us=0n;
+      for(const r of open){
+        if(r.paymentToken.toLowerCase()===CFG.SKOOP.toLowerCase())sk+=r.tokenAmount;else us+=r.tokenAmount;
+      }
+      if(sk>=skOwed&&us>=usOwed)reconciled=true;
+      head.textContent='Checking open receipts… '+(scanned/1000|0)+'k blocks';
+      det.textContent=open.length+' open so far · '+fSK(sk)+' / '+fSK(skOwed)+' SKOOP accounted';
+      hi=lo-1;
+    }
+
+    // Confirm each candidate against the contract rather than trusting the log replay.
+    let open=[...caps.entries()].filter(([k])=>!closed.has(k)).map(([,v])=>v)
+      .sort((a,b)=>a.ts-b.ts).slice(0,MAX_VERIFY);
+    const checked=await Promise.all(open.map(async r=>{
+      try{
+        const [st,exp]=await Promise.all([esc.paymentStatus(r.receiptId),esc.isExpired(r.receiptId)]);
+        return {...r,status:Number(st),expired:exp};
+      }catch{return {...r,status:-1,expired:false};}
+    }));
+    const disagreed=checked.filter(r=>r.status!==1);
+    open=checked.filter(r=>r.status===1);
+
+    let sk=0n,us=0n;
+    for(const r of open){
+      if(r.paymentToken.toLowerCase()===CFG.SKOOP.toLowerCase())sk+=r.tokenAmount;else us+=r.tokenAmount;
+    }
+    const skGap=skOwed-sk, usGap=usOwed-us;
+
+    // Feed the page's existing settlement UI and action buttons.
+    pendingReceipts=open.map(r=>({
+      receiptId:r.receiptId,ts:r.ts,payer:r.payer,totalCents:r.totalCents,
+      isUsdc:r.paymentToken.toLowerCase()!==CFG.SKOOP.toLowerCase(),
+      tokenAmount:r.tokenAmount,burned:false,settled:false,voided:false,
+      _expired:r.expired
+    }));
+    reconState={skOwed,usOwed,sk,us,skGap,usGap,count:open.length,scanned,
+                reconciled:skGap===0n&&usGap===0n,disagreed:disagreed.length};
+
+    const ok=skGap===0n&&usGap===0n;
+    strip.style.background=ok?'#e4f4ea':'#fdeacd';
+    strip.style.borderColor=ok?'#9dcfb0':'#e6bf76';
+    strip.style.color=ok?'#11483d':'#7a5312';
+    const capped=scanned>=MAX_SCAN&&!ok;
+    head.textContent=ok
+      ? `✓ Reconciled — ${open.length} open receipt${open.length!==1?'s':''}, all escrowed funds accounted for`
+      : capped
+        ? `⚠ Stopped after ${(MAX_SCAN/1000|0)}k blocks with ${fSK(skGap>0n?skGap:0n)} SKOOP / ${fU(usGap>0n?usGap:0n)} unaccounted — likely funds sent straight to the escrow, or receipts older than this window`
+        : `⚠ ${fSK(skGap>0n?skGap:0n)} SKOOP / ${fU(usGap>0n?usGap:0n)} in escrow is NOT accounted for by the receipts listed`;
+    det.textContent=
+      `escrow holds ${fSK(skOwed)} SKOOP, ${fU(usOwed)} USDC · listed ${fSK(sk)} SKOOP, ${fU(us)} USDC`
+      +` · scanned ${(scanned/1000|0)}k blocks · refund window ${(Number(rw)/86400)}d`
+      +(disagreed.length?` · ${disagreed.length} log-derived receipt${disagreed.length!==1?'s':''} rejected by on-chain status`:'');
+
+    renderSettlement();renderQuickActions();
+    document.getElementById('meta-settle').textContent=
+      `${open.length} open · ${ok?'reconciled':'UNRECONCILED'}`;
+    showToast(ok?`${open.length} open receipts · reconciled ✓`:'Escrow does not match the listed receipts','success');
+  }catch(e){
+    strip.style.background='#fdecea';strip.style.borderColor='#e6a29b';strip.style.color='#7a1f16';
+    head.textContent='Could not verify open receipts';
+    det.textContent=String(e?.shortMessage||e?.message||e).slice(0,160);
+  }
+}
+
+// ── SETTLEMENT ACTIONS ────────────────────────────────────────────────────────
+async function doVoidReceipt(receiptId){
+  if(!confirm('Void this payment and refund to customer?'))return;
+  try{
+    const signer=await provider.getSigner();
+    const escrow=new ethers.Contract(CFG.ESCROW,ABI_ESC,signer);
+    showToast('Voiding…','');
+    const tx=await escrow.voidPayment(receiptId);
+    await tx.wait();
+    showToast('Payment voided ✓','success');
+    runScan();
+  }catch(e){showToast(e?.reason||e?.shortMessage||'Void failed','error');}
+}
+
+async function doBurnSKOOP(){
+  if(reconState&&!reconState.reconciled&&!confirm('The escrow balance does not match the receipts listed, so this list may be incomplete.\n\nContinue with the burn anyway?'))return;
+  const now=Math.floor(Date.now()/1000);
+  // _expired is the contract's own isExpired(); the time check is only a fallback for
+  // rows that came from the historical scan rather than loadOpenReceipts().
+  const ids=pendingReceipts.filter(r=>!r.isUsdc&&(r._expired!==undefined?r._expired:(r.ts&&now>r.ts+CFG.REFUND_WINDOW))).map(r=>r.receiptId);
+  if(!ids.length){showToast('No SKOOP receipts ready to burn','');return;}
+  if(!confirm(`Burn ${ids.length} SKOOP receipt${ids.length!==1?'s':''}?`))return;
+  try{
+    const signer=await provider.getSigner();
+    const escrow=new ethers.Contract(CFG.ESCROW,ABI_ESC,signer);
+    showToast('Burning SKOOP…','');
+    const tx=await escrow.burnPayments(ids);
+    await tx.wait();
+    showToast(`${ids.length} ${BUSINESS_CONFIG.tokenSymbol} receipt${ids.length!==1?'s':''} burned 🔥`,'success');
+    runScan();
+  }catch(e){showToast(e?.reason||e?.shortMessage||'Burn failed','error');}
+}
+
+async function doSettleUSDC(){
+  if(reconState&&!reconState.reconciled&&!confirm('The escrow balance does not match the receipts listed, so this list may be incomplete.\n\nContinue with the settle anyway?'))return;
+  const now=Math.floor(Date.now()/1000);
+  const ids=pendingReceipts.filter(r=>r.isUsdc&&(r._expired!==undefined?r._expired:(r.ts&&now>r.ts+CFG.REFUND_WINDOW))).map(r=>r.receiptId);
+  if(!ids.length){showToast('No USDC receipts ready to settle','');return;}
+  if(!confirm(`Settle ${ids.length} USDC receipt${ids.length!==1?'s':''} to treasury?`))return;
+  try{
+    const signer=await provider.getSigner();
+    const escrow=new ethers.Contract(CFG.ESCROW,ABI_ESC,signer);
+    showToast('Settling USDC…','');
+    const tx=await escrow.settleUSDCPayments(ids);
+    await tx.wait();
+    showToast(`${ids.length} USDC receipt${ids.length!==1?'s':''} sent to treasury ✓`,'success');
+    runScan();
+  }catch(e){showToast(e?.reason||e?.shortMessage||'Settle failed','error');}
+}
+
+// ── RENDER ────────────────────────────────────────────────────────────────────
+const f$=c=>'$'+(c/100).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
+const fSK=r=>parseFloat(ethers.formatUnits(BigInt(r),CFG.DEC)).toLocaleString('en-US',{maximumFractionDigits:2});
+const fU=r=>'$'+parseFloat(ethers.formatUnits(BigInt(r),CFG.STABLE_DEC)).toFixed(2);
+const toCT=ts=>new Date(ts*1000).toLocaleString('en-US',{timeZone:CFG.TZ,month:'2-digit',day:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit',hour12:true});
+const toDate=ts=>new Date(ts*1000).toLocaleDateString('en-US',{timeZone:CFG.TZ,month:'2-digit',day:'2-digit',year:'numeric'});
+const toMon=ts=>new Date(ts*1000).toLocaleDateString('en-US',{timeZone:CFG.TZ,month:'long',year:'numeric'});
+const toYr=ts=>new Date(ts*1000).toLocaleDateString('en-US',{timeZone:CFG.TZ,year:'numeric'});
+const sh=a=>a.slice(0,6)+'…'+a.slice(-4);
+const shh=h=>h.slice(0,10)+'…';
+const skBadge=`<span class="badge badge-sk">${BUSINESS_CONFIG.tokenSymbol}</span>`;
+const usdcBadge=`<span class="badge badge-usdc">${BUSINESS_CONFIG.stablecoinSymbol}</span>`;
+
+function renderAll(){renderKPIs();renderPeriod();renderTx();renderBurns();renderUSDCSettles();renderTsySettles();renderRew();renderSettlement();renderQuickActions();renderVoids();renderCustomerStats();renderTokenomics();renderDirectUSDC();}
+
+function renderKPIs(){
+  const netTx=fTx.filter(t=>!t.voided);
+  const voidTx=fTx.filter(t=>t.voided);
+  const skoopTx=netTx.filter(t=>!t.isUsdc);
+  const usdcTx=netTx.filter(t=>t.isUsdc);
+  const g=netTx.reduce((s,t)=>s+t.subtotalCents,0);
+  const x=netTx.reduce((s,t)=>s+t.taxCents,0);
+  const tot=netTx.reduce((s,t)=>s+t.totalCents,0);
+  const n=netTx.length;
+  const sk=skoopTx.reduce((s,t)=>s+BigInt(t.tokenAmount),0n);
+  const uc=usdcTx.reduce((s,t)=>s+BigInt(t.tokenAmount),0n);
+  const skN=parseFloat(ethers.formatUnits(sk,CFG.DEC));
+  const ucN=parseFloat(ethers.formatUnits(uc,6));
+  const totalBurned=allBurnBatches.reduce((s,b)=>s+BigInt(b.totalSkoop),0n);
+  document.getElementById('k-gross').textContent=f$(g);
+  document.getElementById('k-gross-sub').textContent=voidTx.length?`Net of ${voidTx.length} void${voidTx.length!==1?'s':''}` :'Before tax';
+  document.getElementById('k-tax').textContent=f$(x);
+  document.getElementById('k-total').textContent=f$(tot);
+  document.getElementById('k-count').textContent=n.toLocaleString();
+  document.getElementById('k-count-sub').textContent=`${skoopTx.length} SKOOP · ${usdcTx.length} USDC`;
+  document.getElementById('k-skoop').textContent=skN.toLocaleString('en-US',{maximumFractionDigits:0});
+  document.getElementById('k-skoop-sub').textContent=skoopUSD>0?'≈ $'+(skN*skoopUSD).toFixed(2)+' USD':'In escrow';
+  document.getElementById('k-usdc').textContent='$'+ucN.toFixed(2);
+  document.getElementById('k-usdc-sub').textContent=`${usdcTx.length} transaction${usdcTx.length!==1?'s':''}`;
+  document.getElementById('k-avg').textContent=n?f$(Math.round(tot/n)):'—';
+  document.getElementById('k-burned').textContent=parseFloat(ethers.formatUnits(totalBurned,CFG.DEC)).toLocaleString('en-US',{maximumFractionDigits:0});
+  const vSK=voidTx.filter(t=>!t.isUsdc).length,vUSDC=voidTx.filter(t=>t.isUsdc).length;
+  document.getElementById('k-voided').textContent=voidTx.length.toString();
+  document.getElementById('k-voided-sub').textContent=voidTx.length?`${vSK?vSK+' SKOOP':''}${vSK&&vUSDC?' · ':''}${vUSDC?vUSDC+' USDC':''}` :'None in period';
+  const uniqueWallets=new Set(netTx.map(t=>t.payer.toLowerCase())).size;
+  document.getElementById('k-wallets').textContent=uniqueWallets.toLocaleString();
+  document.getElementById('k-wallets-sub').textContent=uniqueWallets?'In selected period':'No transactions';
+}
+
+function renderPeriod(){
+  const tbody=document.getElementById('tb-period');
+  const tfoot=document.getElementById('tf-period');
+  if(!fTx.length){tbody.innerHTML='<tr><td colspan="8" class="empty">No transactions in this period</td></tr>';tfoot.style.display='none';return;}
+  let keyFn,title;
+  if(period==='today'||period==='week'||period==='month'){keyFn=t=>toDate(t.ts);title='Sales by Day';}
+  else if(period==='year'||period==='custom'){keyFn=t=>toMon(t.ts);title='Sales by Month';}
+  else{keyFn=t=>toYr(t.ts);title='Sales by Year';}
+  document.getElementById('period-title').textContent=title;
+  const grp={};
+  fTx.forEach(t=>{const k=keyFn(t);if(!grp[k])grp[k]={k,n:0,g:0,x:0,tot:0,sk:0n,uc:0n};
+    grp[k].n++;grp[k].g+=t.subtotalCents;grp[k].x+=t.taxCents;grp[k].tot+=t.totalCents;
+    if(t.isUsdc)grp[k].uc+=BigInt(t.tokenAmount);else grp[k].sk+=BigInt(t.tokenAmount);});
+  const rows=Object.values(grp).sort((a,b)=>b.k.localeCompare(a.k));
+  tbody.innerHTML=rows.map(r=>`<tr>
+    <td style="font-weight:600;">${r.k}</td><td class="r">${r.n}</td>
+    <td class="r">${f$(r.g)}</td><td class="r">${f$(r.x)}</td>
+    <td class="r" style="font-weight:600;">${f$(r.tot)}</td>
+    <td class="r g">${r.sk>0n?fSK(r.sk):'—'}</td>
+    <td class="r g">${r.uc>0n?'$'+parseFloat(ethers.formatUnits(r.uc,6)).toFixed(2):'—'}</td>
+    <td class="r">${f$(Math.round(r.tot/r.n))}</td>
+  </tr>`).join('');
+  const tg=fTx.reduce((s,t)=>s+t.subtotalCents,0),tx2=fTx.reduce((s,t)=>s+t.taxCents,0),tt=fTx.reduce((s,t)=>s+t.totalCents,0);
+  const tsk=fTx.filter(t=>!t.isUsdc).reduce((s,t)=>s+BigInt(t.tokenAmount),0n);
+  const tuc=fTx.filter(t=>t.isUsdc).reduce((s,t)=>s+BigInt(t.tokenAmount),0n);
+  tfoot.style.display='';
+  tfoot.innerHTML=`<tr><td>Totals</td><td class="r">${fTx.length}</td><td class="r">${f$(tg)}</td><td class="r">${f$(tx2)}</td><td class="r">${f$(tt)}</td><td class="r">${fSK(tsk)}</td><td class="r">$${parseFloat(ethers.formatUnits(tuc,6)).toFixed(2)}</td><td class="r">${f$(Math.round(tt/fTx.length))}</td></tr>`;
+}
+
+function renderTx(){
+  document.getElementById('meta-tx').textContent=fTx.length+' transactions';
+  document.getElementById('tb-tx').innerHTML=!fTx.length?'<tr><td colspan="9" class="empty">No transactions in this period</td></tr>':
+    fTx.map(t=>{
+      const badge=t.isUsdc?usdcBadge:skBadge;
+      const amtStr=t.isUsdc?fU(t.tokenAmount):fSK(t.tokenAmount)+' SK';
+      return`<tr>
+        <td style="white-space:nowrap;font-size:0.72rem;">${toCT(t.ts)}</td>
+        <td>${badge}</td>
+        <td class="mn">${t.receiptId.slice(0,10)}…</td>
+        <td class="r">${f$(t.subtotalCents)}</td><td class="r">${f$(t.taxCents)}</td>
+        <td class="r" style="font-weight:600;">${f$(t.totalCents)}</td>
+        <td class="r g">${amtStr}</td>
+        <td class="r">${t.itemCount}</td>
+        <td class="mn">${sh(t.payer)}</td>
+      </tr>`;
+    }).join('');
+}
+
+function renderSettlement(){
+  const now=Math.floor(Date.now()/1000);
+  const voidable=pendingReceipts.filter(r=>r.ts&&now<=r.ts+CFG.REFUND_WINDOW);
+  const ready=pendingReceipts.filter(r=>r.ts&&now>r.ts+CFG.REFUND_WINDOW);
+  const readySKOOP=ready.filter(r=>!r.isUsdc);
+  const readyUSDC=ready.filter(r=>r.isUsdc);
+
+  document.getElementById('meta-settle').textContent=
+    `${pendingReceipts.length} pending · ${voidable.length} voidable · ${ready.length} ready to settle`;
+  document.getElementById('settle-void-count').textContent=
+    voidable.length?`${voidable.length} receipt${voidable.length!==1?'s':''}` :'';
+  document.getElementById('settle-ready-count').textContent=
+    ready.length?`${readySKOOP.length} SKOOP · ${readyUSDC.length} USDC`:'';
+
+  const vTbody=document.getElementById('tb-voidable');
+  if(!voidable.length){
+    vTbody.innerHTML='<tr><td colspan="5" class="empty">No voidable receipts</td></tr>';
+  }else{
+    vTbody.innerHTML=voidable.map(r=>{
+      const secsLeft=r.ts+CFG.REFUND_WINDOW-now;
+      const d=Math.floor(secsLeft/86400),h=Math.floor((secsLeft%86400)/3600);
+      const timeLeft=d>0?`${d}d ${h}h`:`${h}h`;
+      const badge=r.isUsdc?usdcBadge:skBadge;
+      const amt=r.isUsdc?fU(r.tokenAmount):fSK(r.tokenAmount)+' SK';
+      return`<tr>
+        <td style="font-size:0.7rem;white-space:nowrap;">${toDate(r.ts)}</td>
+        <td>${badge}</td><td class="r">${amt}</td>
+        <td class="r" style="font-size:0.68rem;color:var(--ink-lt);">${timeLeft}</td>
+        <td><button onclick="doVoidReceipt('${r.receiptId}')" style="background:var(--sand);border:none;border-radius:6px;padding:2px 8px;font-size:0.65rem;font-weight:700;cursor:pointer;">Void</button></td>
+      </tr>`;
+    }).join('');
+  }
+
+  const rTbody=document.getElementById('tb-ready');
+  if(!ready.length){
+    rTbody.innerHTML='<tr><td colspan="4" class="empty">No receipts ready to settle</td></tr>';
+  }else{
+    rTbody.innerHTML=ready.map(r=>{
+      const badge=r.isUsdc?usdcBadge:skBadge;
+      const amt=r.isUsdc?fU(r.tokenAmount):fSK(r.tokenAmount)+' SK';
+      return`<tr>
+        <td style="font-size:0.7rem;white-space:nowrap;">${toDate(r.ts)}</td>
+        <td>${badge}</td><td class="r">${amt}</td>
+        <td class="mn">${sh(r.payer)}</td>
+      </tr>`;
+    }).join('');
+  }
+
+  document.getElementById('burn-skoop-btn').disabled=!readySKOOP.length;
+  document.getElementById('settle-usdc-btn').disabled=!readyUSDC.length;
+}
+
+function renderBurns(){
+  const tfoot=document.getElementById('tf-burn');
+  document.getElementById('meta-burn').textContent=fBurnBatches.length+' batches';
+  if(!fBurnBatches.length){document.getElementById('tb-burn').innerHTML='<tr><td colspan="4" class="empty">No SKOOP burns in this period</td></tr>';tfoot.style.display='none';return;}
+  document.getElementById('tb-burn').innerHTML=fBurnBatches.map(b=>`<tr>
+    <td style="white-space:nowrap;font-size:0.72rem;">${toCT(b.ts)}</td>
+    <td class="r">${b.count}</td>
+    <td class="r g" style="font-weight:700;">${fSK(b.totalSkoop)} SKOOP</td>
+    <td><a class="lnk" href="${CFG.EXPLORER}/tx/${b.txHash}" target="_blank" rel="noopener">${shh(b.txHash)}</a></td>
+  </tr>`).join('');
+  const totCount=fBurnBatches.reduce((s,b)=>s+b.count,0);
+  const totSkoop=fBurnBatches.reduce((s,b)=>s+BigInt(b.totalSkoop),0n);
+  tfoot.style.display='';
+  tfoot.innerHTML=`<tr><td>Totals</td><td class="r">${totCount} receipts</td><td class="r">${fSK(totSkoop)} SKOOP</td><td></td></tr>`;
+}
+
+function renderUSDCSettles(){
+  const tfoot=document.getElementById('tf-usdc-settle');
+  document.getElementById('meta-usdc-settle').textContent=fUSDCBatches.length+' batches';
+  if(!fUSDCBatches.length){document.getElementById('tb-usdc-settle').innerHTML='<tr><td colspan="5" class="empty">No USDC settlements in this period</td></tr>';tfoot.style.display='none';return;}
+  document.getElementById('tb-usdc-settle').innerHTML=fUSDCBatches.map(b=>`<tr>
+    <td style="white-space:nowrap;font-size:0.72rem;">${toCT(b.ts)}</td>
+    <td class="r">${b.count}</td>
+    <td class="r g" style="font-weight:700;">${fU(b.totalUsdc)}</td>
+    <td class="mn">${sh(b.treasury)}</td>
+    <td><a class="lnk" href="${CFG.EXPLORER}/tx/${b.txHash}" target="_blank" rel="noopener">${shh(b.txHash)}</a></td>
+  </tr>`).join('');
+  const totCount=fUSDCBatches.reduce((s,b)=>s+b.count,0);
+  const totUsdc=fUSDCBatches.reduce((s,b)=>s+BigInt(b.totalUsdc),0n);
+  tfoot.style.display='';
+  tfoot.innerHTML=`<tr><td>Totals</td><td class="r">${totCount} receipts</td><td class="r">$${parseFloat(ethers.formatUnits(totUsdc,6)).toFixed(2)}</td><td colspan="2"></td></tr>`;
+}
+
+function renderTsySettles(){
+  const tfoot=document.getElementById('tf-tsy-settle');
+  document.getElementById('meta-tsy-settle').textContent=fTsySettles.length+' deploys';
+  if(!fTsySettles.length){document.getElementById('tb-tsy-settle').innerHTML='<tr><td colspan="6" class="empty">No treasury deploys in this period</td></tr>';tfoot.style.display='none';return;}
+  document.getElementById('tb-tsy-settle').innerHTML=fTsySettles.map(t=>`<tr>
+    <td style="white-space:nowrap;font-size:0.72rem;">${toCT(t.ts)}</td>
+    <td class="r">$${parseFloat(ethers.formatUnits(BigInt(t.totalUSDC),6)).toFixed(2)}</td>
+    <td class="r">$${parseFloat(ethers.formatUnits(BigInt(t.burnUSDC),6)).toFixed(2)}</td>
+    <td class="r">$${parseFloat(ethers.formatUnits(BigInt(t.lpUSDC),6)).toFixed(2)}</td>
+    <td class="r g">${fSK(t.skoopBurned)} SKOOP</td>
+    <td><a class="lnk" href="${CFG.EXPLORER}/tx/${t.txHash}" target="_blank" rel="noopener">${shh(t.txHash)}</a></td>
+  </tr>`).join('');
+  const totUsdc=fTsySettles.reduce((s,t)=>s+BigInt(t.totalUSDC),0n);
+  const totBurned=fTsySettles.reduce((s,t)=>s+BigInt(t.skoopBurned),0n);
+  tfoot.style.display='';
+  tfoot.innerHTML=`<tr><td>Totals</td><td class="r">$${parseFloat(ethers.formatUnits(totUsdc,6)).toFixed(2)}</td><td></td><td></td><td class="r">${fSK(totBurned)} SKOOP</td><td></td></tr>`;
+}
+
+function renderDirectUSDC(){
+  const tfoot=document.getElementById('tf-direct-usdc');
+  if(!rewardsLoaded){
+    document.getElementById('tb-direct-usdc').innerHTML='<tr><td colspan="4" class="empty">Run ⟳ Full Scan to load direct USDC data</td></tr>';
+    document.getElementById('meta-direct-usdc').textContent='not loaded';
+    tfoot.style.display='none';return;
+  }
+  document.getElementById('meta-direct-usdc').textContent=fDirectUSDC.length+' payments';
+  if(!fDirectUSDC.length){document.getElementById('tb-direct-usdc').innerHTML='<tr><td colspan="4" class="empty">No direct USDC payments in this period</td></tr>';tfoot.style.display='none';return;}
+  document.getElementById('tb-direct-usdc').innerHTML=fDirectUSDC.map(r=>`<tr>
+    <td style="white-space:nowrap;font-size:0.72rem;">${r.ts?toCT(r.ts):'—'}</td>
+    <td class="mn">${sh(r.from)}</td>
+    <td class="r g" style="font-weight:700;">$${parseFloat(ethers.formatUnits(r.amount,6)).toFixed(2)}</td>
+    <td><a class="lnk" href="${CFG.EXPLORER}/tx/${r.txHash}" target="_blank" rel="noopener">${shh(r.txHash)}</a></td>
+  </tr>`).join('');
+  const tot=fDirectUSDC.reduce((s,r)=>s+BigInt(r.amount),0n);
+  tfoot.style.display='';
+  tfoot.innerHTML=`<tr><td colspan="2" style="text-align:right;">Total</td><td class="r">$${parseFloat(ethers.formatUnits(tot,6)).toFixed(2)}</td><td></td></tr>`;
+}
+
+function renderRew(){
+  const tfoot=document.getElementById('tf-rew');
+  if(!rewardsLoaded){
+    document.getElementById('tb-rew').innerHTML='<tr><td colspan="4" class="empty">Run ⟳ Full Scan to load reward data</td></tr>';
+    document.getElementById('meta-rew').textContent='not loaded';
+    tfoot.style.display='none';return;
+  }
+  document.getElementById('meta-rew').textContent=fRew.length+' rewards';
+  if(!fRew.length){document.getElementById('tb-rew').innerHTML='<tr><td colspan="4" class="empty">No rewards in this period</td></tr>';tfoot.style.display='none';return;}
+  document.getElementById('tb-rew').innerHTML=fRew.map(r=>`<tr>
+    <td style="white-space:nowrap;font-size:0.72rem;">${r.ts?toCT(r.ts):'—'}</td>
+    <td class="mn">${sh(r.to)}</td>
+    <td class="r g">${fSK(r.amount)} SKOOP</td>
+    <td><a class="lnk" href="${CFG.EXPLORER}/tx/${r.txHash}" target="_blank" rel="noopener">${shh(r.txHash)}</a></td>
+  </tr>`).join('');
+  const tot=fRew.reduce((s,r)=>s+BigInt(r.amount),0n);
+  tfoot.style.display='';
+  tfoot.innerHTML=`<tr><td colspan="2" style="text-align:right;">Total Rewards</td><td class="r">${fSK(tot)} ${BUSINESS_CONFIG.tokenSymbol}</td><td></td></tr>`;
+}
+
+// ── QUICK ACTION BANNER ───────────────────────────────────────────────────────
+function renderQuickActions(){
+  const now=Math.floor(Date.now()/1000);
+  const readySKOOP=pendingReceipts.filter(r=>!r.isUsdc&&r.ts&&now>r.ts+CFG.REFUND_WINDOW);
+  const readyUSDC=pendingReceipts.filter(r=>r.isUsdc&&r.ts&&now>r.ts+CFG.REFUND_WINDOW);
+  const banner=document.getElementById('action-banner');
+  if(!readySKOOP.length&&!readyUSDC.length){banner.classList.remove('on');return;}
+  const parts=[];
+  if(readySKOOP.length)parts.push(`${readySKOOP.length} ${BUSINESS_CONFIG.tokenSymbol} receipt${readySKOOP.length!==1?'s':''} ready to burn`);
+  if(readyUSDC.length)parts.push(`${readyUSDC.length} ${BUSINESS_CONFIG.stablecoinSymbol} receipt${readyUSDC.length!==1?'s':''} ready to settle`);
+  document.getElementById('ab-msg').textContent=parts.join(' · ');
+  document.getElementById('ab-burn-btn').style.display=readySKOOP.length?'':'none';
+  document.getElementById('ab-settle-btn').style.display=readyUSDC.length?'':'none';
+  banner.classList.add('on');
+}
+
+// ── VOID LOG ──────────────────────────────────────────────────────────────────
+function renderVoids(){
+  const{from,to}=getRange();
+  const fV=allVoided.filter(v=>v.ts>=from&&v.ts<=to);
+  document.getElementById('meta-voids').textContent=fV.length+' void'+(fV.length!==1?'s':'');
+  const tfoot=document.getElementById('tf-voids');
+  if(!fV.length){
+    document.getElementById('tb-voids').innerHTML='<tr><td colspan="7" class="empty">No voids in this period</td></tr>';
+    tfoot.style.display='none';return;
+  }
+  document.getElementById('tb-voids').innerHTML=fV.map(v=>{
+    const orig=allTx.find(t=>t.receiptId===v.receiptId);
+    const isUsdc=v.paymentToken?.toLowerCase()===CFG.USDC.toLowerCase();
+    const badge=isUsdc?usdcBadge:skBadge;
+    const amt=isUsdc?fU(v.tokenAmount):fSK(v.tokenAmount)+' '+BUSINESS_CONFIG.tokenSymbol;
+    const total=orig?f$(orig.totalCents):'—';
+    const payer=orig?sh(orig.payer):'—';
+    return`<tr>
+      <td style="white-space:nowrap;font-size:0.72rem;">${toCT(v.ts)}</td>
+      <td>${badge}</td>
+      <td class="mn">${v.receiptId.slice(0,10)}…</td>
+      <td class="r">${amt}</td>
+      <td class="r" style="color:var(--ink-lt);">${total}</td>
+      <td class="mn">${payer}</td>
+      <td><a class="lnk" href="${CFG.EXPLORER}/tx/${v.txHash}" target="_blank" rel="noopener">${shh(v.txHash)}</a></td>
+    </tr>`;
+  }).join('');
+  const totUSDC=fV.filter(v=>v.paymentToken?.toLowerCase()===CFG.USDC.toLowerCase()).reduce((s,v)=>s+BigInt(v.tokenAmount),0n);
+  const totSK=fV.filter(v=>v.paymentToken?.toLowerCase()!==CFG.USDC.toLowerCase()).reduce((s,v)=>s+BigInt(v.tokenAmount),0n);
+  tfoot.style.display='';
+  const parts=[];
+  if(totSK>0n)parts.push(fSK(totSK)+' '+BUSINESS_CONFIG.tokenSymbol+' refunded');
+  if(totUSDC>0n)parts.push(fU(totUSDC)+' '+BUSINESS_CONFIG.stablecoinSymbol+' refunded');
+  tfoot.innerHTML=`<tr><td>Totals</td><td></td><td></td><td class="r">${parts.join(' · ')||'—'}</td><td colspan="3"></td></tr>`;
+}
+
+// ── CUSTOMER STATS ────────────────────────────────────────────────────────────
+function renderCustomerStats(){
+  if(!allTx.length)return;
+  const netTx=fTx.filter(t=>!t.voided);
+  const walletMap={};
+  netTx.forEach(t=>{
+    const w=t.payer.toLowerCase();
+    if(!walletMap[w])walletMap[w]={count:0,lastTs:0,addr:t.payer};
+    walletMap[w].count++;
+    if(t.ts>walletMap[w].lastTs)walletMap[w].lastTs=t.ts;
+  });
+  const wallets=Object.keys(walletMap);
+  const uniq=wallets.length;
+  const repeat=wallets.filter(w=>walletMap[w].count>1).length;
+  const avgV=uniq?netTx.length/uniq:0;
+  let topW='',topC=0;
+  wallets.forEach(w=>{if(walletMap[w].count>topC){topC=walletMap[w].count;topW=w;}});
+  document.getElementById('c-uniq').textContent=uniq.toLocaleString();
+  document.getElementById('c-uniq-sub').textContent='In selected period';
+  document.getElementById('c-repeat').textContent=repeat.toLocaleString();
+  document.getElementById('c-repeat-sub').textContent=uniq?Math.round(repeat/uniq*100)+'% of wallets':'';
+  document.getElementById('c-avgv').textContent=avgV.toFixed(1);
+  document.getElementById('c-top').textContent=topW?sh(walletMap[topW].addr):'—';
+  document.getElementById('c-top-sub').textContent=topC?topC+' visit'+(topC!==1?'s':''):'';
+  document.getElementById('meta-cust').textContent=`${uniq} wallet${uniq!==1?'s':''} · ${repeat} repeat`;
+  if(allTx.length)document.getElementById('top-spenders-btn').disabled=false;
+  const sorted=wallets.sort((a,b)=>walletMap[b].count-walletMap[a].count).slice(0,20);
+  if(sorted.length){
+    document.getElementById('tb-top-spenders').innerHTML=sorted.map((w,i)=>`<tr>
+      <td style="font-size:0.7rem;color:var(--ink-lt);">${i+1}</td>
+      <td class="mn">${sh(walletMap[w].addr)}</td>
+      <td class="r">${walletMap[w].count}</td>
+      <td class="r mn" style="color:var(--ink-lt);" id="ts-${w}">—</td>
+      <td style="font-size:0.68rem;color:var(--ink-lt);">${toDate(walletMap[w].lastTs)}</td>
+    </tr>`).join('');
+  }
+}
+
+async function loadTopSpenders(){
+  const btn=document.getElementById('top-spenders-btn');
+  btn.disabled=true;btn.textContent='Loading…';
+  try{
+    const pub=new ethers.JsonRpcProvider(CFG.RPC);
+    const esc=new ethers.Contract(CFG.ESCROW,ABI_ESC,pub);
+    const allWalletMap={};
+    allTx.filter(t=>!t.voided).forEach(t=>{
+      const w=t.payer.toLowerCase();
+      if(!allWalletMap[w])allWalletMap[w]={count:0,lastTs:0,addr:t.payer};
+      allWalletMap[w].count++;
+      if(t.ts>allWalletMap[w].lastTs)allWalletMap[w].lastTs=t.ts;
+    });
+    const sorted=Object.keys(allWalletMap).sort((a,b)=>allWalletMap[b].count-allWalletMap[a].count).slice(0,20);
+    // ensure rows exist (renderCustomerStats may have used different filter)
+    const existingRows=document.getElementById('tb-top-spenders').querySelectorAll('tr').length;
+    if(!existingRows||existingRows===1){
+      document.getElementById('tb-top-spenders').innerHTML=sorted.map((w,i)=>`<tr>
+        <td style="font-size:0.7rem;color:var(--ink-lt);">${i+1}</td>
+        <td class="mn">${sh(allWalletMap[w].addr)}</td>
+        <td class="r">${allWalletMap[w].count}</td>
+        <td class="r mn" style="color:var(--ink-lt);" id="ts-${w}">—</td>
+        <td style="font-size:0.68rem;color:var(--ink-lt);">${toDate(allWalletMap[w].lastTs)}</td>
+      </tr>`).join('');
+    }
+    for(let i=0;i<sorted.length;i+=5){
+      const batch=sorted.slice(i,i+5);
+      await Promise.all(batch.map(async w=>{
+        try{
+          const v=await esc.totalSpentByWallet(allWalletMap[w].addr);
+          const el=document.getElementById('ts-'+w);
+          if(el)el.textContent=fSK(v)+' SK';
+        }catch{}
+      }));
+      if(i+5<sorted.length)await new Promise(r=>setTimeout(r,300));
+    }
+    showToast('Top spenders loaded','success');
+  }catch(e){showToast('Load failed: '+(e?.message||'').slice(0,40),'error');}
+  btn.textContent='Reload';btn.disabled=false;
+}
+
+// ── TOKENOMICS ────────────────────────────────────────────────────────────────
+function renderTokenomics(){
+  if(!skoopUSD)return;
+  const pStr=skoopUSD<0.001?'$'+skoopUSD.toFixed(6):skoopUSD<0.01?'$'+skoopUSD.toFixed(4):'$'+skoopUSD.toFixed(3);
+  document.getElementById('tok-price').textContent=pStr;
+  if(skoopTotalSupply>0n){
+    const circ=parseFloat(ethers.formatUnits(skoopTotalSupply,6));
+    document.getElementById('tok-circ').textContent=circ>=1e6?(circ/1e6).toFixed(2)+'M':(circ/1e3).toFixed(1)+'K';
+    const mcap=circ*skoopUSD;
+    document.getElementById('tok-mcap').textContent=mcap>=1e6?'$'+(mcap/1e6).toFixed(2)+'M':mcap>=1e3?'$'+(mcap/1e3).toFixed(1)+'K':'$'+mcap.toFixed(0);
+    document.getElementById('tok-mcap-sub').textContent=circ.toLocaleString('en-US',{maximumFractionDigits:0})+' circulating';
+  }
+  const escrowBurned=allBurnBatches.reduce((s,b)=>s+BigInt(b.totalSkoop),0n);
+  const tsyBurned=allTsySettles.reduce((s,t)=>s+BigInt(t.skoopBurned),0n);
+  const totalBurned=escrowBurned+tsyBurned;
+  const tbN=parseFloat(ethers.formatUnits(totalBurned,6));
+  document.getElementById('tok-total-burned').textContent=tbN>=1e6?(tbN/1e6).toFixed(2)+'M':tbN>=1e3?(tbN/1e3).toFixed(1)+'K':tbN.toFixed(0);
+  const now=Math.floor(Date.now()/1000);
+  const cutoff=now-30*86400;
+  const mBurnEsc=allBurnBatches.filter(b=>b.ts>=cutoff).reduce((s,b)=>s+BigInt(b.totalSkoop),0n);
+  const mBurnTsy=allTsySettles.filter(t=>t.ts>=cutoff).reduce((s,t)=>s+BigInt(t.skoopBurned),0n);
+  const mbN=parseFloat(ethers.formatUnits(mBurnEsc+mBurnTsy,6));
+  document.getElementById('tok-monthly-burn').textContent=mbN>=1e6?(mbN/1e6).toFixed(2)+'M':mbN>=1e3?(mbN/1e3).toFixed(1)+'K':mbN.toFixed(0);
+  const rewTotal=fRew.reduce((s,r)=>s+BigInt(r.amount),0n);
+  const rewUSD=parseFloat(ethers.formatUnits(rewTotal,6))*skoopUSD;
+  const revUSD=fTx.filter(t=>!t.voided).reduce((s,t)=>s+t.subtotalCents,0)/100;
+  document.getElementById('tok-rew-cost').textContent=revUSD>0?((rewUSD/revUSD)*100).toFixed(1)+'%':'—';
+  document.getElementById('meta-tok').textContent=`${pStr} SKOOP · ${skoopTotalSupply>0n?parseFloat(ethers.formatUnits(skoopTotalSupply,6)).toLocaleString('en-US',{maximumFractionDigits:0})+' circulating':''}`;
+}
+
+// ── SCAN BAR ──────────────────────────────────────────────────────────────────
+function setScanBar(v){document.getElementById('scan-bar-wrap').classList.toggle('on',v);}
+function setBar(pct,lbl){document.getElementById('bar-fill').style.width=pct+'%';document.getElementById('bar-lbl').textContent=lbl;}
+
+// ── CSV ───────────────────────────────────────────────────────────────────────
+function exportCSV(){
+  const p=period.toUpperCase();
+  const gen=new Date().toLocaleString('en-US',{timeZone:CFG.TZ});
+  const g=fTx.reduce((s,t)=>s+t.subtotalCents,0),x=fTx.reduce((s,t)=>s+t.taxCents,0),tot=fTx.reduce((s,t)=>s+t.totalCents,0);
+  const sk=fTx.filter(t=>!t.isUsdc).reduce((s,t)=>s+BigInt(t.tokenAmount),0n);
+  const uc=fTx.filter(t=>t.isUsdc).reduce((s,t)=>s+BigInt(t.tokenAmount),0n);
+  const B=BUSINESS_CONFIG,SYM=B.tokenSymbol,SSYM=B.stablecoinSymbol;
+  let csv=`${B.name} — Accounting\nPeriod: ${p} | Generated: ${gen}\n\n`;
+  csv+=`SUMMARY\nNet Sales,$${(g/100).toFixed(2)}\nTax Collected,$${(x/100).toFixed(2)}\nNet Revenue,$${(tot/100).toFixed(2)}\nTransactions,${fTx.length}\n${SYM} Captured,${fSK(sk)}\n${SSYM} Captured,$${parseFloat(ethers.formatUnits(uc,CFG.STABLE_DEC)).toFixed(2)}\n\n`;
+  csv+=`TRANSACTIONS\nDate/Time,Token,Receipt ID,Gross,Tax,Total,Amount,Items,Payer\n`;
+  fTx.forEach(t=>{csv+=`"${toCT(t.ts)}","${t.isUsdc?SSYM:SYM}","${t.receiptId}","${(t.subtotalCents/100).toFixed(2)}","${(t.taxCents/100).toFixed(2)}","${(t.totalCents/100).toFixed(2)}","${t.isUsdc?parseFloat(ethers.formatUnits(BigInt(t.tokenAmount),CFG.STABLE_DEC)).toFixed(2):fSK(t.tokenAmount)}","${t.itemCount}","${t.payer}"\n`;});
+  csv+=`\n${SYM} BURNS\nDate/Time,Receipts Burned,${SYM} Burned,Tx Hash\n`;
+  fBurnBatches.forEach(b=>{csv+=`"${toCT(b.ts)}","${b.count}","${fSK(b.totalSkoop)}","${b.txHash}"\n`;});
+  csv+=`\n${SSYM} SETTLEMENTS\nDate/Time,Receipts,${SSYM} Sent,Tx Hash\n`;
+  fUSDCBatches.forEach(b=>{csv+=`"${toCT(b.ts)}","${b.count}","${parseFloat(ethers.formatUnits(BigInt(b.totalUsdc),CFG.STABLE_DEC)).toFixed(2)}","${b.txHash}"\n`;});
+  csv+=`\nTREASURY DEPLOYS\nDate/Time,${SSYM} In,Buyback ${SSYM},LP ${SSYM},${SYM} Burned,Tx Hash\n`;
+  fTsySettles.forEach(t=>{csv+=`"${toCT(t.ts)}","${parseFloat(ethers.formatUnits(BigInt(t.totalUSDC),CFG.STABLE_DEC)).toFixed(2)}","${parseFloat(ethers.formatUnits(BigInt(t.burnUSDC),CFG.STABLE_DEC)).toFixed(2)}","${parseFloat(ethers.formatUnits(BigInt(t.lpUSDC),CFG.STABLE_DEC)).toFixed(2)}","${fSK(t.skoopBurned)}","${t.txHash}"\n`;});
+  csv+=`\nREWARDS\nDate/Time,Recipient,${SYM} Sent,Tx Hash\n`;
+  fRew.forEach(r=>{csv+=`"${r.ts?toCT(r.ts):'—'}","${r.to}","${fSK(r.amount)}","${r.txHash}"\n`;});
+  const{from:csvFrom,to:csvTo}=getRange();
+  const fV=allVoided.filter(v=>v.ts>=csvFrom&&v.ts<=csvTo);
+  csv+=`\nVOIDS\nDate/Time (CT),Token,Receipt,Amount,Total (at capture),Payer,Tx Hash\n`;
+  fV.forEach(v=>{
+    const orig=allTx.find(t=>t.receiptId===v.receiptId);
+    const isUsdc=v.paymentToken?.toLowerCase()===CFG.USDC.toLowerCase();
+    const amt=isUsdc?parseFloat(ethers.formatUnits(BigInt(v.tokenAmount),6)).toFixed(2):fSK(v.tokenAmount);
+    csv+=`"${toCT(v.ts)}","${isUsdc?'USDC':'SKOOP'}","${v.receiptId}","${amt}","${orig?(orig.totalCents/100).toFixed(2):'—'}","${orig?orig.payer:'—'}","${v.txHash}"\n`;
+  });
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv'}));
+  a.download=`${BUSINESS_CONFIG.name}_${p}_${new Date().toISOString().slice(0,10)}.csv`;a.click();
+  showToast('CSV downloaded','success');
+}
+
+// ── PDF ───────────────────────────────────────────────────────────────────────
+function exportPDF(){
+  const p=period.charAt(0).toUpperCase()+period.slice(1);
+  const gen=new Date().toLocaleString('en-US',{timeZone:CFG.TZ,dateStyle:'long',timeStyle:'short'});
+  const g=fTx.reduce((s,t)=>s+t.subtotalCents,0),x=fTx.reduce((s,t)=>s+t.taxCents,0),tot=fTx.reduce((s,t)=>s+t.totalCents,0);
+  const sk=fTx.filter(t=>!t.isUsdc).reduce((s,t)=>s+BigInt(t.tokenAmount),0n);
+  const uc=fTx.filter(t=>t.isUsdc).reduce((s,t)=>s+BigInt(t.tokenAmount),0n);
+  const rewTot=fRew.reduce((s,r)=>s+BigInt(r.amount),0n);
+  const B=BUSINESS_CONFIG,SYM=B.tokenSymbol,SSYM=B.stablecoinSymbol;
+  const txR=fTx.map(t=>`<tr><td>${toCT(t.ts)}</td><td>${t.isUsdc?SSYM:SYM}</td><td class="mn">${t.receiptId.slice(0,14)}…</td><td>$${(t.subtotalCents/100).toFixed(2)}</td><td>$${(t.taxCents/100).toFixed(2)}</td><td><b>$${(t.totalCents/100).toFixed(2)}</b></td><td>${t.isUsdc?parseFloat(ethers.formatUnits(BigInt(t.tokenAmount),CFG.STABLE_DEC)).toFixed(2)+' '+SSYM:fSK(t.tokenAmount)+' '+SYM}</td><td>${t.itemCount}</td></tr>`).join('');
+  const buR=fBurnBatches.map(b=>`<tr><td>${toCT(b.ts)}</td><td>${b.count}</td><td><b>${fSK(b.totalSkoop)} ${SYM}</b></td><td class="mn">${b.txHash.slice(0,18)}…</td></tr>`).join('');
+  const usR=fUSDCBatches.map(b=>`<tr><td>${toCT(b.ts)}</td><td>${b.count}</td><td><b>$${parseFloat(ethers.formatUnits(BigInt(b.totalUsdc),CFG.STABLE_DEC)).toFixed(2)}</b></td><td class="mn">${b.txHash.slice(0,18)}…</td></tr>`).join('');
+  const tsR=fTsySettles.map(t=>`<tr><td>${toCT(t.ts)}</td><td>$${parseFloat(ethers.formatUnits(BigInt(t.totalUSDC),CFG.STABLE_DEC)).toFixed(2)}</td><td>$${parseFloat(ethers.formatUnits(BigInt(t.burnUSDC),CFG.STABLE_DEC)).toFixed(2)}</td><td>$${parseFloat(ethers.formatUnits(BigInt(t.lpUSDC),CFG.STABLE_DEC)).toFixed(2)}</td><td>${fSK(t.skoopBurned)} ${SYM}</td></tr>`).join('');
+  const reR=fRew.map(r=>`<tr><td>${r.ts?toCT(r.ts):'—'}</td><td class="mn">${r.to}</td><td>${fSK(r.amount)} ${SYM}</td></tr>`).join('');
+  const html=`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>${B.name} Accounting — ${p}</title>
+  <style>*{box-sizing:border-box;margin:0;padding:0;}body{font-family:'Helvetica Neue',Arial,sans-serif;font-size:10px;color:#2a1f1a;padding:28px 36px;line-height:1.5;}
+  h1{font-size:18px;font-weight:300;letter-spacing:0.15em;color:${B.colors.brand};margin-bottom:2px;}.sub{font-size:9px;color:${B.colors.inkLight};margin-bottom:16px;}
+  .kpis{display:flex;gap:10px;margin-bottom:16px;flex-wrap:wrap;}.kpi{flex:1;min-width:90px;background:#f0f9f5;border-radius:5px;padding:7px 9px;}
+  .kl{font-size:7px;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:${B.colors.inkMid};margin-bottom:2px;}.kv{font-size:15px;font-weight:600;color:${B.colors.ink};}
+  h2{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.1em;color:${B.colors.brand};margin:14px 0 5px;border-bottom:1px solid ${B.colors.mint};padding-bottom:3px;}
+  table{width:100%;border-collapse:collapse;font-size:8.5px;margin-bottom:3px;}
+  th{text-align:left;padding:4px 5px;background:${B.colors.apricot};font-size:7.5px;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:${B.colors.inkMid};}
+  td{padding:3px 5px;border-bottom:1px solid rgba(42,31,26,0.06);}.mn{font-family:monospace;font-size:7.5px;}
+  tfoot td{background:#e8f5ef;font-weight:700;color:${B.colors.brand};}
+  .foot{margin-top:20px;font-size:7.5px;color:${B.colors.inkLight};text-align:center;border-top:1px solid #eee;padding-top:8px;}
+  @media print{body{padding:12px;}}</style></head><body>
+  <h1>${B.name} — Accounting</h1>
+  <div class="sub">Period: ${p} &nbsp;|&nbsp; Generated: ${gen} &nbsp;|&nbsp; On-chain data</div>
+  <div class="kpis">
+    <div class="kpi"><div class="kl">Net Sales</div><div class="kv">$${(g/100).toFixed(2)}</div></div>
+    <div class="kpi"><div class="kl">Tax Collected</div><div class="kv">$${(x/100).toFixed(2)}</div></div>
+    <div class="kpi"><div class="kl">Net Revenue</div><div class="kv">$${(tot/100).toFixed(2)}</div></div>
+    <div class="kpi"><div class="kl">${SYM} Captured</div><div class="kv">${fSK(sk)}</div></div>
+    <div class="kpi"><div class="kl">${SSYM} Captured</div><div class="kv">$${parseFloat(ethers.formatUnits(uc,CFG.STABLE_DEC)).toFixed(2)}</div></div>
+    <div class="kpi"><div class="kl">Rewards Issued</div><div class="kv">${fSK(rewTot)}</div></div>
+  </div>
+  <h2>Transactions (${fTx.length})</h2>
+  <table><thead><tr><th>Date/Time</th><th>Token</th><th>Receipt</th><th>Gross</th><th>Tax</th><th>Total</th><th>Amount</th><th>Items</th></tr></thead>
+  <tbody>${txR||'<tr><td colspan="8" style="color:#a08880;">No transactions</td></tr>'}</tbody>
+  <tfoot><tr><td colspan="2">Totals</td><td></td><td>$${(g/100).toFixed(2)}</td><td>$${(x/100).toFixed(2)}</td><td>$${(tot/100).toFixed(2)}</td><td></td><td></td></tr></tfoot></table>
+  <h2>${SYM} Burns (${fBurnBatches.length} batches)</h2>
+  <table><thead><tr><th>Date/Time</th><th>Receipts</th><th>${SYM} Burned</th><th>Tx Hash</th></tr></thead>
+  <tbody>${buR||'<tr><td colspan="4" style="color:#a08880;">No burns</td></tr>'}</tbody></table>
+  <h2>${SSYM} Settlements (${fUSDCBatches.length} batches)</h2>
+  <table><thead><tr><th>Date/Time</th><th>Receipts</th><th>${SSYM} Sent</th><th>Tx Hash</th></tr></thead>
+  <tbody>${usR||'<tr><td colspan="4" style="color:#a08880;">No ${SSYM} settlements</td></tr>'}</tbody></table>
+  <h2>Treasury Deploys (${fTsySettles.length})</h2>
+  <table><thead><tr><th>Date/Time</th><th>${SSYM} In</th><th>Buyback</th><th>LP</th><th>${SYM} Burned</th></tr></thead>
+  <tbody>${tsR||'<tr><td colspan="5" style="color:#a08880;">No treasury deploys</td></tr>'}</tbody></table>
+  <h2>Rewards (${fRew.length})</h2>
+  <table><thead><tr><th>Date/Time</th><th>Recipient</th><th>${SYM} Sent</th></tr></thead>
+  <tbody>${reR||'<tr><td colspan="3" style="color:#a08880;">No rewards</td></tr>'}</tbody>
+  <tfoot><tr><td colspan="2">Total Rewards</td><td>${fSK(rewTot)} ${SYM}</td></tr></tfoot></table>
+  <div class="foot">${B.name} · ${B.location} · Escrow ${CFG.ESCROW} · Treasury ${CFG.TREASURY}</div>
+  </body></html>`;
+  const win=window.open('','_blank');win.document.write(html);win.document.close();win.focus();
+  setTimeout(()=>win.print(),400);
+  showToast('PDF print dialog opened','success');
+}
+
+// ── TOAST ─────────────────────────────────────────────────────────────────────
+function showToast(msg,type=''){
+  const t=document.getElementById('toast');t.textContent=msg;t.className='show '+(type||'');
+  clearTimeout(toastT);toastT=setTimeout(()=>t.classList.remove('show'),4000);
+}
+
+// ── BRANDING ──────────────────────────────────────────────────────────────────
+function patchBranding(){
+  const B=BUSINESS_CONFIG,co=B.colors,r=document.documentElement.style;
+  r.setProperty('--coral',      co.coral);
+  r.setProperty('--coral-mid',  co.coralMid);
+  r.setProperty('--coral-deep', co.coralDeep);
+  r.setProperty('--mint',       co.mint);
+  r.setProperty('--mint-mid',   co.mintMid);
+  r.setProperty('--apricot',    co.apricot);
+  r.setProperty('--lavender',   co.lavender);
+  r.setProperty('--sand',       co.sand);
+  r.setProperty('--green',      co.brand);
+  r.setProperty('--green-dk',   co.brandDark);
+  r.setProperty('--green-lt',   co.brandLight);
+  r.setProperty('--cream',      co.cream);
+  r.setProperty('--ink',        co.ink);
+  r.setProperty('--ink-mid',    co.inkMid);
+  r.setProperty('--ink-lt',     co.inkLight);
+  document.title = B.name+' — Accounting';
+  document.querySelector('.logo img').src = B.logoUrl;
+  document.querySelector('.logo img').alt = B.name;
+  document.querySelector('.logo-text').textContent = B.name;
+  document.querySelector('.gate-desc').textContent =
+    'Connect the '+B.name+' owner wallet to view accounting reports.';
+  document.querySelector('.gate-addr').textContent = B.ownerWallet;
+  const taxSub=document.getElementById('k-tax-sub');
+  if(taxSub)taxSub.textContent=B.taxLabel;
+  // Token symbol labels
+  const feesUSDCLbl=document.querySelector('#tsy-fees-usdc')?.closest('.tsy-stat')?.querySelector('.tsy-lbl');
+  if(feesUSDCLbl)feesUSDCLbl.textContent='Uncollected '+B.stablecoinSymbol;
+  const feesSKLbl=document.querySelector('#tsy-fees-skoop')?.closest('.tsy-stat')?.querySelector('.tsy-lbl');
+  if(feesSKLbl)feesSKLbl.textContent='Uncollected '+B.tokenSymbol;
+}
+
+const today=new Date().toISOString().slice(0,10);
+document.getElementById('date-from').value=today;
+document.getElementById('date-to').value=today;
+patchBranding();
+</script>
+</body>
+</html>
