@@ -1,0 +1,27 @@
+{
+  "_readme": [
+    "Edit this file to change the register's menu. Commit it and the POS picks it up on the next load — no code change.",
+    "Every field is checked before use. A bad entry is dropped; if nothing survives, the register falls back to the menu built into the page, so it can never end up with no menu.",
+    "id     — letters, numbers, - and _ only. Must be unique. Changing an id is fine; it is not stored anywhere.",
+    "cat    — must match one of the category ids below, or the item will not show under any tab (it still shows under All).",
+    "price  — a number in dollars, 0 or more. This is what the customer is charged. Use 8 or 8.50, not \"$8.50\".",
+    "emoji  — shown when img is empty.",
+    "img    — optional image URL (https:// or /path). Leave as \"\" to use the emoji.",
+    "The Custom $ tile is built into the register and is not listed here."
+  ],
+  "categories": [
+    { "id": "scoops", "label": "Scoops" },
+    { "id": "drinks", "label": "Drinks" },
+    { "id": "extras", "label": "Extras" }
+  ],
+  "items": [
+    { "id": "s1", "cat": "scoops", "emoji": "🍦", "name": "Kids Scoop", "price": 6.00,  "img": "" },
+    { "id": "s2", "cat": "scoops", "emoji": "🍧", "name": "Small",      "price": 8.00,  "img": "" },
+    { "id": "s3", "cat": "scoops", "emoji": "🍨", "name": "Trio",       "price": 10.00, "img": "" },
+    { "id": "s4", "cat": "scoops", "emoji": "🫙", "name": "Pint",       "price": 14.00, "img": "" },
+    { "id": "d1", "cat": "drinks", "emoji": "☕", "name": "Latte",      "price": 7.00,  "img": "" },
+    { "id": "d2", "cat": "drinks", "emoji": "💧", "name": "Water",      "price": 1.00,  "img": "" },
+    { "id": "e1", "cat": "extras", "emoji": "🍟", "name": "Fries",      "price": 6.50,  "img": "" },
+    { "id": "e2", "cat": "extras", "emoji": "🍦", "name": "Cone",       "price": 0.75,  "img": "" }
+  ]
+}
