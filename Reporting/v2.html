@@ -528,7 +528,7 @@ const BUSINESS_CONFIG = {
 
   // ── Scan ────────────────────────────────────────────────────────────────
   startBlock:        46180000,
-  chunkSize:         1800,   // Base's public RPC caps eth_getLogs at a 2,000-block range
+  chunkSize:         900,    // Base's eth_getLogs cap has gone 10k -> 2k -> 1k; 900 leaves headroom
   refundWindowDays:  1,
 
   // ── Accounting ──────────────────────────────────────────────────────────
@@ -1088,7 +1088,7 @@ async function doSettle(){
 //   USDC  — an EIP-681 transfer straight to the treasury, never touches the escrow.
 //           usdcEscrowBalance() is structurally always 0. Nothing to settle; the money
 //           is already in the treasury. It is shown so the page accounts for it.
-const OPEN_SPAN=1800, OPEN_PAR=12, OPEN_FLOOR=CFG.START_BLOCK, MAX_VERIFY=300;
+const OPEN_SPAN=900, OPEN_PAR=12, OPEN_FLOOR=CFG.START_BLOCK, MAX_VERIFY=300;
 const MAX_SCAN=1500000; // ~35 days — a direct transfer into the escrow never reconciles
 const RECON_KEY='kokos_recon_v2_'+CFG.ESCROW.slice(-8);
 let reconState=null;
@@ -1102,6 +1102,12 @@ async function openLogs(pub,filter,a,b,att=0){
   try{
     return await pub.send('eth_getLogs',[{...filter,fromBlock:'0x'+a.toString(16),toBlock:'0x'+b.toString(16)}]);
   }catch(e){
+    // Range cap tightened again? Split rather than fail.
+    if(/-32614|limited to a|Payload Too Large|\b413\b/i.test(JSON.stringify(e&&(e.info||e.error||{message:e.message})||''))&&b>a){
+      const mid=Math.floor((a+b)/2);
+      const [x,y]=await Promise.all([openLogs(pub,filter,a,mid),openLogs(pub,filter,mid+1,b)]);
+      return x.concat(y);
+    }
     if(att<4){await new Promise(r=>setTimeout(r,500*(att+1)));return openLogs(pub,filter,a,b,att+1);}
     throw e;
   }

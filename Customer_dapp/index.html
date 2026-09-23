@@ -979,8 +979,13 @@ async function updateFromBal(){
 // rate-limited is retried — an empty chunk would read as "no rewards", which is worse
 // than showing nothing at all.
 const ACTIVITY_WINDOW_BLOCKS=43200; // ~24h
-const LOG_CHUNK=1800;               // safely under the 2k cap
+const LOG_CHUNK=900;                // Base's cap has gone 10k -> 2k -> 1k; 900 leaves headroom
 const LOG_PAR=6;                    // concurrent chunks before Base starts 429ing
+// A range that is still too wide is split rather than failed. Base has tightened this
+// limit twice already, so the number above is a hint, not a contract — this is what
+// stops the next tightening from silently emptying the rewards feed again.
+const isRangeErr=e=>/-32614|limited to a|Payload Too Large|\b413\b/i.test(
+  JSON.stringify(e&&(e.info||e.error||{message:e.message})||''));
 let _lastActivityLoad=0;
 
 // Mirrors the activity row into the balance block, where it's always on screen.
@@ -1025,6 +1030,11 @@ async function loadActivityFeed(opts){
           toBlock:'0x'+b.toString(16)
         }]);
       }catch(err){
+        if(isRangeErr(err)&&b>a){
+          const mid=Math.floor((a+b)/2);
+          const [x,y]=await Promise.all([fetchChunk(a,mid),fetchChunk(mid+1,b)]);
+          return x.concat(y);
+        }
         if(attempt<4){
           await new Promise(r=>setTimeout(r,500*(attempt+1)));
           return fetchChunk(a,b,attempt+1);

@@ -519,7 +519,7 @@ const BUSINESS_CONFIG = {
 
   // ── Scan ────────────────────────────────────────────────────────────────
   startBlock:        46180000,
-  chunkSize:         1800,   // Base's public RPC caps eth_getLogs at a 2,000-block range
+  chunkSize:         900,    // Base's eth_getLogs cap has gone 10k -> 2k -> 1k; 900 leaves headroom
   refundWindowDays:  1,
 
   // ── Accounting ──────────────────────────────────────────────────────────
