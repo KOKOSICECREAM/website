@@ -97,6 +97,29 @@ completed. The existing treasury can still burn-only if the owner calls
 
 Use the `…34f1` address for the new deployment and this is simply fixed.
 
+## The local sources match what is deployed
+
+Checked against the verified source on Basescan, not assumed. Comments, imports, pragma
+and whitespace normalised, then hashed:
+
+```
+KOKOSPaymentEscrowV3  local == deployed 0x4db1DA87…   sha256 557324d3fd97db04…
+KOKOSTreasuryV3       local == deployed 0x187b746a…   sha256 566d99c9b88e533f…
+```
+
+So redeploying from `~/KOKOS/BASE contracts/` reproduces current production behaviour
+exactly. The 2026-09-20 edit to `KOKOSTreasuryV3.sol` was the header comment correcting
+the `positionManager` address — comment-only, no code change, which is why the normalised
+hashes still match.
+
+**Compiler settings to reproduce and verify:** `v0.8.24+commit.e11b9ed9`, optimizer
+**enabled**, **200 runs**.
+
+A local `forge build` will not produce byte-identical bytecode, and that is expected: the
+deployed artifacts were flattened with mixed OpenZeppelin versions (5.0.0, 5.0.1, 5.1.0,
+5.3.0, 5.4.0, 5.5.0, 5.6.0 all appear inline), whereas a clean `forge install` pins one
+version. Same source, different dependency snapshot — it changes bytecode, not behaviour.
+
 ## Checklist to go live
 
 1. Deploy `KOKOSTreasuryV3` (args above). Needs only the token CA — no pool required.
