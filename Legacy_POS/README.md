@@ -60,11 +60,49 @@ Treasury V3 0x187b746a…  skoopToken -> 0xfd3ce21c…  (immutable)
   refuses SKOOP checkouts outright with "Waiting for SKOOP price…". Seed the pool at the
   same 3000 fee tier the old pools use.
 
+## Deploy inputs (verified against the live contracts)
+
+Only the **new token CA is needed to deploy**. Neither constructor takes or touches a
+pool — the escrow never mentions one, and the treasury only uses `poolFee` (mutable,
+default 3000) at settle time. Pools are a *runtime* dependency, not a deploy dependency.
+
+```
+KOKOSTreasuryV3(skoopToken_, usdcToken_, swapRouter_, positionManager_)
+  skoopToken_       0xBa147713adF122A8Fc224e52Cb431D7919831939
+  usdcToken_        0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913
+  swapRouter_       0x2626664c2603336E57B271c5C0b26F421741e481
+  positionManager_  0x03a520b32C04BF3bEEf7BEb72E919cf822Ed34f1   <-- NOT the live value
+
+KOKOSPaymentEscrowV3(skoopToken_, usdcToken_, initialSigner_, treasury_)
+  skoopToken_       0xBa147713adF122A8Fc224e52Cb431D7919831939
+  usdcToken_        0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913
+  initialSigner_    0x4eCc3f03c018208Ae5932eAB91bbD82F37F56D9B   (current POS signer)
+  treasury_         <address of the treasury deployed in step 2>
+```
+
+### Do not copy the live treasury's positionManager
+
+The deployed treasury at `0x187b746a…` holds
+`positionManager = 0x03a520b32c04BF3BeEF7beB72E919cF822ed34F2`, and **that address has no
+code on Base**. The real Uniswap V3 `NonfungiblePositionManager` is the `…34f1` above —
+verified: 24,384 bytes, `name() = "Uniswap V3 Positions NFT-V1"`, factory matches the V3
+factory. The two differ only in the last character.
+
+Because `positionManager` is `immutable`, the live treasury's LP path can never work:
+`settle()` splits 60/40, and the 40% branch calls `positionManager.mint(...)` on a
+codeless address, which reverts the whole transaction. On-chain state agrees —
+`totalUSDCDeployed = 0`, `totalSkoopBurned = 0`, `lpPositionId = 0`: `settle()` has never
+completed. The existing treasury can still burn-only if the owner calls
+`setSplit(10000, 0)`, which skips the LP branch.
+
+Use the `…34f1` address for the new deployment and this is simply fixed.
+
 ## Checklist to go live
 
-1. Create the USDC/SKOOP pool (fee 3000) for the new token and seed liquidity.
-2. Deploy `KOKOSTreasuryV3` with the new token.
-3. Deploy `KOKOSPaymentEscrowV3` with the new token + that treasury + the POS signer.
+1. Deploy `KOKOSTreasuryV3` (args above). Needs only the token CA — no pool required.
+2. Deploy `KOKOSPaymentEscrowV3` with that treasury address.
+3. Create the USDC/SKOOP pool (fee 3000) for the new token and seed liquidity. Required
+   before the apps can price anything, and before the treasury's `settle()` can swap.
 4. Put those addresses into **both** files (`BRAND.escrowContract` / `BRAND.skoopPool` in
    the POS, `CFG.ESCROW` / `POOL_*` in the dapp). The banner clears itself.
 5. Fund the POS signer wallet with the new token so rewards can send.
