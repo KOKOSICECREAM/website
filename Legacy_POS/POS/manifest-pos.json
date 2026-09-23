@@ -1,0 +1,31 @@
+{
+  "name": "KOKOS POS (Legacy \u00b7 new token)",
+  "short_name": "KOKOS POS Legacy",
+  "description": "Legacy KOKOS terminal running the new SKOOP token",
+  "start_url": "/Legacy_POS/POS/index.html",
+  "scope": "/Legacy_POS/POS/",
+  "display": "standalone",
+  "orientation": "landscape-primary",
+  "background_color": "#fdcec1",
+  "theme_color": "#fdcec1",
+  "icons": [
+    {
+      "src": "/Legacy_POS/POS/KOKOS.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/Legacy_POS/POS/KOKOS.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/Legacy_POS/POS/KOKOS.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ]
+}
