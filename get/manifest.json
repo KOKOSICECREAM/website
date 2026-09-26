@@ -11,19 +11,19 @@
   "theme_color": "#fdcec1",
   "icons": [
     {
-      "src": "/Customer_dapp/KOKOS_SKOOP.png",
+      "src": "/Customer_dapp/KOKOS_SKOOP_192.png",
       "sizes": "192x192",
       "type": "image/png",
       "purpose": "any"
     },
     {
-      "src": "/Customer_dapp/KOKOS_SKOOP.png",
+      "src": "/Customer_dapp/KOKOS_SKOOP_512.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any"
     },
     {
-      "src": "/Customer_dapp/KOKOS_SKOOP.png",
+      "src": "/Customer_dapp/KOKOS_SKOOP_maskable.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "maskable"

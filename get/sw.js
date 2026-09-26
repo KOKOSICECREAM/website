@@ -8,7 +8,7 @@
 //
 // Network-first: this page is print-linked from a QR, so a stale copy could outlive
 // the sticker it came from. Cache is only a fallback for a dead connection.
-const CACHE = 'kokos-get-v1';
+const CACHE = 'kokos-get-v2';   // v2: QR badge and icons moved to the SKOOP PunchCard logo
 const ASSETS = ['./', './index.html', './KOKOS_dapp_QR.svg'];
 
 self.addEventListener('install', e => {
