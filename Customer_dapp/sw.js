@@ -1,6 +1,9 @@
-// Bumped for SKOOP PunchCard (2026-09-26): new token, contracts and icons. Icons are
-// served cache-first, so without a new name installed apps would keep the old ones.
-const CACHE='skoop-v8';
+// BUMP THIS ON EVERY RELEASE of index.html. The page only reloads itself when a new
+// service worker takes over, and the browser only installs a new one when this file's
+// bytes change. Leave it alone and an installed app brought back from the background
+// keeps running the previous build until it is fully closed.
+// v9 2026-09-26: price window cleanup, escrow wording, install-link hiding.
+const CACHE='skoop-v9';
 
 // Third-party libs are version-pinned URLs — safe to serve from cache forever.
 const CDN=[
