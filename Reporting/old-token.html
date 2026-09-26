@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+<meta name="robots" content="noindex,nofollow">
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>KOKOS — Accounting</title>
@@ -151,6 +152,10 @@ tfoot td{background:var(--green-lt);font-weight:700;color:var(--green);border-to
 </style>
 </head>
 <body>
+<div style="background:#7a1f16;color:#fff;font:600 12px/1.5 ui-monospace,monospace;padding:8px 12px;text-align:center;">
+RETIRED CONTRACTS — old KOKOS SKOOPS token (0xfd3c…Eb92), escrow 0x4db1…9121, treasury 0x187b…cdA.
+Kept for the record and to burn the ~1,184 old SKOOP still in the old escrow. Current reporting: <a href="./v2.html" style="color:#fff;">v2.html</a>
+</div>
 
 <header id="topbar">
   <div class="logo">
@@ -230,6 +235,15 @@ tfoot td{background:var(--green-lt);font-weight:700;color:var(--green);border-to
     <div class="kpi"><div class="kl">SKOOP Burned</div><div class="kv" id="k-burned">—</div><div class="ks">All time via burns</div></div>
     <div class="kpi"><div class="kl">Voided</div><div class="kv" id="k-voided">—</div><div class="ks" id="k-voided-sub">Refunded</div></div>
     <div class="kpi"><div class="kl">Unique Customers</div><div class="kv" id="k-wallets">—</div><div class="ks" id="k-wallets-sub">Distinct wallets</div></div>
+  </div>
+
+  <!-- Reconciliation strip. The escrow's own balance is the source of truth for how
+       much is still owed; if the listed receipts don't add up to it, something is
+       missing and settling from this page would be incomplete. -->
+  <div id="recon-strip" style="display:none;margin:0 0 0.6rem;padding:0.6rem 0.8rem;border-radius:8px;font-size:0.76rem;line-height:1.5;border:1px solid transparent;">
+    <div id="recon-headline" style="font-weight:700;"></div>
+    <div id="recon-detail" style="opacity:0.85;margin-top:2px;font-family:ui-monospace,monospace;font-size:0.72rem;"></div>
+    <button id="recon-btn" onclick="loadOpenReceipts({force:true})" style="margin-top:6px;font-size:0.7rem;padding:4px 10px;border-radius:6px;border:1px solid rgba(0,0,0,0.18);background:#fff;cursor:pointer;">Re-check open receipts</button>
   </div>
 
   <!-- ── SETTLEMENT ─────────────────────────────────────────── -->
@@ -499,12 +513,12 @@ const BUSINESS_CONFIG = {
   explorerUrl:  'https://basescan.org',
 
   // ── Contracts ───────────────────────────────────────────────────────────
-  escrow:       '0x46D5520Ef1DeACd6cA332A9510141b28dC6141a1',   // KOKOSPaymentEscrowV3 on SKOOP PunchCard, 2026-09-25
-  treasury:     '0xc35397cBDbcdb24705bc09917f9DdF9E6970C904',   // KOKOSTreasuryV3 (fixed), 2026-09-25
+  escrow:       '0x4db1DA8719f2e51F016d5D54D1175C9f49749121',
+  treasury:     '0x187b746aB9e369c01A540aE098dB29fb0c7AbcdA',
   posSigner:    '0x4eCc3f03c018208Ae5932eAB91bbD82F37F56D9B',
 
   // ── Loyalty / payment token ─────────────────────────────────────────────
-  token:             '0xBa147713adF122A8Fc224e52Cb431D7919831939',   // SKOOP PunchCard
+  token:             '0xfd3ce21c5acd8bbbe576d0e2336c210c3cebeb92',
   tokenSymbol:       'SKOOP',
   tokenDecimals:     6,
 
@@ -514,13 +528,13 @@ const BUSINESS_CONFIG = {
   stablecoinDecimals: 6,
 
   // ── LP / price feed ─────────────────────────────────────────────────────
-  pool:         '0x5185bef315Dee41727865AC26243bD62008d11b1',   // USDC/SKOOP 1%
+  pool:         '0x64Ef20F32445EB0A86f4b97CA895fE508AF253CD',
   positionMgr:  '0x03a520b32C04BF3bEEf7BEb72E919cf822Ed34f1',
 
   // ── Scan ────────────────────────────────────────────────────────────────
-  startBlock:        51804300,   // just before the new treasury (51804303) and escrow (51804311)
+  startBlock:        46180000,
   chunkSize:         900,    // Base's eth_getLogs cap has gone 10k -> 2k -> 1k; 900 leaves headroom
-  refundWindowDays:  1,          // escrow.refundWindow() = 86400 since 2026-09-26
+  refundWindowDays:  1,
 
   // ── Accounting ──────────────────────────────────────────────────────────
   taxRate:      0.0925,             // decimal — 9.25% Nashville
@@ -578,6 +592,12 @@ const ABI_ESC=[
   {inputs:[{name:"receiptIds",type:"bytes32[]"}],name:"burnPayments",outputs:[],stateMutability:"nonpayable",type:"function"},
   {inputs:[{name:"receiptIds",type:"bytes32[]"}],name:"settleUSDCPayments",outputs:[],stateMutability:"nonpayable",type:"function"},
   {inputs:[{name:"receiptId",type:"bytes32"}],name:"voidPayment",outputs:[],stateMutability:"nonpayable",type:"function"},
+  // v2 trusts these over anything reconstructed from event history.
+  {inputs:[{name:"receiptId",type:"bytes32"}],name:"paymentStatus",outputs:[{name:"",type:"uint8"}],stateMutability:"view",type:"function"},
+  {inputs:[{name:"receiptId",type:"bytes32"}],name:"isExpired",outputs:[{name:"",type:"bool"}],stateMutability:"view",type:"function"},
+  {inputs:[],name:"skoopEscrowBalance",outputs:[{name:"",type:"uint256"}],stateMutability:"view",type:"function"},
+  {inputs:[],name:"usdcEscrowBalance",outputs:[{name:"",type:"uint256"}],stateMutability:"view",type:"function"},
+  {inputs:[],name:"refundWindow",outputs:[{name:"",type:"uint256"}],stateMutability:"view",type:"function"},
   {inputs:[{name:"wallet",type:"address"}],name:"totalSpentByWallet",outputs:[{type:"uint256"}],stateMutability:"view",type:"function"},
 ];
 
@@ -628,7 +648,14 @@ async function connectOwner(){
     document.getElementById('disc-btn').style.display='flex';
     showToast('Owner wallet verified ✓','success');
     loadTreasury();
-    runSettlementScan();
+    // Settling depends only on this. Run it alone first — the historical scan below
+    // issues thousands of requests against the same rate-limited endpoint, and firing
+    // both at once made the reconciliation crawl while competing with a scan whose
+    // results settlement does not need.
+    loadOpenReceipts().finally(()=>{
+      // Reporting figures fill in afterwards, out of the way.
+      if(!window.__skipHistoryScan)runSettlementScan();
+    });
     window.ethereum.on('accountsChanged',a=>{
       if(!a.length||a[0].toLowerCase()!==CFG.OWNER.toLowerCase())disconnect();
     });
@@ -1010,42 +1037,8 @@ async function openSettleModal(){
     }else{
       document.getElementById('settle-modal-info').textContent=
         `$${usd.toFixed(2)} USDC available · $${(usd*0.6).toFixed(2)} → buyback+burn · $${(usd*0.4).toFixed(2)} → LP`;
-      await prefillSettleMins(pub,uBal);
     }
   }catch{document.getElementById('settle-modal-info').textContent='Could not load treasury balance.';}
-}
-
-// ── Settle slippage floors, quoted on-chain ──────────────────────────────────
-// settle() runs two USDC→SKOOP swaps back to back in the 1% pool: the burn leg,
-// then half of the LP leg. The pool is thin, so a settle with zero floors is an easy
-// sandwich. Quote both legs with Uniswap's QuoterV2 and floor each at 98% of the
-// quote. The second leg is quoted as (both legs together) − (first leg), because it
-// executes after the first has already moved the price. The two LP-mint floors stay
-// 0: the full-range mint takes whatever ratio the post-swap price gives, and the
-// swap floors already bound how far that price can have been pushed.
-const QUOTER_V2='0x3d4e44Eb1374240CE5F1B871ab261CD16335B76a';
-const SETTLE_SLIP_BPS=200n;
-async function prefillSettleMins(pub,uBal){
-  const set=(id,v)=>{const el=document.getElementById(id);if(el)el.value=v;};
-  const info=document.getElementById('settle-modal-info');
-  try{
-    const tsy=new ethers.Contract(CFG.TREASURY,[
-      'function burnBps() view returns (uint256)','function minimumSettle() view returns (uint256)','function poolFee() view returns (uint24)'],pub);
-    const [bps,minSettle,fee]=await Promise.all([tsy.burnBps(),tsy.minimumSettle(),tsy.poolFee()]);
-    if(uBal<minSettle){
-      info.textContent+=` · below the treasury's $${ethers.formatUnits(minSettle,6)} minimum — settle() will revert until more USDC arrives`;
-      return;
-    }
-    const burnAlloc=uBal*bps/10000n, lpAlloc=uBal-burnAlloc, lpSwap=lpAlloc/2n;
-    const q=new ethers.Contract(QUOTER_V2,['function quoteExactInputSingle((address tokenIn,address tokenOut,uint256 amountIn,uint24 fee,uint160 sqrtPriceLimitX96)) returns (uint256 amountOut,uint160,uint32,uint256)'],pub);
-    const quote=async a=>a>0n?(await q.quoteExactInputSingle.staticCall({tokenIn:CFG.USDC,tokenOut:CFG.SKOOP,amountIn:a,fee,sqrtPriceLimitX96:0n}))[0]:0n;
-    const [q1,q12]=await Promise.all([quote(burnAlloc),quote(burnAlloc+lpSwap)]);
-    const q2=q12>q1?q12-q1:0n;
-    const floor=x=>x*(10000n-SETTLE_SLIP_BPS)/10000n;
-    set('sm-min1',floor(q1).toString());set('sm-min2',floor(q2).toString());set('sm-min3','0');set('sm-min4','0');
-    const f=x=>parseFloat(ethers.formatUnits(x,CFG.DEC)).toLocaleString('en-US',{maximumFractionDigits:0});
-    info.textContent+=` · quoted: burn ≈ ${f(q1)} SKOOP, LP swap ≈ ${f(q2)} SKOOP (floors at 98%)`;
-  }catch(e){console.error('prefillSettleMins:',e);info.textContent+=' · could not quote — enter floors by hand';}
 }
 
 function closeSettleModal(){document.getElementById('settle-modal').classList.remove('open');}
@@ -1072,6 +1065,203 @@ async function doSettle(){
   }catch(e){showToast(e?.reason||e?.shortMessage||'Deploy failed','error');}
 }
 
+// ── OPEN RECEIPTS: RECONCILED AGAINST THE ESCROW BALANCE ──────────────────────
+// Settling used to depend on the full historical scan, which walks ~5.1M blocks from
+// START_BLOCK and takes about 44 minutes on a cold cache. Until it finished, the
+// settle and burn buttons acted on an incomplete list.
+//
+// The escrow's own balance is the authority on how much is still owed, so this walks
+// backwards from the head and stops the moment the open receipts account for it.
+// Everything still owed is by definition recent, so this is seconds, not minutes.
+//
+// Event history is only used to DISCOVER candidate ids. Whether a receipt is actually
+// open, and whether it can be settled yet, is then read from the contract itself —
+// paymentStatus() and isExpired() — so a missed log can't strand funds or mislabel a
+// receipt as ready.
+// ── OPEN RECEIPTS: RECONCILED AGAINST THE ESCROW BALANCE ──────────────────────
+// Settling used to wait on the full historical scan (~5.1M blocks, about 44 minutes
+// cold). The escrow's own balance says how much is still owed, and anything still
+// owed is recent, so this walks back from the head only until the open receipts
+// account for it.
+//
+// Steady state is a cache, not a walk. The open set and the block it was accurate at
+// are persisted; on reload the cached receipts are re-checked against the contract and
+// only the new blocks since then are scanned. The backward walk is the cold path.
+//
+// Two token flows, and they are not symmetrical:
+//   SKOOP — captured into the escrow, sits there until burnPayments(). Needs settling.
+//   USDC  — an EIP-681 transfer straight to the treasury, never touches the escrow.
+//           usdcEscrowBalance() is structurally always 0. Nothing to settle; the money
+//           is already in the treasury. It is shown so the page accounts for it.
+const OPEN_SPAN=900, OPEN_PAR=12, OPEN_FLOOR=CFG.START_BLOCK, MAX_VERIFY=300;
+const MAX_SCAN=1500000; // ~35 days — a direct transfer into the escrow never reconciles
+const RECON_KEY='kokos_recon_v2_'+CFG.ESCROW.slice(-8);
+let reconState=null;
+
+function loadRecon(){try{const r=localStorage.getItem(RECON_KEY);return r?JSON.parse(r):null;}catch{return null;}}
+function saveRecon(d){try{localStorage.setItem(RECON_KEY,JSON.stringify(d));}catch{}}
+const toRec=r=>({...r,tokenAmount:r.tokenAmount.toString()});
+const fromRec=r=>({...r,tokenAmount:BigInt(r.tokenAmount)});
+
+async function openLogs(pub,filter,a,b,att=0){
+  try{
+    return await pub.send('eth_getLogs',[{...filter,fromBlock:'0x'+a.toString(16),toBlock:'0x'+b.toString(16)}]);
+  }catch(e){
+    // Range cap tightened again? Split rather than fail.
+    if(/-32614|limited to a|Payload Too Large|\b413\b/i.test(JSON.stringify(e&&(e.info||e.error||{message:e.message})||''))&&b>a){
+      const mid=Math.floor((a+b)/2);
+      const [x,y]=await Promise.all([openLogs(pub,filter,a,mid),openLogs(pub,filter,mid+1,b)]);
+      return x.concat(y);
+    }
+    if(att<4){await new Promise(r=>setTimeout(r,500*(att+1)));return openLogs(pub,filter,a,b,att+1);}
+    throw e;
+  }
+}
+// One consolidated query per span; the four receipt events share a topic0 OR-filter.
+async function scanSpans(pub,filter,esc,lo,hi,onProgress){
+  const caps=new Map(),closed=new Set();
+  for(let a=lo;a<=hi;a+=OPEN_SPAN*OPEN_PAR){
+    const spans=[];
+    for(let x=a;x<=Math.min(hi,a+OPEN_SPAN*OPEN_PAR-1);x+=OPEN_SPAN)spans.push([x,Math.min(x+OPEN_SPAN-1,hi)]);
+    const res=await Promise.all(spans.map(([x,y])=>openLogs(pub,filter,x,y)));
+    for(const chunk of res)for(const l of chunk){
+      const pl=esc.interface.parseLog(l); if(!pl)continue;
+      const id=pl.args.receiptId.toLowerCase();
+      if(pl.name==='PaymentCaptured'){
+        if(!caps.has(id))caps.set(id,{receiptId:pl.args.receiptId,paymentToken:pl.args.paymentToken,
+          tokenAmount:pl.args.tokenAmount,totalCents:Number(pl.args.totalCents),
+          payer:pl.args.payer,ts:Number(pl.args.timestamp),block:parseInt(l.blockNumber,16)});
+      }else closed.add(id);
+    }
+    if(onProgress)onProgress(Math.min(hi,a+OPEN_SPAN*OPEN_PAR-1));
+  }
+  return {caps,closed};
+}
+
+async function loadOpenReceipts(opts){
+  const force=!!(opts&&opts.force);
+  const strip=document.getElementById('recon-strip');
+  const head=document.getElementById('recon-headline');
+  const det=document.getElementById('recon-detail');
+  strip.style.display='block';
+  strip.style.background='#eef2f7';strip.style.borderColor='#c9d4e2';strip.style.color='#243447';
+  head.textContent='Checking open receipts…';det.textContent='';
+  const t0=Date.now();
+  try{
+    const pub=new ethers.JsonRpcProvider(CFG.RPC,CFG.CHAIN_ID||8453,{staticNetwork:true,batchMaxCount:1});
+    const esc=new ethers.Contract(CFG.ESCROW,ABI_ESC,pub);
+    const usdc=new ethers.Contract(CFG.USDC||'0x833589fcd6edb6e08f4c7c32d4f71b54bda02913',
+      ['function balanceOf(address) view returns (uint256)'],pub);
+    const [skOwed,rw,headBlk,tsyUsdc]=await Promise.all([
+      esc.skoopEscrowBalance(),esc.refundWindow(),pub.getBlock('latest'),usdc.balanceOf(CFG.TREASURY)
+    ]);
+    const latest=headBlk.number, chainNow=headBlk.timestamp;
+    CFG.REFUND_WINDOW=Number(rw); // from the contract, never assumed
+
+    const T=n=>esc.interface.getEvent(n).topicHash;
+    const filter={address:CFG.ESCROW,topics:[[T('PaymentCaptured'),T('PaymentBurned'),T('PaymentSettled'),T('PaymentVoided')]]};
+
+    const cache=force?null:loadRecon();
+    let candidates=new Map(), scanned=0, usedCache=false, cappedOut=false;
+
+    if(cache&&cache.head&&cache.head<=latest){
+      // Warm path: trust nothing, but only re-check what we already know plus what is new.
+      usedCache=true;
+      for(const r of (cache.open||[]))candidates.set(r.receiptId.toLowerCase(),fromRec(r));
+      const from=cache.head+1;
+      if(from<=latest){
+        head.textContent='Checking new blocks…';
+        const {caps,closed}=await scanSpans(pub,filter,esc,from,latest);
+        scanned=latest-from+1;
+        for(const [k,v] of caps)if(!candidates.has(k))candidates.set(k,v);
+        for(const k of closed)candidates.delete(k);
+      }
+    }
+
+    // Verify every candidate against the contract. This is what decides the list —
+    // the logs only ever suggested which ids to ask about.
+    // paymentStatus() is the authority on whether a receipt is open, and it is fast in
+    // parallel. isExpired() is not — three of them at once cost 43s against Base while
+    // the same three sequentially cost 184ms. It is pure arithmetic over values already
+    // in hand, so it is computed here rather than called, using the chain's clock.
+    const verify=async list=>await Promise.all(list.slice(0,MAX_VERIFY).map(async r=>{
+      try{
+        const st=Number(await esc.paymentStatus(r.receiptId));
+        return {...r,status:st,expired:st===1&&chainNow>r.ts+Number(rw)};
+      }catch{return {...r,status:-1,expired:false};}
+    }));
+    const sumSkoop=list=>list.reduce((a,r)=>
+      r.paymentToken.toLowerCase()===CFG.SKOOP.toLowerCase()?a+r.tokenAmount:a,0n);
+
+    let checked=await verify([...candidates.values()]);
+    let open=checked.filter(r=>r.status===1);
+    let disagreed=checked.length-open.length;
+    let oldest=cache&&usedCache?cache.oldest:latest;
+
+    // Cold path, or a warm set that no longer adds up: walk backwards until the escrow
+    // balance is accounted for.
+    if(sumSkoop(open)<skOwed){
+      usedCache=false;
+      candidates=new Map(open.map(r=>[r.receiptId.toLowerCase(),r]));
+      let hi=(cache&&cache.oldest?Math.min(cache.oldest,latest):latest);
+      const closedAll=new Set();
+      while(hi>OPEN_FLOOR&&scanned<MAX_SCAN){
+        const lo=Math.max(OPEN_FLOOR,hi-OPEN_SPAN*OPEN_PAR+1);
+        const {caps,closed}=await scanSpans(pub,filter,esc,lo,hi);
+        for(const k of closed)closedAll.add(k);
+        for(const [k,v] of caps)if(!closedAll.has(k)&&!candidates.has(k))candidates.set(k,v);
+        for(const k of closedAll)candidates.delete(k);
+        scanned+=hi-lo+1;oldest=lo;
+        const sum=sumSkoop([...candidates.values()]);
+        head.textContent=`Scanning back… ${(scanned/1000|0)}k blocks`;
+        det.textContent=`${candidates.size} open so far · ${fSK(sum)} / ${fSK(skOwed)} SKOOP accounted`;
+        if(sum>=skOwed)break;
+        hi=lo-1;
+      }
+      cappedOut=scanned>=MAX_SCAN;
+      checked=await verify([...candidates.values()]);
+      open=checked.filter(r=>r.status===1);
+      disagreed=checked.length-open.length;
+    }
+
+    open.sort((a,b)=>a.ts-b.ts);
+    const sk=sumSkoop(open), skGap=skOwed-sk, ok=skGap===0n;
+
+    pendingReceipts=open.map(r=>({
+      receiptId:r.receiptId,ts:r.ts,payer:r.payer,totalCents:r.totalCents,
+      isUsdc:r.paymentToken.toLowerCase()!==CFG.SKOOP.toLowerCase(),
+      tokenAmount:r.tokenAmount,burned:false,settled:false,voided:false,_expired:r.expired
+    }));
+    reconState={skOwed,sk,skGap,count:open.length,scanned,reconciled:ok,disagreed,tsyUsdc};
+    if(ok)saveRecon({head:latest,oldest,open:open.map(r=>toRec({receiptId:r.receiptId,
+      paymentToken:r.paymentToken,tokenAmount:r.tokenAmount,totalCents:r.totalCents,
+      payer:r.payer,ts:r.ts,block:r.block}))});
+
+    const ready=open.filter(r=>r.expired).length;
+    strip.style.background=ok?'#e4f4ea':'#fdeacd';
+    strip.style.borderColor=ok?'#9dcfb0':'#e6bf76';
+    strip.style.color=ok?'#11483d':'#7a5312';
+    head.textContent=ok
+      ? `✓ Reconciled — ${open.length} open receipt${open.length!==1?'s':''}, ${ready} ready to burn`
+      : cappedOut
+        ? `⚠ Stopped after ${(MAX_SCAN/1000|0)}k blocks with ${fSK(skGap>0n?skGap:0n)} SKOOP unaccounted — funds may have been sent straight to the escrow`
+        : `⚠ ${fSK(skGap>0n?skGap:0n)} SKOOP in escrow is NOT accounted for by the receipts listed`;
+    det.innerHTML=
+      `escrow ${fSK(skOwed)} SKOOP awaiting burn · listed ${fSK(sk)}${ok?'':' · gap '+fSK(skGap)}<br>`
+      +`treasury ${fU(tsyUsdc)} USDC — paid direct, already received, nothing to settle<br>`
+      +`${usedCache?'incremental':'full scan'} · ${scanned.toLocaleString()} blocks in ${((Date.now()-t0)/1000).toFixed(1)}s · refund window ${(Number(rw)/86400)}d`
+      +(disagreed?` · ${disagreed} rejected by on-chain status`:'');
+
+    renderSettlement();renderQuickActions();
+    document.getElementById('meta-settle').textContent=`${open.length} open · ${ok?'reconciled':'UNRECONCILED'}`;
+    showToast(ok?`${open.length} open · reconciled ✓ (${((Date.now()-t0)/1000).toFixed(1)}s)`:'Escrow does not match the listed receipts','success');
+  }catch(e){
+    strip.style.background='#fdecea';strip.style.borderColor='#e6a29b';strip.style.color='#7a1f16';
+    head.textContent='Could not verify open receipts';
+    det.textContent=String(e?.shortMessage||e?.message||e).slice(0,160);
+  }
+}
+
 // ── SETTLEMENT ACTIONS ────────────────────────────────────────────────────────
 async function doVoidReceipt(receiptId){
   if(!confirm('Void this payment and refund to customer?'))return;
@@ -1087,8 +1277,11 @@ async function doVoidReceipt(receiptId){
 }
 
 async function doBurnSKOOP(){
+  if(reconState&&!reconState.reconciled&&!confirm('The escrow balance does not match the receipts listed, so this list may be incomplete.\n\nContinue with the burn anyway?'))return;
   const now=Math.floor(Date.now()/1000);
-  const ids=pendingReceipts.filter(r=>!r.isUsdc&&r.ts&&now>r.ts+CFG.REFUND_WINDOW).map(r=>r.receiptId);
+  // _expired is the contract's own isExpired(); the time check is only a fallback for
+  // rows that came from the historical scan rather than loadOpenReceipts().
+  const ids=pendingReceipts.filter(r=>!r.isUsdc&&(r._expired!==undefined?r._expired:(r.ts&&now>r.ts+CFG.REFUND_WINDOW))).map(r=>r.receiptId);
   if(!ids.length){showToast('No SKOOP receipts ready to burn','');return;}
   if(!confirm(`Burn ${ids.length} SKOOP receipt${ids.length!==1?'s':''}?`))return;
   try{
@@ -1103,8 +1296,9 @@ async function doBurnSKOOP(){
 }
 
 async function doSettleUSDC(){
+  if(reconState&&!reconState.reconciled&&!confirm('The escrow balance does not match the receipts listed, so this list may be incomplete.\n\nContinue with the settle anyway?'))return;
   const now=Math.floor(Date.now()/1000);
-  const ids=pendingReceipts.filter(r=>r.isUsdc&&r.ts&&now>r.ts+CFG.REFUND_WINDOW).map(r=>r.receiptId);
+  const ids=pendingReceipts.filter(r=>r.isUsdc&&(r._expired!==undefined?r._expired:(r.ts&&now>r.ts+CFG.REFUND_WINDOW))).map(r=>r.receiptId);
   if(!ids.length){showToast('No USDC receipts ready to settle','');return;}
   if(!confirm(`Settle ${ids.length} USDC receipt${ids.length!==1?'s':''} to treasury?`))return;
   try{

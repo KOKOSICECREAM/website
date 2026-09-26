@@ -508,12 +508,12 @@ const BUSINESS_CONFIG = {
   explorerUrl:  'https://basescan.org',
 
   // ── Contracts ───────────────────────────────────────────────────────────
-  escrow:       '0x4db1DA8719f2e51F016d5D54D1175C9f49749121',
-  treasury:     '0x187b746aB9e369c01A540aE098dB29fb0c7AbcdA',
+  escrow:       '0x46D5520Ef1DeACd6cA332A9510141b28dC6141a1',   // KOKOSPaymentEscrowV3 on SKOOP PunchCard, 2026-09-25
+  treasury:     '0xc35397cBDbcdb24705bc09917f9DdF9E6970C904',   // KOKOSTreasuryV3 (fixed), 2026-09-25
   posSigner:    '0x4eCc3f03c018208Ae5932eAB91bbD82F37F56D9B',
 
   // ── Loyalty / payment token ─────────────────────────────────────────────
-  token:             '0xfd3ce21c5acd8bbbe576d0e2336c210c3cebeb92',
+  token:             '0xBa147713adF122A8Fc224e52Cb431D7919831939',   // SKOOP PunchCard
   tokenSymbol:       'SKOOP',
   tokenDecimals:     6,
 
@@ -523,13 +523,13 @@ const BUSINESS_CONFIG = {
   stablecoinDecimals: 6,
 
   // ── LP / price feed ─────────────────────────────────────────────────────
-  pool:         '0x64Ef20F32445EB0A86f4b97CA895fE508AF253CD',
+  pool:         '0x5185bef315Dee41727865AC26243bD62008d11b1',   // USDC/SKOOP 1%
   positionMgr:  '0x03a520b32C04BF3bEEf7BEb72E919cf822Ed34f1',
 
   // ── Scan ────────────────────────────────────────────────────────────────
-  startBlock:        46180000,
+  startBlock:        51804300,   // just before the new treasury (51804303) and escrow (51804311)
   chunkSize:         900,    // Base's eth_getLogs cap has gone 10k -> 2k -> 1k; 900 leaves headroom
-  refundWindowDays:  1,
+  refundWindowDays:  1,          // escrow.refundWindow() = 86400 since 2026-09-26
 
   // ── Accounting ──────────────────────────────────────────────────────────
   taxRate:      0.0925,             // decimal — 9.25% Nashville
@@ -1032,8 +1032,42 @@ async function openSettleModal(){
     }else{
       document.getElementById('settle-modal-info').textContent=
         `$${usd.toFixed(2)} USDC available · $${(usd*0.6).toFixed(2)} → buyback+burn · $${(usd*0.4).toFixed(2)} → LP`;
+      await prefillSettleMins(pub,uBal);
     }
   }catch{document.getElementById('settle-modal-info').textContent='Could not load treasury balance.';}
+}
+
+// ── Settle slippage floors, quoted on-chain ──────────────────────────────────
+// settle() runs two USDC→SKOOP swaps back to back in the 1% pool: the burn leg,
+// then half of the LP leg. The pool is thin, so a settle with zero floors is an easy
+// sandwich. Quote both legs with Uniswap's QuoterV2 and floor each at 98% of the
+// quote. The second leg is quoted as (both legs together) − (first leg), because it
+// executes after the first has already moved the price. The two LP-mint floors stay
+// 0: the full-range mint takes whatever ratio the post-swap price gives, and the
+// swap floors already bound how far that price can have been pushed.
+const QUOTER_V2='0x3d4e44Eb1374240CE5F1B871ab261CD16335B76a';
+const SETTLE_SLIP_BPS=200n;
+async function prefillSettleMins(pub,uBal){
+  const set=(id,v)=>{const el=document.getElementById(id);if(el)el.value=v;};
+  const info=document.getElementById('settle-modal-info');
+  try{
+    const tsy=new ethers.Contract(CFG.TREASURY,[
+      'function burnBps() view returns (uint256)','function minimumSettle() view returns (uint256)','function poolFee() view returns (uint24)'],pub);
+    const [bps,minSettle,fee]=await Promise.all([tsy.burnBps(),tsy.minimumSettle(),tsy.poolFee()]);
+    if(uBal<minSettle){
+      info.textContent+=` · below the treasury's $${ethers.formatUnits(minSettle,6)} minimum — settle() will revert until more USDC arrives`;
+      return;
+    }
+    const burnAlloc=uBal*bps/10000n, lpAlloc=uBal-burnAlloc, lpSwap=lpAlloc/2n;
+    const q=new ethers.Contract(QUOTER_V2,['function quoteExactInputSingle((address tokenIn,address tokenOut,uint256 amountIn,uint24 fee,uint160 sqrtPriceLimitX96)) returns (uint256 amountOut,uint160,uint32,uint256)'],pub);
+    const quote=async a=>a>0n?(await q.quoteExactInputSingle.staticCall({tokenIn:CFG.USDC,tokenOut:CFG.SKOOP,amountIn:a,fee,sqrtPriceLimitX96:0n}))[0]:0n;
+    const [q1,q12]=await Promise.all([quote(burnAlloc),quote(burnAlloc+lpSwap)]);
+    const q2=q12>q1?q12-q1:0n;
+    const floor=x=>x*(10000n-SETTLE_SLIP_BPS)/10000n;
+    set('sm-min1',floor(q1).toString());set('sm-min2',floor(q2).toString());set('sm-min3','0');set('sm-min4','0');
+    const f=x=>parseFloat(ethers.formatUnits(x,CFG.DEC)).toLocaleString('en-US',{maximumFractionDigits:0});
+    info.textContent+=` · quoted: burn ≈ ${f(q1)} SKOOP, LP swap ≈ ${f(q2)} SKOOP (floors at 98%)`;
+  }catch(e){console.error('prefillSettleMins:',e);info.textContent+=' · could not quote — enter floors by hand';}
 }
 
 function closeSettleModal(){document.getElementById('settle-modal').classList.remove('open');}
