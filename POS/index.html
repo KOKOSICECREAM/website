@@ -480,11 +480,13 @@ const BRAND = {
   colors:{},
   signerWallet:   '0x4eCc3f03c018208Ae5932eAB91bbD82F37F56D9B',
   ownerWallet:    '0x001b3fB36FE7E3a741A15Ed8bE68610442E3a50b',
-  skoopToken:     '0xfd3ce21c5acd8bbbe576d0e2336c210c3cebeb92',
+  skoopToken:     '0xBa147713adF122A8Fc224e52Cb431D7919831939',   // SKOOP PunchCard
   usdcToken:      '0x833589fcd6edb6e08f4c7c32d4f71b54bda02913',
-  escrowContract: '0x4db1DA8719f2e51F016d5D54D1175C9f49749121',
-  skoopPool:      '0xc1d89ca13d5cbc24b92e9f40b36d43da347c5198',
-  dailyRewardLimit: 888888,
+  escrowContract: '0x46D5520Ef1DeACd6cA332A9510141b28dC6141a1',   // KOKOSPaymentEscrowV3 on SKOOP PunchCard, 2026-09-25
+  skoopPool:      '0x116d0a851632958AFD3B1a0B751089392bcb4e6A',   // ETH/SKOOP 1%
+  // In SKOOP. Was 888,888 for the old token, ~$81/day at its price; at SKOOP PunchCard's
+  // $0.001 launch price the same dollar budget is ~80,000. Revisit if the price moves a lot.
+  dailyRewardLimit: 80000,
   taxRate: 0.0925,
   categories: [
     { id:'scoops', label:'Scoops' },
@@ -511,8 +513,8 @@ const CFG={
   CHAIN_ID:8453,CHAIN_HEX:'0x2105',RPC:'https://mainnet.base.org',
   SKOOP:BRAND.skoopToken,USDC:BRAND.usdcToken,ESCROW:BRAND.escrowContract,
   SIGNER:BRAND.signerWallet,OWNER:BRAND.ownerWallet,
-  TREASURY:'0x187b746aB9e369c01A540aE098dB29fb0c7AbcdA',
-  POOL_ETH_SKOOP:BRAND.skoopPool,POOL_USDC_SKOOP:'0x64Ef20F32445EB0A86f4b97CA895fE508AF253CD',SKOOP_DEC:6,USDC_DEC:6,
+  TREASURY:'0xc35397cBDbcdb24705bc09917f9DdF9E6970C904',   // KOKOSTreasuryV3 (fixed), 2026-09-25
+  POOL_ETH_SKOOP:BRAND.skoopPool,POOL_USDC_SKOOP:'0x5185bef315Dee41727865AC26243bD62008d11b1',SKOOP_DEC:6,USDC_DEC:6,
   TAX_RATE:BRAND.taxRate,STORE_ID:BRAND.storeId,TERMINAL_ID:BRAND.terminalId,
   DAILY_REWARD_LIMIT:BRAND.dailyRewardLimit,AUTO_REWARD_RATE:0.10,AUTO_REWARD_RATE_USDC:0.05,
 };

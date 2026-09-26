@@ -1,4 +1,6 @@
-const CACHE='skoop-v7';
+// Bumped for SKOOP PunchCard (2026-09-26): new token, contracts and icons. Icons are
+// served cache-first, so without a new name installed apps would keep the old ones.
+const CACHE='skoop-v8';
 
 // Third-party libs are version-pinned URLs — safe to serve from cache forever.
 const CDN=[

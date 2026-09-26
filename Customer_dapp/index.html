@@ -374,12 +374,13 @@ html,body{height:100%;height:100dvh;overflow:hidden;background:var(--coral);font
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 12h.01"/><path d="M2 10h20"/><path d="M7 3l5-1 5 1"/></svg>
         Get Started
       </button>
-      <div class="ca-line" onclick="navigator.clipboard.writeText('0xfd3ce21c5acd8bbbe576d0e2336c210c3cebeb92').then(()=>showToast('CA copied','ok'))">
-        SKOOP &middot; <span style="text-decoration:underline dotted;">0xfd3ce21c5Acd8BbbE576d0E2336C210C3cEBeb92</span> &middot; tap to copy
+      <div class="ca-line" onclick="navigator.clipboard.writeText('0xba147713adf122a8fc224e52cb431d7919831939').then(()=>showToast('CA copied','ok'))">
+        SKOOP &middot; <span style="text-decoration:underline dotted;">0xBa147713adF122A8Fc224e52Cb431D7919831939</span> &middot; tap to copy
       </div>
       <div class="gate-divider"><span>About SKOOP</span></div>
-      <div class="about-kicker">The KOKOS Token</div>
+      <div class="about-kicker">The KOKOS Token · PunchCard Network</div>
       <h2 class="about-heading">Your skoop,<br><em>on-chain.</em></h2>
+      <p class="about-body">SKOOP PunchCard is the first token built for the <a href="https://punchcard.club" target="_blank" rel="noopener" style="color:inherit;">PunchCard Network</a> — shared rails that let local businesses' loyalty tokens trade with each other.</p>
       <p class="about-body">SKOOP is the loyalty and payment token for KOKOS Ice Cream — Nashville's original plant-based scoop shop. Built on Base, it lets you buy tokens, pay at the register, and earn rewards just for being a regular. No points cards. No apps. Just your web3 wallet.</p>
       <p class="about-body" style="margin-top:-8px;">Every SKOOP transaction at the shop flows through an on-chain escrow and settles transparently — no middlemen, no processing fees eating into your purchase. It's the first crypto-native checkout experience in Nashville's food scene.</p>
       <div class="stat-strip">
@@ -390,11 +391,15 @@ html,body{height:100%;height:100dvh;overflow:hidden;background:var(--coral);font
       <div class="token-card">
         <div class="token-card-head"><span class="token-badge">$SKOOP</span><span class="token-card-title">Base &middot; ERC-20</span></div>
         <p class="token-card-body">
-          <strong>Contract:</strong> 0xfd3ce21c5Acd8BbbE576d0E2336C210C3cEBeb92<br>
+          <strong>Contract:</strong> 0xBa147713adF122A8Fc224e52Cb431D7919831939<br>
           <strong>Buy with:</strong> USDC or ETH via Uniswap V3<br>
           <strong>Use it:</strong> Scan &amp; pay at the KOKOS register in Nashville<br>
           <strong>Earn it:</strong> Card &amp; cash purchases → show your QR; SKOOP payments → rewards auto-sent
         </p>
+      </div>
+      <div style="display:flex;gap:8px;margin:12px 0 4px;">
+        <a href="https://kokosicecream.com/SKOOP/dashboard.html" target="_blank" rel="noopener" style="flex:1;text-align:center;background:var(--white);border:1.5px solid var(--border-mid);border-radius:var(--r-sm);padding:10px 8px;font-size:12px;font-weight:600;color:var(--ink);text-decoration:none;">SKOOP dashboard &#8599;</a>
+        <a href="https://kokosicecream.com/" target="_blank" rel="noopener" style="flex:1;text-align:center;background:var(--white);border:1.5px solid var(--border-mid);border-radius:var(--r-sm);padding:10px 8px;font-size:12px;font-weight:600;color:var(--ink);text-decoration:none;">kokosicecream.com &#8599;</a>
       </div>
       <div class="gate-divider"><span>How It Works</span></div>
       <h2 class="hiw-heading">Three ways<br>to <em>use SKOOP</em></h2>
@@ -402,7 +407,7 @@ html,body{height:100%;height:100dvh;overflow:hidden;background:var(--coral);font
         <div class="step"><div class="step-num">1</div><div class="step-content"><div class="step-title">Get SKOOP</div><div class="step-desc">Connect your wallet and tap Buy. Swap USDC or ETH for SKOOP directly through Uniswap V3 on Base — no account required, no KYC.</div></div></div>
         <div class="step"><div class="step-num">2</div><div class="step-content"><div class="step-title">Pay at the shop</div><div class="step-desc">The KOKOS team rings up your order and shows you a checkout QR. Open the Pay tab, scan it, review the total, and confirm — SKOOP goes to escrow instantly.</div></div></div>
         <div class="step"><div class="step-num">3</div><div class="step-content"><div class="step-title">Earn rewards</div><div class="step-desc">Paying with Square or cash? Show your wallet QR to the KOKOS team — they'll send SKOOP to your wallet. Paid with SKOOP? Rewards are sent to you automatically — no QR needed.</div></div></div>
-        <div class="step"><div class="step-num">4</div><div class="step-content"><div class="step-title">Settlement &amp; burn</div><div class="step-desc">SKOOP captured in escrow settles on-chain and a portion burns — reducing supply over time. Every scoop you buy makes the token a little more scarce.</div></div></div>
+        <div class="step"><div class="step-num">4</div><div class="step-content"><div class="step-title">Settlement &amp; burn</div><div class="step-desc">SKOOP captured in escrow settles on-chain and SKOOP paid at the shop is burned — removed from the supply for good.</div></div></div>
       </div>
       <div class="earn-pay-grid">
         <div class="ep-card"><div class="ep-icon">🎁</div><div class="ep-title">Earn SKOOP</div><div class="ep-body">Pay with Square or cash and show your QR. Paid with SKOOP? Rewards auto-send — no QR needed.</div></div>
@@ -443,7 +448,7 @@ html,body{height:100%;height:100dvh;overflow:hidden;background:var(--coral);font
           <div class="rc-sub" id="rc-sub">earned in the last 24 hours</div>
         </div>
       </div>
-      <div style="margin-top:6px;font-size:9px;font-weight:500;color:var(--ink-light);letter-spacing:0.3px;word-break:break-all;opacity:0.7;cursor:pointer;" onclick="navigator.clipboard.writeText('0xfd3ce21c5acd8bbbe576d0e2336c210c3cebeb92').then(()=>showToast('CA copied','ok'))">CA: 0xfd3ce21c5Acd8BbbE576d0E2336C210C3cEBeb92</div>
+      <div style="margin-top:6px;font-size:9px;font-weight:500;color:var(--ink-light);letter-spacing:0.3px;word-break:break-all;opacity:0.7;cursor:pointer;" onclick="navigator.clipboard.writeText('0xba147713adf122a8fc224e52cb431d7919831939').then(()=>showToast('CA copied','ok'))">CA: 0xBa147713adF122A8Fc224e52Cb431D7919831939</div>
     </div>
     <div class="action-grid">
       <button class="action-cell ac-mint" onclick="goTo('buy')"><div class="ac-icon">&#x1F4B1;</div><div><div class="ac-label">Buy SKOOP</div><div class="ac-sub">USDC or ETH</div></div></button>
@@ -493,7 +498,7 @@ html,body{height:100%;height:100dvh;overflow:hidden;background:var(--coral);font
       <div class="det-row"><span class="dk">Route</span><span class="dv" id="det-route">&#8212;</span></div>
       <div class="det-row"><span class="dk">Price impact</span><span class="dv" id="det-impact">&#8212;</span></div>
       <div class="det-row"><span class="dk">Min received</span><span class="dv" id="det-min">&#8212;</span></div>
-      <div class="det-row"><span class="dk">Pool fee</span><span class="dv">0.30%</span></div>
+      <div class="det-row"><span class="dk">Pool fee</span><span class="dv">1.00%</span></div>
     </div>
     <button class="btn-swap" id="btn-swap" onclick="execSwap()" disabled>Enter amount</button>
   </div>
@@ -666,7 +671,11 @@ html,body{height:100%;height:100dvh;overflow:hidden;background:var(--coral);font
         </div>
         <canvas id="pm-chart" height="130" style="width:100%;display:block;"></canvas>
       </div>
-      <a href="https://app.uniswap.org/explore/tokens/base/0xfd3ce21c5acd8bbbe576d0e2336c210c3cebeb92" target="_blank" rel="noopener" style="display:flex;align-items:center;justify-content:center;gap:8px;background:var(--apricot);border:1.5px solid var(--border-mid);border-radius:var(--r);padding:14px;text-decoration:none;color:var(--ink-mid);font-size:12px;font-weight:600;">Trade on Uniswap ↗</a>
+      <a href="https://app.uniswap.org/explore/tokens/base/0xba147713adf122a8fc224e52cb431d7919831939" target="_blank" rel="noopener" style="display:flex;align-items:center;justify-content:center;gap:8px;background:var(--apricot);border:1.5px solid var(--border-mid);border-radius:var(--r);padding:14px;text-decoration:none;color:var(--ink-mid);font-size:12px;font-weight:600;">Trade on Uniswap ↗</a>
+      <div style="display:flex;gap:8px;margin:10px 0 0;">
+        <a href="https://kokosicecream.com/SKOOP/dashboard.html" target="_blank" rel="noopener" style="flex:1;text-align:center;background:var(--white);border:1.5px solid var(--border-mid);border-radius:var(--r-sm);padding:10px 8px;font-size:12px;font-weight:600;color:var(--ink);text-decoration:none;">SKOOP dashboard &#8599;</a>
+        <a href="https://kokosicecream.com/" target="_blank" rel="noopener" style="flex:1;text-align:center;background:var(--white);border:1.5px solid var(--border-mid);border-radius:var(--r-sm);padding:10px 8px;font-size:12px;font-weight:600;color:var(--ink);text-decoration:none;">kokosicecream.com &#8599;</a>
+      </div>
     </div>
   </div>
 </div>
@@ -674,13 +683,14 @@ html,body{height:100%;height:100dvh;overflow:hidden;background:var(--coral);font
 <script>
 const CFG={
   CHAIN_ID:8453,CHAIN_HEX:'0x2105',RPC:'https://mainnet.base.org',
-  SKOOP:'0xfd3ce21c5acd8bbbe576d0e2336c210c3cebeb92',
-  ESCROW:'0x4db1DA8719f2e51F016d5D54D1175C9f49749121',
+  SKOOP:'0xBa147713adF122A8Fc224e52Cb431D7919831939',   // SKOOP PunchCard
+  ESCROW:'0x46D5520Ef1DeACd6cA332A9510141b28dC6141a1',   // KOKOSPaymentEscrowV3 on SKOOP PunchCard, 2026-09-25
   POS_SIGNER:'0x4eCc3f03c018208Ae5932eAB91bbD82F37F56D9B',
   ROUTER:'0x2626664c2603336e57b271c5c0b26f421741e481',
   USDC:'0x833589fcd6edb6e08f4c7c32d4f71b54bda02913',
   WETH:'0x4200000000000000000000000000000000000006',
-  FEE:3000,SKOOP_DEC:6,USDC_DEC:6,WETH_DEC:18,
+  FEE:10000,SKOOP_DEC:6,USDC_DEC:6,WETH_DEC:18,
+  SUPPLY:100000000,   // SKOOP PunchCard total supply, whole tokens
 };
 const ABI_ERC20=["function balanceOf(address) view returns (uint256)","function allowance(address,address) view returns (uint256)","function approve(address,uint256) returns (bool)","event Transfer(address indexed from, address indexed to, uint256 value)"];
 const ABI_ROUTER=["function exactInputSingle((address tokenIn,address tokenOut,uint24 fee,address recipient,uint256 amountIn,uint256 amountOutMinimum,uint160 sqrtPriceLimitX96)) payable returns (uint256)"];
@@ -693,8 +703,8 @@ const ABI_ESCROW=[{inputs:[{components:[
   {name:"itemCount",type:"uint256"},{name:"cartHash",type:"bytes32"},{name:"deadline",type:"uint256"}
 ],name:"intent",type:"tuple"},{name:"signature",type:"bytes"}],name:"capturePayment",outputs:[],stateMutability:"nonpayable",type:"function"}];
 
-const POOL_ETH_SKOOP  = '0xc1d89ca13d5cbc24b92e9f40b36d43da347c5198';
-const POOL_USDC_SKOOP = '0x64ef20f32445eb0a86f4b97ca895fe508af253cd';
+const POOL_ETH_SKOOP  = '0x116d0a851632958AFD3B1a0B751089392bcb4e6A'; // 1%
+const POOL_USDC_SKOOP = '0x5185bef315Dee41727865AC26243bD62008d11b1'; // 1%
 const ABI_POOL_IMM=["function token0() view returns (address)","function token1() view returns (address)","function fee() view returns (uint24)"];
 const poolFees={};
 
@@ -1228,11 +1238,31 @@ async function fetchQuote(amt){
     }
     curQuote={amtOut,amtIn,tokenIn,fee};
     const out=parseFloat(ethers.formatUnits(amtOut,CFG.SKOOP_DEC));
+    // Price impact = how far the quote falls short of trading the whole amount at the
+    // current pool price (after the pool fee). The pools are thin, so this is real
+    // money on larger buys and must not be shown as a constant.
+    let impactPct=null;
+    if(!isEstimate){
+      try{
+        const ABI_P=["function slot0() view returns (uint160 sqrtPriceX96,int24,uint16,uint16,uint16,uint8,bool)","function token0() view returns (address)"];
+        const pool=new ethers.Contract(poolAddr,ABI_P,rpc());
+        const [s0,t0]=await Promise.all([pool.slot0(),pool.token0()]);
+        const sq=Number(s0.sqrtPriceX96)/Number(2n**96n);const raw=sq*sq;
+        const skoopIsT0=t0.toLowerCase()===CFG.SKOOP.toLowerCase();
+        const adj=isUSDC?1:1e12;   // WETH 18dp vs SKOOP 6dp
+        const skoopPerIn=skoopIsT0?adj/raw:raw*adj;
+        const spotOut=parseFloat(ethers.formatUnits(amtIn,decIn))*skoopPerIn*(1-fee/1e6);
+        if(spotOut>0)impactPct=Math.max(0,(1-out/spotOut)*100);
+      }catch(e){}
+    }
+    curQuote.impactPct=impactPct;
     const min=out*(1-slip/100);
     document.getElementById("out-amt").textContent=(isEstimate?"~":"")+out.toLocaleString("en-US",{maximumFractionDigits:2});
     document.getElementById("out-loading").classList.remove("show");
     document.getElementById("det-route").textContent=selToken+" \u2192 SKOOP ("+(fee/10000).toFixed(2)+"%)";
-    document.getElementById("det-impact").textContent=isEstimate?"~estimated":"< 1%";
+    const impEl=document.getElementById("det-impact");
+    impEl.textContent=isEstimate?"~estimated":impactPct===null?"—":impactPct<0.1?"< 0.1%":impactPct.toFixed(2)+"%";
+    impEl.style.color=impactPct!==null&&impactPct>=3?"#c0392b":"";
     document.getElementById("det-min").textContent=min.toLocaleString("en-US",{maximumFractionDigits:2})+" SKOOP";
     document.getElementById("swap-dets").classList.add("show");
     document.getElementById("btn-swap").disabled=false;
@@ -1248,6 +1278,10 @@ async function execSwap(){
     const spendUSD=selToken==="ETH"?parseFloat(ethers.formatEther(curQuote.amtIn))*ethPriceUSD:parseFloat(ethers.formatUnits(curQuote.amtIn,CFG.USDC_DEC));
     if(spendUSD>MAX_USD){showToast("Max swap is $"+MAX_USD+" \u2014 reduce your amount",'err');return;}
   }
+  // The pools are small: a large buy moves the price against the buyer. Refuse rather
+  // than let a customer lose a tenth or more of their money to impact.
+  const MAX_IMPACT=10;
+  if(curQuote.impactPct!=null&&curQuote.impactPct>MAX_IMPACT){showToast("Price impact "+curQuote.impactPct.toFixed(1)+"% \u2014 try a smaller amount",'err');return;}
   btn.disabled=true;btn.innerHTML='<span class="spinner"></span> Swapping...';
   try{
     const router=new ethers.Contract(CFG.ROUTER,ABI_ROUTER,signer);
@@ -1747,7 +1781,7 @@ async function renderPriceModal(){
     setEl('pm-eth-price','ETH: $'+ethP.toLocaleString('en-US',{maximumFractionDigits:0}));
     setEl('pm-per-eth',Math.round(ethP/price).toLocaleString('en-US'));
     setEl('pm-per-usdc',Math.round(1/price).toLocaleString('en-US'));
-    const mcap=price*888888888;
+    const mcap=price*CFG.SUPPLY;
     setEl('pm-mcap','$'+(mcap>=1e6?(mcap/1e6).toFixed(2)+'M':mcap>=1e3?(mcap/1e3).toFixed(1)+'K':mcap.toFixed(0)));
     const sub=document.getElementById('home-skoop-price');if(sub)sub.textContent='$'+price.toFixed(6);
   }
@@ -1900,7 +1934,43 @@ const _isStandalone=window.matchMedia('(display-mode: standalone)').matches||win
 const _isWeb3Browser=!!(window.ethereum&&(window.ethereum.isCoinbaseWallet||window.ethereum.isCoinbaseBrowser||window.ethereum.isMetaMask))||/CoinbaseBrowser|MetaMaskMobile|DappBrowser/i.test(navigator.userAgent);
 const _isIOSSafari=_isIOS&&/Safari/i.test(navigator.userAgent)&&!/CriOS|FxiOS|OPiOS|EdgiOS/i.test(navigator.userAgent);
 if(_isIOS&&!_isStandalone&&!_isWeb3Browser){setTimeout(()=>showPWABanner(_isIOSSafari?'ios':'ios-notsafari'),3000);}
-if('serviceWorker' in navigator){navigator.serviceWorker.register('./sw.js').catch(()=>{});}
+// ── SERVICE WORKER: pick up new builds without a manual refresh ──────────────
+// sw.js already activates at once (skipWaiting + clients.claim). What was missing is
+// the page noticing: an installed app could keep running an old build — old contract
+// addresses included — until it was fully closed. Now it checks for a new build on
+// launch and whenever it returns to the foreground, and reloads once the new worker
+// takes over. Never mid-payment or mid-swap: then it waits until the app is hidden.
+if('serviceWorker' in navigator){
+  const hadController=!!navigator.serviceWorker.controller;
+  let reloading=false;
+  const busy=()=>{
+    const pc=document.getElementById('pay-confirm');
+    const bs=document.getElementById('btn-swap');
+    const bc=document.getElementById('btn-confirm');
+    return (pc&&pc.classList.contains('active'))||
+           (bs&&/Swapping/.test(bs.textContent))||
+           (bc&&bc.disabled);
+  };
+  const reloadWhenSafe=()=>{
+    if(reloading)return;
+    if(busy()&&!document.hidden){
+      document.addEventListener('visibilitychange',function once(){
+        if(document.hidden){document.removeEventListener('visibilitychange',once);reloading=true;location.reload();}
+      });
+      return;
+    }
+    reloading=true;location.reload();
+  };
+  navigator.serviceWorker.addEventListener('controllerchange',()=>{
+    // First install also fires controllerchange; only a replacement is an update.
+    if(hadController)reloadWhenSafe();
+  });
+  navigator.serviceWorker.register('./sw.js',{updateViaCache:'none'}).then(reg=>{
+    const check=()=>reg.update().catch(()=>{});
+    document.addEventListener('visibilitychange',()=>{if(!document.hidden)check();});
+    setInterval(check,30*60*1000);
+  }).catch(()=>{});
+}
 </script>
 </body>
 </html>

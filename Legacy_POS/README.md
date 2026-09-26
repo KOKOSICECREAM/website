@@ -1,3 +1,7 @@
+> **Superseded 2026-09-26.** This build was promoted to the main `/POS/` and `/Customer_dapp/`,
+> which now run SKOOP PunchCard against the escrow and treasury below. Both pages here redirect
+> there (query string kept, so an in-flight `?d=` checkout QR still resolves).
+
 # Legacy POS — old protocol, new token
 
 A copy of the working POS and Customer dapp wired to the **new SKOOP token**, so the
