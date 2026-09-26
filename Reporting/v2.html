@@ -227,7 +227,7 @@ tfoot td{background:var(--green-lt);font-weight:700;color:var(--green);border-to
     <div class="kpi"><div class="kl">SKOOP Captured</div><div class="kv" id="k-skoop">—</div><div class="ks" id="k-skoop-sub">In escrow</div></div>
     <div class="kpi"><div class="kl">USDC Captured</div><div class="kv" id="k-usdc">—</div><div class="ks" id="k-usdc-sub">In escrow</div></div>
     <div class="kpi"><div class="kl">Avg Ticket</div><div class="kv" id="k-avg">—</div><div class="ks">Per transaction</div></div>
-    <div class="kpi"><div class="kl">SKOOP Burned</div><div class="kv" id="k-burned">—</div><div class="ks">All time via burns</div></div>
+    <div class="kpi"><div class="kl">SKOOP Burned</div><div class="kv" id="k-burned">—</div><div class="ks">All time · from token supply</div></div>
     <div class="kpi"><div class="kl">Voided</div><div class="kv" id="k-voided">—</div><div class="ks" id="k-voided-sub">Refunded</div></div>
     <div class="kpi"><div class="kl">Unique Customers</div><div class="kv" id="k-wallets">—</div><div class="ks" id="k-wallets-sub">Distinct wallets</div></div>
   </div>
@@ -689,7 +689,10 @@ function setPeriod(p,btn){
   document.querySelectorAll('.pp-btn').forEach(b=>b.classList.remove('active'));
   btn.classList.add('active');
   document.getElementById('custom-dates').style.display=p==='custom'?'flex':'none';
-  if(p!=='custom'&&allTx.length)applyFilter();
+  if(p==='custom'||!rewardsLoaded)return;
+  const need=p==='all'?CFG.START_BLOCK:blockAtTs(getRange().from);
+  if(scanCoverageFrom!==null&&need<scanCoverageFrom)runScan();   // reads only the missing older blocks
+  else applyFilter();
 }
 
 function getRange(){
@@ -719,6 +722,16 @@ function applyFilter(){
 // ── SCAN CACHE ────────────────────────────────────────────────────────────────
 const SCAN_CACHE_KEY=`kokos_v1_${CFG.ESCROW.slice(-8)}_${CFG.TREASURY.slice(-8)}`;
 const BASE_REF_BLOCK=51804303, BASE_REF_TS=1790397953;   // block, unix time
+const INITIAL_SUPPLY=100_000_000n*10n**6n;   // SKOOP PunchCard mint, 6dp
+let scanCoverageFrom=null;   // oldest block the loaded data covers
+// Unix time -> the Base block produced at that moment (2s blocks, see BASE_REF_*).
+// When only part of history is loaded, older unsettled receipts are not in the lists.
+function coverageNote(){
+  if(scanCoverageFrom===null||scanCoverageFrom<=CFG.START_BLOCK)return'';
+  const d=new Date((BASE_REF_TS+2*(scanCoverageFrom-BASE_REF_BLOCK))*1000).toLocaleDateString('en-US',{timeZone:CFG.TZ,month:'short',day:'numeric'});
+  return ` · since ${d} — choose All Time to find older open receipts`;
+}
+function blockAtTs(ts){return Math.max(CFG.START_BLOCK,BASE_REF_BLOCK+Math.floor((ts-BASE_REF_TS)/2));}
 const N_PAR=3;   // chunks in flight at once; each is 3 requests
 
 function loadScanCache(){try{const r=localStorage.getItem(SCAN_CACHE_KEY);return r?JSON.parse(r):null;}catch{return null;}}
@@ -865,19 +878,30 @@ async function runScan(){
 
     // Load cache — incremental scan starts from lastBlock+1
     const cache=loadScanCache();
-    const fromBlock=cache?cache.lastBlock+1:CFG.START_BLOCK;
-    const isIncremental=!!(cache&&fromBlock>CFG.START_BLOCK);
+    // Read only what the selected period needs and the cache does not already hold:
+    // new blocks since the last scan, plus older blocks only if this period reaches back
+    // further than anything scanned before. The cache covers one contiguous span,
+    // [firstBlock, lastBlock]; caches written before this change covered everything.
+    const needFrom=period==='all'?CFG.START_BLOCK:blockAtTs(getRange().from);
+    const cachedFrom=cache?(cache.firstBlock??CFG.START_BLOCK):null;
+    const ranges=[];
+    if(cache){
+      if(cache.lastBlock+1<=latest)ranges.push([cache.lastBlock+1,latest]);
+      if(needFrom<cachedFrom)ranges.push([needFrom,cachedFrom-1]);
+    }else ranges.push([needFrom,latest]);
+    const firstBlock=cache?Math.min(cachedFrom,needFrom):needFrom;
+    const isIncremental=!!cache;
 
     let capR=cache?.capR||[],voidR=cache?.voidR||[],burnR=cache?.burnR||[],stlR=cache?.stlR||[];
     let bbR=cache?.bbR||[],ubR=cache?.ubR||[],tyR=cache?.tyR||[],rwR=cache?.rwR||[],dirR=cache?.dirR||[];
     let tsMap=cache?.tsMap||{};
 
-    if(fromBlock<=latest){
+    if(ranges.length){
       const esc=new ethers.Contract(CFG.ESCROW,ABI_ESC,pub);
       const tsy=new ethers.Contract(CFG.TREASURY,ABI_TSY,pub);
       const sk=new ethers.Contract(CFG.SKOOP,ABI_TRF,pub);
       const usdcTrf=new ethers.Contract(CFG.USDC,ABI_TRF,pub);
-      const totalChunks=Math.ceil((latest-fromBlock+1)/CFG.CHUNK);
+      const totalChunks=ranges.reduce((n,[a,b])=>n+Math.ceil((b-a+1)/CFG.CHUNK),0);
       let done=0;
 
       // One getLogs for everything the escrow and treasury emit, plus one for each token
@@ -933,12 +957,13 @@ async function runScan(){
       }
 
       // Fetch N_PAR chunks in parallel
-      for(let s=fromBlock;s<=latest;s+=CFG.CHUNK*N_PAR){
+      for(const[rFrom,rTo] of ranges)
+      for(let s=rFrom;s<=rTo;s+=CFG.CHUNK*N_PAR){
         const starts=[];
-        for(let j=0;j<N_PAR&&s+j*CFG.CHUNK<=latest;j++) starts.push(s+j*CFG.CHUNK);
+        for(let j=0;j<N_PAR&&s+j*CFG.CHUNK<=rTo;j++) starts.push(s+j*CFG.CHUNK);
         const label=isIncremental?'Updating…':(totalChunks>1?`Chunks ${done+1}–${Math.min(done+starts.length,totalChunks)} of ${totalChunks}`:'Loading events…');
         setBar(10+Math.round((done/totalChunks)*82),label);
-        const results=await Promise.all(starts.map(bs=>queryChunk(bs,Math.min(bs+CFG.CHUNK-1,latest))));
+        const results=await Promise.all(starts.map(bs=>queryChunk(bs,Math.min(bs+CFG.CHUNK-1,rTo))));
         for(const[a,b,c,d,e,f,g,h,i] of results){
           capR=capR.concat(a.map(EX.cap));voidR=voidR.concat(b.map(EX.void));
           burnR=burnR.concat(c.map(EX.burn));stlR=stlR.concat(d.map(EX.settle));
@@ -954,8 +979,9 @@ async function runScan(){
       // treasury's deploy block, 51804303.
       for(const e of [...rwR,...dirR])if(!tsMap[e.blk])tsMap[e.blk]=BASE_REF_TS+2*(e.blk-BASE_REF_BLOCK);
 
-      saveScanCache({capR,voidR,burnR,stlR,bbR,ubR,tyR,rwR,dirR,tsMap,lastBlock:latest});
+      saveScanCache({capR,voidR,burnR,stlR,bbR,ubR,tyR,rwR,dirR,tsMap,lastBlock:latest,firstBlock});
     }
+    scanCoverageFrom=firstBlock;
 
     setBar(92,'Processing…');
     buildAllData(capR,voidR,burnR,stlR,bbR,ubR,tyR,rwR,dirR,tsMap);
@@ -1404,7 +1430,10 @@ function renderKPIs(){
   document.getElementById('k-usdc').textContent='$'+ucN.toFixed(2);
   document.getElementById('k-usdc-sub').textContent=`${usdcTx.length} transaction${usdcTx.length!==1?'s':''}`;
   document.getElementById('k-avg').textContent=n?f$(Math.round(tot/n)):'—';
-  document.getElementById('k-burned').textContent=parseFloat(ethers.formatUnits(totalBurned,CFG.DEC)).toLocaleString('en-US',{maximumFractionDigits:0});
+  // SKOOP has no mint: everything ever burned is initial supply minus supply now. Exact,
+  // and independent of how much history this device has scanned.
+  const burnedAllTime=skoopTotalSupply>0n?INITIAL_SUPPLY-skoopTotalSupply:totalBurned;
+  document.getElementById('k-burned').textContent=parseFloat(ethers.formatUnits(burnedAllTime,CFG.DEC)).toLocaleString('en-US',{maximumFractionDigits:0});
   const vSK=voidTx.filter(t=>!t.isUsdc).length,vUSDC=voidTx.filter(t=>t.isUsdc).length;
   document.getElementById('k-voided').textContent=voidTx.length.toString();
   document.getElementById('k-voided-sub').textContent=voidTx.length?`${vSK?vSK+' SKOOP':''}${vSK&&vUSDC?' · ':''}${vUSDC?vUSDC+' USDC':''}` :'None in period';
@@ -1469,7 +1498,7 @@ function renderSettlement(){
   const readyUSDC=ready.filter(r=>r.isUsdc);
 
   document.getElementById('meta-settle').textContent=
-    `${pendingReceipts.length} pending · ${voidable.length} voidable · ${ready.length} ready to settle`;
+    `${pendingReceipts.length} pending · ${voidable.length} voidable · ${ready.length} ready to settle`+coverageNote();
   document.getElementById('settle-void-count').textContent=
     voidable.length?`${voidable.length} receipt${voidable.length!==1?'s':''}` :'';
   document.getElementById('settle-ready-count').textContent=
