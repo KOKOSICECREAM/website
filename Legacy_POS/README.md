@@ -10,12 +10,30 @@ repo root are untouched and still run the old token.
 | | old (live, untouched) | this folder |
 |---|---|---|
 | token | `0xfd3ce21c…` KOKOS SKOOPS, 888,888,888 supply | `0xBa147713adF122A8Fc224e52Cb431D7919831939` SKOOP PunchCard, 100,000,000 supply |
-| escrow | `0x4db1DA87…` | **not deployed yet** |
-| pools | USDC/3000 + WETH/3000 | **none exist yet** |
+| escrow | `0x4db1DA87…` | `0x46D5520Ef1DeACd6cA332A9510141b28dC6141a1` |
+| treasury | `0x187b746a…` | `0xc35397cBDbcdb24705bc09917f9DdF9E6970C904` |
+| pools | USDC/3000 + WETH/3000 | USDC/10000 `0x5185bef3…11b1` + WETH/10000 `0x116d0a85…4e6A` |
 
 Both tokens are 6 decimals and symbol `SKOOP`, so no amount-handling changed.
 
-## This build cannot take payments yet
+## Deployed 2026-09-25
+
+Both contracts were deployed from the KOKOS OA `0x001b3fB3…a50b` (Ledger, `m/44'/60'/21'/0/0`),
+which owns both. Source, fork tests and the deploy script are in `~/KOKOS/legacy-v3/`.
+
+```
+KOKOSTreasuryV3       0xc35397cBDbcdb24705bc09917f9DdF9E6970C904   tx 0x9e76b594…1ea9  block 51804303
+KOKOSPaymentEscrowV3  0x46D5520Ef1DeACd6cA332A9510141b28dC6141a1   tx 0x503ea954…eb2b  block 51804311
+```
+
+**The treasury is not the V3 source unchanged.** Three fixes, each of which alone made
+`settle()` revert: SwapRouter02's `exactInputSingle` has no `deadline` field (the V3 struct
+calls selector `0x414bf389`, which does not exist on `0x2626…e481` — so the original treasury
+could never have settled, independent of the positionManager typo below); `poolFee` is 10000
+because the new pools are 1% and it has no setter; full-range ticks are ±887200 for tick
+spacing 200. The escrow is the V3 source unchanged.
+
+## Before the addresses were filled in
 
 It ships with the escrow and pool addresses set to `0x000…0`. A guard at the top of each
 file detects that, shows a red banner, and blocks the checkout path. That is deliberate —

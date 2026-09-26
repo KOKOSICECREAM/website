@@ -494,7 +494,7 @@ html,body{height:100%;height:100dvh;overflow:hidden;background:var(--coral);font
       <div class="det-row"><span class="dk">Route</span><span class="dv" id="det-route">&#8212;</span></div>
       <div class="det-row"><span class="dk">Price impact</span><span class="dv" id="det-impact">&#8212;</span></div>
       <div class="det-row"><span class="dk">Min received</span><span class="dv" id="det-min">&#8212;</span></div>
-      <div class="det-row"><span class="dk">Pool fee</span><span class="dv">0.30%</span></div>
+      <div class="det-row"><span class="dk">Pool fee</span><span class="dv">1.00%</span></div>
     </div>
     <button class="btn-swap" id="btn-swap" onclick="execSwap()" disabled>Enter amount</button>
   </div>
@@ -676,12 +676,12 @@ html,body{height:100%;height:100dvh;overflow:hidden;background:var(--coral);font
 const CFG={
   CHAIN_ID:8453,CHAIN_HEX:'0x2105',RPC:'https://mainnet.base.org',
   SKOOP:'0xBa147713adF122A8Fc224e52Cb431D7919831939',   // SKOOP PunchCard (new)
-  ESCROW:'0x0000000000000000000000000000000000000000',   // TODO redeploy KOKOSPaymentEscrowV3 against the new token
+  ESCROW:'0x46D5520Ef1DeACd6cA332A9510141b28dC6141a1',   // KOKOSPaymentEscrowV3 on SKOOP PunchCard, deployed 2026-09-25 from the KOKOS OA
   POS_SIGNER:'0x4eCc3f03c018208Ae5932eAB91bbD82F37F56D9B',
   ROUTER:'0x2626664c2603336e57b271c5c0b26f421741e481',
   USDC:'0x833589fcd6edb6e08f4c7c32d4f71b54bda02913',
   WETH:'0x4200000000000000000000000000000000000006',
-  FEE:3000,SKOOP_DEC:6,USDC_DEC:6,WETH_DEC:18,
+  FEE:10000,SKOOP_DEC:6,USDC_DEC:6,WETH_DEC:18,
 };
 const ABI_ERC20=["function balanceOf(address) view returns (uint256)","function allowance(address,address) view returns (uint256)","function approve(address,uint256) returns (bool)","event Transfer(address indexed from, address indexed to, uint256 value)"];
 const ABI_ROUTER=["function exactInputSingle((address tokenIn,address tokenOut,uint24 fee,address recipient,uint256 amountIn,uint256 amountOutMinimum,uint160 sqrtPriceLimitX96)) payable returns (uint256)"];
@@ -694,8 +694,8 @@ const ABI_ESCROW=[{inputs:[{components:[
   {name:"itemCount",type:"uint256"},{name:"cartHash",type:"bytes32"},{name:"deadline",type:"uint256"}
 ],name:"intent",type:"tuple"},{name:"signature",type:"bytes"}],name:"capturePayment",outputs:[],stateMutability:"nonpayable",type:"function"}];
 
-const POOL_ETH_SKOOP  = '0x0000000000000000000000000000000000000000'; // TODO create pool
-const POOL_USDC_SKOOP = '0x0000000000000000000000000000000000000000'; // TODO create pool
+const POOL_ETH_SKOOP  = '0x116d0a851632958AFD3B1a0B751089392bcb4e6A'; // 1%
+const POOL_USDC_SKOOP = '0x5185bef315Dee41727865AC26243bD62008d11b1'; // 1%
 const ABI_POOL_IMM=["function token0() view returns (address)","function token1() view returns (address)","function fee() view returns (uint24)"];
 const poolFees={};
 
