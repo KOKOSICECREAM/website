@@ -519,7 +519,7 @@ const CFG={
   DAILY_REWARD_LIMIT:BRAND.dailyRewardLimit,AUTO_REWARD_RATE:0.10,AUTO_REWARD_RATE_USDC:0.05,
 };
 
-let skoopPriceUSD=0,cachedSkoopBalance=0;
+let skoopPriceUSD=0,cachedSkoopBalance=0,priceDivergence=null;
 let currentPaymentToken=null; // set to CFG.SKOOP or CFG.USDC at checkout open
 const ABI_ERC20=["function transfer(address,uint256) returns (bool)","function approve(address,uint256) returns (bool)"];
 const ABI_ESCROW=[
@@ -566,6 +566,29 @@ let activeCat='all',toastTimer=null,calcSkoopAmount=0,successTimer=null;
 // ═══════════════════════════════════════════════════════════════
 //  PRICE FETCHING
 // ═══════════════════════════════════════════════════════════════
+// ── PRICE SANITY: the two SKOOP pools must agree ──────────────────────────────
+// SKOOP payments are priced from the USDC pool alone, and it is small: someone could
+// push its price up for a minute and pay for an order with fewer SKOOP. Moving both
+// pools the same way costs far more, so compare the USDC pool against the ETH pool
+// (via ETH/USD from the deep WETH/USDC pool). More than 3% apart and SKOOP checkout
+// pauses until they agree again. If the check itself cannot be read, it blocks nothing.
+const WETH_USDC_POOL='0xd0b53D9277642d899DF5C87A3966A349A798F224',WETH_ADDR='0x4200000000000000000000000000000000000006';
+const PRICE_DIVERGENCE_MAX=0.03;
+async function checkPriceAgreement(pub){
+  const sp=async a=>{const c=new ethers.Contract(a,ABI_POOL,pub);const[s0,t0]=await Promise.all([c.slot0(),c.token0()]);const q=Number(s0.sqrtPriceX96)/Number(2n**96n);return{raw:q*q,t0:t0.toLowerCase()};};
+  try{
+    const[eu,es]=await Promise.all([sp(WETH_USDC_POOL),sp(CFG.POOL_ETH_SKOOP)]);
+    const ethUsd=eu.t0===WETH_ADDR.toLowerCase()?eu.raw*1e12:1e12/eu.raw;          // WETH 18dp, USDC 6dp
+    const skoopPerEth=es.t0===WETH_ADDR.toLowerCase()?es.raw*1e12:1e12/es.raw;      // WETH 18dp, SKOOP 6dp
+    const viaEth=ethUsd/skoopPerEth;
+    if(!(viaEth>0)||!(skoopPriceUSD>0)){priceDivergence=null;return;}
+    priceDivergence=Math.abs(viaEth-skoopPriceUSD)/skoopPriceUSD;
+  }catch(e){priceDivergence=null;}
+  const el=document.getElementById('price-pill-change');
+  if(el&&priceDivergence!==null&&priceDivergence>PRICE_DIVERGENCE_MAX){
+    el.textContent='⚠ pools disagree '+(priceDivergence*100).toFixed(1)+'% — SKOOP checkout paused';el.style.color='#c0392b';
+  }
+}
 async function fetchSkoopPrice(){
   try{
     // batchMaxCount:1 — slot0() and token0() go out together below, and a batched
@@ -577,13 +600,14 @@ async function fetchSkoopPrice(){
     const raw=sq*sq;
     const skoopIsT0=t0.toLowerCase()===CFG.SKOOP.toLowerCase();
     skoopPriceUSD=skoopIsT0?raw:1/raw;
+    await checkPriceAgreement(pub).catch(()=>{});
     if(skoopPriceUSD>0){
       document.getElementById('price-pill-main').textContent='1 USDC = '+Math.round(1/skoopPriceUSD).toLocaleString()+' SKOOP';
       try{
         const ds=await fetch('https://api.dexscreener.com/latest/dex/pairs/base/'+CFG.POOL_ETH_SKOOP);
         const dj=await ds.json();
         const change=dj?.pair?.priceChange?.h24;
-        if(change!==undefined&&change!==null){
+        if(change!==undefined&&change!==null&&!(priceDivergence!==null&&priceDivergence>PRICE_DIVERGENCE_MAX)){
           const pct=parseFloat(change);const up=pct>=0;
           const el=document.getElementById('price-pill-change');
           el.textContent=(up?'▲':'▼')+' '+Math.abs(pct).toFixed(2)+'% (24h)';
@@ -856,6 +880,9 @@ async function generateQR(){
   const payToken = currentPaymentToken || CFG.SKOOP;
   const isUSDC = payToken.toLowerCase() === CFG.USDC.toLowerCase();
   if(!isUSDC && !skoopPriceUSD){showToast('Waiting for SKOOP price…','error');return;}
+  if(!isUSDC && priceDivergence!==null && priceDivergence>PRICE_DIVERGENCE_MAX){
+    showToast('SKOOP price unsettled ('+(priceDivergence*100).toFixed(1)+'% gap between pools) — take USDC or try again in a minute','error');return;
+  }
   const subtotalCents=Math.round(Object.entries(cart).reduce((s,[id,qty])=>{const item=MENU.find(m=>m.id===id);return s+(item?item.price*qty:0);},0)*100);
   const taxCents=Math.round(subtotalCents*CFG.TAX_RATE);
   const totalCents=subtotalCents+taxCents;
@@ -969,6 +996,10 @@ function closeModal(){clearInterval(qrCountdownTimer);activePollToken=null;qrMod
 //  AUTO-REWARD
 // ═══════════════════════════════════════════════════════════════
 async function autoSendReward(payerAddr,rewardSkoop,paidCents,receiptId){
+  // Never reward one of our own addresses: SKOOP sent to the escrow cannot be recovered.
+  if([CFG.ESCROW,CFG.TREASURY,CFG.SKOOP,CFG.USDC,CFG.POOL_ETH_SKOOP,CFG.POOL_USDC_SKOOP].some(x=>x&&x.toLowerCase()===String(payerAddr).toLowerCase())){
+    console.warn('autoSendReward: refused reward to protocol address',payerAddr);return;
+  }
   setSuccessRewardStatus('sending',rewardSkoop);
   if(getDailyRewardState()+rewardSkoop>CFG.DAILY_REWARD_LIMIT){
     savePendingReward(receiptId,rewardSkoop,paidCents);
@@ -1069,7 +1100,12 @@ async function pollForDirectUSDC(usdcAmount,totalCents,pollToken){
     try{
       // value is not indexed — filter only by to=treasury, match amount client-side
       const events=await usdc.queryFilter(usdc.filters.Transfer(null,CFG.TREASURY),startBlock);
-      const ev=events.find(e=>e.args.value===usdcAmount&&!seenHashes.has(e.transactionHash));
+      // Only a customer's transfer counts. The escrow sends USDC here whenever receipts are
+      // settled, and the owner may top the treasury up by hand; either could match an
+      // order's amount by coincidence, mark it paid, and send its reward to a contract
+      // that can never return it.
+      const notOurs=a=>![CFG.ESCROW,CFG.TREASURY,CFG.OWNER,CFG.SIGNER].some(x=>x&&x.toLowerCase()===a.toLowerCase());
+      const ev=events.find(e=>e.args.value===usdcAmount&&notOurs(e.args.from)&&!seenHashes.has(e.transactionHash));
       if(ev)seenHashes.add(ev.transactionHash);
       if(ev){
         activePollToken=null;clearInterval(poll);
@@ -1162,6 +1198,7 @@ function applyCalcReward(){
 async function sendReward(){
   if(!signer){showToast('Connect wallet first','error');return;}
   if(!scannedRewardAddr){showToast('No wallet address set','error');return;}
+  if([CFG.ESCROW,CFG.TREASURY,CFG.SKOOP,CFG.USDC].some(x=>x.toLowerCase()===scannedRewardAddr.toLowerCase())){showToast('That is a contract address, not a customer wallet','error');return;}
   const amtStr=document.getElementById('reward-amount').value;
   if(!amtStr||Number(amtStr)<=0){showToast('Enter SKOOP amount','error');return;}
   const amtNum=parseFloat(amtStr);
@@ -1408,8 +1445,9 @@ async function fetchWalletBalance(){
     const pub=new ethers.JsonRpcProvider(CFG.RPC);
     const ABI_BAL=["function balanceOf(address) view returns (uint256)"];
     const token=new ethers.Contract(CFG.SKOOP,ABI_BAL,pub);
-    const raw=await token.balanceOf(signerAddr);
+    const [raw,ethRaw]=await Promise.all([token.balanceOf(signerAddr),pub.getBalance(signerAddr)]);
     const balance=parseFloat(ethers.formatUnits(raw,CFG.SKOOP_DEC));
+    const ethBal=parseFloat(ethers.formatEther(ethRaw));
     cachedSkoopBalance=balance;
     const dotEl=document.getElementById('wallet-balance-dot');
     if(dotEl){dotEl.className='';dotEl.style.background='var(--mint-dk)';}
@@ -1420,6 +1458,19 @@ async function fetchWalletBalance(){
     } else {
       usdEl.textContent='wallet balance';
     }
+    // Rewards are paid from this wallet, so running dry fails silently at the worst
+    // moment — mid-sale, as "Auto-reward failed". Warn before that. SKOOP thresholds
+    // scale with the daily reward cap; ETH ones are a few hundred Base transfers.
+    const lvl=(balance<CFG.DAILY_REWARD_LIMIT*0.05||ethBal<0.0005)?'crit'
+             :(balance<CFG.DAILY_REWARD_LIMIT*0.25||ethBal<0.002)?'warn':'ok';
+    const why=balance<CFG.DAILY_REWARD_LIMIT*0.25?'Low SKOOP — top up rewards wallet':'Low ETH — add gas';
+    const dotNow=document.getElementById('wallet-balance-dot');
+    if(lvl!=='ok'){
+      const col=lvl==='crit'?'#c0392b':'#d4880f';
+      if(dotNow)dotNow.style.background=col;
+      usdEl.textContent=why;usdEl.style.color=col;usdEl.style.fontWeight='700';
+      document.getElementById('wallet-balance-wrap').title=`${balance.toLocaleString()} SKOOP · ${ethBal.toFixed(4)} ETH`;
+    } else {usdEl.style.color='';usdEl.style.fontWeight='';}
     clearTimeout(walletBalanceTimer);
     walletBalanceTimer=setTimeout(fetchWalletBalance,30000);
   }catch(e){
