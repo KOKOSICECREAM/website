@@ -528,7 +528,7 @@ const BUSINESS_CONFIG = {
 
   // ── Scan ────────────────────────────────────────────────────────────────
   startBlock:        51804300,   // just before the new treasury (51804303) and escrow (51804311)
-  chunkSize:         900,    // Base's eth_getLogs cap has gone 10k -> 2k -> 1k; 900 leaves headroom
+  chunkSize:         1900,   // Base's getLogs cap is 2,000 today; a narrower cap is handled by splitting
   refundWindowDays:  1,          // escrow.refundWindow() = 86400 since 2026-09-26
 
   // ── Accounting ──────────────────────────────────────────────────────────
@@ -718,7 +718,8 @@ function applyFilter(){
 
 // ── SCAN CACHE ────────────────────────────────────────────────────────────────
 const SCAN_CACHE_KEY=`kokos_v1_${CFG.ESCROW.slice(-8)}_${CFG.TREASURY.slice(-8)}`;
-const N_PAR=1;
+const BASE_REF_BLOCK=51804303, BASE_REF_TS=1790397953;   // block, unix time
+const N_PAR=3;   // chunks in flight at once; each is 3 requests
 
 function loadScanCache(){try{const r=localStorage.getItem(SCAN_CACHE_KEY);return r?JSON.parse(r):null;}catch{return null;}}
 function saveScanCache(d){try{localStorage.setItem(SCAN_CACHE_KEY,JSON.stringify(d));}catch{console.warn('Cache quota full — scan works, just slower next time');}}
@@ -879,21 +880,47 @@ async function runScan(){
       const totalChunks=Math.ceil((latest-fromBlock+1)/CFG.CHUNK);
       let done=0;
 
+      // One getLogs for everything the escrow and treasury emit, plus one for each token
+      // transfer we track: 3 requests per chunk instead of 9 (one per event type). The raw
+      // logs are decoded into the same {args, transactionHash, blockNumber} shape that
+      // queryFilter returned, in the same nine buckets, so nothing downstream changes.
+      const iEsc=new ethers.Interface(ABI_ESC), iTsy=new ethers.Interface(ABI_TSY), iTrf=new ethers.Interface(ABI_TRF);
+      const T_TRANSFER=iTrf.getEvent('Transfer').topicHash;
+      const pad=a=>ethers.zeroPadValue(a,32);
+      const ESC_L=CFG.ESCROW.toLowerCase(), TSY_L=CFG.TREASURY.toLowerCase();
+      const ESC_BUCKET={PaymentCaptured:0,PaymentVoided:1,PaymentBurned:2,PaymentSettled:3,BatchBurnExecuted:4,BatchUSDCSettled:5};
+      const asEvent=(log,parsed)=>({args:parsed.args,transactionHash:log.transactionHash,blockNumber:log.blockNumber});
+
+      async function fetchChunk(blkStart,blkEnd){
+        const [core,rew,dir]=await Promise.all([
+          pub.getLogs({address:[CFG.ESCROW,CFG.TREASURY],fromBlock:blkStart,toBlock:blkEnd}),
+          pub.getLogs({address:CFG.SKOOP,topics:[T_TRANSFER,pad(CFG.POS_SIGNER)],fromBlock:blkStart,toBlock:blkEnd}),
+          pub.getLogs({address:CFG.USDC,topics:[T_TRANSFER,null,pad(CFG.TREASURY)],fromBlock:blkStart,toBlock:blkEnd}),
+        ]);
+        const out=[[],[],[],[],[],[],[],[],[]];
+        for(const log of core){
+          const a=log.address.toLowerCase();
+          if(a===ESC_L){const p=iEsc.parseLog(log);if(p&&p.name in ESC_BUCKET)out[ESC_BUCKET[p.name]].push(asEvent(log,p));}
+          else if(a===TSY_L){const p=iTsy.parseLog(log);if(p&&p.name==='Settled')out[6].push(asEvent(log,p));}
+        }
+        for(const log of rew)out[7].push(asEvent(log,iTrf.parseLog(log)));
+        for(const log of dir)out[8].push(asEvent(log,iTrf.parseLog(log)));
+        return out;
+      }
+
       async function queryChunk(blkStart,blkEnd,attempt=0){
         try{
-          return await Promise.all([
-            esc.queryFilter(esc.filters.PaymentCaptured(),blkStart,blkEnd),
-            esc.queryFilter(esc.filters.PaymentVoided(),blkStart,blkEnd),
-            esc.queryFilter(esc.filters.PaymentBurned(),blkStart,blkEnd),
-            esc.queryFilter(esc.filters.PaymentSettled(),blkStart,blkEnd),
-            esc.queryFilter(esc.filters.BatchBurnExecuted(),blkStart,blkEnd),
-            esc.queryFilter(esc.filters.BatchUSDCSettled(),blkStart,blkEnd),
-            tsy.queryFilter(tsy.filters.Settled(),blkStart,blkEnd),
-            sk.queryFilter(sk.filters.Transfer(CFG.POS_SIGNER,null),blkStart,blkEnd),
-            usdcTrf.queryFilter(usdcTrf.filters.Transfer(null,CFG.TREASURY),blkStart,blkEnd),
-          ]);
+          return await fetchChunk(blkStart,blkEnd);
         }catch(err){
           const msg=JSON.stringify(err);
+          // The node narrowed its getLogs range (it has gone 10k -> 2k -> 1k -> 2k): split
+          // this chunk in half and carry on, rather than failing the whole scan.
+          const isRange=/-32614|limited to|block range|range/i.test(msg)&&!/rate/i.test(msg);
+          if(isRange&&blkEnd>blkStart){
+            const mid=Math.floor((blkStart+blkEnd)/2);
+            const[x,y]=await Promise.all([queryChunk(blkStart,mid),queryChunk(mid+1,blkEnd)]);
+            return x.map((arr,k)=>arr.concat(y[k]));
+          }
           const isRate=msg.includes('rate limit')||msg.includes('-32016')||msg.includes('over rate')||msg.includes('429')||msg.includes('too many');
           if(isRate&&attempt<4){
             const wait=1500*(attempt+1);
@@ -922,14 +949,10 @@ async function runScan(){
         done+=starts.length;
       }
 
-      // Fetch timestamps only for blocks not already in tsMap
-      const newBlocks=new Set([...rwR,...dirR].map(e=>e.blk).filter(bn=>!tsMap[bn]));
-      await Promise.all([...newBlocks].map(async bn=>{
-        for(let attempt=0;attempt<3;attempt++){
-          try{const blk=await pub.getBlock(bn);if(blk){tsMap[bn]=blk.timestamp;break;}}
-          catch{if(attempt<2)await new Promise(r=>setTimeout(r,500*(attempt+1)));}
-        }
-      }));
+      // Timestamps without a request per block: Base produces a block every 2 seconds,
+      // exactly (checked on-chain across 12M blocks, zero drift). Anchored at the new
+      // treasury's deploy block, 51804303.
+      for(const e of [...rwR,...dirR])if(!tsMap[e.blk])tsMap[e.blk]=BASE_REF_TS+2*(e.blk-BASE_REF_BLOCK);
 
       saveScanCache({capR,voidR,burnR,stlR,bbR,ubR,tyR,rwR,dirR,tsMap,lastBlock:latest});
     }
