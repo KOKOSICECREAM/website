@@ -3,7 +3,8 @@
 // bytes change. Leave it alone and an installed app brought back from the background
 // keeps running the previous build until it is fully closed.
 // v9 2026-09-26: price window cleanup, escrow wording, install-link hiding.
-const CACHE='skoop-v10';
+// v11 2026-09-27: the app moved to punchcard.club/app — index.html now forwards there.
+const CACHE='skoop-v11';
 
 // Third-party libs are version-pinned URLs — safe to serve from cache forever.
 const CDN=[
