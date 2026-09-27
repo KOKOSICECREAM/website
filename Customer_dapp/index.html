@@ -684,6 +684,7 @@ const CFG={
   SKOOP:'0xBa147713adF122A8Fc224e52Cb431D7919831939',   // SKOOP PunchCard
   ESCROW:'0x46D5520Ef1DeACd6cA332A9510141b28dC6141a1',   // KOKOSPaymentEscrowV3 on SKOOP PunchCard, 2026-09-25
   POS_SIGNER:'0x4eCc3f03c018208Ae5932eAB91bbD82F37F56D9B',
+  REWARD_VAULT:'0xEFe813AAb7421534f0f59678e9Ef390CAB9086d2',   // PunchCard rewards vault — POS V2 pays rewards from here
   ROUTER:'0x2626664c2603336e57b271c5c0b26f421741e481',
   USDC:'0x833589fcd6edb6e08f4c7c32d4f71b54bda02913',
   WETH:'0x4200000000000000000000000000000000000006',
@@ -1019,12 +1020,11 @@ async function loadActivityFeed(opts){
     const currentBlock=await readProvider.getBlockNumber();
     const topic0=ethers.id('Transfer(address,address,uint256)');
     const pad=a=>'0x'+ethers.getAddress(a).slice(2).toLowerCase().padStart(64,'0');
-    const EXCLUDED=[
-      userAddr.slice(2).toLowerCase(),
-      CFG.ROUTER.slice(2).toLowerCase(),
-      POOL_ETH_SKOOP.slice(2).toLowerCase(),
-      POOL_USDC_SKOOP.slice(2).toLowerCase(),
-    ];
+    // A reward is SKOOP sent by the shop's reward sources — the POS signer (POS V1, and V2's
+    // float) or the PunchCard rewards vault (POS V2) — and nothing else. This used to count
+    // every incoming transfer outside a short blocklist, so a SKOOP buy through any other
+    // route (Uniswap app, an aggregator), a gift or a refund showed as a reward.
+    const REWARD_SOURCES=[pad(CFG.POS_SIGNER),pad(CFG.REWARD_VAULT)];
     const ranges=[];
     for(let s=currentBlock-ACTIVITY_WINDOW_BLOCKS;s<=currentBlock;s+=LOG_CHUNK){
       ranges.push([Math.max(0,s),Math.min(s+LOG_CHUNK-1,currentBlock)]);
@@ -1033,7 +1033,7 @@ async function loadActivityFeed(opts){
       try{
         return await readProvider.send('eth_getLogs',[{
           address:CFG.SKOOP,
-          topics:[topic0,null,pad(userAddr)],
+          topics:[topic0,REWARD_SOURCES,pad(userAddr)],
           fromBlock:'0x'+a.toString(16),
           toBlock:'0x'+b.toString(16)
         }]);
@@ -1055,7 +1055,7 @@ async function loadActivityFeed(opts){
       const res=await Promise.all(ranges.slice(i,i+LOG_PAR).map(([a,b])=>fetchChunk(a,b)));
       for(const r of res)logs.push(...r);
     }
-    const rewards=logs.filter(l=>!EXCLUDED.includes((l.topics[1]||'').slice(-40).toLowerCase()));
+    const rewards=logs;   // already only transfers from a reward source (see REWARD_SOURCES)
     if(!rewards.length){
       renderRewardsChip(0,0);
       list.innerHTML='<div class="tx-row"><div class="tx-dot td-apricot">\ud83c\udf66</div><div class="tx-info"><div class="tx-name">No rewards in the last 24 hours</div><div class="tx-date">Pay with SKOOP or show your QR to earn</div></div></div>';
