@@ -390,9 +390,12 @@ button{font-family:inherit;}
         <p style="font-size:0.68rem;color:var(--ink-lt);text-align:center;padding:0.875rem 0;">No captured receipts yet</p>
       </div>
       <button class="action-btn secondary" onclick="loadReceipts()" style="font-size:0.65rem;margin-top:auto;">Refresh Receipts</button>
-      <div style="display:flex;gap:0.4rem;">
+      <div id="owner-actions" style="display:none;gap:0.4rem;">
         <button class="action-btn secondary" onclick="selectAllReady()" style="flex:1;font-size:0.65rem;">Select All Ready</button>
         <button class="action-btn danger" id="burn-btn" onclick="burnSelected()" disabled style="flex:1;">🔥 Burn / Settle</button>
+      </div>
+      <div id="owner-note" style="display:block;font-size:0.64rem;color:var(--ink-mid);text-align:center;line-height:1.5;padding:0.2rem 0.4rem;">
+        Voids and settlement are manager-only. Connect the owner wallet here, or use Reporting.
       </div>
     </div>
   </div>
@@ -674,6 +677,7 @@ async function connectInjectedWallet(){
     const name=window.ethereum.isMetaMask?'MetaMask':window.ethereum.isCoinbaseWallet?'Coinbase':'Wallet';
     showToast(name+' connected ✓','success');
     showWalletBalancePill();
+    setOwnerControls();if(capturedReceipts.length)renderReceipts();
     fetchWalletBalance();
     loadReceipts();
   }catch(e){
@@ -1444,9 +1448,18 @@ function renderReceipts(){
     const statusLabel=windowOpen
       ?`<div class="rc-status rc-pending">Settles in ${formatTimeLeft(secsLeft)}</div>`
       :`<div class="rc-status rc-ready">Ready ✓</div>`;
-    const voidBtn=windowOpen?`<button class="rc-void-btn" onclick="voidReceipt('${r.receiptId}')">Void</button>`:'';
-    return`<div class="receipt-card"><input type="checkbox" id="rc-${i}" value="${r.receiptId}" ${windowOpen?'disabled':''} onchange="updateBurnBtn()"><div style="flex:1;"><div class="rc-id">${r.receiptId.slice(0,18)}…${badge}</div><div class="rc-amt">${amtStr}</div>${statusLabel}</div>${voidBtn}</div>`;
+    // Voids and settlement are owner-only in the escrow (onlyOwner). The tablet runs as the
+    // POS signer, so an employee never sees these controls; a manager connects the owner wallet.
+    const voidBtn=windowOpen&&isOwnerConnected()?`<button class="rc-void-btn" onclick="voidReceipt('${r.receiptId}')">Void</button>`:'';
+    return`<div class="receipt-card"><input type="checkbox" id="rc-${i}" value="${r.receiptId}" ${windowOpen||!isOwnerConnected()?'disabled':''} ${isOwnerConnected()?'':'style="display:none"'} onchange="updateBurnBtn()"><div style="flex:1;"><div class="rc-id">${r.receiptId.slice(0,18)}…${badge}</div><div class="rc-amt">${amtStr}</div>${statusLabel}</div>${voidBtn}</div>`;
   }).join('');
+  setOwnerControls();
+}
+const isOwnerConnected=()=>!!signerAddr&&signerAddr.toLowerCase()===CFG.OWNER.toLowerCase();
+function setOwnerControls(){
+  const own=isOwnerConnected();
+  const a=document.getElementById('owner-actions'),n=document.getElementById('owner-note');
+  if(a)a.style.display=own?'flex':'none';if(n)n.style.display=own?'none':'block';
 }
 function updateBurnBtn(){document.getElementById('burn-btn').disabled=document.querySelectorAll('#receipt-list input:checked').length===0;}
 function formatTimeLeft(secs){
@@ -1466,6 +1479,7 @@ function selectAllReady(){
 }
 async function voidReceipt(receiptId){
   if(!signer){showToast('Connect wallet first','error');return;}
+  if(!isOwnerConnected()){showToast('Voids are manager-only — connect the owner wallet','error');return;}
   if(!confirm('Void this payment? Tokens will be returned to the customer.'))return;
   try{
     const escrow=new ethers.Contract(CFG.ESCROW,ABI_ESCROW,signer);
