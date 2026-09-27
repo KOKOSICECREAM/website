@@ -593,16 +593,19 @@ async function fetchSkoopPrice(){
   try{
     // batchMaxCount:1 — slot0() and token0() go out together below, and a batched
     // pair fails as a unit under Base's rate limit. This price drives the reward math.
-    const pub=new ethers.JsonRpcProvider(CFG.RPC,CFG.CHAIN_ID,{batchMaxCount:1});
+    const pub=new ethers.JsonRpcProvider(CFG.RPC,CFG.CHAIN_ID,{batchMaxCount:1,staticNetwork:true});
     const pool=new ethers.Contract(CFG.POOL_USDC_SKOOP,ABI_POOL,pub);
     const[s0,t0]=await Promise.all([pool.slot0(),pool.token0()]);
     const sq=Number(s0.sqrtPriceX96)/Number(2n**96n);
     const raw=sq*sq;
     const skoopIsT0=t0.toLowerCase()===CFG.SKOOP.toLowerCase();
     skoopPriceUSD=skoopIsT0?raw:1/raw;
-    await checkPriceAgreement(pub).catch(()=>{});
+    // Show the price as soon as it is read. The two-pool cross-check runs after, capped at 8s:
+    // under the public RPC's throttling ethers backs off for minutes, and the pill used to sit
+    // on "loading…" the whole time. The checkout gate still reads priceDivergence as before.
+    if(skoopPriceUSD>0)document.getElementById('price-pill-main').textContent='1 USDC = '+Math.round(1/skoopPriceUSD).toLocaleString()+' SKOOP';
+    await Promise.race([checkPriceAgreement(pub).catch(()=>{}),new Promise(r=>setTimeout(r,8000))]);
     if(skoopPriceUSD>0){
-      document.getElementById('price-pill-main').textContent='1 USDC = '+Math.round(1/skoopPriceUSD).toLocaleString()+' SKOOP';
       try{
         const ds=await fetch('https://api.dexscreener.com/latest/dex/pairs/base/'+CFG.POOL_ETH_SKOOP);
         const dj=await ds.json();
@@ -1055,7 +1058,7 @@ function showPaymentSuccess(totalCents,tokenAmt,receiptId,tokenLabel='SKOOP'){
 }
 function closeSuccess(){clearInterval(successTimer);closeModal();}
 async function pollForPayment(receiptId,pollToken){
-  const pub=new ethers.JsonRpcProvider(CFG.RPC);
+  const pub=new ethers.JsonRpcProvider(CFG.RPC,CFG.CHAIN_ID,{staticNetwork:true});
   const escrow=new ethers.Contract(CFG.ESCROW,ABI_ESCROW,pub);
   let startBlock;try{startBlock=await pub.getBlockNumber()-5;}catch(e){startBlock=0;}
   let attempts=0;
@@ -1088,7 +1091,7 @@ async function pollForPayment(receiptId,pollToken){
 }
 
 async function pollForDirectUSDC(usdcAmount,totalCents,pollToken){
-  const pub=new ethers.JsonRpcProvider(CFG.RPC);
+  const pub=new ethers.JsonRpcProvider(CFG.RPC,CFG.CHAIN_ID,{staticNetwork:true});
   const usdc=new ethers.Contract(CFG.USDC,['event Transfer(address indexed from,address indexed to,uint256 value)'],pub);
   let startBlock;try{startBlock=await pub.getBlockNumber()-5;}catch(e){startBlock=0;}
   let attempts=0;
@@ -1442,7 +1445,7 @@ async function fetchWalletBalance(){
   skEl.innerHTML='<span id="wallet-balance-dot" class="loading"></span>…';
   usdEl.textContent='loading…';
   try{
-    const pub=new ethers.JsonRpcProvider(CFG.RPC);
+    const pub=new ethers.JsonRpcProvider(CFG.RPC,CFG.CHAIN_ID,{staticNetwork:true});
     const ABI_BAL=["function balanceOf(address) view returns (uint256)"];
     const token=new ethers.Contract(CFG.SKOOP,ABI_BAL,pub);
     const [raw,ethRaw]=await Promise.all([token.balanceOf(signerAddr),pub.getBalance(signerAddr)]);
