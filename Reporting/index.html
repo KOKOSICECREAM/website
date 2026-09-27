@@ -502,6 +502,7 @@ const BUSINESS_CONFIG = {
   escrow:       '0x46D5520Ef1DeACd6cA332A9510141b28dC6141a1',   // KOKOSPaymentEscrowV3 on SKOOP PunchCard, 2026-09-25
   treasury:     '0xc35397cBDbcdb24705bc09917f9DdF9E6970C904',   // KOKOSTreasuryV3 (fixed), 2026-09-25
   posSigner:    '0x4eCc3f03c018208Ae5932eAB91bbD82F37F56D9B',
+  rewardVault:  '0xEFe813AAb7421534f0f59678e9Ef390CAB9086d2',   // PunchCard RewardEscrow — POS V2 pays rewards from here
 
   // ── Loyalty / payment token ─────────────────────────────────────────────
   token:             '0xBa147713adF122A8Fc224e52Cb431D7919831939',   // SKOOP PunchCard
@@ -555,6 +556,7 @@ const CFG={
   ESCROW:        BUSINESS_CONFIG.escrow,
   TREASURY:      BUSINESS_CONFIG.treasury,
   POS_SIGNER:    BUSINESS_CONFIG.posSigner,
+  REWARD_VAULT:  BUSINESS_CONFIG.rewardVault,
   OWNER:         BUSINESS_CONFIG.ownerWallet,
   POOL:          BUSINESS_CONFIG.pool,
   POS_MGR:       BUSINESS_CONFIG.positionMgr,
@@ -896,7 +898,7 @@ async function runScan(){
       async function fetchChunk(blkStart,blkEnd){
         const [core,rew,dir]=await Promise.all([
           pub.getLogs({address:[CFG.ESCROW,CFG.TREASURY],fromBlock:blkStart,toBlock:blkEnd}),
-          pub.getLogs({address:CFG.SKOOP,topics:[T_TRANSFER,pad(CFG.POS_SIGNER)],fromBlock:blkStart,toBlock:blkEnd}),
+          pub.getLogs({address:CFG.SKOOP,topics:[T_TRANSFER,[pad(CFG.POS_SIGNER),pad(CFG.REWARD_VAULT)]],fromBlock:blkStart,toBlock:blkEnd}),
           pub.getLogs({address:CFG.USDC,topics:[T_TRANSFER,null,pad(CFG.TREASURY)],fromBlock:blkStart,toBlock:blkEnd}),
         ]);
         const out=[[],[],[],[],[],[],[],[],[]];
@@ -905,7 +907,7 @@ async function runScan(){
           if(a===ESC_L){const p=iEsc.parseLog(log);if(p&&p.name in ESC_BUCKET)out[ESC_BUCKET[p.name]].push(asEvent(log,p));}
           else if(a===TSY_L){const p=iTsy.parseLog(log);if(p&&p.name==='Settled')out[6].push(asEvent(log,p));}
         }
-        for(const log of rew)out[7].push(asEvent(log,iTrf.parseLog(log)));
+        for(const log of rew){const p=iTrf.parseLog(log);if(p.args.to!==ethers.ZeroAddress)out[7].push(asEvent(log,p));}
         for(const log of dir)out[8].push(asEvent(log,iTrf.parseLog(log)));
         return out;
       }
