@@ -767,7 +767,7 @@ async function runSettlementScan(){
   if(qBtn){qBtn.disabled=true;qBtn.innerHTML='<span class="spin"></span> Loading…';}
   document.getElementById('meta-settle').textContent='Loading…';
   try{
-    const pub=new ethers.JsonRpcProvider(CFG.RPC,undefined,{batchMaxCount:1});
+    const pub=new ethers.JsonRpcProvider(CFG.RPC,8453,{batchMaxCount:1,staticNetwork:true});
     const[latest]=await Promise.all([pub.getBlockNumber(),fetchPrice(pub)]);
     const cache=loadSettleCache();
     const fromBlock=cache?cache.lastBlock+1:CFG.START_BLOCK;
@@ -850,7 +850,7 @@ async function runScan(){
   btn.disabled=true;btn.innerHTML='<span class="spin"></span> Scanning…';
   setScanBar(true);setBar(0,'Connecting…');
   try{
-    const pub=new ethers.JsonRpcProvider(CFG.RPC,undefined,{batchMaxCount:1});
+    const pub=new ethers.JsonRpcProvider(CFG.RPC,8453,{batchMaxCount:1,staticNetwork:true});
     const latest=await pub.getBlockNumber();
 
     setBar(4,'Loading price…');
@@ -982,7 +982,7 @@ async function runScan(){
 
 async function fetchPrice(pub){
   try{
-    const p=pub||new ethers.JsonRpcProvider(CFG.RPC);
+    const p=pub||new ethers.JsonRpcProvider(CFG.RPC,8453,{staticNetwork:true});
     const pool=new ethers.Contract(CFG.POOL,ABI_POOL,p);
     const sk=new ethers.Contract(CFG.SKOOP,ABI_SKOOP_READ,p);
     const[[s0,t0],supply]=await Promise.all([
@@ -1000,7 +1000,7 @@ async function fetchPrice(pub){
 // ── TREASURY ──────────────────────────────────────────────────────────────────
 async function loadTreasury(pub){
   try{
-    const p=pub||new ethers.JsonRpcProvider(CFG.RPC);
+    const p=pub||new ethers.JsonRpcProvider(CFG.RPC,8453,{staticNetwork:true});
     const tsy=new ethers.Contract(CFG.TREASURY,ABI_TSY,p);
     const safe=async(fn,fallback)=>{try{return await fn();}catch{return fallback;}};
     const[uBal,sBal,totDep,totBurn,lpId]=await Promise.all([
@@ -1052,7 +1052,7 @@ async function openSettleModal(){
   document.getElementById('settle-modal-info').textContent='Loading…';
   document.getElementById('settle-modal').classList.add('open');
   try{
-    const pub=new ethers.JsonRpcProvider(CFG.RPC);
+    const pub=new ethers.JsonRpcProvider(CFG.RPC,8453,{staticNetwork:true});
     const tsy=new ethers.Contract(CFG.TREASURY,ABI_TSY,pub);
     const uBal=await tsy.usdcBalance();
     const usd=parseFloat(ethers.formatUnits(uBal,6));
@@ -1506,7 +1506,7 @@ async function loadTopSpenders(){
   const btn=document.getElementById('top-spenders-btn');
   btn.disabled=true;btn.textContent='Loading…';
   try{
-    const pub=new ethers.JsonRpcProvider(CFG.RPC);
+    const pub=new ethers.JsonRpcProvider(CFG.RPC,8453,{staticNetwork:true});
     const esc=new ethers.Contract(CFG.ESCROW,ABI_ESC,pub);
     const allWalletMap={};
     allTx.filter(t=>!t.voided).forEach(t=>{
